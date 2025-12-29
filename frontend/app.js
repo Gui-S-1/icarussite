@@ -650,9 +650,68 @@ async function loadHistoryInOS() {
     return;
   }
 
-  tbody.innerHTML = completedOrders.map(o => 
-    `<tr><td>${o.id}</td><td>${o.status}</td><td>${o.created_at}</td></tr>`
-  ).join('');
+  tbody.innerHTML = completedOrders.map(o => {
+    const startedAt = o.started_at ? new Date(o.started_at) : null;
+    const finishedAt = o.finished_at ? new Date(o.finished_at) : null;
+    
+    // Calcular tempo total
+    let tempoTotal = '-';
+    if (startedAt && finishedAt) {
+      const diffMs = finishedAt - startedAt;
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (diffHours > 24) {
+        const days = Math.floor(diffHours / 24);
+        const hours = diffHours % 24;
+        tempoTotal = `${days}d ${hours}h`;
+      } else {
+        tempoTotal = `${diffHours}h ${diffMinutes}min`;
+      }
+    }
+    
+    // Quem executou
+    const executores = o.assigned_users && o.assigned_users.length > 0
+      ? o.assigned_users.map(u => u.name || u.username).join(', ')
+      : '-';
+    
+    return `
+      <tr onclick="showOSDetail('${o.id}')" style="cursor: pointer;">
+        <td>
+          <div><strong>${o.title}</strong></div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Executado por: ${executores}</div>
+        </td>
+        <td>${o.sector || '-'}</td>
+        <td>${startedAt ? startedAt.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
+        <td>${finishedAt ? finishedAt.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
+        <td><strong>${tempoTotal}</strong></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function toggleOSView(view) {
+  const btnAtivas = document.getElementById('btn-os-ativas');
+  const btnHistorico = document.getElementById('btn-os-historico');
+  const contentAtivas = document.getElementById('os-ativas-content');
+  const contentHistorico = document.getElementById('os-historico-content');
+  
+  if (view === 'ativas') {
+    btnAtivas.classList.add('btn-primary');
+    btnAtivas.classList.remove('btn-secondary');
+    btnHistorico.classList.remove('btn-primary');
+    btnHistorico.classList.add('btn-secondary');
+    contentAtivas.classList.remove('hidden');
+    contentHistorico.classList.add('hidden');
+  } else {
+    btnHistorico.classList.add('btn-primary');
+    btnHistorico.classList.remove('btn-secondary');
+    btnAtivas.classList.remove('btn-primary');
+    btnAtivas.classList.add('btn-secondary');
+    contentHistorico.classList.remove('hidden');
+    contentAtivas.classList.add('hidden');
+    loadHistoryInOS(); // Carregar histórico ao mostrar
+  }
 }
 
 async function startOrder(orderId) {
