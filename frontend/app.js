@@ -1526,7 +1526,7 @@ function renderPurchasesTable() {
       </td>
       <td>${new Date(purchase.created_at).toLocaleDateString('pt-BR')}</td>
       <td>
-        ${purchase.status !== 'chegou' ? `
+        ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin')) ? `
           <button class="btn-small" onclick="advancePurchaseStatus(${purchase.id})">
             Avançar
           </button>
@@ -1586,6 +1586,12 @@ async function createPurchaseFromForm(event) {
 }
 
 async function advancePurchaseStatus(purchaseId) {
+  // Só joacir e admin podem avançar status
+  if (state.user.username !== 'joacir' && !state.user.roles.includes('admin')) {
+    showNotification('Apenas o responsável de compras pode avançar o status', 'error');
+    return;
+  }
+
   const purchase = state.purchases.find(p => p.id === purchaseId);
   if (!purchase) return;
 
