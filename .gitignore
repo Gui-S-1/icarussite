@@ -1,0 +1,12 @@
+# root ignores
+node_modules/
+.DS_Store
+
+# backend
+backend/node_modules/
+backend/.env
+backend/.env.production
+backend/npm-debug.log*
+
+# frontend
+frontend/.vercel/
