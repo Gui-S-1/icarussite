@@ -235,13 +235,15 @@
     .premium-popup {
       background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 100%);
       border: 1px solid rgba(212, 175, 55, 0.3);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 480px;
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 420px;
+      max-height: 85vh;
+      overflow-y: auto;
       width: 90%;
       text-align: center;
       position: relative;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(212, 175, 55, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 175, 55, 0.1);
       animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
@@ -284,16 +286,16 @@
     }
 
     .premium-popup-icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.5));
+      font-size: 48px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
     }
 
     .premium-popup h2 {
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 700;
       color: #fff;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       line-height: 1.3;
     }
 
@@ -303,32 +305,32 @@
 
     .premium-popup-subtitle {
       color: var(--text-secondary);
-      font-size: 15px;
-      margin-bottom: 28px;
-      line-height: 1.6;
+      font-size: 14px;
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
 
     .premium-features {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 28px;
+      gap: 10px;
+      margin-bottom: 20px;
       text-align: left;
     }
 
     .premium-feature {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
+      gap: 10px;
+      padding: 10px 14px;
       background: rgba(255,255,255,0.03);
-      border-radius: 10px;
+      border-radius: 8px;
       border-left: 3px solid var(--primary);
     }
 
     .premium-feature-icon {
-      font-size: 20px;
-      min-width: 28px;
+      font-size: 18px;
+      min-width: 24px;
     }
 
     .premium-feature-text {
@@ -371,18 +373,18 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
-      padding: 18px 32px;
+      padding: 14px 24px;
       background: linear-gradient(135deg, var(--primary) 0%, #FFD700 100%);
       color: var(--bg-primary);
       text-decoration: none;
-      border-radius: 12px;
+      border-radius: 10px;
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
       transition: all 0.3s;
-      box-shadow: 0 8px 30px rgba(212,175,55,0.4);
-      margin-bottom: 16px;
+      box-shadow: 0 6px 20px rgba(212,175,55,0.4);
+      margin-bottom: 12px;
     }
 
     .premium-cta-btn:hover {
@@ -1786,54 +1788,51 @@
     <div class="premium-popup" onclick="event.stopPropagation()">
       <button class="premium-popup-close" onclick="closePremiumPopup()">&times;</button>
       
-      <span class="premium-badge">🏆 Exclusivo</span>
+      <div class="premium-popup-icon">⚙️</div>
       
-      <div class="premium-popup-icon">🚀</div>
-      
-      <h2>Transforme sua <span>Gestão de Manutenção</span></h2>
+      <h2>Sistema <span>ICARUS</span></h2>
       
       <p class="premium-popup-subtitle">
-        Empresas líderes já estão economizando tempo e dinheiro com o ICARUS. 
-        Seu time merece as melhores ferramentas.
+        Gestão profissional de manutenção para sua empresa.
+        Solicite uma demonstração sem compromisso.
       </p>
       
       <div class="premium-features">
         <div class="premium-feature">
-          <span class="premium-feature-icon">⚡</span>
-          <span class="premium-feature-text">Reduza tempo de resposta em até 70%</span>
+          <span class="premium-feature-icon">📋</span>
+          <span class="premium-feature-text">Gestão completa de ordens de serviço</span>
         </div>
         <div class="premium-feature">
-          <span class="premium-feature-icon">📊</span>
-          <span class="premium-feature-text">Dashboard em tempo real com métricas inteligentes</span>
+          <span class="premium-feature-icon">📦</span>
+          <span class="premium-feature-text">Controle de almoxarifado integrado</span>
         </div>
         <div class="premium-feature">
-          <span class="premium-feature-icon">🔒</span>
-          <span class="premium-feature-text">Segurança de nível empresarial</span>
+          <span class="premium-feature-icon">🛒</span>
+          <span class="premium-feature-text">Sistema de compras e orçamentos</span>
         </div>
         <div class="premium-feature">
-          <span class="premium-feature-icon">📱</span>
-          <span class="premium-feature-text">Acesso mobile - gerencie de qualquer lugar</span>
+          <span class="premium-feature-icon">🔧</span>
+          <span class="premium-feature-text">Manutenções preventivas programadas</span>
         </div>
       </div>
       
-      <div class="premium-social-proof">
-        <span class="premium-social-proof-dot"></span>
-        <span class="premium-social-proof-text">47 empresas solicitaram acesso este mês</span>
+      <div style="padding: 12px; background: rgba(212,175,55,0.1); border-radius: 8px; margin-bottom: 20px;">
+        <p style="color: var(--primary); font-size: 13px; margin: 0; font-weight: 500;">✨ Sistema em nuvem • Acesso de qualquer lugar</p>
       </div>
       
       <a href="https://wa.me/5562984930056?text=Olá!%20Vim%20do%20ICARUS%20e%20gostaria%20de%20saber%20mais%20sobre%20o%20sistema.%20Tenho%20interesse%20em%20transformar%20minha%20gestão%20de%20manutenção!" 
          target="_blank" 
          class="premium-cta-btn"
          onclick="closePremiumPopup()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
         </svg>
-        Quero Transformar Minha Empresa
+        Solicitar Demonstração
       </a>
       
       <div class="premium-guarantee">
-        <span class="premium-guarantee-icon">🛡️</span>
-        <span>Demonstração gratuita • Sem compromisso</span>
+        <span class="premium-guarantee-icon">📱</span>
+        <span>Atendimento rápido via WhatsApp</span>
       </div>
     </div>
   </div>
