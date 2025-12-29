@@ -81,6 +81,8 @@ function navigateTo(view) {
   console.log('Navegando para:', view);
   console.log('User roles:', state.user?.roles);
   
+  state.currentView = view; // Salvar view atual para polling
+  
   // Update active nav
   document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.remove('active');
@@ -242,6 +244,13 @@ async function showApp() {
 
   // Initial check after 10 seconds
   setTimeout(checkForUpdates, 10000);
+  
+  // Polling em tempo real a cada 5 segundos para atualizar views
+  setInterval(() => {
+    if (state.currentView && state.token) {
+      loadViewData(state.currentView).catch(err => console.error('Erro no polling:', err));
+    }
+  }, 5000);
 }
 
 function setupPermissions() {
