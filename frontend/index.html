@@ -70,7 +70,7 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+      background: linear-gradient(180deg, #1a1510 0%, #2a1f15 30%, #3d2a18 60%, #1a1510 100%);
       position: relative;
       overflow: hidden;
     }
@@ -78,40 +78,25 @@
     #auth-screen::before {
       content: '';
       position: absolute;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%);
-      border-radius: 50%;
-      top: -150px;
-      right: -150px;
-      animation: pulse-glow 3s ease-in-out infinite;
-    }
-
-    #auth-screen::after {
-      content: '';
-      position: absolute;
       width: 400px;
       height: 400px;
-      background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(212,175,55,0.25) 0%, transparent 60%);
       border-radius: 50%;
-      bottom: -100px;
-      left: -100px;
-      animation: pulse-glow 4s ease-in-out infinite;
-    }
-
-    @keyframes pulse-glow {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.1); }
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%);
     }
 
     .auth-card {
-      background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);\
-      padding: 40px;\n      border-radius: 20px;
+      background: rgba(30, 28, 26, 0.95);
+      padding: 40px;
+      border-radius: 24px;
       width: 400px;
       max-width: 90%;
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--border-color);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      position: relative;
+      z-index: 1;
     }
 
     .auth-logo {
@@ -126,47 +111,22 @@
     }
 
     .auth-logo-star {
-      font-size: 80px;
+      font-size: 72px;
       color: var(--primary);
       text-shadow: 
-        0 0 20px rgba(212, 175, 55, 0.8),
-        0 0 40px rgba(212, 175, 55, 0.5),
-        0 0 60px rgba(212, 175, 55, 0.3);
-      animation: starFloat 4s ease-in-out infinite, starPulse 2s ease-in-out infinite;
+        0 0 30px rgba(212, 175, 55, 0.9),
+        0 0 60px rgba(212, 175, 55, 0.5);
       display: block;
       line-height: 1;
-      filter: drop-shadow(0 5px 15px rgba(212, 175, 55, 0.4));
-    }
-
-    @keyframes starFloat {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-12px) rotate(5deg); }
-    }
-
-    @keyframes starPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.9; transform: scale(1.05); }
     }
 
     .auth-logo h1 {
       font-size: 28px;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent-gold) 0%, #FFD700 50%, var(--accent-gold) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-top: 12px;
+      color: var(--primary);
+      margin-top: 16px;
       margin-bottom: 8px;
-      letter-spacing: 4px;
-      text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
-      animation: shimmer 3s ease-in-out infinite;
-      background-size: 200% auto;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: 0% center; }
-      50% { background-position: 100% center; }
-      100% { background-position: 0% center; }
+      letter-spacing: 8px;
     }
 
     .auth-logo p {
