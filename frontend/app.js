@@ -207,7 +207,16 @@ async function showApp() {
 
   // Load initial data
   await loadUsers(); // Carregar usuários primeiro
-  loadDashboard();
+  
+  // Usuários simples vão direto para OS ao invés do dashboard
+  const roles = state.user.roles || [];
+  const canSeeDashboard = roles.includes('admin') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  
+  if (canSeeDashboard) {
+    loadDashboard();
+  } else {
+    navigateTo('os');
+  }
 
   // Start polling for notifications (every 5 minutes)
   setInterval(checkForUpdates, 5 * 60 * 1000);
@@ -219,13 +228,16 @@ async function showApp() {
 function setupPermissions() {
   const roles = state.user.roles || [];
   const isAdmin = roles.includes('admin');
+  const canSeeDashboard = isAdmin || roles.includes('os_manage_all') || roles.includes('os_view_all');
 
+  const navDashboard = document.querySelector('[data-view="dashboard"]');
   const navAlmox = document.querySelector('[data-view="almoxarifado"]');
   const navCompras = document.querySelector('[data-view="compras"]');
   const navPrev = document.querySelector('[data-view="preventivas"]');
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
+  if (navDashboard) navDashboard.classList.toggle('hidden', !canSeeDashboard);
   if (navAlmox) navAlmox.classList.toggle('hidden', !(isAdmin || roles.includes('almoxarifado')));
   if (navCompras) navCompras.classList.toggle('hidden', !(isAdmin || roles.includes('compras')));
   if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas')));
