@@ -1961,6 +1961,80 @@
     });
   </script>
 
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+    <div class="mobile-bottom-nav-items">
+      <div class="mobile-nav-item active" data-view="dashboard" onclick="navigateMobile('dashboard')">
+        <span class="mobile-nav-icon">📊</span>
+        <span class="mobile-nav-label">Dashboard</span>
+      </div>
+      <div class="mobile-nav-item" data-view="os" onclick="navigateMobile('os')">
+        <span class="mobile-nav-icon">🔧</span>
+        <span class="mobile-nav-label">OS</span>
+      </div>
+      <div class="mobile-nav-item" data-view="almoxarifado" onclick="navigateMobile('almoxarifado')">
+        <span class="mobile-nav-icon">📦</span>
+        <span class="mobile-nav-label">Estoque</span>
+      </div>
+      <div class="mobile-nav-item" data-view="compras" onclick="navigateMobile('compras')">
+        <span class="mobile-nav-icon">🛒</span>
+        <span class="mobile-nav-label">Compras</span>
+      </div>
+      <div class="mobile-nav-item" data-view="preventivas" onclick="navigateMobile('preventivas')">
+        <span class="mobile-nav-icon">📅</span>
+        <span class="mobile-nav-label">Preventivas</span>
+      </div>
+    </div>
+  </nav>
+
+  <script>
+    // Mobile Navigation
+    function navigateMobile(viewName) {
+      // Update mobile nav active state
+      document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.view === viewName) {
+          item.classList.add('active');
+        }
+      });
+      
+      // Use existing showView function if available
+      if (typeof showView === 'function') {
+        showView(viewName);
+      } else if (typeof window.showView === 'function') {
+        window.showView(viewName);
+      } else {
+        // Fallback: manually switch views
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
+        const targetView = document.getElementById(viewName + '-view');
+        const targetNav = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+        
+        if (targetView) targetView.classList.add('active');
+        if (targetNav) targetNav.classList.add('active');
+      }
+      
+      // Scroll to top
+      window.scrollTo(0, 0);
+    }
+
+    // Sync mobile nav with sidebar clicks
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const viewName = this.dataset.view;
+          document.querySelectorAll('.mobile-nav-item').forEach(mobileItem => {
+            mobileItem.classList.remove('active');
+            if (mobileItem.dataset.view === viewName) {
+              mobileItem.classList.add('active');
+            }
+          });
+        });
+      });
+    });
+  </script>
+
   <!-- Premium Access Popup -->
   <div id="premium-popup-overlay" class="premium-popup-overlay" onclick="closePremiumPopup(event)">
     <div class="premium-popup" onclick="event.stopPropagation()">

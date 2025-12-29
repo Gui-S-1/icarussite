@@ -25,6 +25,63 @@
   transition: all 0.3s;
 }
 
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 8px 0;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  z-index: 1000;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-bottom-nav-items {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  min-width: 60px;
+  cursor: pointer;
+}
+
+.mobile-nav-item.active {
+  color: var(--accent-gold);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.95);
+}
+
+.mobile-nav-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.mobile-nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
   body {
     overflow-y: auto;
@@ -33,6 +90,15 @@
 
   .mobile-menu-toggle {
     display: flex;
+  }
+
+  .mobile-bottom-nav {
+    display: block;
+  }
+
+  /* Add padding at bottom for fixed nav */
+  .content {
+    padding-bottom: 100px !important;
   }
 
   .header {
@@ -46,6 +112,11 @@
     margin-left: 60px;
   }
 
+  /* Fix text overflow */
+  .header-logo-text {
+    font-size: 16px !important;
+  }
+
   .user-panel {
     width: 100%;
     margin-top: 10px;
@@ -55,11 +126,18 @@
   }
 
   .user-info h4 {
-    font-size: 14px;
+    font-size: 13px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .user-info p {
-    font-size: 11px;
+    font-size: 10px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .sidebar {
@@ -91,6 +169,7 @@
 
   .card {
     margin-bottom: 15px;
+    overflow: hidden;
   }
 
   .card-header {
@@ -100,7 +179,15 @@
   }
 
   .card-title {
-    font-size: 18px;
+    font-size: 16px;
+    word-break: break-word;
+  }
+
+  /* Fix text overflow in cards */
+  .card-body {
+    overflow-x: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .stats-grid {
@@ -110,14 +197,18 @@
 
   .stat-card {
     padding: 12px;
+    overflow: hidden;
   }
 
   .stat-label {
-    font-size: 11px;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .stat-value {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .table-container {
@@ -181,6 +272,11 @@
     padding: 12px;
   }
 
+  .form-group label {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
   .auth-card {
     width: 95%;
     max-width: 95%;
@@ -194,6 +290,21 @@
   .os-info-grid {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+
+  /* Fix text in info items */
+  .os-info-item {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .os-info-label {
+    font-size: 11px;
+  }
+
+  .os-info-value {
+    font-size: 13px;
+    word-break: break-word;
   }
 
   .checkbox-grid {
