@@ -1605,20 +1605,86 @@ function renderPurchasesTable() {
       <td>${new Date(purchase.created_at).toLocaleDateString('pt-BR')}</td>
       <td>
         ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin')) ? `
-          <button class="btn-small" onclick="advancePurchaseStatus(${purchase.id})">
+          <button class="btn-small" onclick="showAdvancePurchaseModal('${purchase.id}')">
             Avançar
           </button>
         ` : ''}
-        <button class="btn-small btn-danger" onclick="deletePurchase(${purchase.id})">Excluir</button>
+        ${purchase.requested_by === state.user.id || state.user.roles.includes('admin') ? `
+          <button class="btn-small btn-danger" onclick="deletePurchase('${purchase.id}')">Excluir</button>
+        ` : ''}
       </td>
     </tr>
   `}).join('');
 }
 
 function showCreatePurchase() {
+  document.getElementById('form-create-purchase').reset();
   const modal = document.getElementById('modal-create-purchase');
   modal.classList.remove('hidden');
   modal.classList.add('active');
+}
+
+function showAdvancePurchaseModal(purchaseId) {
+  const purchase = state.purchases.find(p => p.id === purchaseId);
+  if (!purchase) return;
+  
+  const statusFlow = {
+    analise: { next: 'pedido', label: 'Pedido Feito' },
+    pedido: { next: 'chegando', label: 'Em Trânsito' },
+    chegando: { next: 'chegou', label: 'Entregue' }
+  };
+  
+  const nextStatus = statusFlow[purchase.status];
+  if (!nextStatus) return;
+  
+  // Criar modal dinâmico
+  const modalHtml = `
+    <div id="modal-advance-purchase" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-advance-purchase')">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">Avançar para: ${nextStatus.label}</h3>
+          <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-advance-purchase')">×</span>
+        </div>
+        
+        <div style="padding: 15px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 15px;">
+          <strong>${purchase.item_name}</strong><br>
+          <span style="color: var(--text-secondary);">${purchase.quantity} ${purchase.unit}</span>
+        </div>
+        
+        <form id="form-advance-purchase" onsubmit="advancePurchaseWithDetails(event, '${purchaseId}')">
+          ${purchase.status === 'analise' && (!purchase.unit_price || !purchase.supplier) ? `
+            <div class="form-row">
+              <div class="form-group">
+                <label>Preço Unitário (R$)</label>
+                <input type="number" name="unit_price" step="0.01" min="0" value="${purchase.unit_price || ''}" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label>Fornecedor</label>
+                <input type="text" name="supplier" value="${purchase.supplier || ''}" placeholder="Nome do fornecedor">
+              </div>
+            </div>
+          ` : ''}
+          
+          <div class="form-group">
+            <label>Observações (opcional)</label>
+            <textarea name="notes" placeholder="Adicione informações relevantes..."></textarea>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn-small btn-cancel" onclick="closeModal('modal-advance-purchase')">Cancelar</button>
+            <button type="submit" class="btn-small btn-primary">Confirmar Avanço</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  // Remover modal anterior se existir
+  const oldModal = document.getElementById('modal-advance-purchase');
+  if (oldModal) oldModal.remove();
+  
+  // Adicionar novo modal
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
 async function createPurchaseFromForm(event) {
@@ -1626,8 +1692,8 @@ async function createPurchaseFromForm(event) {
   
   const formData = new FormData(event.target);
   const quantity = parseInt(formData.get('quantity'));
-  const unitPrice = parseFloat(formData.get('price')) || 0;
-  const totalCost = quantity * unitPrice;
+  const unitPrice = parseFloat(formData.get('price')) || null;
+  const totalCost = unitPrice ? quantity * unitPrice : null;
   
   const purchaseData = {
     item_name: formData.get('item'),
@@ -1663,25 +1729,36 @@ async function createPurchaseFromForm(event) {
   }
 }
 
-async function advancePurchaseStatus(purchaseId) {
-  // Só joacir e admin podem avançar status
-  if (state.user.username !== 'joacir' && !state.user.roles.includes('admin')) {
-    showNotification('Apenas o responsável de compras pode avançar o status', 'error');
-    return;
-  }
-
+async function advancePurchaseWithDetails(event, purchaseId) {
+  event.preventDefault();
+  
+  const formData = new FormData(event.target);
   const purchase = state.purchases.find(p => p.id === purchaseId);
   if (!purchase) return;
-
+  
   const statusFlow = {
     analise: 'pedido',
     pedido: 'chegando',
     chegando: 'chegou'
   };
-
+  
   const nextStatus = statusFlow[purchase.status];
   if (!nextStatus) return;
-
+  
+  // Preparar dados para atualizar
+  const updateData = { status: nextStatus };
+  
+  const unitPrice = parseFloat(formData.get('unit_price'));
+  const supplier = formData.get('supplier');
+  const notes = formData.get('notes');
+  
+  if (unitPrice && unitPrice > 0) {
+    updateData.unit_price = unitPrice;
+    updateData.total_cost = unitPrice * purchase.quantity;
+  }
+  if (supplier) updateData.supplier = supplier;
+  if (notes) updateData.notes = notes;
+  
   try {
     const response = await fetch(`${API_URL}/purchases/${purchaseId}`, {
       method: 'PATCH',
@@ -1689,19 +1766,25 @@ async function advancePurchaseStatus(purchaseId) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${state.token}`
       },
-      body: JSON.stringify({ status: nextStatus })
+      body: JSON.stringify(updateData)
     });
-
+    
     const data = await response.json();
     if (data.ok) {
-      showNotification(`[COMPRAS] Status atualizado para: ${nextStatus}`, 'success');
+      const statusLabels = {
+        pedido: 'Pedido Feito',
+        chegando: 'Em Trânsito',
+        chegou: 'Entregue'
+      };
+      showNotification(`Status atualizado: ${statusLabels[nextStatus]}`, 'success');
+      closeModal('modal-advance-purchase');
       await loadPurchases();
     } else {
-      showNotification('Erro ao atualizar status', 'error');
+      showNotification('Erro ao atualizar: ' + (data.error || 'Erro desconhecido'), 'error');
     }
   } catch (error) {
-    console.error('Erro ao atualizar status:', error);
-    showNotification('Erro ao atualizar status', 'error');
+    console.error('Erro ao avançar:', error);
+    showNotification('Erro ao avançar status', 'error');
   }
 }
 

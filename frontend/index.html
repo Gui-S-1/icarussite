@@ -1423,29 +1423,19 @@
           </div>
           <div class="form-group">
             <label>Unidade *</label>
-            <input type="text" id="purchase-unit" name="unit" required placeholder="Ex: rolo, pç, kg">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Preço Unitário (R$)</label>
-            <input type="number" id="purchase-price" name="price" step="0.01" min="0" placeholder="0.00">
-          </div>
-          <div class="form-group">
-            <label>Total Estimado</label>
-            <input type="text" id="purchase-total" readonly placeholder="R$ 0,00" style="background: var(--bg-secondary);">
+            <input type="text" id="purchase-unit" name="unit" required placeholder="Ex: rolo, pç, kg, m">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Fornecedor</label>
-          <input type="text" id="purchase-supplier" name="supplier" placeholder="Ex: Casa do Eletricista LTDA">
+          <label>Especificações / Tamanho / Observações *</label>
+          <textarea id="purchase-notes" name="notes" required placeholder="Descreva detalhes importantes: tamanho, cor, modelo, marca preferencial, etc."></textarea>
         </div>
-
-        <div class="form-group">
-          <label>Justificativa / Observações</label>
-          <textarea id="purchase-notes" name="notes" placeholder="Por que este item é necessário?"></textarea>
+        
+        <div style="padding: 10px; background: var(--bg-secondary); border-radius: 6px; margin: 10px 0;">
+          <small style="color: var(--text-secondary);">
+            ℹ️ Preço e fornecedor serão preenchidos pelo responsável de compras
+          </small>
         </div>
 
         <div class="modal-actions">

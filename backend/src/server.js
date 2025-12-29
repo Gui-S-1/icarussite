@@ -446,11 +446,53 @@ app.post('/purchases', requireAuth, requireRoles(['compras','almoxarifado','os']
 
 // Only compras managers can advance status
 app.patch('/purchases/:id', requireAuth, requireRoles(['compras']), async (req, res) => {
-  const { status } = req.body || {};
-  const allowed = ['analise', 'pedido', 'chegando', 'chegou'];
-  if (!allowed.includes(status)) return res.status(400).json({ ok: false, error: 'Status inválido' });
+  const { status, unit_price, supplier, notes, total_cost } = req.body || {};
+  
   try {
-    await pool.query('UPDATE purchases SET status = $1 WHERE id = $2 AND key_id = $3', [status, req.params.id, req.user.keyId]);
+    // Construir query dinâmica baseado nos campos fornecidos
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (status) {
+      const allowed = ['analise', 'pedido', 'chegando', 'chegou'];
+      if (!allowed.includes(status)) return res.status(400).json({ ok: false, error: 'Status inválido' });
+      updates.push(`status = $${paramCount++}`);
+      values.push(status);
+    }
+    
+    if (unit_price !== undefined && unit_price !== null) {
+      updates.push(`unit_price = $${paramCount++}`);
+      values.push(unit_price);
+    }
+    
+    if (total_cost !== undefined && total_cost !== null) {
+      updates.push(`total_cost = $${paramCount++}`);
+      values.push(total_cost);
+    }
+    
+    if (supplier !== undefined) {
+      updates.push(`supplier = $${paramCount++}`);
+      values.push(supplier);
+    }
+    
+    if (notes !== undefined) {
+      updates.push(`notes = $${paramCount++}`);
+      values.push(notes);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ ok: false, error: 'Nenhum campo para atualizar' });
+    }
+    
+    values.push(req.params.id);
+    values.push(req.user.keyId);
+    
+    await pool.query(
+      `UPDATE purchases SET ${updates.join(', ')} WHERE id = $${paramCount++} AND key_id = $${paramCount}`,
+      values
+    );
+    
     const result = await pool.query('SELECT * FROM purchases WHERE key_id = $1 ORDER BY created_at DESC', [req.user.keyId]);
     return res.json({ ok: true, purchases: normalizePurchases(result.rows) });
   } catch (err) {
