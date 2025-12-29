@@ -66,12 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // Navigation
 function navigateTo(view) {
   console.log('Navegando para:', view);
+  console.log('User roles:', state.user?.roles);
   
   // Update active nav
   document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.remove('active');
     if (item.getAttribute('data-view') === view) {
       item.classList.add('active');
+      console.log('Nav item ativado:', item);
     }
   });
 
@@ -84,6 +86,9 @@ function navigateTo(view) {
   console.log('View encontrada:', activeView);
   if (activeView) {
     activeView.classList.add('active');
+    console.log('View ativada com sucesso');
+  } else {
+    console.error('View não encontrada para:', view);
   }
 
   loadViewData(view).catch(err => console.error('Erro ao carregar view:', err));
@@ -231,6 +236,7 @@ function setupPermissions() {
   const canSeeDashboard = isAdmin || roles.includes('os_manage_all') || roles.includes('os_view_all');
 
   const navDashboard = document.querySelector('[data-view="dashboard"]');
+  const navOS = document.querySelector('[data-view="os"]');
   const navAlmox = document.querySelector('[data-view="almoxarifado"]');
   const navCompras = document.querySelector('[data-view="compras"]');
   const navPrev = document.querySelector('[data-view="preventivas"]');
@@ -238,11 +244,14 @@ function setupPermissions() {
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
   if (navDashboard) navDashboard.classList.toggle('hidden', !canSeeDashboard);
+  if (navOS) navOS.classList.remove('hidden'); // OS sempre visível para todos
   if (navAlmox) navAlmox.classList.toggle('hidden', !(isAdmin || roles.includes('almoxarifado')));
   if (navCompras) navCompras.classList.toggle('hidden', !(isAdmin || roles.includes('compras')));
   if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas')));
   if (navRel) navRel.classList.toggle('hidden', !isAdmin);
   if (navCfg) navCfg.classList.remove('hidden');
+  
+  console.log('Permissões configuradas. Roles:', roles);
 }
 
 function showError(message) {
@@ -2033,7 +2042,7 @@ function logout() {
 function showLoginScreen() {
   document.getElementById('app-screen').style.display = 'none';
   document.getElementById('auth-screen').classList.remove('hidden');
-  document.getElementById('login-form').classList.remove('hidden');
+  document.getElementById('login-form').classList.add('hidden');
   document.getElementById('key-validation-form').classList.remove('hidden');
   document.getElementById('auth-error').classList.add('hidden');
 }
