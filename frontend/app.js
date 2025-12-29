@@ -2379,3 +2379,34 @@ function showLoginScreen() {
   document.getElementById('auth-error').classList.add('hidden');
 }
 
+// Mobile Menu Toggle
+function toggleMobileMenu() {
+  const sidebar = document.querySelector('.sidebar');
+  const toggle = document.querySelector('.mobile-menu-toggle');
+  
+  sidebar.classList.toggle('mobile-open');
+  toggle.classList.toggle('active');
+  
+  // Fechar ao clicar em qualquer item do menu
+  if (sidebar.classList.contains('mobile-open')) {
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        sidebar.classList.remove('mobile-open');
+        toggle.classList.remove('active');
+      }, { once: true });
+    });
+  }
+}
+
+// Fechar menu ao clicar fora
+document.addEventListener('click', (e) => {
+  const sidebar = document.querySelector('.sidebar');
+  const toggle = document.querySelector('.mobile-menu-toggle');
+  
+  if (sidebar && toggle && sidebar.classList.contains('mobile-open')) {
+    if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+      sidebar.classList.remove('mobile-open');
+      toggle.classList.remove('active');
+    }
+  }
+});
