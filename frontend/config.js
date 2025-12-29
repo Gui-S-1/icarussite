@@ -1,7 +1,7 @@
 // Configuração do Icarus - Frontend
 
-// URL da API backend
-window.ICARUS_API_URL = window.ICARUS_API_URL || 'http://159.203.8.237:4000';
+// URL da API backend (HTTPS via Cloudflare Tunnel)
+window.ICARUS_API_URL = window.ICARUS_API_URL || 'https://parameters-morrison-harry-intended.trycloudflare.com';
 
 // Key ID da Granja Vitta (UUID fixo gerado no backend)
 window.ICARUS_KEY_ID = '76453ce2-9e83-4764-bf13-e11125f6b880';
