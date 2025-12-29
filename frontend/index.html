@@ -69,7 +69,38 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #auth-screen::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      top: -150px;
+      right: -150px;
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    #auth-screen::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      bottom: -100px;
+      left: -100px;
+      animation: pulse-glow 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
     }
 
     .auth-card {
@@ -153,24 +184,223 @@
     .whatsapp-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: #25D366;
-      color: white;
+      gap: 10px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, var(--accent-gold) 0%, #FFD700 100%);
+      color: var(--bg-primary);
       text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
       transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(212,175,55,0.3);
     }
 
     .whatsapp-btn:hover {
-      background: #20BA5A;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+      background: linear-gradient(135deg, #FFD700 0%, var(--accent-gold) 100%);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(212,175,55,0.5);
     }
 
     .whatsapp-btn:active {
-      transform: translateY(0);
+      transform: translateY(-1px);
+    }
+
+    .whatsapp-icon {
+      width: 24px;
+      height: 24px;
+      fill: var(--bg-primary);
+    }
+
+    /* Premium Access Popup */
+    .premium-popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .premium-popup-overlay.active {
+      display: flex;
+    }
+
+    .premium-popup {
+      background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 100%);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(212, 175, 55, 0.1);
+      animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popupSlideIn {
+      from { opacity: 0; transform: scale(0.8) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .premium-popup-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: var(--text-secondary);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.2s;
+    }
+
+    .premium-popup-close:hover {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    .premium-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: linear-gradient(135deg, var(--primary) 0%, #FFD700 100%);
+      color: var(--bg-primary);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    .premium-popup-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.5));
+    }
+
+    .premium-popup h2 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .premium-popup h2 span {
+      color: var(--primary);
+    }
+
+    .premium-popup-subtitle {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .premium-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+
+    .premium-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .premium-feature-icon {
+      font-size: 20px;
+      min-width: 28px;
+    }
+
+    .premium-feature-text {
+      font-size: 14px;
+      color: #e0e0e0;
+    }
+
+    .premium-social-proof {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding: 12px;
+      background: rgba(76, 175, 80, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+
+    .premium-social-proof-dot {
+      width: 8px;
+      height: 8px;
+      background: #4CAF50;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .premium-social-proof-text {
+      color: #4CAF50;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .premium-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 18px 32px;
+      background: linear-gradient(135deg, var(--primary) 0%, #FFD700 100%);
+      color: var(--bg-primary);
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.3s;
+      box-shadow: 0 8px 30px rgba(212,175,55,0.4);
+      margin-bottom: 16px;
+    }
+
+    .premium-cta-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(212,175,55,0.6);
+    }
+
+    .premium-guarantee {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .premium-guarantee-icon {
+      font-size: 16px;
     }
 
     .error-msg {
@@ -802,20 +1032,18 @@
 
       <div id="auth-error" class="error-msg hidden"></div>
       
-      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
-        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">
-          Não tem acesso?
+      <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(212,175,55,0.2); text-align: center;">
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px; font-weight: 500;">
+          🔒 Não tem acesso?
         </p>
-        <a href="https://wa.me/5562984930056?text=Olá!%20Gostaria%20de%20solicitar%20acesso%20ao%20sistema%20Icarus" 
-           target="_blank"
-           class="whatsapp-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+        <button onclick="openPremiumPopup()" class="whatsapp-btn" style="border: none; cursor: pointer;">
+          <svg class="whatsapp-icon" viewBox="0 0 24 24">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
           </svg>
-          Solicitar Acesso / Fazer Orçamento
-        </a>
-        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 12px;">
-          Resposta rápida via WhatsApp
+          Solicitar Acesso / Orçamento
+        </button>
+        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 15px; opacity: 0.8;">
+          ⚡ Resposta rápida • 🏆 +47 empresas atendidas
         </p>
       </div>
     </div>
@@ -1150,25 +1378,17 @@
               <div class="card-header">
                 <h3 class="card-title">🔔 Notificações</h3>
               </div>
-              <div style="padding: 20px;">
-                <div class="form-group">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="config-whatsapp-enabled" onchange="toggleWhatsAppConfig()">
-                    <span>Receber notificações via WhatsApp</span>
-                  </label>
-                  <small style="color: var(--text-secondary); margin-top: 4px; display: block;">
-                    Receba alertas de novas OS e lembretes
-                  </small>
-                </div>
-                <div id="whatsapp-config" class="hidden" style="margin-top: 16px;">
-                  <div class="form-group">
-                    <label>Número do WhatsApp</label>
-                    <input type="tel" id="config-whatsapp-phone" placeholder="(11) 99999-9999" maxlength="15">
-                    <small style="color: var(--text-secondary); margin-top: 4px; display: block;">
-                      Formato: (XX) XXXXX-XXXX
-                    </small>
+              <div style="padding: 20px; text-align: center;">
+                <div style="padding: 32px 20px;">
+                  <div style="font-size: 48px; margin-bottom: 16px;">🚀</div>
+                  <h4 style="color: var(--primary); margin-bottom: 8px; font-size: 18px;">Em Breve</h4>
+                  <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                    Estamos trabalhando em notificações inteligentes via WhatsApp.<br>
+                    Você será avisado quando estiver disponível!
+                  </p>
+                  <div style="margin-top: 16px; padding: 12px 20px; background: rgba(212, 175, 55, 0.1); border-radius: 8px; border: 1px dashed var(--primary);">
+                    <span style="color: var(--primary); font-size: 13px;">✨ Novidade chegando em breve</span>
                   </div>
-                  <button class="btn-small btn-primary" onclick="verifyWhatsApp()">Verificar e Ativar</button>
                 </div>
               </div>
             </div>
@@ -1200,19 +1420,26 @@
                 <h3 class="card-title">ℹ Sobre o Sistema</h3>
               </div>
               <div style="padding: 20px;">
-                <h4 style="color: var(--primary); margin-bottom: 8px;">ICARUS</h4>
-                <p style="color: var(--text-secondary); margin-bottom: 12px;">
-                  Sistema Integrado de Gestão de Manutenção
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
-                  <div><strong>Versão:</strong> 1.0.0</div>
-                  <div><strong>Build:</strong> 2025.12.15</div>
-                  <div><strong>Servidor:</strong> <span id="config-server-status">Conectado</span></div>
-                  <div><strong>Desenvolvido para:</strong> Granja Vitta</div>
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <h4 style="color: var(--primary); margin-bottom: 4px; font-size: 28px; letter-spacing: 3px;">ICARUS</h4>
+                  <p style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    Sistema Integrado de Gestão de Manutenção
+                  </p>
                 </div>
-                <button class="btn-small" onclick="checkForUpdates()" style="width: 100%; margin-top: 16px;">
-                  🔄 Verificar Atualizações
-                </button>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                  <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Versão</span> <strong>1.0.0</strong></div>
+                  <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Build</span> <strong>2025.12.15</strong></div>
+                  <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Servidor</span> <span id="config-server-status" style="color: #4CAF50;">● Conectado</span></div>
+                </div>
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                  <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Desenvolvido por</p>
+                  <p style="font-size: 14px; color: var(--primary); font-weight: 600; margin-bottom: 12px;">Guilherme Braga</p>
+                  <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Fornecido para</p>
+                  <p style="font-size: 14px; color: #fff; font-weight: 500;">Granja Vitta</p>
+                </div>
+                <div style="margin-top: 16px; text-align: center;">
+                  <span style="font-size: 11px; color: var(--text-secondary);">© 2025 Todos os direitos reservados</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1550,6 +1777,84 @@
       if (qtyInput && priceInput) {
         qtyInput.addEventListener('input', updateTotal);
         priceInput.addEventListener('input', updateTotal);
+      }
+    });
+  </script>
+
+  <!-- Premium Access Popup -->
+  <div id="premium-popup-overlay" class="premium-popup-overlay" onclick="closePremiumPopup(event)">
+    <div class="premium-popup" onclick="event.stopPropagation()">
+      <button class="premium-popup-close" onclick="closePremiumPopup()">&times;</button>
+      
+      <span class="premium-badge">🏆 Exclusivo</span>
+      
+      <div class="premium-popup-icon">🚀</div>
+      
+      <h2>Transforme sua <span>Gestão de Manutenção</span></h2>
+      
+      <p class="premium-popup-subtitle">
+        Empresas líderes já estão economizando tempo e dinheiro com o ICARUS. 
+        Seu time merece as melhores ferramentas.
+      </p>
+      
+      <div class="premium-features">
+        <div class="premium-feature">
+          <span class="premium-feature-icon">⚡</span>
+          <span class="premium-feature-text">Reduza tempo de resposta em até 70%</span>
+        </div>
+        <div class="premium-feature">
+          <span class="premium-feature-icon">📊</span>
+          <span class="premium-feature-text">Dashboard em tempo real com métricas inteligentes</span>
+        </div>
+        <div class="premium-feature">
+          <span class="premium-feature-icon">🔒</span>
+          <span class="premium-feature-text">Segurança de nível empresarial</span>
+        </div>
+        <div class="premium-feature">
+          <span class="premium-feature-icon">📱</span>
+          <span class="premium-feature-text">Acesso mobile - gerencie de qualquer lugar</span>
+        </div>
+      </div>
+      
+      <div class="premium-social-proof">
+        <span class="premium-social-proof-dot"></span>
+        <span class="premium-social-proof-text">47 empresas solicitaram acesso este mês</span>
+      </div>
+      
+      <a href="https://wa.me/5562984930056?text=Olá!%20Vim%20do%20ICARUS%20e%20gostaria%20de%20saber%20mais%20sobre%20o%20sistema.%20Tenho%20interesse%20em%20transformar%20minha%20gestão%20de%20manutenção!" 
+         target="_blank" 
+         class="premium-cta-btn"
+         onclick="closePremiumPopup()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+        </svg>
+        Quero Transformar Minha Empresa
+      </a>
+      
+      <div class="premium-guarantee">
+        <span class="premium-guarantee-icon">🛡️</span>
+        <span>Demonstração gratuita • Sem compromisso</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Premium Popup Functions
+    function openPremiumPopup() {
+      document.getElementById('premium-popup-overlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closePremiumPopup(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('premium-popup-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closePremiumPopup();
       }
     });
   </script>
