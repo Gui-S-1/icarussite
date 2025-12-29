@@ -20,6 +20,9 @@ const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  // Setup navigation PRIMEIRO (antes de qualquer coisa)
+  setupNavigation();
+  
   // Tentativa de retomar sessão salva (token + user)
   const savedToken = localStorage.getItem('token');
   const savedUser = localStorage.getItem('user');
@@ -53,15 +56,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loading-screen').classList.add('hidden');
     document.getElementById('auth-screen').classList.remove('hidden');
   }, 500);
+});
 
-  // Setup navigation
+function setupNavigation() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    // Remove listeners antigos para evitar duplicação
+    item.replaceWith(item.cloneNode(true));
+  });
+  
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
       const view = item.getAttribute('data-view');
-      navigateTo(view);
+      console.log('Clicou em:', view);
+      if (view) {
+        navigateTo(view);
+      }
     });
   });
-});
+  console.log('Navegação configurada');
+}
 
 // Navigation
 function navigateTo(view) {
@@ -207,8 +220,9 @@ async function showApp() {
   document.getElementById('user-name').textContent = state.user.name;
   document.getElementById('user-role').textContent = state.user.roles.join(', ');
 
-  // Setup permissions
+  // Setup permissions e navegação (IMPORTANTE: refazer para garantir que funciona)
   setupPermissions();
+  setupNavigation();
 
   // Load initial data
   await loadUsers(); // Carregar usuários primeiro
@@ -218,7 +232,7 @@ async function showApp() {
   const canSeeDashboard = roles.includes('admin') || roles.includes('os_manage_all') || roles.includes('os_view_all');
   
   if (canSeeDashboard) {
-    loadDashboard();
+    navigateTo('dashboard');
   } else {
     navigateTo('os');
   }
@@ -393,36 +407,38 @@ function updateDashboardStats() {
 function renderProductivityChart(filteredOrders = state.orders) {
   const completedOrders = filteredOrders.filter(o => o.status === 'completed');
   
-  // Contar OS por usuário (assigned_users)
+  // Contar OS por usuário (assigned_users) - todos os usuários da equipe de manutenção
   const userStats = {};
-  const teamMembers = ['declie', 'eduardo', 'alissom', 'vanderlei', 'gui'];
   
   completedOrders.forEach(order => {
     if (order.assigned_users && Array.isArray(order.assigned_users)) {
       order.assigned_users.forEach(user => {
         const username = user.username.toLowerCase();
-        if (teamMembers.includes(username)) {
-          userStats[username] = (userStats[username] || 0) + 1;
+        const displayName = user.name || username;
+        // Usar o nome para exibição mas username como chave
+        if (!userStats[username]) {
+          userStats[username] = { count: 0, name: displayName };
         }
+        userStats[username].count++;
       });
     }
   });
   
   // Ordenar por quantidade (maior para menor)
-  const sorted = Object.entries(userStats).sort((a, b) => b[1] - a[1]);
-  const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
+  const sorted = Object.entries(userStats).sort((a, b) => b[1].count - a[1].count);
+  const maxCount = sorted.length > 0 ? sorted[0][1].count : 1;
   
-  const chartHtml = sorted.length > 0 ? sorted.map(([username, count]) => {
-    const percentage = (count / maxCount) * 100;
+  const chartHtml = sorted.length > 0 ? sorted.map(([username, data]) => {
+    const percentage = (data.count / maxCount) * 100;
     return `
       <div class="productivity-bar">
-        <div class="productivity-name">${username.charAt(0).toUpperCase() + username.slice(1)}</div>
+        <div class="productivity-name">${data.name}</div>
         <div class="productivity-bar-container">
           <div class="productivity-bar-fill" style="width: ${percentage}%">
-            <span class="productivity-count">${count}</span>
+            <span class="productivity-count">${data.count}</span>
           </div>
         </div>
-        <div class="productivity-total">${count}</div>
+        <div class="productivity-total">${data.count}</div>
       </div>
     `;
   }).join('') : '<p style="color: var(--text-secondary); padding: 20px;">Nenhuma OS concluída ainda</p>';
@@ -652,6 +668,47 @@ async function startOrder(orderId) {
 }
 
 async function completeOrder(orderId) {
+  // Verificar se alguém foi atribuído à OS antes de concluir
+  const order = state.orders.find(o => o.id === orderId);
+  if (order) {
+    const hasAssigned = order.assigned_users && order.assigned_users.length > 0;
+    
+    // Verificar também os checkboxes no modal (caso esteja aberto)
+    const assignedUsernames = [];
+    ['declie', 'eduardo', 'vanderlei', 'alissom'].forEach(username => {
+      const checkbox = document.getElementById(`detail-assign-${username}`);
+      if (checkbox && checkbox.checked) {
+        assignedUsernames.push(username);
+      }
+    });
+    
+    if (!hasAssigned && assignedUsernames.length === 0) {
+      showNotification('Atribua quem executou a OS antes de concluir!', 'error');
+      return;
+    }
+    
+    // Se tem checkboxes selecionados, salvar primeiro
+    if (assignedUsernames.length > 0) {
+      // Buscar IDs
+      const assignedUserIds = state.users
+        .filter(u => assignedUsernames.includes(u.username.toLowerCase()))
+        .map(u => u.id);
+      
+      try {
+        await fetch(`${API_URL}/orders/${orderId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${state.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ assigned_user_ids: assignedUserIds })
+        });
+      } catch (e) {
+        console.error('Erro ao atribuir usuários:', e);
+      }
+    }
+  }
+  
   try {
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
       method: 'PATCH',
@@ -664,11 +721,14 @@ async function completeOrder(orderId) {
 
     const data = await response.json();
     if (data.ok) {
+      showNotification('OS concluída com sucesso!', 'success');
       await loadOrders();
-      // await backupOrdersToTXT(); // Desabilitado temporariamente
+      closeModal('modal-os-detail');
+    } else {
+      showNotification(data.error || 'Erro ao concluir OS', 'error');
     }
   } catch (error) {
-    alert('Erro ao concluir OS: ' + error.message);
+    showNotification('Erro ao concluir OS: ' + error.message, 'error');
   }
 }
 
