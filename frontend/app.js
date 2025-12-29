@@ -239,17 +239,32 @@ async function showApp() {
     navigateTo('os');
   }
 
-  // Start polling for notifications (every 5 minutes)
-  setInterval(checkForUpdates, 5 * 60 * 1000);
-
-  // Initial check after 10 seconds
-  setTimeout(checkForUpdates, 10000);
-  
   // Polling em tempo real a cada 5 segundos para atualizar views
   setInterval(() => {
     if (state.currentView && state.token) {
       loadViewData(state.currentView).catch(err => console.error('Erro no polling:', err));
     }
+  }, 5000);
+  
+  // Inicializar busca rápida (Ctrl+K)
+  initQuickSearch();
+  
+  // Adicionar indicador de atualização automática
+  const statusBar = document.createElement('div');
+  statusBar.id = 'auto-refresh-indicator';
+  statusBar.innerHTML = '🔄 Auto-refresh ativo';
+  statusBar.style.cssText = 'position: fixed; bottom: 10px; right: 10px; padding: 6px 12px; background: rgba(212, 175, 55, 0.1); border: 1px solid var(--accent-gold); border-radius: 6px; font-size: 11px; color: var(--accent-gold); z-index: 1000;';
+  document.body.appendChild(statusBar);
+  
+  // Animar indicador quando atualizar
+  let lastUpdate = Date.now();
+  setInterval(() => {
+    const indicator = document.getElementById('auto-refresh-indicator');
+    if (indicator && Date.now() - lastUpdate < 1000) {
+      indicator.style.animation = 'pulse 0.5s';
+      setTimeout(() => indicator.style.animation = '', 500);
+    }
+    lastUpdate = Date.now();
   }, 5000);
 }
 
@@ -468,9 +483,27 @@ async function loadOrders() {
     if (data.ok) {
       state.orders = data.orders;
       renderOrdersTable();
+      updateOSBadge(); // Atualizar badge no header
     }
   } catch (error) {
     console.error('Erro ao carregar OS:', error);
+  }
+}
+
+function updateOSBadge() {
+  const badge = document.getElementById('os-badge');
+  if (!badge) return;
+  
+  const pending = state.orders.filter(o => o.status === 'pending').length;
+  badge.textContent = pending;
+  badge.style.display = pending > 0 ? 'block' : 'none';
+  
+  if (pending > 5) {
+    badge.style.background = 'var(--danger)';
+    badge.style.animation = 'pulse 2s infinite';
+  } else if (pending > 0) {
+    badge.style.background = 'var(--warning)';
+    badge.style.animation = 'none';
   }
 }
 
@@ -615,24 +648,24 @@ async function updateOSAssignments(orderId) {
       data = await response.json();
     } catch (jsonErr) {
       const text = await response.text();
-      showNotification('[ERRO]', `Resposta inválida do servidor: ${text.substring(0, 100)}`, 'danger');
+      showNotification(`Resposta inválida do servidor: ${text.substring(0, 100)}`, 'error');
       return;
     }
     if (data.ok) {
       await loadOrders();
       // await backupOrdersToTXT(); // Desabilitado temporariamente
       closeModal('modal-os-detail');
-      showNotification('[SUCESSO]', 'Atribuições atualizadas!', 'success');
+      showNotification('✓ Salvo', 'success');
       // Atualizar visualização dos técnicos atribuídos se necessário
       if (data.assigned_users) {
         const assignedContainer = document.getElementById('detail-os-assigned');
         assignedContainer.innerHTML = data.assigned_users.map(u => `<span class="user-chip">${u.name || u.username}</span>`).join('');
       }
     } else {
-      showNotification('[ERRO]', 'Erro ao atualizar: ' + (data.error || 'Erro desconhecido'), 'danger');
+      showNotification('Erro ao atualizar: ' + (data.error || 'Erro desconhecido'), 'error');
     }
   } catch (error) {
-    showNotification('[ERRO]', 'Erro ao atualizar: ' + error.message, 'danger');
+    showNotification('Erro ao atualizar: ' + error.message, 'error');
   }
 }
 
@@ -727,11 +760,13 @@ async function startOrder(orderId) {
 
     const data = await response.json();
     if (data.ok) {
+      showNotification('OS iniciada com sucesso!', 'success');
       await loadOrders();
-      // await backupOrdersToTXT(); // Desabilitado temporariamente
+    } else {
+      showNotification(data.error || 'Erro ao iniciar OS', 'error');
     }
   } catch (error) {
-    alert('Erro ao iniciar OS: ' + error.message);
+    showNotification('Erro ao iniciar OS: ' + error.message, 'error');
   }
 }
 
@@ -813,11 +848,14 @@ async function deleteOrder(orderId) {
 
     const data = await response.json();
     if (data.ok) {
+      showNotification('OS excluída com sucesso!', 'success');
+      closeModal('modal-os-detail');
       await loadOrders();
-      // await backupOrdersToTXT(); // Desabilitado temporariamente
+    } else {
+      showNotification(data.error || 'Erro ao excluir OS', 'error');
     }
   } catch (error) {
-    alert('Erro ao excluir OS: ' + error.message);
+    showNotification('Erro ao excluir OS: ' + error.message, 'error');
   }
 }
 
@@ -832,10 +870,15 @@ function showCreateOS() {
 async function createOrderFromForm(event) {
   event.preventDefault();
   
-  const title = document.getElementById('os-title').value;
-  const sector = document.getElementById('os-sector').value;
+  const title = document.getElementById('os-title').value.trim();
+  const sector = document.getElementById('os-sector').value.trim();
   const priority = document.getElementById('os-priority').value;
-  const description = document.getElementById('os-description').value;
+  const description = document.getElementById('os-description').value.trim();
+  
+  if (!title) {
+    showNotification('Título é obrigatório!', 'error');
+    return;
+  }
   
   // Pegar usuários selecionados
   const assignedUsernames = [];
@@ -900,12 +943,12 @@ async function createOrder(orderData) {
     if (data.ok) {
       await loadOrders();
       // await backupOrdersToTXT(); // Desabilitado temporariamente
-      showNotification('[SUCESSO]', 'OS criada com sucesso!', 'success');
+      showNotification('OS criada com sucesso!', 'success');
     } else {
-      showNotification('[ERRO]', data.error || 'Erro ao criar OS', 'danger');
+      showNotification(data.error || 'Erro ao criar OS', 'error');
     }
   } catch (error) {
-    showNotification('[ERRO]', 'Erro ao criar OS: ' + error.message, 'danger');
+    showNotification('Erro ao criar OS: ' + error.message, 'error');
   }
 }
 
@@ -1259,19 +1302,28 @@ async function checkForUpdates() {
   }
 }
 
-function showNotification(title, message, type = 'info', duration = 8000) {
+function showNotification(message, type = 'info', duration = 5000) {
   const container = document.getElementById('notification-container');
+  if (!container) return;
+  
   const id = 'notif-' + Date.now();
+  
+  const typeIcons = {
+    success: '✓',
+    error: '✗',
+    warning: '⚠',
+    info: 'ℹ'
+  };
   
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
   notification.id = id;
   notification.innerHTML = `
-    <div class="notification-header">
-      <span class="notification-title">${title}</span>
+    <div class="notification-content">
+      <span class="notification-icon">${typeIcons[type] || typeIcons.info}</span>
+      <span class="notification-message">${message}</span>
       <span class="notification-close" onclick="closeNotification('${id}')">×</span>
     </div>
-    <div class="notification-body">${message}</div>
   `;
   
   container.appendChild(notification);
@@ -1491,7 +1543,7 @@ async function adjustStock(itemId, delta) {
     if (data.ok) {
       await loadInventory();
       // await backupInventoryToTXT(); // Desabilitado temporariamente
-      showNotification(`[ALMOXARIFADO] Estoque atualizado: ${item.name}`, 'success');
+      showNotification(`✓ ${item.name} atualizado`, 'success');
     } else {
       showNotification('Erro ao atualizar estoque', 'error');
     }
@@ -2231,12 +2283,81 @@ function reportBug() {
   console.log('Bug Report:', description, 'User:', state.user.username);
 }
 
-async function checkForUpdates() {
-  showNotification('[ATUALIZAÇÃO] Verificando...', 'info');
+// Busca rápida global (Ctrl+K)
+function initQuickSearch() {
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      showQuickSearch();
+    }
+  });
+}
+
+function showQuickSearch() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔍 Busca Rápida</h3>
+        <span style="cursor: pointer; font-size: 24px;" onclick="this.closest('.modal-overlay').remove()">×</span>
+      </div>
+      <input type="text" id="quick-search-input" placeholder="Digite para buscar OS, peças, compras..." 
+        style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 15px;">
+      <div id="quick-search-results" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
   
-  setTimeout(() => {
-    showNotification('[SISTEMA ATUALIZADO] Você está na versão mais recente!', 'success');
-  }, 2000);
+  const input = document.getElementById('quick-search-input');
+  input.focus();
+  
+  input.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    if (query.length < 2) {
+      document.getElementById('quick-search-results').innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Digite pelo menos 2 caracteres</p>';
+      return;
+    }
+    
+    const results = [];
+    
+    // Buscar OS
+    state.orders.forEach(o => {
+      if (o.title.toLowerCase().includes(query) || (o.description && o.description.toLowerCase().includes(query))) {
+        results.push({ type: 'OS', title: o.title, id: o.id, action: () => { modal.remove(); navigateTo('os'); setTimeout(() => showOSDetail(o.id), 300); } });
+      }
+    });
+    
+    // Buscar peças
+    state.inventory.forEach(i => {
+      if (i.name.toLowerCase().includes(query) || (i.sku && i.sku.toLowerCase().includes(query))) {
+        results.push({ type: 'Peça', title: i.name, id: i.sku, action: () => { modal.remove(); navigateTo('almoxarifado'); } });
+      }
+    });
+    
+    // Buscar compras
+    state.purchases.forEach(p => {
+      if (p.item_name.toLowerCase().includes(query)) {
+        results.push({ type: 'Compra', title: p.item_name, id: p.id, action: () => { modal.remove(); navigateTo('compras'); } });
+      }
+    });
+    
+    if (results.length === 0) {
+      document.getElementById('quick-search-results').innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Nenhum resultado encontrado</p>';
+    } else {
+      document.getElementById('quick-search-results').innerHTML = results.slice(0, 10).map(r => `
+        <div onclick="(${r.action.toString()})()" style="padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;" 
+          onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
+          <span style="color: var(--accent-gold); font-weight: bold;">[${r.type}]</span> ${r.title}
+          ${r.id ? `<span style="color: var(--text-secondary); font-size: 12px;"> • ${r.id}</span>` : ''}
+        </div>
+      `).join('');
+    }
+  });
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
 }
 
 function logout() {
