@@ -1,2 +1,10 @@
-// API base URL used by the frontend; override before loading app.js if needed
+// Configuração do Icarus - Frontend
+
+// URL da API backend
 window.ICARUS_API_URL = window.ICARUS_API_URL || 'http://159.203.8.237:4000';
+
+// Key ID da Granja Vitta (UUID fixo gerado no backend)
+window.ICARUS_KEY_ID = '76453ce2-9e83-4764-bf13-e11125f6b880';
+
+// Chave de acesso (para validação inicial)
+window.ICARUS_KEY = 'granja-vitta-key';
