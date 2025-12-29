@@ -7,4 +7,4 @@ window.ICARUS_API_URL = window.ICARUS_API_URL || 'https://concept-cancellation-h
 window.ICARUS_KEY_ID = '76453ce2-9e83-4764-bf13-e11125f6b880';
 
 // Chave de acesso (para validação inicial)
-window.ICARUS_KEY = 'granja-vitta-key';
+window.ICARUS_KEY = 'GRANJA-VITTA-5590PALU-ICARUS';

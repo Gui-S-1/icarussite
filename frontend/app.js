@@ -203,7 +203,13 @@ async function login() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      showApp();
+      // Check if salaovos user - show operator selection popup
+      if (username.toLowerCase() === 'salaovos') {
+        window.afterUserSelection = showApp;
+        openUserSelectionPopup();
+      } else {
+        showApp();
+      }
     } else {
       showError(data.error || 'Login inválido');
     }
@@ -219,7 +225,11 @@ async function showApp() {
   // Setup user info
   const avatar = state.user.name.substring(0, 2).toUpperCase();
   document.getElementById('user-avatar').textContent = avatar;
-  document.getElementById('user-name').textContent = state.user.name;
+  
+  // If operator selected, show it in the name
+  const selectedOperator = localStorage.getItem('selectedOperator');
+  const displayName = selectedOperator ? `${state.user.name} (${selectedOperator})` : state.user.name;
+  document.getElementById('user-name').textContent = displayName;
   document.getElementById('user-role').textContent = state.user.roles.join(', ');
 
   // Setup permissions e navegação (IMPORTANTE: refazer para garantir que funciona)

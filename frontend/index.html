@@ -8,14 +8,17 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     :root {
-      --bg-primary: #0a0a0a;
-      --bg-secondary: #141414;
-      --bg-card: #1a1a1a;
-      --accent-gold: #d4af37;
-      --accent-gold-dim: #b8941f;
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a24;
+      --accent-gold: #c0c0c0;
+      --accent-gold-dim: #a8a8a8;
+      --accent-silver: #e8e8f0;
+      --accent-neon: #f0f0ff;
+      --primary: #c0c0c0;
       --text-primary: #ffffff;
-      --text-secondary: #a0a0a0;
-      --border-color: #2a2a2a;
+      --text-secondary: #b0b0c0;
+      --border-color: #2a2a35;
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
@@ -125,15 +128,15 @@
 
     .auth-logo-star {
       font-size: 80px;
-      color: var(--primary);
+      color: #e8e8f0;
       text-shadow: 
-        0 0 20px rgba(212, 175, 55, 0.8),
-        0 0 40px rgba(212, 175, 55, 0.5),
-        0 0 60px rgba(212, 175, 55, 0.3);
+        0 0 20px rgba(240, 240, 255, 0.9),
+        0 0 40px rgba(192, 192, 192, 0.6),
+        0 0 60px rgba(240, 240, 255, 0.4);
       animation: starFloat 4s ease-in-out infinite, starPulse 2s ease-in-out infinite;
       display: block;
       line-height: 1;
-      filter: drop-shadow(0 5px 15px rgba(212, 175, 55, 0.4));
+      filter: drop-shadow(0 5px 15px rgba(240, 240, 255, 0.5));
     }
 
     @keyframes starFloat {
@@ -149,14 +152,14 @@
     .auth-logo h1 {
       font-size: 28px;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent-gold) 0%, #FFD700 50%, var(--accent-gold) 100%);
+      background: linear-gradient(135deg, #c0c0c0 0%, #f0f0ff 50%, #c0c0c0 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-top: 12px;
       margin-bottom: 8px;
       letter-spacing: 4px;
-      text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+      text-shadow: 0 0 30px rgba(240, 240, 255, 0.6);
       animation: shimmer 3s ease-in-out infinite;
       background-size: 200% auto;
     }
@@ -552,13 +555,13 @@
 
     .header-logo-star {
       font-size: 24px;
-      color: var(--primary);
+      color: #e8e8f0;
       text-shadow: 
-        0 0 15px rgba(212, 175, 55, 0.6),
-        0 0 30px rgba(212, 175, 55, 0.4);
+        0 0 15px rgba(240, 240, 255, 0.7),
+        0 0 30px rgba(192, 192, 192, 0.5);
       animation: headerStarRotate 8s linear infinite;
       display: inline-block;
-      filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.3));
+      filter: drop-shadow(0 2px 8px rgba(240, 240, 255, 0.4));
     }
 
     @keyframes headerStarRotate {
@@ -567,7 +570,7 @@
     }
 
     .header-logo-text {
-      background: linear-gradient(135deg, var(--accent-gold) 0%, #FFD700 100%);
+      background: linear-gradient(135deg, #c0c0c0 0%, #f0f0ff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -1118,6 +1121,12 @@
     }
   </style>
   <link rel="stylesheet" href="mobile.css">
+  <style>
+    /* Hide mobile menu on auth screen */
+    #auth-screen:not(.hidden) ~ .mobile-menu-toggle {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
   <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
@@ -1989,7 +1998,50 @@
         closePremiumPopup();
       }
     });
+
+    // User Selection Popup Functions
+    function openUserSelectionPopup() {
+      document.getElementById('user-selection-overlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function selectOperator(operatorName) {
+      localStorage.setItem('selectedOperator', operatorName);
+      document.getElementById('user-selection-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+      // Continue with normal app flow
+      if (window.afterUserSelection) {
+        window.afterUserSelection();
+      }
+    }
   </script>
+
+  <!-- User Selection Popup -->
+  <div id="user-selection-overlay" class="premium-popup-overlay">
+    <div class="premium-popup" onclick="event.stopPropagation()">
+      <div class="premium-popup-icon">👤</div>
+      
+      <h2>Selecione o <span>Operador</span></h2>
+      
+      <p class="premium-popup-subtitle">
+        Quem está utilizando o sistema agora?
+      </p>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+        <button onclick="selectOperator('Erica')" class="premium-cta-btn" style="margin-bottom: 0;">
+          <span>👩</span> Erica
+        </button>
+        <button onclick="selectOperator('Irene')" class="premium-cta-btn" style="margin-bottom: 0;">
+          <span>👩</span> Irene
+        </button>
+      </div>
+      
+      <div class="premium-guarantee" style="margin-top: 20px;">
+        <span class="premium-guarantee-icon">✓</span>
+        <span>Rastreamento de atividades</span>
+      </div>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
