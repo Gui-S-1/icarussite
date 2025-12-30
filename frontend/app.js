@@ -3380,20 +3380,22 @@ function renderWaterHistory() {
     const tankClass = reading.tank_name;
     const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
     
-    // Calcular consumo (próxima leitura 7h - leitura 7h atual)
+    // Calcular consumo 24h (leitura 7h anterior - leitura 7h atual)
+    // Hidrômetro aumenta, então consumo = leitura atual - leitura anterior
     let consumption = '--';
     if (reading.reading_time === '07:00') {
-      const nextReading = filteredReadings.find((r, i) => 
-        i > idx && 
+      // Encontrar leitura 7h do dia anterior (mesmo tanque)
+      const prevReading = filteredReadings.find((r, i) => 
+        i < idx && 
         r.tank_name === reading.tank_name && 
         r.reading_time === '07:00'
       );
-      if (nextReading) {
-        const diff = reading.reading_value - nextReading.reading_value;
+      if (prevReading) {
+        const diff = reading.reading_value - prevReading.reading_value;
         if (diff >= 0) {
-          consumption = `<span class="consumption-positive">-${diff.toFixed(3)} m³</span>`;
+          consumption = `<span class="consumption-positive">${diff.toFixed(3)} m³</span>`;
         } else {
-          consumption = `<span class="consumption-negative">+${Math.abs(diff).toFixed(3)} m³</span>`;
+          consumption = `<span class="consumption-negative">${diff.toFixed(3)} m³</span>`;
         }
       }
     }
@@ -3548,7 +3550,52 @@ async function saveWaterReading() {
 function exportWaterReportPDF() {
   // Preparar dados
   const stats = state.waterStats;
-  const readings = state.waterReadings.slice(0, 30);
+  const readings = state.waterReadings || [];
+  
+  if (readings.length === 0) {
+    showNotification('Nenhum dado para exportar', 'warning');
+    return;
+  }
+  
+  // Calcular período real baseado nas leituras
+  const sortedReadings = [...readings].sort((a, b) => new Date(a.reading_date) - new Date(b.reading_date));
+  const firstDate = sortedReadings.length > 0 ? new Date(sortedReadings[0].reading_date) : new Date();
+  const lastDate = sortedReadings.length > 0 ? new Date(sortedReadings[sortedReadings.length - 1].reading_date) : new Date();
+  
+  const firstDateStr = firstDate.toLocaleDateString('pt-BR');
+  const lastDateStr = lastDate.toLocaleDateString('pt-BR');
+  const periodStr = firstDateStr === lastDateStr ? firstDateStr : `${firstDateStr} a ${lastDateStr}`;
+  
+  // Calcular consumos corretamente (leitura nova - leitura antiga por tanque)
+  const calculateConsumption = (tank) => {
+    const tankReadings = sortedReadings
+      .filter(r => r.tank_name === tank && r.reading_time === '07:00')
+      .sort((a, b) => new Date(a.reading_date) - new Date(b.reading_date));
+    
+    if (tankReadings.length < 2) return { total: 0, avg: 0, days: 0 };
+    
+    let total = 0;
+    let count = 0;
+    for (let i = 1; i < tankReadings.length; i++) {
+      const diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
+      if (diff >= 0) {
+        total += diff;
+        count++;
+      }
+    }
+    
+    return { total, avg: count > 0 ? total / count : 0, days: count };
+  };
+  
+  const aviariosCalc = calculateConsumption('aviarios');
+  const recriaCalc = calculateConsumption('recria');
+  const totalConsumo = aviariosCalc.total + recriaCalc.total;
+  
+  // Usar dados do stats se disponíveis, senão usar calculados
+  const aviariosAvg = stats?.aviarios?.avg_daily || aviariosCalc.avg;
+  const recriaAvg = stats?.recria?.avg_daily || recriaCalc.avg;
+  const aviariosTotal = stats?.aviarios?.total_consumption || aviariosCalc.total;
+  const recriaTotal = stats?.recria?.total_consumption || recriaCalc.total;
   
   // Criar conteúdo HTML para impressão
   const content = `
@@ -3563,45 +3610,58 @@ function exportWaterReportPDF() {
         .header h1 { color: #1a1a2e; margin: 0; font-size: 28px; }
         .header .subtitle { color: #666; margin: 10px 0 0 0; font-size: 14px; }
         .header .period { color: #888; font-size: 12px; margin-top: 5px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-box { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; text-align: center; }
-        .stat-box h3 { margin: 0 0 10px 0; color: #333; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-box .value { font-size: 32px; font-weight: bold; color: #1a1a2e; }
-        .stat-box .label { font-size: 11px; color: #666; margin-top: 5px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-box { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; text-align: center; }
+        .stat-box h3 { margin: 0 0 10px 0; color: #333; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-box .value { font-size: 28px; font-weight: bold; color: #1a1a2e; }
+        .stat-box .label { font-size: 10px; color: #666; margin-top: 5px; }
         .section-title { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 16px; margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background: #1a1a2e; color: white; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
         tr:nth-child(even) { background: #f8f9fa; }
         .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
         .tank-aviarios { color: #1a1a2e; font-weight: 600; }
         .tank-recria { color: #2d5a27; font-weight: 600; }
-        @media print { body { padding: 20px; } }
+        @media print { body { padding: 20px; } @page { size: A4; margin: 15mm; } }
       </style>
     </head>
     <body>
       <div class="header">
         <h1>RELATÓRIO DE CONTROLE DE ÁGUA</h1>
         <p class="subtitle"><strong>Granja Vitta</strong> — Sistema Icarus</p>
-        <p class="period">Período: ${getPeriodLabel()} | Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+        <p class="period">Período: ${periodStr} | Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
       </div>
       
       <h2 class="section-title">RESUMO DE CONSUMO</h2>
       <div class="stats-grid">
         <div class="stat-box">
-          <h3>CAIXA AVIÁRIOS</h3>
-          <div class="value">${stats?.aviarios?.avg_daily?.toFixed(2) || '0.00'}</div>
-          <div class="label">m³/dia (média)</div>
+          <h3>Aviários (Média)</h3>
+          <div class="value">${aviariosAvg.toFixed(2)}</div>
+          <div class="label">m³/dia</div>
         </div>
         <div class="stat-box">
-          <h3>CAIXA RECRIA</h3>
-          <div class="value">${stats?.recria?.avg_daily?.toFixed(2) || '0.00'}</div>
-          <div class="label">m³/dia (média)</div>
+          <h3>Recria (Média)</h3>
+          <div class="value">${recriaAvg.toFixed(2)}</div>
+          <div class="label">m³/dia</div>
         </div>
         <div class="stat-box">
-          <h3>TOTAL PERÍODO</h3>
-          <div class="value">${((stats?.aviarios?.total_consumption || 0) + (stats?.recria?.total_consumption || 0)).toFixed(2)}</div>
+          <h3>Total Aviários</h3>
+          <div class="value">${aviariosTotal.toFixed(2)}</div>
           <div class="label">m³ consumidos</div>
+        </div>
+        <div class="stat-box">
+          <h3>Total Recria</h3>
+          <div class="value">${recriaTotal.toFixed(2)}</div>
+          <div class="label">m³ consumidos</div>
+        </div>
+      </div>
+      
+      <div class="stats-grid" style="grid-template-columns: 1fr;">
+        <div class="stat-box" style="background: #1a1a2e; color: white;">
+          <h3 style="color: #d4af37;">CONSUMO TOTAL DO PERÍODO</h3>
+          <div class="value" style="color: #d4af37; font-size: 42px;">${(aviariosTotal + recriaTotal).toFixed(2)} m³</div>
+          <div class="label" style="color: #aaa;">${readings.length} leituras registradas</div>
         </div>
       </div>
       
@@ -3618,7 +3678,7 @@ function exportWaterReportPDF() {
           </tr>
         </thead>
         <tbody>
-          ${readings.map(r => `
+          ${readings.slice(0, 50).map(r => `
             <tr>
               <td>${new Date(r.reading_date).toLocaleDateString('pt-BR')}</td>
               <td>${r.reading_time}</td>
@@ -4265,10 +4325,36 @@ function exportDashboardReport() {
     </div>
 
     <div class="footer">
+      <button onclick="window.print()" class="print-btn">🖨️ Imprimir / Salvar PDF</button>
       <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
       <p>Desenvolvido por Guilherme Braga • © 2025</p>
     </div>
   </div>
+
+  <style>
+    .print-btn { 
+      background: linear-gradient(135deg, #d4af37, #b8942e); 
+      color: #000; 
+      border: none; 
+      padding: 15px 40px; 
+      font-size: 16px; 
+      font-weight: 600; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      margin-bottom: 20px;
+      transition: transform 0.2s;
+    }
+    .print-btn:hover { transform: scale(1.05); }
+    @media print { 
+      .print-btn { display: none; }
+      body { background: #fff !important; color: #333 !important; }
+      .stat-card, .chart-card, .table-card { border-color: #ddd !important; }
+      .stat-card .value { color: #333 !important; }
+      .stat-card.gold .value, .value.gold { color: #b8942e !important; }
+      .header { background: #f5f5f5 !important; border-color: #b8942e !important; }
+      .header h1 { color: #b8942e !important; }
+    }
+  </style>
 
   <script>
     const executorData = ${JSON.stringify(byExecutor)};

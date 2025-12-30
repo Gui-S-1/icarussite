@@ -977,7 +977,8 @@ app.get('/water-readings/stats', requireAuth, async (req, res) => {
         byDate[date][r.reading_time] = r.reading_value;
       });
       
-      // Calcular consumo diário (7h dia X - 7h dia X+1 = consumo 24h)
+      // Calcular consumo diário (7h dia X+1 - 7h dia X = consumo 24h)
+      // Hidrômetro aumenta, então consumo = leitura nova - leitura antiga
       const dates = Object.keys(byDate).sort();
       let totalConsumption = 0;
       
@@ -989,10 +990,10 @@ app.get('/water-readings/stats', requireAuth, async (req, res) => {
         const nextMorning7h = byDate[nextDate] ? byDate[nextDate]['07:00'] : null;
         
         if (morning7h !== undefined && nextMorning7h !== undefined) {
-          const consumption = morning7h - nextMorning7h;
+          const consumption = nextMorning7h - morning7h;
           if (consumption >= 0) {
             stats[tank].daily_consumption.push({
-              date: currentDate,
+              date: nextDate,
               consumption: consumption
             });
             totalConsumption += consumption;
