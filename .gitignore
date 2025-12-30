@@ -2,6 +2,23 @@
 node_modules/
 .DS_Store
 
+# Sensitive files - NEVER commit
+*.env
+*.env.*
+.env.local
+.env.production
+GUIA_ADMINISTRACAO.txt
+criar_salaovos*.txt
+criar_salaovos*.sh
+EXECUTAR_NO_DROPLET.sh
+INSTALAR_NO_DROPLET.txt
+*_droplet*
+*DROPLET*
+*.pem
+*.key
+*password*
+*secret*
+
 # backend
 backend/node_modules/
 backend/.env
@@ -10,3 +27,9 @@ backend/npm-debug.log*
 
 # frontend
 frontend/.vercel/
+
+# Compiled/Build
+dist/
+build/
+*.tar.gz
+*.zip
