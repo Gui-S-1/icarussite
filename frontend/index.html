@@ -1679,6 +1679,44 @@
       margin: 0;
     }
 
+    .tank-title-big {
+      font-size: 18px !important;
+      font-weight: 800 !important;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .tank-readings {
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .reading-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .reading-row:not(:last-child) {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .reading-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .reading-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: 'Consolas', monospace;
+    }
+
     .tank-status-badge {
       display: inline-block;
       font-size: 11px;
@@ -1692,21 +1730,25 @@
 
     .tank-stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
       margin-bottom: 16px;
+    }
+
+    .tank-stats.four-cols {
+      grid-template-columns: repeat(3, 1fr);
     }
 
     .tank-stat {
       text-align: center;
-      padding: 12px 8px;
+      padding: 10px 6px;
       background: var(--bg-secondary);
       border-radius: 10px;
     }
 
     .tank-stat-value {
       display: block;
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 700;
       color: #3b82f6;
       line-height: 1.2;
@@ -2619,22 +2661,36 @@
               <div class="tank-header">
                 <div class="tank-icon">🏭</div>
                 <div class="tank-info">
-                  <h3>Caixa Aviários</h3>
+                  <h3 class="tank-title-big">CAIXA AVIÁRIOS</h3>
                   <span class="tank-status-badge">● Monitorando</span>
+                </div>
+              </div>
+              <div class="tank-readings">
+                <div class="reading-row">
+                  <span class="reading-label">Leitura 7h:</span>
+                  <span class="reading-value" id="aviarios-leitura-7h">--</span>
+                </div>
+                <div class="reading-row">
+                  <span class="reading-label">Leitura 16h:</span>
+                  <span class="reading-value" id="aviarios-leitura-16h">--</span>
                 </div>
               </div>
               <div class="tank-stats">
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="aviarios-consumo-dia">--</span>
-                  <span class="tank-stat-label">Consumo/Dia (m³)</span>
+                  <span class="tank-stat-value" id="aviarios-consumo-trabalho">--</span>
+                  <span class="tank-stat-label">7h-16h (m³)</span>
                 </div>
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="aviarios-consumo-hora">--</span>
-                  <span class="tank-stat-label">Consumo/Hora (L)</span>
+                  <span class="tank-stat-value" id="aviarios-lt-hora-trabalho">--</span>
+                  <span class="tank-stat-label">L/hora (trab)</span>
                 </div>
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="aviarios-ultima-leitura">--</span>
-                  <span class="tank-stat-label">Última Leitura (m³)</span>
+                  <span class="tank-stat-value" id="aviarios-consumo-24h">--</span>
+                  <span class="tank-stat-label">24h (m³)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="aviarios-lt-hora-24h">--</span>
+                  <span class="tank-stat-label">L/hora (24h)</span>
                 </div>
               </div>
               <div class="tank-chart" id="aviarios-mini-chart"></div>
@@ -2645,37 +2701,51 @@
               <div class="tank-header">
                 <div class="tank-icon">🐣</div>
                 <div class="tank-info">
-                  <h3>Caixa Recria</h3>
+                  <h3 class="tank-title-big">CAIXA RECRIA</h3>
                   <span class="tank-status-badge">● Monitorando</span>
+                </div>
+              </div>
+              <div class="tank-readings">
+                <div class="reading-row">
+                  <span class="reading-label">Leitura 7h:</span>
+                  <span class="reading-value" id="recria-leitura-7h">--</span>
+                </div>
+                <div class="reading-row">
+                  <span class="reading-label">Leitura 16h:</span>
+                  <span class="reading-value" id="recria-leitura-16h">--</span>
                 </div>
               </div>
               <div class="tank-stats">
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="recria-consumo-dia">--</span>
-                  <span class="tank-stat-label">Consumo/Dia (m³)</span>
+                  <span class="tank-stat-value" id="recria-consumo-trabalho">--</span>
+                  <span class="tank-stat-label">7h-16h (m³)</span>
                 </div>
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="recria-consumo-hora">--</span>
-                  <span class="tank-stat-label">Consumo/Hora (L)</span>
+                  <span class="tank-stat-value" id="recria-lt-hora-trabalho">--</span>
+                  <span class="tank-stat-label">L/hora (trab)</span>
                 </div>
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="recria-ultima-leitura">--</span>
-                  <span class="tank-stat-label">Última Leitura (m³)</span>
+                  <span class="tank-stat-value" id="recria-consumo-24h">--</span>
+                  <span class="tank-stat-label">24h (m³)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="recria-lt-hora-24h">--</span>
+                  <span class="tank-stat-label">L/hora (24h)</span>
                 </div>
               </div>
               <div class="tank-chart" id="recria-mini-chart"></div>
             </div>
 
-            <!-- Card Diferença -->
+            <!-- Card Comparativo -->
             <div class="water-tank-card difference">
               <div class="tank-header">
-                <div class="tank-icon">⚖️</div>
+                <div class="tank-icon">📊</div>
                 <div class="tank-info">
-                  <h3>Comparativo</h3>
+                  <h3 class="tank-title-big">COMPARATIVO</h3>
                   <span class="tank-status-badge secondary">Análise</span>
                 </div>
               </div>
-              <div class="tank-stats">
+              <div class="tank-stats four-cols">
                 <div class="tank-stat">
                   <span class="tank-stat-value" id="diferenca-consumo">--</span>
                   <span class="tank-stat-label">Diferença (m³)</span>

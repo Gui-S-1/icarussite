@@ -3080,40 +3080,72 @@ async function setWaterPeriod(period) {
 // Renderizar estatísticas
 function renderWaterStats() {
   const stats = state.waterStats;
-  if (!stats) return;
+  const readings = state.waterReadings;
   
-  // Aviários
-  const aviariosConsumo = stats.aviarios?.avg_daily?.toFixed(2) || '--';
-  const aviariosHora = stats.aviarios?.avg_hourly ? (stats.aviarios.avg_hourly * 1000).toFixed(0) : '--';
-  const aviariosUltima = getLastReading('aviarios');
+  // Pegar leituras mais recentes de cada horário
+  const today = new Date().toISOString().split('T')[0];
   
-  document.getElementById('aviarios-consumo-dia').textContent = aviariosConsumo;
-  document.getElementById('aviarios-consumo-hora').textContent = aviariosHora;
-  document.getElementById('aviarios-ultima-leitura').textContent = aviariosUltima;
-  
-  // Recria
-  const recriaConsumo = stats.recria?.avg_daily?.toFixed(2) || '--';
-  const recriaHora = stats.recria?.avg_hourly ? (stats.recria.avg_hourly * 1000).toFixed(0) : '--';
-  const recriaUltima = getLastReading('recria');
-  
-  document.getElementById('recria-consumo-dia').textContent = recriaConsumo;
-  document.getElementById('recria-consumo-hora').textContent = recriaHora;
-  document.getElementById('recria-ultima-leitura').textContent = recriaUltima;
+  ['aviarios', 'recria'].forEach(tank => {
+    const tankReadings = readings.filter(r => r.tank_name === tank);
+    
+    // Leitura das 7h (mais recente)
+    const leitura7h = tankReadings.find(r => r.reading_time === '07:00');
+    const leitura16h = tankReadings.find(r => r.reading_time === '16:00');
+    
+    // Atualizar leituras
+    const el7h = document.getElementById(`${tank}-leitura-7h`);
+    const el16h = document.getElementById(`${tank}-leitura-16h`);
+    if (el7h) el7h.textContent = leitura7h ? Math.round(leitura7h.reading_value).toLocaleString('pt-BR') : '--';
+    if (el16h) el16h.textContent = leitura16h ? Math.round(leitura16h.reading_value).toLocaleString('pt-BR') : '--';
+    
+    // Calcular consumo do período de trabalho (7h-16h = 9 horas)
+    let consumoTrabalho = '--';
+    let ltHoraTrabalho = '--';
+    if (leitura7h && leitura16h && leitura7h.reading_date === leitura16h.reading_date) {
+      const diff = leitura16h.reading_value - leitura7h.reading_value;
+      consumoTrabalho = diff.toFixed(0);
+      ltHoraTrabalho = Math.round((diff * 1000) / 9).toLocaleString('pt-BR');
+    }
+    
+    const elConsumoTrab = document.getElementById(`${tank}-consumo-trabalho`);
+    const elLtHoraTrab = document.getElementById(`${tank}-lt-hora-trabalho`);
+    if (elConsumoTrab) elConsumoTrab.textContent = consumoTrabalho;
+    if (elLtHoraTrab) elLtHoraTrab.textContent = ltHoraTrabalho;
+    
+    // Calcular consumo 24h (7h de hoje - 7h de ontem)
+    let consumo24h = '--';
+    let ltHora24h = '--';
+    const leituras7h = tankReadings.filter(r => r.reading_time === '07:00').sort((a, b) => 
+      new Date(b.reading_date) - new Date(a.reading_date)
+    );
+    if (leituras7h.length >= 2) {
+      const diff = leituras7h[0].reading_value - leituras7h[1].reading_value;
+      consumo24h = diff.toFixed(0);
+      ltHora24h = Math.round((diff * 1000) / 24).toLocaleString('pt-BR');
+    }
+    
+    const elConsumo24h = document.getElementById(`${tank}-consumo-24h`);
+    const elLtHora24h = document.getElementById(`${tank}-lt-hora-24h`);
+    if (elConsumo24h) elConsumo24h.textContent = consumo24h;
+    if (elLtHora24h) elLtHora24h.textContent = ltHora24h;
+  });
   
   // Comparativo
-  const aviariosTotal = stats.aviarios?.total_consumption || 0;
-  const recriaTotal = stats.recria?.total_consumption || 0;
-  const diferenca = Math.abs(aviariosTotal - recriaTotal).toFixed(2);
-  const total = (aviariosTotal + recriaTotal).toFixed(2);
-  const mediaGeral = ((stats.aviarios?.avg_daily || 0) + (stats.recria?.avg_daily || 0)).toFixed(2);
-  
-  document.getElementById('diferenca-consumo').textContent = diferenca;
-  document.getElementById('total-consumo').textContent = total;
-  document.getElementById('media-geral').textContent = mediaGeral;
-  
-  // Mini charts
-  renderMiniChart('aviarios', stats.aviarios?.daily_consumption || []);
-  renderMiniChart('recria', stats.recria?.daily_consumption || []);
+  if (stats) {
+    const aviariosTotal = stats.aviarios?.total_consumption || 0;
+    const recriaTotal = stats.recria?.total_consumption || 0;
+    const diferenca = Math.abs(aviariosTotal - recriaTotal).toFixed(0);
+    const total = (aviariosTotal + recriaTotal).toFixed(0);
+    const mediaGeral = ((stats.aviarios?.avg_daily || 0) + (stats.recria?.avg_daily || 0)).toFixed(0);
+    
+    document.getElementById('diferenca-consumo').textContent = diferenca;
+    document.getElementById('total-consumo').textContent = total;
+    document.getElementById('media-geral').textContent = mediaGeral;
+    
+    // Mini charts
+    renderMiniChart('aviarios', stats.aviarios?.daily_consumption || []);
+    renderMiniChart('recria', stats.recria?.daily_consumption || []);
+  }
 }
 
 // Obter última leitura de um tanque
