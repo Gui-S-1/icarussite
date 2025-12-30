@@ -1419,6 +1419,608 @@
       font-weight: 600;
     }
 
+    /* ========== CONTROLE DE ÁGUA - ESTILOS PREMIUM ========== */
+    
+    /* Header Premium */
+    .water-control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .water-control-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .water-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 1;
+    }
+
+    .water-icon-badge {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    }
+
+    .water-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .water-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      margin: 4px 0 0 0;
+    }
+
+    .water-header-actions {
+      display: flex;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .btn-water-export {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-water-export:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Water Alert */
+    .water-alert {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-left: 4px solid #ef4444;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      animation: alertPulse 2s infinite;
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 20px 0 rgba(239, 68, 68, 0.2); }
+    }
+
+    .water-alert-icon {
+      font-size: 24px;
+      animation: shake 0.5s infinite;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .water-alert-text {
+      flex: 1;
+    }
+
+    .water-alert-title {
+      font-weight: 700;
+      color: #ef4444;
+      font-size: 14px;
+    }
+
+    .water-alert-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 2px;
+    }
+
+    /* Water Filters */
+    .water-filters {
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      width: fit-content;
+    }
+
+    .water-filter-btn {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .water-filter-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+    }
+
+    .water-filter-btn.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Water Stats Grid */
+    .water-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      .water-stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .water-stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .water-control-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+      .water-header-left {
+        flex-direction: column;
+      }
+    }
+
+    /* Water Tank Card */
+    .water-tank-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .water-tank-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .water-tank-card.aviarios::before {
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    }
+
+    .water-tank-card.recria::before {
+      background: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    .water-tank-card.difference::before {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    .water-tank-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .tank-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .tank-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .tank-info h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .tank-status-badge {
+      display: inline-block;
+      font-size: 11px;
+      color: #10b981;
+      margin-top: 4px;
+    }
+
+    .tank-status-badge.secondary {
+      color: #f59e0b;
+    }
+
+    .tank-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .tank-stat {
+      text-align: center;
+      padding: 12px 8px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+    }
+
+    .tank-stat-value {
+      display: block;
+      font-size: 20px;
+      font-weight: 700;
+      color: #3b82f6;
+      line-height: 1.2;
+    }
+
+    .water-tank-card.recria .tank-stat-value {
+      color: #10b981;
+    }
+
+    .water-tank-card.difference .tank-stat-value {
+      color: #f59e0b;
+    }
+
+    .tank-stat-label {
+      display: block;
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-top: 4px;
+    }
+
+    .tank-chart {
+      height: 60px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding: 8px;
+    }
+
+    .tank-chart-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #3b82f6 0%, rgba(59, 130, 246, 0.3) 100%);
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+      transition: height 0.3s;
+    }
+
+    .water-tank-card.recria .tank-chart-bar {
+      background: linear-gradient(180deg, #10b981 0%, rgba(16, 185, 129, 0.3) 100%);
+    }
+
+    /* Water Input Section */
+    .water-input-section {
+      margin-bottom: 24px;
+    }
+
+    .water-input-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(59, 130, 246, 0.05) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .water-input-time {
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
+    .water-input-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .water-input-group.full-width {
+      grid-column: span 4;
+    }
+
+    @media (max-width: 900px) {
+      .water-input-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .water-input-group.full-width {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .water-input-grid {
+        grid-template-columns: 1fr;
+      }
+      .water-input-group.full-width {
+        grid-column: span 1;
+      }
+    }
+
+    .water-input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .water-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .water-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .water-input-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-water-save {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-water-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+    }
+
+    /* Water Chart Card */
+    .water-chart-card {
+      margin-bottom: 24px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .legend-item.aviarios .legend-dot {
+      background: #3b82f6;
+    }
+
+    .legend-item.recria .legend-dot {
+      background: #10b981;
+    }
+
+    .water-main-chart {
+      height: 250px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .chart-bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chart-bars {
+      display: flex;
+      gap: 4px;
+      align-items: flex-end;
+      height: 180px;
+    }
+
+    .chart-bar {
+      width: 20px;
+      border-radius: 4px 4px 0 0;
+      transition: height 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .chart-bar.aviarios {
+      background: linear-gradient(180deg, #3b82f6 0%, rgba(59, 130, 246, 0.4) 100%);
+    }
+
+    .chart-bar.recria {
+      background: linear-gradient(180deg, #10b981 0%, rgba(16, 185, 129, 0.4) 100%);
+    }
+
+    .chart-bar:hover {
+      opacity: 0.8;
+    }
+
+    .chart-bar-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* Water History */
+    .water-history-card {
+      max-height: 500px;
+      overflow: hidden;
+    }
+
+    .history-filters {
+      display: flex;
+      gap: 10px;
+    }
+
+    .water-select {
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .water-history-table {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .water-history-table::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .water-history-table::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+      border-radius: 3px;
+    }
+
+    .water-history-table::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .water-history-table::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-gold);
+    }
+
+    #water-history-table {
+      width: 100%;
+    }
+
+    #water-history-table th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-secondary);
+      z-index: 1;
+    }
+
+    #water-history-table td {
+      font-size: 13px;
+    }
+
+    .consumption-positive {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .consumption-negative {
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    .tank-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tank-badge.aviarios {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+
+    .tank-badge.recria {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+
+    /* ========== FIM ESTILOS CONTROLE DE ÁGUA ========== */
+
     /* Hidden utility */
     .hidden { display: none !important; }
 
@@ -1677,6 +2279,10 @@
         <div class="nav-item hidden" data-view="preventivas">
           <span class="nav-icon">⚙</span>
           <span>Preventivas</span>
+        </div>
+        <div class="nav-item hidden" data-view="controle-agua">
+          <span class="nav-icon">💧</span>
+          <span>Controle de Água</span>
         </div>
         <div class="nav-item hidden" data-view="checklists">
           <span class="nav-icon">☑</span>
@@ -1974,6 +2580,207 @@
             <div id="checklist-executions-list"></div>
           </div>
         </div>
+        
+        <!-- ========== CONTROLE DE ÁGUA - GRANJA VITTA ========== -->
+        <div id="controle-agua-view" class="view">
+          <!-- Header Premium com Gradiente -->
+          <div class="water-control-header">
+            <div class="water-header-left">
+              <div class="water-icon-badge">💧</div>
+              <div>
+                <h2 class="water-title">Controle de Água</h2>
+                <p class="water-subtitle">Sistema Inteligente de Monitoramento • Granja Vitta</p>
+              </div>
+            </div>
+            <div class="water-header-actions">
+              <button class="btn-water-export" onclick="exportWaterReportPDF()">
+                <span>📄</span> Exportar PDF
+              </button>
+              <button class="btn-water-export" onclick="exportWaterReportExcel()">
+                <span>📊</span> Exportar Excel
+              </button>
+            </div>
+          </div>
+
+          <!-- Alerta de Consumo (se houver) -->
+          <div id="water-alert-container"></div>
+
+          <!-- Filtros de Período -->
+          <div class="water-filters">
+            <button class="water-filter-btn active" id="water-filter-day" onclick="setWaterPeriod('day')">Hoje</button>
+            <button class="water-filter-btn" id="water-filter-week" onclick="setWaterPeriod('week')">Semana</button>
+            <button class="water-filter-btn" id="water-filter-month" onclick="setWaterPeriod('month')">Mês</button>
+          </div>
+
+          <!-- Cards de Resumo -->
+          <div class="water-stats-grid">
+            <!-- Card Aviários -->
+            <div class="water-tank-card aviarios">
+              <div class="tank-header">
+                <div class="tank-icon">🏭</div>
+                <div class="tank-info">
+                  <h3>Caixa Aviários</h3>
+                  <span class="tank-status-badge">● Monitorando</span>
+                </div>
+              </div>
+              <div class="tank-stats">
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="aviarios-consumo-dia">--</span>
+                  <span class="tank-stat-label">Consumo/Dia (m³)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="aviarios-consumo-hora">--</span>
+                  <span class="tank-stat-label">Consumo/Hora (L)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="aviarios-ultima-leitura">--</span>
+                  <span class="tank-stat-label">Última Leitura (m³)</span>
+                </div>
+              </div>
+              <div class="tank-chart" id="aviarios-mini-chart"></div>
+            </div>
+
+            <!-- Card Recria -->
+            <div class="water-tank-card recria">
+              <div class="tank-header">
+                <div class="tank-icon">🐣</div>
+                <div class="tank-info">
+                  <h3>Caixa Recria</h3>
+                  <span class="tank-status-badge">● Monitorando</span>
+                </div>
+              </div>
+              <div class="tank-stats">
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="recria-consumo-dia">--</span>
+                  <span class="tank-stat-label">Consumo/Dia (m³)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="recria-consumo-hora">--</span>
+                  <span class="tank-stat-label">Consumo/Hora (L)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="recria-ultima-leitura">--</span>
+                  <span class="tank-stat-label">Última Leitura (m³)</span>
+                </div>
+              </div>
+              <div class="tank-chart" id="recria-mini-chart"></div>
+            </div>
+
+            <!-- Card Diferença -->
+            <div class="water-tank-card difference">
+              <div class="tank-header">
+                <div class="tank-icon">⚖️</div>
+                <div class="tank-info">
+                  <h3>Comparativo</h3>
+                  <span class="tank-status-badge secondary">Análise</span>
+                </div>
+              </div>
+              <div class="tank-stats">
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="diferenca-consumo">--</span>
+                  <span class="tank-stat-label">Diferença (m³)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="total-consumo">--</span>
+                  <span class="tank-stat-label">Total Consumido</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="media-geral">--</span>
+                  <span class="tank-stat-label">Média Geral/Dia</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção de Entrada de Dados -->
+          <div class="water-input-section">
+            <div class="card water-input-card">
+              <div class="card-header">
+                <h3 class="card-title">📝 Registrar Leitura do Relógio</h3>
+                <span class="water-input-time" id="current-time"></span>
+              </div>
+              
+              <div class="water-input-grid">
+                <div class="water-input-group">
+                  <label>📆 Data da Leitura</label>
+                  <input type="date" id="water-reading-date" class="water-input">
+                </div>
+                
+                <div class="water-input-group">
+                  <label>⏰ Horário</label>
+                  <select id="water-reading-time" class="water-input">
+                    <option value="07:00">07:00 - Manhã</option>
+                    <option value="16:00">16:00 - Tarde</option>
+                  </select>
+                </div>
+                
+                <div class="water-input-group">
+                  <label>🏭 Caixa Aviários (m³)</label>
+                  <input type="number" step="0.001" id="water-aviarios-value" class="water-input" placeholder="Ex: 1234.567">
+                </div>
+                
+                <div class="water-input-group">
+                  <label>🐣 Caixa Recria (m³)</label>
+                  <input type="number" step="0.001" id="water-recria-value" class="water-input" placeholder="Ex: 567.890">
+                </div>
+                
+                <div class="water-input-group full-width">
+                  <label>📝 Observações (opcional)</label>
+                  <input type="text" id="water-reading-notes" class="water-input" placeholder="Ex: Vazamento detectado, manutenção realizada...">
+                </div>
+              </div>
+              
+              <div class="water-input-actions">
+                <button class="btn-water-save" onclick="saveWaterReading()">
+                  <span>💾</span> Salvar Leitura
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfico Principal -->
+          <div class="card water-chart-card">
+            <div class="card-header">
+              <h3 class="card-title">📈 Gráfico de Consumo</h3>
+              <div class="chart-legend">
+                <span class="legend-item aviarios"><span class="legend-dot"></span> Aviários</span>
+                <span class="legend-item recria"><span class="legend-dot"></span> Recria</span>
+              </div>
+            </div>
+            <div class="water-main-chart" id="water-consumption-chart"></div>
+          </div>
+
+          <!-- Histórico de Leituras -->
+          <div class="card water-history-card">
+            <div class="card-header">
+              <h3 class="card-title">📋 Histórico de Leituras</h3>
+              <div class="history-filters">
+                <select id="history-tank-filter" class="water-select" onchange="filterWaterHistory()">
+                  <option value="all">Todas as Caixas</option>
+                  <option value="aviarios">Aviários</option>
+                  <option value="recria">Recria</option>
+                </select>
+              </div>
+            </div>
+            <div class="water-history-table">
+              <table id="water-history-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Horário</th>
+                    <th>Caixa</th>
+                    <th>Leitura (m³)</th>
+                    <th>Consumo 24h</th>
+                    <th>Registrado por</th>
+                    <th>Obs</th>
+                  </tr>
+                </thead>
+                <tbody id="water-history-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- ========== FIM CONTROLE DE ÁGUA ========== -->
         
         <div id="relatorios-view" class="view">
           <h2>Relatórios</h2>
@@ -2525,15 +3332,15 @@
         <svg class="mobile-nav-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
         <span class="mobile-nav-label">OS</span>
       </div>
-      <div class="mobile-nav-item" data-view="almoxarifado" onclick="navigateMobile('almoxarifado')">
-        <svg class="mobile-nav-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z"/></svg>
-        <span class="mobile-nav-label">Estoque</span>
+      <div class="mobile-nav-item" data-view="controle-agua" onclick="navigateMobile('controle-agua')">
+        <svg class="mobile-nav-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z"/></svg>
+        <span class="mobile-nav-label">Água</span>
       </div>
       <div class="mobile-nav-item" data-view="compras" onclick="navigateMobile('compras')">
         <svg class="mobile-nav-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
         <span class="mobile-nav-label">Compras</span>
       </div>
-      <div class="mobile-nav-item" data-view="config" onclick="navigateMobile('config')">
+      <div class="mobile-nav-item" data-view="configuracoes" onclick="navigateMobile('configuracoes')">
         <svg class="mobile-nav-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
         <span class="mobile-nav-label">Config</span>
       </div>
@@ -2551,11 +3358,11 @@
         }
       });
       
-      // Use existing showView function if available
-      if (typeof showView === 'function') {
-        showView(viewName);
-      } else if (typeof window.showView === 'function') {
-        window.showView(viewName);
+      // Use existing navigateTo function from app.js
+      if (typeof navigateTo === 'function') {
+        navigateTo(viewName);
+      } else if (typeof window.navigateTo === 'function') {
+        window.navigateTo(viewName);
       } else {
         // Fallback: manually switch views
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));

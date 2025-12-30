@@ -142,6 +142,22 @@ async function initDb() {
     DO $$ BEGIN
       ALTER TABLE purchases ADD COLUMN IF NOT EXISTS photo_url TEXT;
     EXCEPTION WHEN others THEN NULL; END $$;
+
+    -- Controle de Água - Registros das caixas d'água (Aviários e Recria)
+    CREATE TABLE IF NOT EXISTS water_readings (
+      id TEXT PRIMARY KEY,
+      tank_name TEXT NOT NULL,
+      reading_value NUMERIC(12,3) NOT NULL,
+      reading_time TEXT NOT NULL,
+      reading_date DATE NOT NULL,
+      notes TEXT,
+      recorded_by TEXT REFERENCES users(id),
+      key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- Índice para consultas rápidas por data e tanque
+    CREATE INDEX IF NOT EXISTS idx_water_readings_date ON water_readings(reading_date, tank_name);
   `);
 
   const seedKeyValue = process.env.SEED_KEY_VALUE;
@@ -790,6 +806,239 @@ app.post('/config/verify-whatsapp', requireAuth, async (req, res) => {
   const digits = (phone || '').replace(/\D/g, '');
   if (digits.length < 10 || digits.length > 13) return res.status(400).json({ ok: false, error: 'Telefone inválido' });
   return res.json({ ok: true, phone: digits });
+});
+
+// ========== CONTROLE DE ÁGUA ==========
+
+// GET - Listar leituras de água (com filtros opcionais)
+app.get('/water-readings', requireAuth, async (req, res) => {
+  try {
+    const { tank, start_date, end_date } = req.query;
+    
+    let query = `
+      SELECT wr.*, u.name as recorded_by_name 
+      FROM water_readings wr 
+      LEFT JOIN users u ON u.id = wr.recorded_by 
+      WHERE wr.key_id = $1
+    `;
+    const params = [req.user.keyId];
+    let paramCount = 2;
+    
+    if (tank) {
+      query += ` AND wr.tank_name = $${paramCount++}`;
+      params.push(tank);
+    }
+    
+    if (start_date) {
+      query += ` AND wr.reading_date >= $${paramCount++}`;
+      params.push(start_date);
+    }
+    
+    if (end_date) {
+      query += ` AND wr.reading_date <= $${paramCount++}`;
+      params.push(end_date);
+    }
+    
+    query += ' ORDER BY wr.reading_date DESC, wr.reading_time DESC';
+    
+    const result = await pool.query(query, params);
+    
+    // Converter valores numéricos
+    const readings = result.rows.map(r => ({
+      ...r,
+      reading_value: Number(r.reading_value)
+    }));
+    
+    return res.json({ ok: true, readings });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST - Adicionar nova leitura de água
+app.post('/water-readings', requireAuth, async (req, res) => {
+  const { tank_name, reading_value, reading_time, reading_date, notes } = req.body || {};
+  
+  if (!tank_name || reading_value === undefined || !reading_time || !reading_date) {
+    return res.status(400).json({ ok: false, error: 'Campos obrigatórios: tank_name, reading_value, reading_time, reading_date' });
+  }
+  
+  // Validar tank_name
+  const validTanks = ['aviarios', 'recria'];
+  if (!validTanks.includes(tank_name.toLowerCase())) {
+    return res.status(400).json({ ok: false, error: 'Tank inválido. Use: aviarios ou recria' });
+  }
+  
+  // Validar reading_time
+  const validTimes = ['07:00', '16:00'];
+  if (!validTimes.includes(reading_time)) {
+    return res.status(400).json({ ok: false, error: 'Horário inválido. Use: 07:00 ou 16:00' });
+  }
+  
+  try {
+    // Verificar se já existe leitura para este tanque/data/horário
+    const existing = await pool.query(
+      'SELECT id FROM water_readings WHERE tank_name = $1 AND reading_date = $2 AND reading_time = $3 AND key_id = $4',
+      [tank_name.toLowerCase(), reading_date, reading_time, req.user.keyId]
+    );
+    
+    if (existing.rowCount > 0) {
+      // Atualizar leitura existente
+      await pool.query(
+        'UPDATE water_readings SET reading_value = $1, notes = $2, recorded_by = $3 WHERE id = $4',
+        [reading_value, notes || null, req.user.userId, existing.rows[0].id]
+      );
+    } else {
+      // Inserir nova leitura
+      const id = uuid();
+      await pool.query(
+        `INSERT INTO water_readings (id, tank_name, reading_value, reading_time, reading_date, notes, recorded_by, key_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [id, tank_name.toLowerCase(), reading_value, reading_time, reading_date, notes || null, req.user.userId, req.user.keyId]
+      );
+    }
+    
+    // Retornar todas as leituras
+    const result = await pool.query(
+      `SELECT wr.*, u.name as recorded_by_name 
+       FROM water_readings wr 
+       LEFT JOIN users u ON u.id = wr.recorded_by 
+       WHERE wr.key_id = $1 
+       ORDER BY wr.reading_date DESC, wr.reading_time DESC`,
+      [req.user.keyId]
+    );
+    
+    const readings = result.rows.map(r => ({
+      ...r,
+      reading_value: Number(r.reading_value)
+    }));
+    
+    return res.status(201).json({ ok: true, readings });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// GET - Estatísticas de consumo de água
+app.get('/water-readings/stats', requireAuth, async (req, res) => {
+  try {
+    const { period = 'week' } = req.query;
+    
+    let dateFilter;
+    switch (period) {
+      case 'day':
+        dateFilter = "reading_date = CURRENT_DATE";
+        break;
+      case 'week':
+        dateFilter = "reading_date >= CURRENT_DATE - INTERVAL '7 days'";
+        break;
+      case 'month':
+        dateFilter = "reading_date >= CURRENT_DATE - INTERVAL '30 days'";
+        break;
+      default:
+        dateFilter = "reading_date >= CURRENT_DATE - INTERVAL '7 days'";
+    }
+    
+    // Buscar leituras do período
+    const result = await pool.query(
+      `SELECT tank_name, reading_value, reading_time, reading_date 
+       FROM water_readings 
+       WHERE key_id = $1 AND ${dateFilter}
+       ORDER BY reading_date ASC, reading_time ASC`,
+      [req.user.keyId]
+    );
+    
+    const readings = result.rows.map(r => ({
+      ...r,
+      reading_value: Number(r.reading_value)
+    }));
+    
+    // Calcular consumos por tanque
+    const stats = {
+      aviarios: { readings: [], daily_consumption: [], total_consumption: 0 },
+      recria: { readings: [], daily_consumption: [], total_consumption: 0 }
+    };
+    
+    readings.forEach(r => {
+      if (stats[r.tank_name]) {
+        stats[r.tank_name].readings.push(r);
+      }
+    });
+    
+    // Calcular consumo diário para cada tanque
+    ['aviarios', 'recria'].forEach(tank => {
+      const tankReadings = stats[tank].readings;
+      
+      // Agrupar por data
+      const byDate = {};
+      tankReadings.forEach(r => {
+        const date = r.reading_date.toISOString().split('T')[0];
+        if (!byDate[date]) byDate[date] = {};
+        byDate[date][r.reading_time] = r.reading_value;
+      });
+      
+      // Calcular consumo diário (7h dia X - 7h dia X+1 = consumo 24h)
+      const dates = Object.keys(byDate).sort();
+      let totalConsumption = 0;
+      
+      for (let i = 0; i < dates.length - 1; i++) {
+        const currentDate = dates[i];
+        const nextDate = dates[i + 1];
+        
+        const morning7h = byDate[currentDate]['07:00'];
+        const nextMorning7h = byDate[nextDate] ? byDate[nextDate]['07:00'] : null;
+        
+        if (morning7h !== undefined && nextMorning7h !== undefined) {
+          const consumption = morning7h - nextMorning7h;
+          if (consumption >= 0) {
+            stats[tank].daily_consumption.push({
+              date: currentDate,
+              consumption: consumption
+            });
+            totalConsumption += consumption;
+          }
+        }
+      }
+      
+      stats[tank].total_consumption = totalConsumption;
+      
+      // Calcular médias
+      const consumptions = stats[tank].daily_consumption;
+      stats[tank].avg_daily = consumptions.length > 0 
+        ? consumptions.reduce((a, b) => a + b.consumption, 0) / consumptions.length 
+        : 0;
+      stats[tank].avg_hourly = stats[tank].avg_daily / 24;
+    });
+    
+    return res.json({ ok: true, stats, period });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// DELETE - Remover leitura (admin only)
+app.delete('/water-readings/:id', requireAuth, requireRoles(['admin']), async (req, res) => {
+  try {
+    await pool.query('DELETE FROM water_readings WHERE id = $1 AND key_id = $2', [req.params.id, req.user.keyId]);
+    
+    const result = await pool.query(
+      `SELECT wr.*, u.name as recorded_by_name 
+       FROM water_readings wr 
+       LEFT JOIN users u ON u.id = wr.recorded_by 
+       WHERE wr.key_id = $1 
+       ORDER BY wr.reading_date DESC, wr.reading_time DESC`,
+      [req.user.keyId]
+    );
+    
+    const readings = result.rows.map(r => ({
+      ...r,
+      reading_value: Number(r.reading_value)
+    }));
+    
+    return res.json({ ok: true, readings });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 async function start() {

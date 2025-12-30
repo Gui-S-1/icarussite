@@ -8,6 +8,10 @@ const state = {
   inventory: [],
   preventives: [],
   purchases: [],
+  checklists: [],
+  waterReadings: [],
+  waterPeriod: 'week',
+  waterStats: null,
   currentView: 'dashboard',
   dashboardFilter: 'daily', // daily, weekly, monthly
   dashboardMonth: null, // null = mês atual, ou 'YYYY-MM' para mês específico
@@ -131,6 +135,9 @@ async function loadViewData(view) {
         break;
       case 'checklists':
         await loadChecklists();
+        break;
+      case 'controle-agua':
+        await loadWaterControl();
         break;
       case 'relatorios':
         await loadReports();
@@ -297,8 +304,12 @@ function setupPermissions() {
   const navCompras = document.querySelector('[data-view="compras"]');
   const navPrev = document.querySelector('[data-view="preventivas"]');
   const navChecklists = document.querySelector('[data-view="checklists"]');
+  const navWater = document.querySelector('[data-view="controle-agua"]');
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
+
+  // Controle de água: visível para preventivas, admin, os_manage_all
+  const canSeeWater = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
 
   if (navDashboard) navDashboard.classList.toggle('hidden', !canSeeDashboard);
   if (navOS) navOS.classList.remove('hidden'); // OS sempre visível para todos
@@ -306,6 +317,7 @@ function setupPermissions() {
   if (navCompras) navCompras.classList.toggle('hidden', !(isAdmin || roles.includes('compras')));
   if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas')));
   if (navChecklists) navChecklists.classList.toggle('hidden', !canSeeChecklists);
+  if (navWater) navWater.classList.toggle('hidden', !canSeeWater);
   if (navRel) navRel.classList.toggle('hidden', !isAdmin);
   if (navCfg) navCfg.classList.remove('hidden');
   
@@ -2963,3 +2975,551 @@ async function updateChecklistFromForm(event, checklistId) {
     showNotification('Erro ao atualizar: ' + error.message, 'error');
   }
 }
+
+// ========== CONTROLE DE ÁGUA - GRANJA VITTA ==========
+
+// Estado do controle de água
+state.waterReadings = [];
+state.waterPeriod = 'week';
+state.waterStats = null;
+
+// Carregar controle de água
+async function loadWaterControl() {
+  try {
+    // Definir data de hoje no input
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('water-reading-date');
+    if (dateInput) dateInput.value = today;
+    
+    // Atualizar horário atual
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 60000);
+    
+    // Carregar dados
+    await loadWaterReadings();
+    await loadWaterStats();
+    
+    // Renderizar
+    renderWaterStats();
+    renderWaterChart();
+    renderWaterHistory();
+    checkWaterAlerts();
+    
+  } catch (error) {
+    console.error('Erro ao carregar controle de água:', error);
+  }
+}
+
+// Atualizar horário atual
+function updateCurrentTime() {
+  const timeEl = document.getElementById('current-time');
+  if (timeEl) {
+    const now = new Date();
+    timeEl.textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+}
+
+// Carregar leituras de água
+async function loadWaterReadings() {
+  try {
+    const response = await fetch(`${API_URL}/water-readings`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      state.waterReadings = data.readings || [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar leituras:', error);
+  }
+}
+
+// Carregar estatísticas de água
+async function loadWaterStats() {
+  try {
+    const response = await fetch(`${API_URL}/water-readings/stats?period=${state.waterPeriod}`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      state.waterStats = data.stats;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar estatísticas:', error);
+  }
+}
+
+// Definir período do filtro
+async function setWaterPeriod(period) {
+  state.waterPeriod = period;
+  
+  // Atualizar botões
+  document.querySelectorAll('.water-filter-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById(`water-filter-${period}`);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  // Recarregar dados
+  await loadWaterStats();
+  renderWaterStats();
+  renderWaterChart();
+}
+
+// Renderizar estatísticas
+function renderWaterStats() {
+  const stats = state.waterStats;
+  if (!stats) return;
+  
+  // Aviários
+  const aviariosConsumo = stats.aviarios?.avg_daily?.toFixed(2) || '--';
+  const aviariosHora = stats.aviarios?.avg_hourly ? (stats.aviarios.avg_hourly * 1000).toFixed(0) : '--';
+  const aviariosUltima = getLastReading('aviarios');
+  
+  document.getElementById('aviarios-consumo-dia').textContent = aviariosConsumo;
+  document.getElementById('aviarios-consumo-hora').textContent = aviariosHora;
+  document.getElementById('aviarios-ultima-leitura').textContent = aviariosUltima;
+  
+  // Recria
+  const recriaConsumo = stats.recria?.avg_daily?.toFixed(2) || '--';
+  const recriaHora = stats.recria?.avg_hourly ? (stats.recria.avg_hourly * 1000).toFixed(0) : '--';
+  const recriaUltima = getLastReading('recria');
+  
+  document.getElementById('recria-consumo-dia').textContent = recriaConsumo;
+  document.getElementById('recria-consumo-hora').textContent = recriaHora;
+  document.getElementById('recria-ultima-leitura').textContent = recriaUltima;
+  
+  // Comparativo
+  const aviariosTotal = stats.aviarios?.total_consumption || 0;
+  const recriaTotal = stats.recria?.total_consumption || 0;
+  const diferenca = Math.abs(aviariosTotal - recriaTotal).toFixed(2);
+  const total = (aviariosTotal + recriaTotal).toFixed(2);
+  const mediaGeral = ((stats.aviarios?.avg_daily || 0) + (stats.recria?.avg_daily || 0)).toFixed(2);
+  
+  document.getElementById('diferenca-consumo').textContent = diferenca;
+  document.getElementById('total-consumo').textContent = total;
+  document.getElementById('media-geral').textContent = mediaGeral;
+  
+  // Mini charts
+  renderMiniChart('aviarios', stats.aviarios?.daily_consumption || []);
+  renderMiniChart('recria', stats.recria?.daily_consumption || []);
+}
+
+// Obter última leitura de um tanque
+function getLastReading(tankName) {
+  const tankReadings = state.waterReadings.filter(r => r.tank_name === tankName);
+  if (tankReadings.length === 0) return '--';
+  return tankReadings[0].reading_value.toFixed(3);
+}
+
+// Renderizar mini chart
+function renderMiniChart(tank, consumptions) {
+  const container = document.getElementById(`${tank}-mini-chart`);
+  if (!container) return;
+  
+  if (consumptions.length === 0) {
+    container.innerHTML = '<span style="color: var(--text-secondary); font-size: 11px;">Sem dados</span>';
+    return;
+  }
+  
+  const maxConsumption = Math.max(...consumptions.map(c => c.consumption), 1);
+  
+  container.innerHTML = consumptions.slice(-7).map(c => {
+    const height = (c.consumption / maxConsumption) * 100;
+    return `<div class="tank-chart-bar" style="height: ${Math.max(height, 5)}%;" title="${c.date}: ${c.consumption.toFixed(2)} m³"></div>`;
+  }).join('');
+}
+
+// Renderizar gráfico principal
+function renderWaterChart() {
+  const container = document.getElementById('water-consumption-chart');
+  if (!container) return;
+  
+  const stats = state.waterStats;
+  if (!stats) {
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Sem dados para exibir</p>';
+    return;
+  }
+  
+  // Combinar dados dos dois tanques
+  const allDates = new Set();
+  (stats.aviarios?.daily_consumption || []).forEach(c => allDates.add(c.date));
+  (stats.recria?.daily_consumption || []).forEach(c => allDates.add(c.date));
+  
+  const dates = Array.from(allDates).sort().slice(-14); // Últimos 14 dias
+  
+  if (dates.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Registre leituras para ver o gráfico</p>';
+    return;
+  }
+  
+  // Mapear consumos por data
+  const aviariosMap = {};
+  const recriaMap = {};
+  (stats.aviarios?.daily_consumption || []).forEach(c => aviariosMap[c.date] = c.consumption);
+  (stats.recria?.daily_consumption || []).forEach(c => recriaMap[c.date] = c.consumption);
+  
+  const maxValue = Math.max(
+    ...Object.values(aviariosMap),
+    ...Object.values(recriaMap),
+    1
+  );
+  
+  container.innerHTML = dates.map(date => {
+    const aviariosValue = aviariosMap[date] || 0;
+    const recriaValue = recriaMap[date] || 0;
+    const aviariosHeight = (aviariosValue / maxValue) * 180;
+    const recriaHeight = (recriaValue / maxValue) * 180;
+    const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    
+    return `
+      <div class="chart-bar-group">
+        <div class="chart-bars">
+          <div class="chart-bar aviarios" style="height: ${Math.max(aviariosHeight, 4)}px;" title="Aviários: ${aviariosValue.toFixed(2)} m³"></div>
+          <div class="chart-bar recria" style="height: ${Math.max(recriaHeight, 4)}px;" title="Recria: ${recriaValue.toFixed(2)} m³"></div>
+        </div>
+        <span class="chart-bar-label">${dateLabel}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// Renderizar histórico
+function renderWaterHistory() {
+  const tbody = document.getElementById('water-history-tbody');
+  if (!tbody) return;
+  
+  const readings = state.waterReadings;
+  const filterTank = document.getElementById('history-tank-filter')?.value || 'all';
+  
+  let filteredReadings = readings;
+  if (filterTank !== 'all') {
+    filteredReadings = readings.filter(r => r.tank_name === filterTank);
+  }
+  
+  if (filteredReadings.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Nenhuma leitura registrada</td></tr>';
+    return;
+  }
+  
+  // Calcular consumo 24h para cada leitura
+  tbody.innerHTML = filteredReadings.slice(0, 50).map((reading, idx) => {
+    const date = new Date(reading.reading_date).toLocaleDateString('pt-BR');
+    const tankClass = reading.tank_name;
+    const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
+    
+    // Calcular consumo (próxima leitura 7h - leitura 7h atual)
+    let consumption = '--';
+    if (reading.reading_time === '07:00') {
+      const nextReading = filteredReadings.find((r, i) => 
+        i > idx && 
+        r.tank_name === reading.tank_name && 
+        r.reading_time === '07:00'
+      );
+      if (nextReading) {
+        const diff = reading.reading_value - nextReading.reading_value;
+        if (diff >= 0) {
+          consumption = `<span class="consumption-positive">-${diff.toFixed(3)} m³</span>`;
+        } else {
+          consumption = `<span class="consumption-negative">+${Math.abs(diff).toFixed(3)} m³</span>`;
+        }
+      }
+    }
+    
+    return `
+      <tr>
+        <td>${date}</td>
+        <td>${reading.reading_time}</td>
+        <td><span class="tank-badge ${tankClass}">${tankLabel}</span></td>
+        <td><strong>${reading.reading_value.toFixed(3)}</strong></td>
+        <td>${consumption}</td>
+        <td>${reading.recorded_by_name || '-'}</td>
+        <td>${reading.notes || '-'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Filtrar histórico
+function filterWaterHistory() {
+  renderWaterHistory();
+}
+
+// Verificar alertas
+function checkWaterAlerts() {
+  const container = document.getElementById('water-alert-container');
+  if (!container) return;
+  
+  const stats = state.waterStats;
+  if (!stats) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  // Verificar consumo anormal (mais que 2x a média)
+  const alerts = [];
+  
+  ['aviarios', 'recria'].forEach(tank => {
+    const tankStats = stats[tank];
+    if (!tankStats || !tankStats.daily_consumption || tankStats.daily_consumption.length < 3) return;
+    
+    const consumptions = tankStats.daily_consumption.map(c => c.consumption);
+    const avg = consumptions.reduce((a, b) => a + b, 0) / consumptions.length;
+    const lastConsumption = consumptions[consumptions.length - 1] || 0;
+    
+    if (lastConsumption > avg * 1.5) {
+      alerts.push({
+        tank: tank === 'aviarios' ? 'Aviários' : 'Recria',
+        message: `Consumo ${((lastConsumption / avg - 1) * 100).toFixed(0)}% acima da média!`,
+        value: lastConsumption.toFixed(2)
+      });
+    }
+  });
+  
+  if (alerts.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  container.innerHTML = alerts.map(alert => `
+    <div class="water-alert">
+      <span class="water-alert-icon">🚨</span>
+      <div class="water-alert-text">
+        <div class="water-alert-title">Consumo acima do normal - ${alert.tank}</div>
+        <div class="water-alert-desc">${alert.message} (${alert.value} m³)</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Salvar leitura de água
+async function saveWaterReading() {
+  const date = document.getElementById('water-reading-date').value;
+  const time = document.getElementById('water-reading-time').value;
+  const aviariosValue = document.getElementById('water-aviarios-value').value;
+  const recriaValue = document.getElementById('water-recria-value').value;
+  const notes = document.getElementById('water-reading-notes').value;
+  
+  if (!date || !time) {
+    showNotification('Preencha a data e horário', 'error');
+    return;
+  }
+  
+  if (!aviariosValue && !recriaValue) {
+    showNotification('Preencha pelo menos uma leitura', 'error');
+    return;
+  }
+  
+  try {
+    // Salvar leitura de Aviários
+    if (aviariosValue) {
+      await fetch(`${API_URL}/water-readings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${state.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          tank_name: 'aviarios',
+          reading_value: parseFloat(aviariosValue),
+          reading_time: time,
+          reading_date: date,
+          notes: notes
+        })
+      });
+    }
+    
+    // Salvar leitura de Recria
+    if (recriaValue) {
+      const response = await fetch(`${API_URL}/water-readings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${state.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          tank_name: 'recria',
+          reading_value: parseFloat(recriaValue),
+          reading_time: time,
+          reading_date: date,
+          notes: notes
+        })
+      });
+      
+      const data = await response.json();
+      if (data.ok) {
+        state.waterReadings = data.readings;
+      }
+    }
+    
+    // Limpar campos
+    document.getElementById('water-aviarios-value').value = '';
+    document.getElementById('water-recria-value').value = '';
+    document.getElementById('water-reading-notes').value = '';
+    
+    // Recarregar dados
+    await loadWaterReadings();
+    await loadWaterStats();
+    renderWaterStats();
+    renderWaterChart();
+    renderWaterHistory();
+    checkWaterAlerts();
+    
+    showNotification('Leitura salva com sucesso! 💧', 'success');
+    
+  } catch (error) {
+    showNotification('Erro ao salvar leitura: ' + error.message, 'error');
+  }
+}
+
+// Exportar relatório PDF
+function exportWaterReportPDF() {
+  // Preparar dados
+  const stats = state.waterStats;
+  const readings = state.waterReadings.slice(0, 30);
+  
+  // Criar conteúdo HTML para impressão
+  const content = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Relatório de Controle de Água - Granja Vitta</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #3b82f6; padding-bottom: 20px; }
+        .header h1 { color: #3b82f6; margin: 0; font-size: 28px; }
+        .header p { color: #666; margin: 10px 0 0 0; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; text-align: center; }
+        .stat-box h3 { margin: 0 0 10px 0; color: #3b82f6; font-size: 14px; }
+        .stat-box .value { font-size: 32px; font-weight: bold; color: #333; }
+        .stat-box .label { font-size: 12px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
+        th { background: #3b82f6; color: white; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; }
+        .tank-aviarios { color: #3b82f6; font-weight: bold; }
+        .tank-recria { color: #10b981; font-weight: bold; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>💧 Relatório de Controle de Água</h1>
+        <p><strong>Granja Vitta</strong> • Sistema Icarus</p>
+        <p>Período: ${getPeriodLabel()} • Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+      </div>
+      
+      <h2 style="color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;">📊 Resumo de Consumo</h2>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <h3>🏭 CAIXA AVIÁRIOS</h3>
+          <div class="value">${stats?.aviarios?.avg_daily?.toFixed(2) || '--'}</div>
+          <div class="label">m³/dia (média)</div>
+        </div>
+        <div class="stat-box">
+          <h3>🐣 CAIXA RECRIA</h3>
+          <div class="value">${stats?.recria?.avg_daily?.toFixed(2) || '--'}</div>
+          <div class="label">m³/dia (média)</div>
+        </div>
+        <div class="stat-box">
+          <h3>⚖️ TOTAL PERÍODO</h3>
+          <div class="value">${((stats?.aviarios?.total_consumption || 0) + (stats?.recria?.total_consumption || 0)).toFixed(2)}</div>
+          <div class="label">m³ consumidos</div>
+        </div>
+      </div>
+      
+      <h2 style="color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;">📋 Histórico de Leituras</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Horário</th>
+            <th>Caixa</th>
+            <th>Leitura (m³)</th>
+            <th>Registrado por</th>
+            <th>Observações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${readings.map(r => `
+            <tr>
+              <td>${new Date(r.reading_date).toLocaleDateString('pt-BR')}</td>
+              <td>${r.reading_time}</td>
+              <td class="tank-${r.tank_name}">${r.tank_name === 'aviarios' ? 'Aviários' : 'Recria'}</td>
+              <td><strong>${r.reading_value.toFixed(3)}</strong></td>
+              <td>${r.recorded_by_name || '-'}</td>
+              <td>${r.notes || '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      
+      <div class="footer">
+        <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
+        <p>Desenvolvido por Guilherme Braga • © 2025</p>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  // Abrir janela de impressão
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(content);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+  
+  showNotification('Relatório PDF gerado! 📄', 'success');
+}
+
+// Exportar relatório Excel (CSV)
+function exportWaterReportExcel() {
+  const readings = state.waterReadings;
+  
+  if (readings.length === 0) {
+    showNotification('Nenhum dado para exportar', 'warning');
+    return;
+  }
+  
+  // Criar CSV
+  const headers = ['Data', 'Horário', 'Caixa', 'Leitura (m³)', 'Registrado por', 'Observações'];
+  const rows = readings.map(r => [
+    new Date(r.reading_date).toLocaleDateString('pt-BR'),
+    r.reading_time,
+    r.tank_name === 'aviarios' ? 'Aviários' : 'Recria',
+    r.reading_value.toFixed(3),
+    r.recorded_by_name || '',
+    r.notes || ''
+  ]);
+  
+  const csv = [
+    headers.join(';'),
+    ...rows.map(row => row.join(';'))
+  ].join('\n');
+  
+  // Criar blob e baixar
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `controle_agua_granja_vitta_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  
+  showNotification('Relatório Excel exportado! 📊', 'success');
+}
+
+// Obter label do período
+function getPeriodLabel() {
+  switch (state.waterPeriod) {
+    case 'day': return 'Hoje';
+    case 'week': return 'Última Semana';
+    case 'month': return 'Último Mês';
+    default: return 'Período';
+  }
+}
+
+// ========== FIM CONTROLE DE ÁGUA ==========
