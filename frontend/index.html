@@ -856,6 +856,41 @@
       border-radius: 12px;
     }
 
+    .btn-export-dash {
+      margin-left: auto;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+      border: 1px solid var(--accent-color);
+      color: var(--accent-color);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-export-dash:hover {
+      background: var(--accent-color);
+      color: #000;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary) !important;
+      border: 1px solid var(--border-color) !important;
+      color: var(--text-primary) !important;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-color) !important;
+      color: var(--accent-color) !important;
+    }
+
     .dash-filters {
       display: flex;
       gap: 4px;
@@ -1238,6 +1273,113 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
       background: linear-gradient(135deg, #e04555 0%, #b71d2a 100%);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+      color: #fff !important;
+      border: none !important;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Preventivas - Linhas de destaque */
+    .row-expired {
+      background: rgba(220, 53, 69, 0.15) !important;
+      border-left: 4px solid #dc3545;
+    }
+
+    .row-expired td {
+      color: #ff6b6b !important;
+    }
+
+    .row-today {
+      background: rgba(245, 158, 11, 0.15) !important;
+      border-left: 4px solid #f59e0b;
+    }
+
+    .row-warning {
+      background: rgba(59, 130, 246, 0.1) !important;
+      border-left: 4px solid #3b82f6;
+    }
+
+    /* Alertas de Preventivas */
+    .preventive-alerts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .preventive-alert {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px 20px;
+      border-radius: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    .preventive-alert.danger {
+      background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(220, 53, 69, 0.05) 100%);
+      border: 1px solid rgba(220, 53, 69, 0.5);
+    }
+
+    .preventive-alert.warning {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+
+    .preventive-alert.info {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+
+    .preventive-alert .alert-icon {
+      font-size: 24px;
+    }
+
+    .preventive-alert .alert-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .preventive-alert .alert-content strong {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .preventive-alert .alert-content span {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Badge High/Medium/Low */
+    .badge-high {
+      background: rgba(220, 53, 69, 0.2) !important;
+      color: #ff6b6b !important;
+      border: 1px solid rgba(220, 53, 69, 0.3) !important;
+    }
+
+    .badge-medium {
+      background: rgba(245, 158, 11, 0.2) !important;
+      color: #fbbf24 !important;
+      border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    }
+
+    .badge-low {
+      background: rgba(16, 185, 129, 0.2) !important;
+      color: #34d399 !important;
+      border: 1px solid rgba(16, 185, 129, 0.3) !important;
     }
 
     /* Productivity Chart */
@@ -2393,6 +2535,7 @@
               <span class="dash-icon">◈</span>
               <h2>Dashboard</h2>
               <span class="dash-date" id="dashboard-date"></span>
+              <button class="btn-export-dash" onclick="exportDashboardReport()">📊 Exportar Relatório</button>
             </div>
             <div class="dash-filters">
               <button class="dash-filter active" id="filter-daily" onclick="setDashboardFilter('daily')">Hoje</button>
@@ -2526,7 +2669,10 @@
           <div class="card">
             <div class="card-header">
               <h3 class="card-title">Almoxarifado</h3>
-              <button class="btn-small btn-primary" onclick="showCreateItem()">+ Novo Item</button>
+              <div class="header-actions">
+                <button class="btn-small btn-secondary" onclick="exportAlmoxarifadoReport()">📊 Exportar Relatório</button>
+                <button class="btn-small btn-primary" onclick="showCreateItem()">+ Novo Item</button>
+              </div>
             </div>
             <div id="almoxarifado-alerts"></div>
             <div class="table-container">
@@ -2597,6 +2743,9 @@
         </div>
         
         <div id="preventivas-view" class="view">
+          <!-- Alertas de Preventivas -->
+          <div id="preventive-alerts" class="preventive-alerts-container"></div>
+          
           <!-- Dashboard de Preventivas -->
           <div class="stats-grid">
             <div class="stat-card">
