@@ -32,12 +32,18 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
-  border-top: 1px solid rgba(212, 175, 55, 0.2);
-  padding: 8px 0;
-  padding-bottom: env(safe-area-inset-bottom, 8px);
+  background: linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.99) 100%);
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 10px 0;
+  padding-bottom: env(safe-area-inset-bottom, 10px);
   z-index: 1000;
-  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+}
+
+/* Hide nav on login screen */
+body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
+  display: none !important;
 }
 
 .mobile-bottom-nav-items {
@@ -53,22 +59,47 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
+  padding: 8px 10px;
   color: var(--text-secondary);
   text-decoration: none;
   border-radius: 12px;
   transition: all 0.3s ease;
-  min-width: 60px;
+  min-width: 55px;
   cursor: pointer;
+  position: relative;
 }
 
 .mobile-nav-item.active {
   color: var(--accent-gold);
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.mobile-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  background: var(--accent-gold);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
 .mobile-nav-item:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
+}
+
+.mobile-nav-svg {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+.mobile-nav-item.active .mobile-nav-svg {
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.6));
 }
 
 .mobile-nav-icon {
@@ -77,9 +108,10 @@
 }
 
 .mobile-nav-label {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 9px;
+  font-weight: 600;
   white-space: nowrap;
+  letter-spacing: 0.3px;
 }
 
 @media (max-width: 768px) {
