@@ -3369,55 +3369,76 @@ function renderMiniChartFromReadings(tank, readings7h, period) {
 
 // Renderizar gráfico principal
 function renderWaterChart() {
-  const container = document.getElementById('water-consumption-chart');
+  var container = document.getElementById('water-consumption-chart');
   if (!container) return;
   
-  const stats = state.waterStats;
-  if (!stats) {
-    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Sem dados para exibir</p>';
-    return;
-  }
+  var readings = state.waterReadings || [];
   
-  // Combinar dados dos dois tanques
-  const allDates = new Set();
-  (stats.aviarios?.daily_consumption || []).forEach(c => allDates.add(c.date));
-  (stats.recria?.daily_consumption || []).forEach(c => allDates.add(c.date));
-  
-  const dates = Array.from(allDates).sort().slice(-14); // Últimos 14 dias
-  
-  if (dates.length === 0) {
+  if (readings.length < 2) {
     container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Registre leituras para ver o gráfico</p>';
     return;
   }
   
-  // Mapear consumos por data
-  const aviariosMap = {};
-  const recriaMap = {};
-  (stats.aviarios?.daily_consumption || []).forEach(c => aviariosMap[c.date] = c.consumption);
-  (stats.recria?.daily_consumption || []).forEach(c => recriaMap[c.date] = c.consumption);
+  // Função para formatar data
+  function getDateKey(dateStr) {
+    return dateStr.split('T')[0];
+  }
   
-  const maxValue = Math.max(
+  // Calcular consumo diário a partir das leituras 7h
+  function calcularConsumos(tank) {
+    var tankReadings = readings
+      .filter(function(r) { return r.tank_name === tank && r.reading_time === '07:00'; })
+      .sort(function(a, b) { return getDateKey(a.reading_date).localeCompare(getDateKey(b.reading_date)); });
+    
+    var consumos = {};
+    for (var i = 1; i < tankReadings.length; i++) {
+      var diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
+      if (diff >= 0) {
+        var dateKey = getDateKey(tankReadings[i].reading_date);
+        consumos[dateKey] = diff;
+      }
+    }
+    return consumos;
+  }
+  
+  var aviariosMap = calcularConsumos('aviarios');
+  var recriaMap = calcularConsumos('recria');
+  
+  // Combinar datas
+  var allDates = new Set();
+  Object.keys(aviariosMap).forEach(function(d) { allDates.add(d); });
+  Object.keys(recriaMap).forEach(function(d) { allDates.add(d); });
+  
+  var dates = Array.from(allDates).sort().slice(-14);
+  
+  if (dates.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Registre leituras de pelo menos 2 dias para ver o gráfico</p>';
+    return;
+  }
+  
+  var maxValue = Math.max(
     ...Object.values(aviariosMap),
     ...Object.values(recriaMap),
     1
   );
   
-  container.innerHTML = dates.map(date => {
-    const aviariosValue = aviariosMap[date] || 0;
-    const recriaValue = recriaMap[date] || 0;
-    const aviariosHeight = (aviariosValue / maxValue) * 180;
-    const recriaHeight = (recriaValue / maxValue) * 180;
-    const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  container.innerHTML = dates.map(function(date) {
+    var aviariosValue = aviariosMap[date] || 0;
+    var recriaValue = recriaMap[date] || 0;
+    var aviariosHeight = (aviariosValue / maxValue) * 180;
+    var recriaHeight = (recriaValue / maxValue) * 180;
     
-    return `
-      <div class="chart-bar-group">
-        <div class="chart-bars">
-          <div class="chart-bar aviarios" style="height: ${Math.max(aviariosHeight, 4)}px;" title="Aviários: ${aviariosValue.toFixed(2)} m³"></div>
-          <div class="chart-bar recria" style="height: ${Math.max(recriaHeight, 4)}px;" title="Recria: ${recriaValue.toFixed(2)} m³"></div>
-        </div>
-        <span class="chart-bar-label">${dateLabel}</span>
-      </div>
-    `;
+    // Formatar data corretamente
+    var parts = date.split('-');
+    var dateLabel = parts[2] + '/' + parts[1];
+    
+    return '<div class="chart-bar-group">' +
+      '<div class="chart-bars">' +
+        '<div class="chart-bar aviarios" style="height: ' + Math.max(aviariosHeight, 4) + 'px;" title="Aviários: ' + aviariosValue.toFixed(2) + ' m³"></div>' +
+        '<div class="chart-bar recria" style="height: ' + Math.max(recriaHeight, 4) + 'px;" title="Recria: ' + recriaValue.toFixed(2) + ' m³"></div>' +
+      '</div>' +
+      '<span class="chart-bar-label">' + dateLabel + '</span>' +
+    '</div>';
   }).join('');
 }
 
