@@ -18,6 +18,9 @@ INSTALAR_NO_DROPLET.txt
 *.key
 *password*
 *secret*
+DEPLOY.ps1
+DEPLOY.bat
+deploy.ps1
 
 # backend
 backend/node_modules/
