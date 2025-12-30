@@ -3637,45 +3637,58 @@ function exportWaterReportPDF() {
     return;
   }
   
-  // Calcular período real baseado nas leituras
-  const sortedReadings = [...readings].sort((a, b) => new Date(a.reading_date) - new Date(b.reading_date));
-  const firstDate = sortedReadings.length > 0 ? new Date(sortedReadings[0].reading_date) : new Date();
-  const lastDate = sortedReadings.length > 0 ? new Date(sortedReadings[sortedReadings.length - 1].reading_date) : new Date();
+  // Função para formatar data corretamente (evitar timezone issues)
+  function formatDatePDF(dateStr) {
+    var parts = dateStr.split('T')[0].split('-');
+    var year = parseInt(parts[0]);
+    var month = parseInt(parts[1]) - 1;
+    var day = parseInt(parts[2]);
+    var date = new Date(year, month, day, 12, 0, 0);
+    var dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
+    var formatted = date.toLocaleDateString('pt-BR');
+    return { formatted: formatted, dayOfWeek: dayOfWeek, dateObj: date };
+  }
   
-  const firstDateStr = firstDate.toLocaleDateString('pt-BR');
-  const lastDateStr = lastDate.toLocaleDateString('pt-BR');
-  const periodStr = firstDateStr === lastDateStr ? firstDateStr : `${firstDateStr} a ${lastDateStr}`;
+  // Calcular período real baseado nas leituras
+  var sortedReadings = [...readings].sort(function(a, b) {
+    return formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj;
+  });
+  
+  var firstDateInfo = sortedReadings.length > 0 ? formatDatePDF(sortedReadings[0].reading_date) : { formatted: new Date().toLocaleDateString('pt-BR') };
+  var lastDateInfo = sortedReadings.length > 0 ? formatDatePDF(sortedReadings[sortedReadings.length - 1].reading_date) : { formatted: new Date().toLocaleDateString('pt-BR') };
+  
+  var periodStr = firstDateInfo.formatted === lastDateInfo.formatted ? firstDateInfo.formatted : firstDateInfo.formatted + ' a ' + lastDateInfo.formatted;
   
   // Calcular consumos corretamente (leitura nova - leitura antiga por tanque)
-  const calculateConsumption = (tank) => {
-    const tankReadings = sortedReadings
-      .filter(r => r.tank_name === tank && r.reading_time === '07:00')
-      .sort((a, b) => new Date(a.reading_date) - new Date(b.reading_date));
+  var calculateConsumption = function(tank) {
+    var tankReadings = sortedReadings
+      .filter(function(r) { return r.tank_name === tank && r.reading_time === '07:00'; })
+      .sort(function(a, b) { return formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj; });
     
     if (tankReadings.length < 2) return { total: 0, avg: 0, days: 0 };
     
-    let total = 0;
-    let count = 0;
-    for (let i = 1; i < tankReadings.length; i++) {
-      const diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
+    var total = 0;
+    var count = 0;
+    for (var i = 1; i < tankReadings.length; i++) {
+      var diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
       if (diff >= 0) {
         total += diff;
         count++;
       }
     }
     
-    return { total, avg: count > 0 ? total / count : 0, days: count };
+    return { total: total, avg: count > 0 ? total / count : 0, days: count };
   };
   
-  const aviariosCalc = calculateConsumption('aviarios');
-  const recriaCalc = calculateConsumption('recria');
-  const totalConsumo = aviariosCalc.total + recriaCalc.total;
+  var aviariosCalc = calculateConsumption('aviarios');
+  var recriaCalc = calculateConsumption('recria');
+  var totalConsumo = aviariosCalc.total + recriaCalc.total;
   
-  // Usar dados do stats se disponíveis, senão usar calculados
-  const aviariosAvg = stats?.aviarios?.avg_daily || aviariosCalc.avg;
-  const recriaAvg = stats?.recria?.avg_daily || recriaCalc.avg;
-  const aviariosTotal = stats?.aviarios?.total_consumption || aviariosCalc.total;
-  const recriaTotal = stats?.recria?.total_consumption || recriaCalc.total;
+  // Usar dados calculados diretamente
+  var aviariosAvg = aviariosCalc.avg;
+  var recriaAvg = recriaCalc.avg;
+  var aviariosTotal = aviariosCalc.total;
+  var recriaTotal = recriaCalc.total;
   
   // Criar conteúdo HTML para impressão
   const content = `
@@ -3750,6 +3763,7 @@ function exportWaterReportPDF() {
         <thead>
           <tr>
             <th>Data</th>
+            <th>Dia</th>
             <th>Horário</th>
             <th>Caixa</th>
             <th>Leitura (m³)</th>
@@ -3758,16 +3772,18 @@ function exportWaterReportPDF() {
           </tr>
         </thead>
         <tbody>
-          ${readings.slice(0, 50).map(r => `
-            <tr>
-              <td>${new Date(r.reading_date).toLocaleDateString('pt-BR')}</td>
-              <td>${r.reading_time}</td>
-              <td class="tank-${r.tank_name}">${r.tank_name === 'aviarios' ? 'Aviários' : 'Recria'}</td>
-              <td><strong>${r.reading_value.toFixed(0)}</strong></td>
-              <td>${r.recorded_by_name || '-'}</td>
-              <td>${r.notes || '-'}</td>
-            </tr>
-          `).join('')}
+          ${sortedReadings.slice(-50).reverse().map(function(r) {
+            var dateInfo = formatDatePDF(r.reading_date);
+            return '<tr>' +
+              '<td>' + dateInfo.formatted + '</td>' +
+              '<td style="color: #888; font-size: 9px;">' + dateInfo.dayOfWeek + '</td>' +
+              '<td>' + r.reading_time + '</td>' +
+              '<td class="tank-' + r.tank_name + '">' + (r.tank_name === 'aviarios' ? 'Aviários' : 'Recria') + '</td>' +
+              '<td><strong>' + r.reading_value.toFixed(3) + '</strong></td>' +
+              '<td>' + (r.recorded_by_name || '-') + '</td>' +
+              '<td>' + (r.notes || '-') + '</td>' +
+            '</tr>';
+          }).join('')}
         </tbody>
       </table>
       
@@ -3793,42 +3809,54 @@ function exportWaterReportPDF() {
 
 // Exportar relatório Excel (CSV) - Formato oficial Granja Vitta
 function exportWaterReportExcel() {
-  const readings = state.waterReadings;
+  var readings = state.waterReadings;
   
   if (readings.length === 0) {
     showNotification('Nenhum dado para exportar', 'warning');
     return;
   }
   
-  // Agrupar leituras por dia e calcular consumo
-  const dailyData = {};
-  const sortedReadings = [...readings].sort((a, b) => new Date(a.reading_date) - new Date(b.reading_date));
+  // Função para formatar data corretamente (evitar timezone issues)
+  function formatDateExcel(dateStr) {
+    var parts = dateStr.split('T')[0].split('-');
+    var year = parseInt(parts[0]);
+    var month = parseInt(parts[1]) - 1;
+    var day = parseInt(parts[2]);
+    var date = new Date(year, month, day, 12, 0, 0);
+    var dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase().split('-')[0];
+    var formatted = date.toLocaleDateString('pt-BR');
+    return { formatted: formatted, dayOfWeek: dayOfWeek, dateObj: date, key: parts.join('-') };
+  }
   
-  sortedReadings.forEach(r => {
-    // Corrigir timezone - usar data local
-    const dateObj = new Date(r.reading_date);
-    const dateKey = dateObj.toLocaleDateString('pt-BR').split('/').reverse().join('-'); // YYYY-MM-DD
+  // Agrupar leituras por dia e calcular consumo
+  var dailyData = {};
+  var sortedReadings = [...readings].sort(function(a, b) {
+    return formatDateExcel(a.reading_date).key.localeCompare(formatDateExcel(b.reading_date).key);
+  });
+  
+  sortedReadings.forEach(function(r) {
+    var dateInfo = formatDateExcel(r.reading_date);
+    var dateKey = dateInfo.key;
     
     if (!dailyData[dateKey]) {
-      dailyData[dateKey] = { aviarios: {}, recria: {}, dateFormatted: dateObj.toLocaleDateString('pt-BR') };
+      dailyData[dateKey] = { aviarios: {}, recria: {}, dateFormatted: dateInfo.formatted, dayOfWeek: dateInfo.dayOfWeek };
     }
-    const timeKey = r.reading_time === '07:00' ? 'am' : 'pm';
+    var timeKey = r.reading_time === '07:00' ? 'am' : 'pm';
     dailyData[dateKey][r.tank_name][timeKey] = r.reading_value;
   });
   
   // Gerar linhas no formato da planilha oficial
-  const rows = [];
-  const dates = Object.keys(dailyData).sort();
+  var rows = [];
+  var dates = Object.keys(dailyData).sort();
   
-  dates.forEach((dateStr, idx) => {
-    const data = dailyData[dateStr];
-    const formattedDate = data.dateFormatted;
-    const dateObj = new Date(dateStr + 'T12:00:00');
-    const dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase().split('-')[0];
+  dates.forEach(function(dateStr, idx) {
+    var data = dailyData[dateStr];
+    var formattedDate = data.dateFormatted;
+    var dayOfWeek = data.dayOfWeek;
     
     // Próximo dia para calcular consumo 24h
-    const nextDate = dates[idx + 1];
-    const nextData = nextDate ? dailyData[nextDate] : null;
+    var nextDate = dates[idx + 1];
+    var nextData = nextDate ? dailyData[nextDate] : null;
     
     // RECRIA - 7AM-4PM (período de trabalho)
     if (data.recria.am !== undefined && data.recria.pm !== undefined) {
