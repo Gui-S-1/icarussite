@@ -1044,15 +1044,12 @@
       gap: 6px;
       max-height: 180px;
       overflow-y: auto;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
     }
 
     .dash-activity::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .dash-activity::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 2px;
+      display: none; /* Chrome/Safari */
     }
 
     /* Summary Section */
@@ -1662,31 +1659,31 @@
       <!-- Sidebar -->
       <div class="sidebar">
         <div class="nav-item active" data-view="dashboard">
-          <span class="nav-icon">◈</span>
+          <span class="nav-icon">▣</span>
           <span>Dashboard</span>
         </div>
         <div class="nav-item" data-view="os">
-          <span class="nav-icon">◇</span>
+          <span class="nav-icon">☰</span>
           <span>Ordens de Serviço</span>
         </div>
         <div class="nav-item hidden" data-view="almoxarifado">
-          <span class="nav-icon">◫</span>
+          <span class="nav-icon">▦</span>
           <span>Almoxarifado</span>
         </div>
         <div class="nav-item hidden" data-view="compras">
-          <span class="nav-icon">◪</span>
+          <span class="nav-icon">▥</span>
           <span>Compras</span>
         </div>
         <div class="nav-item hidden" data-view="preventivas">
-          <span class="nav-icon">◎</span>
+          <span class="nav-icon">⚙</span>
           <span>Preventivas</span>
         </div>
         <div class="nav-item hidden" data-view="relatorios">
-          <span class="nav-icon">◧</span>
+          <span class="nav-icon">▤</span>
           <span>Relatórios</span>
         </div>
         <div class="nav-item hidden" data-view="configuracoes">
-          <span class="nav-icon">◉</span>
+          <span class="nav-icon">⚙</span>
           <span>Configurações</span>
         </div>
       </div>
