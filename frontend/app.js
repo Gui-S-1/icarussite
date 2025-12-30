@@ -4365,194 +4365,88 @@ function exportAlmoxarifadoReport() {
     ((i.quantity || 0) * (i.unit_cost || 0)).toFixed(2)
   ]);
   
-  const csv = [csvHeaders.join(';'), ...csvRows.map(r => r.join(';'))].join('\\n');
-  const blob = new Blob(['\\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const csv = [csvHeaders.join(';'), ...csvRows.map(r => r.join(';'))].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = \`ALMOXARIFADO_GRANJA_VITTA_\${new Date().toISOString().split('T')[0]}.csv\`;
+  link.download = 'ALMOXARIFADO_GRANJA_VITTA_' + new Date().toISOString().split('T')[0] + '.csv';
   link.click();
 
   // Gerar relatório HTML interativo
-  const htmlContent = \`
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Relatório Almoxarifado - Granja Vitta</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Segoe UI', system-ui, sans-serif; 
-      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
-      color: #fff;
-      min-height: 100vh;
-      padding: 40px;
-    }
-    .container { max-width: 1400px; margin: 0 auto; }
-    .header {
-      text-align: center;
-      padding: 40px;
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.02) 100%);
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      border-radius: 20px;
-      margin-bottom: 30px;
-    }
-    .header h1 { font-size: 36px; color: #d4af37; margin-bottom: 10px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-    .stat-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 25px;
-      text-align: center;
-    }
-    .stat-card.gold { border-color: rgba(212, 175, 55, 0.5); }
-    .stat-card.danger { border-color: rgba(220, 53, 69, 0.5); }
-    .stat-card h3 { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 8px; }
-    .stat-card .value { font-size: 42px; font-weight: 700; }
-    .stat-card .value.gold { color: #d4af37; }
-    .stat-card .value.red { color: #ef4444; }
-    .stat-card .value.green { color: #10b981; }
-    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-    .chart-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 25px;
-    }
-    .chart-card h3 { margin-bottom: 20px; }
-    .table-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-    .table-card h3 { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: rgba(212, 175, 55, 0.15); color: #d4af37; padding: 12px 15px; text-align: left; font-size: 11px; text-transform: uppercase; }
-    td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
-    .low-stock { background: rgba(220, 53, 69, 0.15); }
-    .footer { text-align: center; padding: 30px; color: #666; font-size: 12px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📦 RELATÓRIO ALMOXARIFADO</h1>
-      <p><strong>Granja Vitta</strong> • Sistema Icarus</p>
-      <p style="margin-top: 10px; color: #666;">Gerado em \${new Date().toLocaleString('pt-BR')}</p>
-    </div>
+  const dateStr = new Date().toLocaleString('pt-BR');
+  const totalValueStr = 'R$ ' + totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  const categoryDataJson = JSON.stringify(Object.fromEntries(Object.entries(byCategory).map(function(entry) { return [entry[0], entry[1].length]; })));
+  const sortedItems = items.slice().sort(function(a, b) { return b.quantity - a.quantity; });
+  const topItemsJson = JSON.stringify(sortedItems.slice(0, 10).map(function(i) { return { name: i.name, qty: i.quantity }; }));
+  
+  let tableRows = '';
+  items.forEach(function(i) {
+    const isLow = i.quantity <= (i.min_stock || 5);
+    tableRows += '<tr class="' + (isLow ? 'low-stock' : '') + '">' +
+      '<td>' + (i.sku || '-') + '</td>' +
+      '<td><strong>' + i.name + '</strong></td>' +
+      '<td>' + (i.category || '-') + '</td>' +
+      '<td>' + (i.brand || '-') + '</td>' +
+      '<td>' + i.quantity + '</td>' +
+      '<td>' + (i.unit || '-') + '</td>' +
+      '<td>' + (i.location || '-') + '</td>' +
+      '<td>' + (isLow ? '⚠️ Baixo' : '✅ OK') + '</td>' +
+      '</tr>';
+  });
 
-    <div class="stats-grid">
-      <div class="stat-card gold">
-        <h3>Total de Itens</h3>
-        <div class="value gold">\${totalItems}</div>
-      </div>
-      <div class="stat-card danger">
-        <h3>Estoque Baixo</h3>
-        <div class="value red">\${lowStock}</div>
-      </div>
-      <div class="stat-card">
-        <h3>Categorias</h3>
-        <div class="value green">\${categories}</div>
-      </div>
-      <div class="stat-card gold">
-        <h3>Valor Total</h3>
-        <div class="value gold">R$ \${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-      </div>
-    </div>
-
-    <div class="charts-row">
-      <div class="chart-card">
-        <h3>📊 Itens por Categoria</h3>
-        <canvas id="categoryChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <h3>📈 Top 10 - Maior Quantidade</h3>
-        <canvas id="topItemsChart"></canvas>
-      </div>
-    </div>
-
-    <div class="table-card">
-      <h3>📋 Lista Completa de Itens</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>SKU</th>
-            <th>Nome</th>
-            <th>Categoria</th>
-            <th>Marca</th>
-            <th>Qtd</th>
-            <th>Unidade</th>
-            <th>Localização</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          \${items.map(i => {
-            const isLow = i.quantity <= (i.min_stock || 5);
-            return \`
-              <tr class="\${isLow ? 'low-stock' : ''}">
-                <td>\${i.sku || '-'}</td>
-                <td><strong>\${i.name}</strong></td>
-                <td>\${i.category || '-'}</td>
-                <td>\${i.brand || '-'}</td>
-                <td>\${i.quantity}</td>
-                <td>\${i.unit || '-'}</td>
-                <td>\${i.location || '-'}</td>
-                <td>\${isLow ? '⚠️ Baixo' : '✅ OK'}</td>
-              </tr>
-            \`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="footer">
-      <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
-    </div>
-  </div>
-
-  <script>
-    const categoryData = \${JSON.stringify(Object.fromEntries(Object.entries(byCategory).map(([k, v]) => [k, v.length])))};
-    const topItems = \${JSON.stringify(items.sort((a, b) => b.quantity - a.quantity).slice(0, 10).map(i => ({ name: i.name, qty: i.quantity })))};
-
-    new Chart(document.getElementById('categoryChart'), {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(categoryData),
-        datasets: [{
-          data: Object.values(categoryData),
-          backgroundColor: ['#d4af37', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899']
-        }]
-      },
-      options: { plugins: { legend: { position: 'bottom', labels: { color: '#888' } } } }
-    });
-
-    new Chart(document.getElementById('topItemsChart'), {
-      type: 'bar',
-      data: {
-        labels: topItems.map(i => i.name.substring(0, 20)),
-        datasets: [{
-          label: 'Quantidade',
-          data: topItems.map(i => i.qty),
-          backgroundColor: 'rgba(212, 175, 55, 0.7)',
-          borderRadius: 6
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-        }
-      }
-    });
-  </script>
-</body>
-</html>\`;
+  const htmlContent = '<!DOCTYPE html>' +
+    '<html lang="pt-BR"><head><meta charset="UTF-8">' +
+    '<title>Relatório Almoxarifado - Granja Vitta</title>' +
+    '<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>' +
+    '<style>' +
+    '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+    'body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%); color: #fff; min-height: 100vh; padding: 40px; }' +
+    '.container { max-width: 1400px; margin: 0 auto; }' +
+    '.header { text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.02) 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 20px; margin-bottom: 30px; }' +
+    '.header h1 { font-size: 36px; color: #d4af37; margin-bottom: 10px; }' +
+    '.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }' +
+    '.stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; text-align: center; }' +
+    '.stat-card.gold { border-color: rgba(212, 175, 55, 0.5); }' +
+    '.stat-card.danger { border-color: rgba(220, 53, 69, 0.5); }' +
+    '.stat-card h3 { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 8px; }' +
+    '.stat-card .value { font-size: 42px; font-weight: 700; }' +
+    '.stat-card .value.gold { color: #d4af37; }' +
+    '.stat-card .value.red { color: #ef4444; }' +
+    '.stat-card .value.green { color: #10b981; }' +
+    '.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }' +
+    '.chart-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; }' +
+    '.chart-card h3 { margin-bottom: 20px; }' +
+    '.table-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden; }' +
+    '.table-card h3 { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); }' +
+    'table { width: 100%; border-collapse: collapse; }' +
+    'th { background: rgba(212, 175, 55, 0.15); color: #d4af37; padding: 12px 15px; text-align: left; font-size: 11px; text-transform: uppercase; }' +
+    'td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }' +
+    '.low-stock { background: rgba(220, 53, 69, 0.15); }' +
+    '.footer { text-align: center; padding: 30px; color: #666; font-size: 12px; }' +
+    '</style></head><body>' +
+    '<div class="container">' +
+    '<div class="header"><h1>📦 RELATÓRIO ALMOXARIFADO</h1><p><strong>Granja Vitta</strong> • Sistema Icarus</p><p style="margin-top: 10px; color: #666;">Gerado em ' + dateStr + '</p></div>' +
+    '<div class="stats-grid">' +
+    '<div class="stat-card gold"><h3>Total de Itens</h3><div class="value gold">' + totalItems + '</div></div>' +
+    '<div class="stat-card danger"><h3>Estoque Baixo</h3><div class="value red">' + lowStock + '</div></div>' +
+    '<div class="stat-card"><h3>Categorias</h3><div class="value green">' + categories + '</div></div>' +
+    '<div class="stat-card gold"><h3>Valor Total</h3><div class="value gold">' + totalValueStr + '</div></div>' +
+    '</div>' +
+    '<div class="charts-row">' +
+    '<div class="chart-card"><h3>📊 Itens por Categoria</h3><canvas id="categoryChart"></canvas></div>' +
+    '<div class="chart-card"><h3>📈 Top 10 - Maior Quantidade</h3><canvas id="topItemsChart"></canvas></div>' +
+    '</div>' +
+    '<div class="table-card"><h3>📋 Lista Completa de Itens</h3>' +
+    '<table><thead><tr><th>SKU</th><th>Nome</th><th>Categoria</th><th>Marca</th><th>Qtd</th><th>Unidade</th><th>Localização</th><th>Status</th></tr></thead>' +
+    '<tbody>' + tableRows + '</tbody></table></div>' +
+    '<div class="footer"><p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p></div>' +
+    '</div>' +
+    '<script>' +
+    'var categoryData = ' + categoryDataJson + ';' +
+    'var topItems = ' + topItemsJson + ';' +
+    'new Chart(document.getElementById("categoryChart"), { type: "doughnut", data: { labels: Object.keys(categoryData), datasets: [{ data: Object.values(categoryData), backgroundColor: ["#d4af37", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899"] }] }, options: { plugins: { legend: { position: "bottom", labels: { color: "#888" } } } } });' +
+    'new Chart(document.getElementById("topItemsChart"), { type: "bar", data: { labels: topItems.map(function(i) { return i.name.substring(0, 20); }), datasets: [{ label: "Quantidade", data: topItems.map(function(i) { return i.qty; }), backgroundColor: "rgba(212, 175, 55, 0.7)", borderRadius: 6 }] }, options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#888" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { ticks: { color: "#888" }, grid: { color: "rgba(255,255,255,0.05)" } } } } });' +
+    '<\/script></body></html>';
 
   const newWindow = window.open('', '_blank');
   newWindow.document.write(htmlContent);
@@ -4560,3 +4454,4 @@ function exportAlmoxarifadoReport() {
   
   showNotification('Relatório e planilha exportados!', 'success');
 }
+
