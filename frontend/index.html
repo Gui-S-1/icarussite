@@ -1565,6 +1565,49 @@
       width: fit-content;
     }
 
+    /* Abas de Tipo de Visualização */
+    .water-view-tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .water-view-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .water-view-tab:hover {
+      border-color: var(--accent-color);
+      color: var(--text-primary);
+    }
+
+    .water-view-tab.active {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .water-view-tab .tab-icon {
+      font-size: 20px;
+    }
+
+    .water-view-tab .tab-text {
+      font-weight: 700;
+    }
+
     .water-filter-btn {
       padding: 10px 20px;
       border: none;
@@ -2646,6 +2689,18 @@
 
           <!-- Alerta de Consumo (se houver) -->
           <div id="water-alert-container"></div>
+
+          <!-- Abas de Tipo de Visualização -->
+          <div class="water-view-tabs">
+            <button class="water-view-tab active" id="tab-trabalho" onclick="setWaterViewType('trabalho')">
+              <span class="tab-icon">⏰</span>
+              <span class="tab-text">Período Trabalho (7h-16h)</span>
+            </button>
+            <button class="water-view-tab" id="tab-24h" onclick="setWaterViewType('24h')">
+              <span class="tab-icon">📊</span>
+              <span class="tab-text">Consumo 24 Horas</span>
+            </button>
+          </div>
 
           <!-- Filtros de Período -->
           <div class="water-filters">

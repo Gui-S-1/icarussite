@@ -3062,6 +3062,24 @@ async function loadWaterStats() {
   }
 }
 
+// Estado da visualização
+state.waterViewType = 'trabalho'; // 'trabalho' ou '24h'
+
+// Definir tipo de visualização
+function setWaterViewType(type) {
+  state.waterViewType = type;
+  
+  // Atualizar abas
+  document.querySelectorAll('.water-view-tab').forEach(tab => tab.classList.remove('active'));
+  const activeTab = document.getElementById(`tab-${type}`);
+  if (activeTab) activeTab.classList.add('active');
+  
+  // Re-renderizar
+  renderWaterStats();
+  renderWaterChart();
+  renderWaterHistory();
+}
+
 // Definir período do filtro
 async function setWaterPeriod(period) {
   state.waterPeriod = period;
@@ -3627,6 +3645,312 @@ function exportWaterReportExcel() {
   link.click();
   
   showNotification('Planilha exportada com sucesso!', 'success');
+  
+  // Também gerar relatório HTML interativo
+  generateInteractiveReport(rows, dailyData, dates);
+}
+
+// Gerar relatório HTML interativo e tecnológico
+function generateInteractiveReport(rows, dailyData, dates) {
+  // Calcular totais para os gráficos
+  let totalRecria = 0, totalAviarios = 0;
+  const chartDataTrabalho = [];
+  const chartData24h = [];
+  
+  dates.forEach((dateStr, idx) => {
+    const data = dailyData[dateStr];
+    const nextData = dates[idx + 1] ? dailyData[dates[idx + 1]] : null;
+    const formattedDate = new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    
+    // Trabalho
+    if (data.recria?.am !== undefined && data.recria?.pm !== undefined) {
+      const consumo = (data.recria.pm - data.recria.am) * 1000;
+      chartDataTrabalho.push({ date: formattedDate, recria: consumo, aviarios: 0 });
+      totalRecria += consumo;
+    }
+    if (data.aviarios?.am !== undefined && data.aviarios?.pm !== undefined) {
+      const consumo = (data.aviarios.pm - data.aviarios.am) * 1000;
+      const existing = chartDataTrabalho.find(d => d.date === formattedDate);
+      if (existing) existing.aviarios = consumo;
+      totalAviarios += consumo;
+    }
+    
+    // 24h
+    if (data.recria?.am !== undefined && nextData?.recria?.am !== undefined) {
+      const consumo = (nextData.recria.am - data.recria.am) * 1000;
+      chartData24h.push({ date: formattedDate, recria: consumo, aviarios: 0 });
+    }
+    if (data.aviarios?.am !== undefined && nextData?.aviarios?.am !== undefined) {
+      const consumo = (nextData.aviarios.am - data.aviarios.am) * 1000;
+      const existing = chartData24h.find(d => d.date === formattedDate);
+      if (existing) existing.aviarios = consumo;
+    }
+  });
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Controle de Água - Granja Vitta</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', system-ui, sans-serif; 
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 30px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header {
+      text-align: center;
+      padding: 40px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.02) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 { 
+      font-size: 32px; 
+      color: #d4af37; 
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    .header p { color: #888; font-size: 14px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 25px;
+      text-align: center;
+    }
+    .stat-card.gold { border-color: rgba(212, 175, 55, 0.5); }
+    .stat-card h3 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .stat-card .value { font-size: 36px; font-weight: 700; color: #d4af37; }
+    .stat-card .unit { font-size: 14px; color: #666; }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab {
+      flex: 1;
+      padding: 15px;
+      background: rgba(255,255,255,0.03);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: #888;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .tab:hover, .tab.active { border-color: #d4af37; color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+    .chart-container {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .chart-title { font-size: 18px; color: #fff; margin-bottom: 20px; }
+    .table-container {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .table-header { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .table-header h3 { font-size: 18px; color: #fff; }
+    table { width: 100%; border-collapse: collapse; }
+    th { 
+      background: rgba(212, 175, 55, 0.15); 
+      color: #d4af37; 
+      padding: 15px; 
+      text-align: left; 
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    td { 
+      padding: 15px; 
+      border-bottom: 1px solid rgba(255,255,255,0.05); 
+      font-size: 13px;
+    }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-trabalho { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .badge-diario { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-recria { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-aviarios { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .footer {
+      text-align: center;
+      padding: 30px;
+      color: #666;
+      font-size: 12px;
+    }
+    @media print {
+      body { background: #fff; color: #333; }
+      .stat-card { border-color: #ddd; }
+      .stat-card .value { color: #333; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Controle de Água</h1>
+      <p><strong>Granja Vitta</strong> • Sistema Icarus • Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <h3>Total Recria</h3>
+        <div class="value">${(totalRecria / 1000).toFixed(1)}</div>
+        <div class="unit">m³ consumidos</div>
+      </div>
+      <div class="stat-card gold">
+        <h3>Total Aviários</h3>
+        <div class="value">${(totalAviarios / 1000).toFixed(1)}</div>
+        <div class="unit">m³ consumidos</div>
+      </div>
+      <div class="stat-card">
+        <h3>Média Diária Recria</h3>
+        <div class="value">${chartDataTrabalho.length > 0 ? Math.round(totalRecria / chartDataTrabalho.length).toLocaleString('pt-BR') : 0}</div>
+        <div class="unit">litros/dia</div>
+      </div>
+      <div class="stat-card">
+        <h3>Média Diária Aviários</h3>
+        <div class="value">${chartDataTrabalho.length > 0 ? Math.round(totalAviarios / chartDataTrabalho.length).toLocaleString('pt-BR') : 0}</div>
+        <div class="unit">litros/dia</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('trabalho')">⏰ Período Trabalho (7h-16h)</div>
+      <div class="tab" onclick="showTab('diario')">📊 Consumo 24 Horas</div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-title">📈 Gráfico de Consumo por Período</div>
+      <canvas id="waterChart" height="100"></canvas>
+    </div>
+
+    <div class="table-container">
+      <div class="table-header">
+        <h3>📋 Histórico Detalhado de Leituras</h3>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Dia</th>
+            <th>Caixa</th>
+            <th>Período</th>
+            <th>Entrada (m³)</th>
+            <th>L/Hora</th>
+            <th>Total (L)</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td><strong>${row[0]}</strong></td>
+              <td>${row[1]}</td>
+              <td><span class="badge badge-${row[2].toLowerCase()}">${row[2]}</span></td>
+              <td>${row[3]}</td>
+              <td style="font-family: monospace;">${row[4]}</td>
+              <td>${row[5]}</td>
+              <td><strong>${row[6]}</strong></td>
+              <td><span class="badge badge-${row[7].toLowerCase()}">${row[7]}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
+      <p>Desenvolvido por Guilherme Braga • © 2025</p>
+    </div>
+  </div>
+
+  <script>
+    const chartDataTrabalho = ${JSON.stringify(chartDataTrabalho)};
+    const chartData24h = ${JSON.stringify(chartData24h)};
+    let currentData = chartDataTrabalho;
+
+    const ctx = document.getElementById('waterChart').getContext('2d');
+    let chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: currentData.map(d => d.date),
+        datasets: [
+          {
+            label: 'Recria (L)',
+            data: currentData.map(d => d.recria),
+            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+            borderColor: '#10b981',
+            borderWidth: 2,
+            borderRadius: 6
+          },
+          {
+            label: 'Aviários (L)',
+            data: currentData.map(d => d.aviarios),
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            borderColor: '#3b82f6',
+            borderWidth: 2,
+            borderRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#888' } }
+        },
+        scales: {
+          x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+
+    function showTab(type) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      currentData = type === 'trabalho' ? chartDataTrabalho : chartData24h;
+      chart.data.labels = currentData.map(d => d.date);
+      chart.data.datasets[0].data = currentData.map(d => d.recria);
+      chart.data.datasets[1].data = currentData.map(d => d.aviarios);
+      chart.update();
+    }
+  </script>
+</body>
+</html>`;
+
+  // Abrir em nova janela
+  const newWindow = window.open('', '_blank');
+  newWindow.document.write(htmlContent);
+  newWindow.document.close();
 }
 
 // Obter label do período
