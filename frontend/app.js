@@ -3725,9 +3725,12 @@ function exportWaterReportExcel() {
   const sortedReadings = [...readings].sort((a, b) => new Date(a.reading_date) - new Date(b.reading_date));
   
   sortedReadings.forEach(r => {
-    const dateKey = r.reading_date.split('T')[0];
+    // Corrigir timezone - usar data local
+    const dateObj = new Date(r.reading_date);
+    const dateKey = dateObj.toLocaleDateString('pt-BR').split('/').reverse().join('-'); // YYYY-MM-DD
+    
     if (!dailyData[dateKey]) {
-      dailyData[dateKey] = { aviarios: {}, recria: {} };
+      dailyData[dateKey] = { aviarios: {}, recria: {}, dateFormatted: dateObj.toLocaleDateString('pt-BR') };
     }
     const timeKey = r.reading_time === '07:00' ? 'am' : 'pm';
     dailyData[dateKey][r.tank_name][timeKey] = r.reading_value;
@@ -3738,10 +3741,10 @@ function exportWaterReportExcel() {
   const dates = Object.keys(dailyData).sort();
   
   dates.forEach((dateStr, idx) => {
-    const date = new Date(dateStr + 'T12:00:00');
-    const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase();
-    const formattedDate = date.toLocaleDateString('pt-BR');
     const data = dailyData[dateStr];
+    const formattedDate = data.dateFormatted;
+    const dateObj = new Date(dateStr + 'T12:00:00');
+    const dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase().split('-')[0];
     
     // Próximo dia para calcular consumo 24h
     const nextDate = dates[idx + 1];
@@ -3749,52 +3752,56 @@ function exportWaterReportExcel() {
     
     // RECRIA - 7AM-4PM (período de trabalho)
     if (data.recria.am !== undefined && data.recria.pm !== undefined) {
-      const consumo = data.recria.pm - data.recria.am;
-      const ltPorHora = Math.round((consumo * 1000) / 9); // 9 horas de trabalho
+      const consumoM3 = data.recria.pm - data.recria.am;
+      const consumoLitros = consumoM3 * 1000;
+      const ltPorHora = Math.round(consumoLitros / 9); // 9 horas de trabalho
       rows.push([
         formattedDate, dayOfWeek, 'RECRIA', '7AM - 4PM',
         `${Math.round(data.recria.am)} - ${Math.round(data.recria.pm)}`,
-        ltPorHora.toLocaleString('pt-BR'),
-        (consumo * 1000).toLocaleString('pt-BR'),
+        ltPorHora,
+        consumoLitros.toFixed(0),
         'TRABALHO'
       ]);
     }
     
     // AVIARIOS - 7AM-4PM (período de trabalho)
     if (data.aviarios.am !== undefined && data.aviarios.pm !== undefined) {
-      const consumo = data.aviarios.pm - data.aviarios.am;
-      const ltPorHora = Math.round((consumo * 1000) / 9);
+      const consumoM3 = data.aviarios.pm - data.aviarios.am;
+      const consumoLitros = consumoM3 * 1000;
+      const ltPorHora = Math.round(consumoLitros / 9);
       rows.push([
         formattedDate, dayOfWeek, 'AVIARIOS', '7AM - 4PM',
         `${Math.round(data.aviarios.am)} - ${Math.round(data.aviarios.pm)}`,
-        ltPorHora.toLocaleString('pt-BR'),
-        (consumo * 1000).toLocaleString('pt-BR'),
+        ltPorHora,
+        consumoLitros.toFixed(0),
         'TRABALHO'
       ]);
     }
     
-    // RECRIA - 24H (diário)
+    // RECRIA - 24H (7h dia X até 7h dia X+1 = consumo do dia X)
     if (data.recria.am !== undefined && nextData?.recria?.am !== undefined) {
-      const consumo = nextData.recria.am - data.recria.am;
-      const ltPorHora = Math.round((consumo * 1000) / 24);
+      const consumoM3 = nextData.recria.am - data.recria.am;
+      const consumoLitros = consumoM3 * 1000;
+      const ltPorHora = Math.round(consumoLitros / 24);
       rows.push([
         formattedDate, dayOfWeek, 'RECRIA', '24H',
         `${Math.round(data.recria.am)} - ${Math.round(nextData.recria.am)}`,
-        ltPorHora.toLocaleString('pt-BR'),
-        (consumo * 1000).toLocaleString('pt-BR'),
+        ltPorHora,
+        consumoLitros.toFixed(0),
         'DIARIO'
       ]);
     }
     
-    // AVIARIOS - 24H (diário)
+    // AVIARIOS - 24H (7h dia X até 7h dia X+1 = consumo do dia X)
     if (data.aviarios.am !== undefined && nextData?.aviarios?.am !== undefined) {
-      const consumo = nextData.aviarios.am - data.aviarios.am;
-      const ltPorHora = Math.round((consumo * 1000) / 24);
+      const consumoM3 = nextData.aviarios.am - data.aviarios.am;
+      const consumoLitros = consumoM3 * 1000;
+      const ltPorHora = Math.round(consumoLitros / 24);
       rows.push([
         formattedDate, dayOfWeek, 'AVIARIOS', '24H',
         `${Math.round(data.aviarios.am)} - ${Math.round(nextData.aviarios.am)}`,
-        ltPorHora.toLocaleString('pt-BR'),
-        (consumo * 1000).toLocaleString('pt-BR'),
+        ltPorHora,
+        consumoLitros.toFixed(0),
         'DIARIO'
       ]);
     }
@@ -3825,38 +3832,64 @@ function exportWaterReportExcel() {
 function generateInteractiveReport(rows, dailyData, dates) {
   // Calcular totais para os gráficos
   let totalRecria = 0, totalAviarios = 0;
+  let totalRecriaTrabalho = 0, totalAviariosTrabalho = 0;
   const chartDataTrabalho = [];
   const chartData24h = [];
-  
+  const dailyTotals = []; // Para ranking de maiores gastos
+
   dates.forEach((dateStr, idx) => {
     const data = dailyData[dateStr];
     const nextData = dates[idx + 1] ? dailyData[dates[idx + 1]] : null;
-    const formattedDate = new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    const formattedDate = data.dateFormatted || new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     
-    // Trabalho
+    let dayTotalTrabalho = 0;
+    let dayTotal24h = 0;
+    
+    // Trabalho RECRIA
     if (data.recria?.am !== undefined && data.recria?.pm !== undefined) {
       const consumo = (data.recria.pm - data.recria.am) * 1000;
-      chartDataTrabalho.push({ date: formattedDate, recria: consumo, aviarios: 0 });
-      totalRecria += consumo;
+      chartDataTrabalho.push({ date: formattedDate, tank: 'Recria', value: consumo });
+      totalRecriaTrabalho += consumo;
+      dayTotalTrabalho += consumo;
     }
+    // Trabalho AVIARIOS
     if (data.aviarios?.am !== undefined && data.aviarios?.pm !== undefined) {
       const consumo = (data.aviarios.pm - data.aviarios.am) * 1000;
-      const existing = chartDataTrabalho.find(d => d.date === formattedDate);
-      if (existing) existing.aviarios = consumo;
-      totalAviarios += consumo;
+      chartDataTrabalho.push({ date: formattedDate, tank: 'Aviários', value: consumo });
+      totalAviariosTrabalho += consumo;
+      dayTotalTrabalho += consumo;
     }
     
-    // 24h
+    // 24h RECRIA
     if (data.recria?.am !== undefined && nextData?.recria?.am !== undefined) {
       const consumo = (nextData.recria.am - data.recria.am) * 1000;
-      chartData24h.push({ date: formattedDate, recria: consumo, aviarios: 0 });
+      chartData24h.push({ date: formattedDate, tank: 'Recria', value: consumo });
+      totalRecria += consumo;
+      dayTotal24h += consumo;
     }
+    // 24h AVIARIOS
     if (data.aviarios?.am !== undefined && nextData?.aviarios?.am !== undefined) {
       const consumo = (nextData.aviarios.am - data.aviarios.am) * 1000;
-      const existing = chartData24h.find(d => d.date === formattedDate);
-      if (existing) existing.aviarios = consumo;
+      chartData24h.push({ date: formattedDate, tank: 'Aviários', value: consumo });
+      totalAviarios += consumo;
+      dayTotal24h += consumo;
+    }
+    
+    if (dayTotal24h > 0) {
+      dailyTotals.push({ date: formattedDate, total: dayTotal24h });
     }
   });
+  
+  // Top 5 maiores gastos
+  const topGastos = [...dailyTotals].sort((a, b) => b.total - a.total).slice(0, 5);
+  
+  // Dados para gráfico de linha (tendência)
+  const uniqueDatesTrabalho = [...new Set(chartDataTrabalho.map(d => d.date))];
+  const uniqueDates24h = [...new Set(chartData24h.map(d => d.date))];
+  
+  // Média móvel (tendência)
+  const avgRecria = totalRecria / Math.max(uniqueDates24h.length, 1);
+  const avgAviarios = totalAviarios / Math.max(uniqueDates24h.length, 1);
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -3934,7 +3967,36 @@ function generateInteractiveReport(rows, dailyData, dates) {
       padding: 30px;
       margin-bottom: 30px;
     }
-    .chart-title { font-size: 18px; color: #fff; margin-bottom: 20px; }
+    .chart-title { font-size: 18px; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
+    .ranking-list { list-style: none; }
+    .ranking-item { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      padding: 15px; 
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.2s;
+    }
+    .ranking-item:hover { background: rgba(255,255,255,0.02); }
+    .ranking-position { 
+      width: 30px; 
+      height: 30px; 
+      background: linear-gradient(135deg, #d4af37, #b8942e);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      color: #000;
+      margin-right: 15px;
+    }
+    .ranking-item:nth-child(1) .ranking-position { background: linear-gradient(135deg, #ffd700, #ffaa00); }
+    .ranking-item:nth-child(2) .ranking-position { background: linear-gradient(135deg, #c0c0c0, #a0a0a0); }
+    .ranking-item:nth-child(3) .ranking-position { background: linear-gradient(135deg, #cd7f32, #a0522d); }
+    .ranking-date { flex: 1; font-weight: 500; }
+    .ranking-value { font-weight: 700; color: #d4af37; font-size: 16px; }
     .table-container {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.1);
@@ -3970,6 +4032,17 @@ function generateInteractiveReport(rows, dailyData, dates) {
     .badge-diario { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     .badge-recria { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     .badge-aviarios { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .print-btn { 
+      background: linear-gradient(135deg, #d4af37, #b8942e); 
+      color: #000; 
+      border: none; 
+      padding: 15px 40px; 
+      font-size: 16px; 
+      font-weight: 600; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      margin-bottom: 20px;
+    }
     .footer {
       text-align: center;
       padding: 30px;
@@ -3980,36 +4053,38 @@ function generateInteractiveReport(rows, dailyData, dates) {
       body { background: #fff; color: #333; }
       .stat-card { border-color: #ddd; }
       .stat-card .value { color: #333; }
+      .print-btn { display: none; }
+      .charts-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Controle de Água</h1>
+      <h1>💧 Controle de Água</h1>
       <p><strong>Granja Vitta</strong> • Sistema Icarus • Gerado em ${new Date().toLocaleString('pt-BR')}</p>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card gold">
-        <h3>Total Recria</h3>
+        <h3>🏆 Total Geral</h3>
+        <div class="value">${((totalRecria + totalAviarios) / 1000).toFixed(1)}</div>
+        <div class="unit">m³ consumidos (24h)</div>
+      </div>
+      <div class="stat-card">
+        <h3>💚 Recria (24h)</h3>
         <div class="value">${(totalRecria / 1000).toFixed(1)}</div>
         <div class="unit">m³ consumidos</div>
       </div>
-      <div class="stat-card gold">
-        <h3>Total Aviários</h3>
+      <div class="stat-card">
+        <h3>💙 Aviários (24h)</h3>
         <div class="value">${(totalAviarios / 1000).toFixed(1)}</div>
         <div class="unit">m³ consumidos</div>
       </div>
-      <div class="stat-card">
-        <h3>Média Diária Recria</h3>
-        <div class="value">${chartDataTrabalho.length > 0 ? Math.round(totalRecria / chartDataTrabalho.length).toLocaleString('pt-BR') : 0}</div>
-        <div class="unit">litros/dia</div>
-      </div>
-      <div class="stat-card">
-        <h3>Média Diária Aviários</h3>
-        <div class="value">${chartDataTrabalho.length > 0 ? Math.round(totalAviarios / chartDataTrabalho.length).toLocaleString('pt-BR') : 0}</div>
-        <div class="unit">litros/dia</div>
+      <div class="stat-card gold">
+        <h3>📊 Média Diária</h3>
+        <div class="value">${Math.round((avgRecria + avgAviarios)).toLocaleString('pt-BR')}</div>
+        <div class="unit">litros/dia (total)</div>
       </div>
     </div>
 
@@ -4018,9 +4093,29 @@ function generateInteractiveReport(rows, dailyData, dates) {
       <div class="tab" onclick="showTab('diario')">📊 Consumo 24 Horas</div>
     </div>
 
-    <div class="chart-container">
-      <div class="chart-title">📈 Gráfico de Consumo por Período</div>
-      <canvas id="waterChart" height="100"></canvas>
+    <div class="charts-grid">
+      <div class="chart-container">
+        <div class="chart-title">📈 Evolução do Consumo</div>
+        <canvas id="waterChart" height="120"></canvas>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">🏅 Top 5 Maiores Gastos (24h)</div>
+        <ul class="ranking-list">
+          ${topGastos.map((item, idx) => `
+            <li class="ranking-item">
+              <span class="ranking-position">${idx + 1}</span>
+              <span class="ranking-date">${item.date}</span>
+              <span class="ranking-value">${(item.total / 1000).toFixed(2)} m³</span>
+            </li>
+          `).join('')}
+          ${topGastos.length === 0 ? '<li class="ranking-item"><span style="color:#666">Sem dados suficientes</span></li>' : ''}
+        </ul>
+      </div>
+    </div>
+
+    <div class="chart-container" style="margin-bottom: 30px;">
+      <div class="chart-title">🎯 Consumo por Caixa (Período Selecionado)</div>
+      <canvas id="tankChart" height="80"></canvas>
     </div>
 
     <div class="table-container">
@@ -4058,48 +4153,97 @@ function generateInteractiveReport(rows, dailyData, dates) {
     </div>
 
     <div class="footer">
+      <button onclick="window.print()" class="print-btn">🖨️ Imprimir / Salvar PDF</button>
       <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
       <p>Desenvolvido por Guilherme Braga • © 2025</p>
     </div>
   </div>
 
   <script>
-    const chartDataTrabalho = ${JSON.stringify(chartDataTrabalho)};
-    const chartData24h = ${JSON.stringify(chartData24h)};
-    let currentData = chartDataTrabalho;
-
+    // Preparar dados para gráficos
+    const trabalhoData = ${JSON.stringify(chartDataTrabalho)};
+    const data24h = ${JSON.stringify(chartData24h)};
+    const avgRecria = ${avgRecria.toFixed(0)};
+    const avgAviarios = ${avgAviarios.toFixed(0)};
+    
+    // Agrupar por data
+    function groupByDate(data) {
+      const grouped = {};
+      data.forEach(d => {
+        if (!grouped[d.date]) grouped[d.date] = { recria: 0, aviarios: 0 };
+        if (d.tank === 'Recria') grouped[d.date].recria = d.value;
+        if (d.tank === 'Aviários') grouped[d.date].aviarios = d.value;
+      });
+      return grouped;
+    }
+    
+    let currentData = groupByDate(trabalhoData);
+    let labels = Object.keys(currentData);
+    
+    // Gráfico principal de evolução
     const ctx = document.getElementById('waterChart').getContext('2d');
     let chart = new Chart(ctx, {
-      type: 'bar',
+      type: 'line',
       data: {
-        labels: currentData.map(d => d.date),
+        labels: labels,
         datasets: [
           {
             label: 'Recria (L)',
-            data: currentData.map(d => d.recria),
-            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+            data: labels.map(l => currentData[l]?.recria || 0),
             borderColor: '#10b981',
-            borderWidth: 2,
-            borderRadius: 6
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 6,
+            pointHoverRadius: 10
           },
           {
             label: 'Aviários (L)',
-            data: currentData.map(d => d.aviarios),
-            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            data: labels.map(l => currentData[l]?.aviarios || 0),
             borderColor: '#3b82f6',
-            borderWidth: 2,
-            borderRadius: 6
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 6,
+            pointHoverRadius: 10
           }
         ]
       },
       options: {
         responsive: true,
-        plugins: {
-          legend: { labels: { color: '#888' } }
-        },
+        interaction: { intersect: false, mode: 'index' },
+        plugins: { legend: { labels: { color: '#888' } } },
         scales: {
           x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
           y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+    
+    // Gráfico de barras horizontais por caixa
+    const tankCtx = document.getElementById('tankChart').getContext('2d');
+    const totalRecriaChart = Object.values(currentData).reduce((a, b) => a + (b.recria || 0), 0);
+    const totalAviariosChart = Object.values(currentData).reduce((a, b) => a + (b.aviarios || 0), 0);
+    
+    let tankChart = new Chart(tankCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Recria', 'Aviários'],
+        datasets: [{
+          data: [totalRecriaChart, totalAviariosChart],
+          backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)'],
+          borderColor: ['#10b981', '#3b82f6'],
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#888', font: { size: 14, weight: 'bold' } }, grid: { display: false } }
         }
       }
     });
@@ -4108,11 +4252,20 @@ function generateInteractiveReport(rows, dailyData, dates) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       event.target.classList.add('active');
       
-      currentData = type === 'trabalho' ? chartDataTrabalho : chartData24h;
-      chart.data.labels = currentData.map(d => d.date);
-      chart.data.datasets[0].data = currentData.map(d => d.recria);
-      chart.data.datasets[1].data = currentData.map(d => d.aviarios);
+      const sourceData = type === 'trabalho' ? trabalhoData : data24h;
+      currentData = groupByDate(sourceData);
+      labels = Object.keys(currentData);
+      
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = labels.map(l => currentData[l]?.recria || 0);
+      chart.data.datasets[1].data = labels.map(l => currentData[l]?.aviarios || 0);
       chart.update();
+      
+      // Atualizar gráfico de barras
+      const totalRecria = labels.reduce((a, l) => a + (currentData[l]?.recria || 0), 0);
+      const totalAviarios = labels.reduce((a, l) => a + (currentData[l]?.aviarios || 0), 0);
+      tankChart.data.datasets[0].data = [totalRecria, totalAviarios];
+      tankChart.update();
     }
   </script>
 </body>
