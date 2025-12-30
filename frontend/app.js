@@ -129,6 +129,9 @@ async function loadViewData(view) {
       case 'preventivas':
         await loadPreventives();
         break;
+      case 'checklists':
+        await loadChecklists();
+        break;
       case 'relatorios':
         await loadReports();
         break;
@@ -284,12 +287,16 @@ function setupPermissions() {
   const roles = state.user.roles || [];
   const isAdmin = roles.includes('admin');
   const canSeeDashboard = isAdmin || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  
+  // Checklists: manutenção pode editar, sala de ovos pode executar, bruno/josewalter podem ver
+  const canSeeChecklists = isAdmin || roles.includes('os_manage_all') || roles.includes('os_view_all') || roles.includes('checklist');
 
   const navDashboard = document.querySelector('[data-view="dashboard"]');
   const navOS = document.querySelector('[data-view="os"]');
   const navAlmox = document.querySelector('[data-view="almoxarifado"]');
   const navCompras = document.querySelector('[data-view="compras"]');
   const navPrev = document.querySelector('[data-view="preventivas"]');
+  const navChecklists = document.querySelector('[data-view="checklists"]');
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
@@ -298,6 +305,7 @@ function setupPermissions() {
   if (navAlmox) navAlmox.classList.toggle('hidden', !(isAdmin || roles.includes('almoxarifado')));
   if (navCompras) navCompras.classList.toggle('hidden', !(isAdmin || roles.includes('compras')));
   if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas')));
+  if (navChecklists) navChecklists.classList.toggle('hidden', !canSeeChecklists);
   if (navRel) navRel.classList.toggle('hidden', !isAdmin);
   if (navCfg) navCfg.classList.remove('hidden');
   
@@ -1967,6 +1975,27 @@ function showAdvancePurchaseModal(purchaseId) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+// Preview foto de compra
+function previewPurchasePhoto(input) {
+  const preview = document.getElementById('purchase-photo-preview');
+  const img = document.getElementById('purchase-photo-img');
+  
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      img.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function clearPurchasePhoto() {
+  document.getElementById('purchase-photo').value = '';
+  document.getElementById('purchase-photo-preview').style.display = 'none';
+  document.getElementById('purchase-photo-img').src = '';
+}
+
 async function createPurchaseFromForm(event) {
   event.preventDefault();
   
@@ -1975,6 +2004,23 @@ async function createPurchaseFromForm(event) {
   const unitPrice = parseFloat(formData.get('price')) || null;
   const totalCost = unitPrice ? quantity * unitPrice : null;
   
+  // Converter foto para base64 se existir
+  let photoUrl = null;
+  const photoInput = document.getElementById('purchase-photo');
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    const file = photoInput.files[0];
+    // Limitar tamanho a 500KB para não sobrecarregar
+    if (file.size > 500 * 1024) {
+      showNotification('Imagem muito grande. Máximo 500KB.', 'error');
+      return;
+    }
+    photoUrl = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+  }
+  
   const purchaseData = {
     item_name: formData.get('item'),
     quantity: quantity,
@@ -1982,7 +2028,8 @@ async function createPurchaseFromForm(event) {
     unit_price: unitPrice,
     total_cost: totalCost,
     supplier: formData.get('supplier') || null,
-    notes: formData.get('notes') || null
+    notes: formData.get('notes') || null,
+    photo_url: photoUrl
   };
 
   try {
@@ -1999,6 +2046,7 @@ async function createPurchaseFromForm(event) {
     if (data.ok) {
       showNotification('[COMPRAS] Requisição criada com sucesso', 'success');
       closeModal('modal-create-purchase');
+      clearPurchasePhoto();
       await loadPurchases();
     } else {
       showNotification('Erro ao criar requisição: ' + (data.error || 'Erro desconhecido'), 'error');
@@ -2579,3 +2627,339 @@ document.addEventListener('click', (e) => {
     }
   }
 });
+
+// ========== CHECKLISTS MODULE ==========
+
+// State for checklists
+state.checklists = [];
+state.currentChecklistId = null;
+
+// Check if user can edit checklists
+function canEditChecklist() {
+  const roles = state.user?.roles || [];
+  return roles.includes('admin') || roles.includes('os_manage_all') || roles.includes('checklist');
+}
+
+// Load checklists
+async function loadChecklists() {
+  try {
+    const response = await fetch(`${API_URL}/checklists`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    const data = await response.json();
+    if (data.ok) {
+      state.checklists = data.checklists || [];
+      renderChecklists();
+    }
+  } catch (error) {
+    console.error('Erro ao carregar checklists:', error);
+  }
+}
+
+// Render checklists list
+function renderChecklists() {
+  const container = document.getElementById('checklists-list');
+  if (!container) return;
+  
+  const canEdit = canEditChecklist();
+  
+  // Hide/show create button based on permission
+  const createBtn = document.getElementById('btn-create-checklist');
+  if (createBtn) {
+    createBtn.style.display = canEdit ? 'block' : 'none';
+  }
+  
+  if (state.checklists.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); padding: 20px; text-align: center;">Nenhum checklist cadastrado</p>';
+    return;
+  }
+  
+  const frequencyLabels = {
+    diario: 'Diário',
+    semanal: 'Semanal',
+    mensal: 'Mensal'
+  };
+  
+  container.innerHTML = state.checklists.map(cl => `
+    <div class="checklist-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div>
+          <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">${cl.name}</h4>
+          <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">
+            ${cl.sector || 'Sem setor'} • ${frequencyLabels[cl.frequency] || cl.frequency} • ${cl.items?.length || 0} itens
+          </p>
+        </div>
+        <span class="badge" style="background: rgba(212, 175, 55, 0.2); color: var(--accent-gold);">
+          ${frequencyLabels[cl.frequency] || cl.frequency}
+        </span>
+      </div>
+      
+      ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${cl.description}</p>` : ''}
+      
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+        ${(cl.items || []).slice(0, 4).map(item => `
+          <span style="font-size: 11px; padding: 4px 8px; background: var(--bg-card); border-radius: 4px; color: var(--text-secondary);">
+            ☐ ${item.description}
+          </span>
+        `).join('')}
+        ${(cl.items?.length || 0) > 4 ? `<span style="font-size: 11px; padding: 4px 8px; color: var(--text-secondary);">+${cl.items.length - 4} mais</span>` : ''}
+      </div>
+      
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-small btn-primary" onclick="openExecuteChecklist('${cl.id}')">☑ Executar</button>
+        <button class="btn-small" onclick="viewChecklistHistory('${cl.id}')">Histórico</button>
+        ${canEdit ? `
+          <button class="btn-small" onclick="editChecklist('${cl.id}')">Editar</button>
+          <button class="btn-small btn-danger" onclick="deleteChecklist('${cl.id}')">Excluir</button>
+        ` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Show create checklist modal
+function showCreateChecklist() {
+  document.getElementById('form-create-checklist').reset();
+  const modal = document.getElementById('modal-create-checklist');
+  modal.classList.remove('hidden');
+  modal.classList.add('active');
+}
+
+// Create checklist from form
+async function createChecklistFromForm(event) {
+  event.preventDefault();
+  
+  const name = document.getElementById('checklist-name').value.trim();
+  const sector = document.getElementById('checklist-sector').value.trim();
+  const frequency = document.getElementById('checklist-frequency').value;
+  const description = document.getElementById('checklist-description').value.trim();
+  const itemsText = document.getElementById('checklist-items').value.trim();
+  
+  const items = itemsText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
+  
+  if (!name || items.length === 0) {
+    showNotification('Preencha o nome e pelo menos um item', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/checklists`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, sector, frequency, description, items })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      state.checklists = data.checklists || [];
+      renderChecklists();
+      closeModal('modal-create-checklist');
+      showNotification('Checklist criado com sucesso!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao criar checklist', 'error');
+    }
+  } catch (error) {
+    showNotification('Erro ao criar checklist: ' + error.message, 'error');
+  }
+}
+
+// Open execute checklist modal
+function openExecuteChecklist(checklistId) {
+  const checklist = state.checklists.find(c => c.id === checklistId);
+  if (!checklist) return;
+  
+  state.currentChecklistId = checklistId;
+  
+  document.getElementById('execute-checklist-title').textContent = checklist.name;
+  document.getElementById('execute-checklist-notes').value = '';
+  
+  const container = document.getElementById('execute-checklist-items');
+  container.innerHTML = (checklist.items || []).map((item, idx) => `
+    <div class="checkbox-item" style="margin-bottom: 8px;">
+      <input type="checkbox" id="exec-item-${idx}" data-item-id="${item.id}">
+      <label for="exec-item-${idx}" style="flex: 1;">${item.description}</label>
+    </div>
+  `).join('');
+  
+  const modal = document.getElementById('modal-execute-checklist');
+  modal.classList.remove('hidden');
+  modal.classList.add('active');
+}
+
+// Submit checklist execution
+async function submitChecklistExecution() {
+  const checklistId = state.currentChecklistId;
+  if (!checklistId) return;
+  
+  const notes = document.getElementById('execute-checklist-notes').value.trim();
+  const itemCheckboxes = document.querySelectorAll('#execute-checklist-items input[type="checkbox"]');
+  
+  const items = Array.from(itemCheckboxes).map(cb => ({
+    item_id: cb.dataset.itemId,
+    checked: cb.checked
+  }));
+  
+  try {
+    const response = await fetch(`${API_URL}/checklists/${checklistId}/execute`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ items, notes })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      closeModal('modal-execute-checklist');
+      showNotification('Checklist executado com sucesso!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao executar checklist', 'error');
+    }
+  } catch (error) {
+    showNotification('Erro ao executar checklist: ' + error.message, 'error');
+  }
+}
+
+// View checklist history
+async function viewChecklistHistory(checklistId) {
+  const checklist = state.checklists.find(c => c.id === checklistId);
+  if (!checklist) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/checklists/${checklistId}/executions`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      const executions = data.executions || [];
+      
+      const historyCard = document.getElementById('checklist-history-card');
+      historyCard.style.display = 'block';
+      
+      const container = document.getElementById('checklist-executions-list');
+      
+      if (executions.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); padding: 20px; text-align: center;">Nenhuma execução registrada</p>';
+      } else {
+        container.innerHTML = executions.map(exec => {
+          const checkedCount = (exec.items || []).filter(i => i.checked).length;
+          const totalCount = (exec.items || []).length;
+          
+          return `
+            <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong>${exec.executed_by_name || 'Usuário'}</strong>
+                <span style="font-size: 12px; color: var(--text-secondary);">${formatDate(exec.executed_at)}</span>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                ${(exec.items || []).map(item => `
+                  <span style="font-size: 11px; padding: 3px 6px; background: ${item.checked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${item.checked ? 'var(--success)' : 'var(--danger)'}; border-radius: 4px;">
+                    ${item.checked ? '✓' : '✗'} ${item.description}
+                  </span>
+                `).join('')}
+              </div>
+              ${exec.notes ? `<p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">${exec.notes}</p>` : ''}
+              <div style="margin-top: 8px; font-size: 12px; color: var(--accent-gold);">
+                ${checkedCount}/${totalCount} itens verificados
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+  } catch (error) {
+    showNotification('Erro ao carregar histórico: ' + error.message, 'error');
+  }
+}
+
+function closeChecklistHistory() {
+  document.getElementById('checklist-history-card').style.display = 'none';
+}
+
+// Delete checklist
+async function deleteChecklist(checklistId) {
+  if (!confirm('Tem certeza que deseja excluir este checklist?')) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/checklists/${checklistId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      state.checklists = data.checklists || [];
+      renderChecklists();
+      showNotification('Checklist excluído!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao excluir', 'error');
+    }
+  } catch (error) {
+    showNotification('Erro ao excluir: ' + error.message, 'error');
+  }
+}
+
+// Edit checklist (simplified - just opens modal with data)
+function editChecklist(checklistId) {
+  const checklist = state.checklists.find(c => c.id === checklistId);
+  if (!checklist) return;
+  
+  document.getElementById('checklist-name').value = checklist.name || '';
+  document.getElementById('checklist-sector').value = checklist.sector || '';
+  document.getElementById('checklist-frequency').value = checklist.frequency || 'diario';
+  document.getElementById('checklist-description').value = checklist.description || '';
+  document.getElementById('checklist-items').value = (checklist.items || []).map(i => i.description).join('\n');
+  
+  // Change form to update mode
+  const form = document.getElementById('form-create-checklist');
+  form.onsubmit = (e) => updateChecklistFromForm(e, checklistId);
+  
+  const modal = document.getElementById('modal-create-checklist');
+  modal.querySelector('.modal-title').textContent = 'Editar Checklist';
+  modal.classList.remove('hidden');
+  modal.classList.add('active');
+}
+
+async function updateChecklistFromForm(event, checklistId) {
+  event.preventDefault();
+  
+  const name = document.getElementById('checklist-name').value.trim();
+  const sector = document.getElementById('checklist-sector').value.trim();
+  const frequency = document.getElementById('checklist-frequency').value;
+  const description = document.getElementById('checklist-description').value.trim();
+  const itemsText = document.getElementById('checklist-items').value.trim();
+  
+  const items = itemsText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
+  
+  try {
+    const response = await fetch(`${API_URL}/checklists/${checklistId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, sector, frequency, description, items })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      state.checklists = data.checklists || [];
+      renderChecklists();
+      closeModal('modal-create-checklist');
+      showNotification('Checklist atualizado!', 'success');
+      
+      // Reset form onsubmit
+      document.getElementById('form-create-checklist').onsubmit = createChecklistFromForm;
+      document.querySelector('#modal-create-checklist .modal-title').textContent = 'Novo Checklist';
+    } else {
+      showNotification(data.error || 'Erro ao atualizar', 'error');
+    }
+  } catch (error) {
+    showNotification('Erro ao atualizar: ' + error.message, 'error');
+  }
+}

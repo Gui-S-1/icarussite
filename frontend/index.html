@@ -1678,6 +1678,10 @@
           <span class="nav-icon">⚙</span>
           <span>Preventivas</span>
         </div>
+        <div class="nav-item hidden" data-view="checklists">
+          <span class="nav-icon">☑</span>
+          <span>Checklists</span>
+        </div>
         <div class="nav-item hidden" data-view="relatorios">
           <span class="nav-icon">▤</span>
           <span>Relatórios</span>
@@ -1943,6 +1947,31 @@
                 <tbody></tbody>
               </table>
             </div>
+          </div>
+        </div>
+        
+        <!-- Checklists View -->
+        <div id="checklists-view" class="view">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">☑ Checklists de Verificação</h3>
+              <button class="btn-small btn-primary" id="btn-create-checklist" onclick="showCreateChecklist()">+ Novo Checklist</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 16px;">
+              Cadastre e execute checklists de verificação diária (ex: lubrificação, inspeção, etc.)
+            </p>
+            
+            <!-- Lista de Checklists -->
+            <div id="checklists-list"></div>
+          </div>
+          
+          <!-- Histórico de Execuções -->
+          <div class="card" id="checklist-history-card" style="display: none;">
+            <div class="card-header">
+              <h3 class="card-title">📋 Histórico de Execuções</h3>
+              <button class="btn-small" onclick="closeChecklistHistory()">Voltar</button>
+            </div>
+            <div id="checklist-executions-list"></div>
           </div>
         </div>
         
@@ -2371,10 +2400,19 @@
           <label>Especificações / Tamanho / Observações *</label>
           <textarea id="purchase-notes" name="notes" required placeholder="Descreva detalhes importantes: tamanho, cor, modelo, marca preferencial, etc."></textarea>
         </div>
+
+        <div class="form-group">
+          <label>📷 Foto da Peça (opcional)</label>
+          <input type="file" id="purchase-photo" name="photo" accept="image/*" capture="environment" onchange="previewPurchasePhoto(this)" style="padding: 8px;">
+          <div id="purchase-photo-preview" style="margin-top: 8px; display: none;">
+            <img id="purchase-photo-img" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+            <button type="button" class="btn-small" onclick="clearPurchasePhoto()" style="margin-top: 8px;">Remover Foto</button>
+          </div>
+        </div>
         
         <div style="padding: 10px; background: var(--bg-secondary); border-radius: 6px; margin: 10px 0;">
           <small style="color: var(--text-secondary);">
-            ℹ️ Preço e fornecedor serão preenchidos pelo responsável de compras
+            ◇ Preço e fornecedor serão preenchidos pelo responsável de compras
           </small>
         </div>
 
@@ -2383,6 +2421,75 @@
           <button type="submit" class="btn-small btn-primary">Criar Requisição</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Checklist -->
+  <div id="modal-create-checklist" class="modal-overlay hidden" onclick="if(event.target === this) closeModal('modal-create-checklist')">
+    <div class="modal" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Novo Checklist</h3>
+        <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-create-checklist')">×</span>
+      </div>
+      
+      <form id="form-create-checklist" onsubmit="createChecklistFromForm(event)">
+        <div class="form-group">
+          <label>Nome do Checklist *</label>
+          <input type="text" id="checklist-name" name="name" required placeholder="Ex: Yamasa Sala de Ovos - Lubrificação">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Setor</label>
+            <input type="text" id="checklist-sector" name="sector" placeholder="Ex: Sala de Ovos, Produção">
+          </div>
+          <div class="form-group">
+            <label>Frequência</label>
+            <select id="checklist-frequency" name="frequency">
+              <option value="diario">Diário</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensal">Mensal</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea id="checklist-description" name="description" placeholder="Descreva o objetivo deste checklist"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Itens do Checklist (um por linha) *</label>
+          <textarea id="checklist-items" name="items" required rows="6" placeholder="Verificar nível de óleo&#10;Lubrificar engrenagens&#10;Checar temperatura&#10;Inspecionar correias"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-small btn-cancel" onclick="closeModal('modal-create-checklist')">Cancelar</button>
+          <button type="submit" class="btn-small btn-primary">Criar Checklist</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Execute Checklist -->
+  <div id="modal-execute-checklist" class="modal-overlay hidden" onclick="if(event.target === this) closeModal('modal-execute-checklist')">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="execute-checklist-title">Executar Checklist</h3>
+        <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-execute-checklist')">×</span>
+      </div>
+      
+      <div id="execute-checklist-items"></div>
+      
+      <div class="form-group" style="margin-top: 16px;">
+        <label>Observações</label>
+        <textarea id="execute-checklist-notes" placeholder="Adicione observações gerais sobre esta execução"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-small btn-cancel" onclick="closeModal('modal-execute-checklist')">Cancelar</button>
+        <button type="button" class="btn-small btn-primary" onclick="submitChecklistExecution()">Concluir Verificação</button>
+      </div>
     </div>
   </div>
 

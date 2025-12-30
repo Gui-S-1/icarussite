@@ -97,6 +97,51 @@ async function initDb() {
       key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    -- Checklists: templates de verificação (ex: Yamasa Sala de Ovos)
+    CREATE TABLE IF NOT EXISTS checklists (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      sector TEXT,
+      frequency TEXT DEFAULT 'diario',
+      created_by TEXT REFERENCES users(id),
+      key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- Itens de cada checklist
+    CREATE TABLE IF NOT EXISTS checklist_items (
+      id TEXT PRIMARY KEY,
+      checklist_id TEXT REFERENCES checklists(id) ON DELETE CASCADE,
+      description TEXT NOT NULL,
+      item_order INTEGER DEFAULT 0
+    );
+
+    -- Execuções de checklist (registro diário)
+    CREATE TABLE IF NOT EXISTS checklist_executions (
+      id TEXT PRIMARY KEY,
+      checklist_id TEXT REFERENCES checklists(id) ON DELETE CASCADE,
+      executed_by TEXT REFERENCES users(id),
+      executed_at TIMESTAMPTZ DEFAULT NOW(),
+      notes TEXT,
+      key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE
+    );
+
+    -- Itens marcados em cada execução
+    CREATE TABLE IF NOT EXISTS checklist_execution_items (
+      execution_id TEXT REFERENCES checklist_executions(id) ON DELETE CASCADE,
+      item_id TEXT REFERENCES checklist_items(id) ON DELETE CASCADE,
+      checked BOOLEAN DEFAULT FALSE,
+      checked_at TIMESTAMPTZ,
+      notes TEXT,
+      PRIMARY KEY(execution_id, item_id)
+    );
+
+    -- Adiciona coluna de foto nas compras (base64 ou URL)
+    DO $$ BEGIN
+      ALTER TABLE purchases ADD COLUMN IF NOT EXISTS photo_url TEXT;
+    EXCEPTION WHEN others THEN NULL; END $$;
   `);
 
   const seedKeyValue = process.env.SEED_KEY_VALUE;
@@ -428,14 +473,14 @@ app.get('/purchases', requireAuth, async (req, res) => {
 
 // Anyone with os/almoxarifado/compras can create purchase requests
 app.post('/purchases', requireAuth, requireRoles(['compras','almoxarifado','os']), async (req, res) => {
-  const { item_name, quantity, unit, unit_price, total_cost, supplier, notes } = req.body || {};
+  const { item_name, quantity, unit, unit_price, total_cost, supplier, notes, photo_url } = req.body || {};
   if (!item_name || !quantity || !unit) return res.status(400).json({ ok: false, error: 'Campos obrigatórios faltando' });
   try {
     const id = uuid();
     await pool.query(
-      `INSERT INTO purchases (id, item_name, quantity, unit, unit_price, total_cost, supplier, notes, status, requested_by, key_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'analise',$9,$10)` ,
-      [id, item_name, quantity, unit, unit_price || 0, total_cost || 0, supplier || null, notes || null, req.user.userId, req.user.keyId]
+      `INSERT INTO purchases (id, item_name, quantity, unit, unit_price, total_cost, supplier, notes, photo_url, status, requested_by, key_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'analise',$10,$11)` ,
+      [id, item_name, quantity, unit, unit_price || 0, total_cost || 0, supplier || null, notes || null, photo_url || null, req.user.userId, req.user.keyId]
     );
     const result = await pool.query('SELECT * FROM purchases WHERE key_id = $1 ORDER BY created_at DESC', [req.user.keyId]);
     return res.status(201).json({ ok: true, purchases: normalizePurchases(result.rows) });
@@ -560,6 +605,186 @@ app.delete('/preventives/:id', requireAuth, requireRoles(['preventivas']), async
   }
 });
 
+// ========== CHECKLISTS ==========
+
+// Função auxiliar para verificar se pode editar checklist
+function canEditChecklist(userRoles) {
+  return userRoles.includes('admin') || userRoles.includes('os_manage_all') || userRoles.includes('checklist');
+}
+
+// GET - Listar checklists com itens
+app.get('/checklists', requireAuth, async (req, res) => {
+  try {
+    const checklists = await pool.query(
+      `SELECT c.*, u.name as created_by_name,
+        COALESCE(json_agg(json_build_object('id', ci.id, 'description', ci.description, 'item_order', ci.item_order) ORDER BY ci.item_order) FILTER (WHERE ci.id IS NOT NULL), '[]'::json) as items
+       FROM checklists c
+       LEFT JOIN users u ON u.id = c.created_by
+       LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
+       WHERE c.key_id = $1
+       GROUP BY c.id, u.name
+       ORDER BY c.name`,
+      [req.user.keyId]
+    );
+    return res.json({ ok: true, checklists: checklists.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST - Criar checklist (manutenção, sala de ovos, admin)
+app.post('/checklists', requireAuth, async (req, res) => {
+  const { name, description, sector, frequency, items } = req.body || {};
+  if (!canEditChecklist(req.user.roles || [])) {
+    return res.status(403).json({ ok: false, error: 'Sem permissão para criar checklist' });
+  }
+  if (!name) return res.status(400).json({ ok: false, error: 'Nome é obrigatório' });
+  try {
+    const id = uuid();
+    await pool.query(
+      `INSERT INTO checklists (id, name, description, sector, frequency, created_by, key_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [id, name, description || null, sector || null, frequency || 'diario', req.user.userId, req.user.keyId]
+    );
+    // Inserir itens
+    if (items && Array.isArray(items)) {
+      for (let i = 0; i < items.length; i++) {
+        await pool.query(
+          'INSERT INTO checklist_items (id, checklist_id, description, item_order) VALUES ($1,$2,$3,$4)',
+          [uuid(), id, items[i], i]
+        );
+      }
+    }
+    const checklists = await pool.query(
+      `SELECT c.*, u.name as created_by_name,
+        COALESCE(json_agg(json_build_object('id', ci.id, 'description', ci.description, 'item_order', ci.item_order) ORDER BY ci.item_order) FILTER (WHERE ci.id IS NOT NULL), '[]'::json) as items
+       FROM checklists c
+       LEFT JOIN users u ON u.id = c.created_by
+       LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
+       WHERE c.key_id = $1
+       GROUP BY c.id, u.name
+       ORDER BY c.name`,
+      [req.user.keyId]
+    );
+    return res.status(201).json({ ok: true, checklists: checklists.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// PATCH - Atualizar checklist
+app.patch('/checklists/:id', requireAuth, async (req, res) => {
+  if (!canEditChecklist(req.user.roles || [])) {
+    return res.status(403).json({ ok: false, error: 'Sem permissão para editar checklist' });
+  }
+  const { name, description, sector, frequency, items } = req.body || {};
+  try {
+    await pool.query(
+      `UPDATE checklists SET name = COALESCE($1, name), description = COALESCE($2, description), 
+       sector = COALESCE($3, sector), frequency = COALESCE($4, frequency) WHERE id = $5 AND key_id = $6`,
+      [name, description, sector, frequency, req.params.id, req.user.keyId]
+    );
+    // Atualizar itens se enviados
+    if (items && Array.isArray(items)) {
+      await pool.query('DELETE FROM checklist_items WHERE checklist_id = $1', [req.params.id]);
+      for (let i = 0; i < items.length; i++) {
+        const itemDesc = typeof items[i] === 'string' ? items[i] : items[i].description;
+        await pool.query(
+          'INSERT INTO checklist_items (id, checklist_id, description, item_order) VALUES ($1,$2,$3,$4)',
+          [uuid(), req.params.id, itemDesc, i]
+        );
+      }
+    }
+    const checklists = await pool.query(
+      `SELECT c.*, u.name as created_by_name,
+        COALESCE(json_agg(json_build_object('id', ci.id, 'description', ci.description, 'item_order', ci.item_order) ORDER BY ci.item_order) FILTER (WHERE ci.id IS NOT NULL), '[]'::json) as items
+       FROM checklists c
+       LEFT JOIN users u ON u.id = c.created_by
+       LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
+       WHERE c.key_id = $1
+       GROUP BY c.id, u.name
+       ORDER BY c.name`,
+      [req.user.keyId]
+    );
+    return res.json({ ok: true, checklists: checklists.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// DELETE - Excluir checklist
+app.delete('/checklists/:id', requireAuth, async (req, res) => {
+  if (!canEditChecklist(req.user.roles || [])) {
+    return res.status(403).json({ ok: false, error: 'Sem permissão para excluir checklist' });
+  }
+  try {
+    await pool.query('DELETE FROM checklists WHERE id = $1 AND key_id = $2', [req.params.id, req.user.keyId]);
+    const checklists = await pool.query(
+      `SELECT c.*, u.name as created_by_name,
+        COALESCE(json_agg(json_build_object('id', ci.id, 'description', ci.description, 'item_order', ci.item_order) ORDER BY ci.item_order) FILTER (WHERE ci.id IS NOT NULL), '[]'::json) as items
+       FROM checklists c
+       LEFT JOIN users u ON u.id = c.created_by
+       LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
+       WHERE c.key_id = $1
+       GROUP BY c.id, u.name
+       ORDER BY c.name`,
+      [req.user.keyId]
+    );
+    return res.json({ ok: true, checklists: checklists.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// GET - Listar execuções de checklist
+app.get('/checklists/:id/executions', requireAuth, async (req, res) => {
+  try {
+    const executions = await pool.query(
+      `SELECT ce.*, u.name as executed_by_name,
+        COALESCE(json_agg(json_build_object('item_id', cei.item_id, 'checked', cei.checked, 'checked_at', cei.checked_at, 'notes', cei.notes, 'description', ci.description) ORDER BY ci.item_order) FILTER (WHERE cei.item_id IS NOT NULL), '[]'::json) as items
+       FROM checklist_executions ce
+       LEFT JOIN users u ON u.id = ce.executed_by
+       LEFT JOIN checklist_execution_items cei ON cei.execution_id = ce.id
+       LEFT JOIN checklist_items ci ON ci.id = cei.item_id
+       WHERE ce.checklist_id = $1 AND ce.key_id = $2
+       GROUP BY ce.id, u.name
+       ORDER BY ce.executed_at DESC
+       LIMIT 30`,
+      [req.params.id, req.user.keyId]
+    );
+    return res.json({ ok: true, executions: executions.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST - Executar checklist (marcar itens)
+app.post('/checklists/:id/execute', requireAuth, async (req, res) => {
+  const { items, notes } = req.body || {};
+  // Qualquer usuário pode executar checklist (sala de ovos, manutenção, etc)
+  try {
+    const execId = uuid();
+    await pool.query(
+      `INSERT INTO checklist_executions (id, checklist_id, executed_by, notes, key_id)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [execId, req.params.id, req.user.userId, notes || null, req.user.keyId]
+    );
+    // Inserir itens marcados
+    if (items && Array.isArray(items)) {
+      for (const item of items) {
+        await pool.query(
+          `INSERT INTO checklist_execution_items (execution_id, item_id, checked, checked_at, notes)
+           VALUES ($1,$2,$3,$4,$5)`,
+          [execId, item.item_id, item.checked || false, item.checked ? new Date() : null, item.notes || null]
+        );
+      }
+    }
+    return res.status(201).json({ ok: true, execution_id: execId });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 app.post('/config/verify-whatsapp', requireAuth, async (req, res) => {
   const { phone } = req.body || {};
   const digits = (phone || '').replace(/\D/g, '');
@@ -576,6 +801,7 @@ async function start() {
         await pool.query("DELETE FROM orders WHERE status = 'completed' AND finished_at < NOW() - INTERVAL '60 days'");
         await pool.query("DELETE FROM purchases WHERE status = 'chegou' AND created_at < NOW() - INTERVAL '60 days'");
         await pool.query("DELETE FROM preventives WHERE last_date IS NOT NULL AND last_date < NOW() - INTERVAL '60 days'");
+        await pool.query("DELETE FROM checklist_executions WHERE executed_at < NOW() - INTERVAL '60 days'");
       } catch (e) { /* noop */ }
     }, 6 * 60 * 60 * 1000);
     app.listen(PORT, () => console.log(`API Icarus rodando na porta ${PORT}`));
