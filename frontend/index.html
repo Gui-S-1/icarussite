@@ -2142,13 +2142,13 @@
       }
     });
 
-    // User Selection Popup Functions
-    function openUserSelectionPopup() {
+    // User Selection Popup Functions - GLOBAL
+    window.openUserSelectionPopup = function() {
       document.getElementById('user-selection-overlay').classList.add('active');
       document.body.style.overflow = 'hidden';
     }
 
-    function selectOperator(operatorName) {
+    window.selectOperator = function(operatorName) {
       localStorage.setItem('selectedOperator', operatorName);
       document.getElementById('user-selection-overlay').classList.remove('active');
       document.body.style.overflow = '';

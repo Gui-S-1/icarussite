@@ -230,7 +230,6 @@ async function showApp() {
   const selectedOperator = localStorage.getItem('selectedOperator');
   const displayName = selectedOperator ? `${state.user.name} (${selectedOperator})` : state.user.name;
   document.getElementById('user-name').textContent = displayName;
-  document.getElementById('user-role').textContent = state.user.roles.join(', ');
 
   // Setup permissions e navegação (IMPORTANTE: refazer para garantir que funciona)
   setupPermissions();
