@@ -2986,14 +2986,25 @@ state.waterStats = null;
 // Carregar controle de água
 async function loadWaterControl() {
   try {
-    // Definir data de hoje no input
-    const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('water-reading-date');
-    if (dateInput) dateInput.value = today;
+    // Verificar permissão - Bruno e JoseWalter só visualizam
+    const inputSection = document.querySelector('.water-input-section');
+    const username = state.user?.username?.toLowerCase() || '';
+    const canEdit = !['bruno', 'josewalter'].includes(username);
     
-    // Atualizar horário atual
-    updateCurrentTime();
-    setInterval(updateCurrentTime, 60000);
+    if (inputSection) {
+      inputSection.style.display = canEdit ? 'block' : 'none';
+    }
+    
+    // Definir data de hoje no input (só se pode editar)
+    if (canEdit) {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('water-reading-date');
+      if (dateInput) dateInput.value = today;
+      
+      // Atualizar horário atual
+      updateCurrentTime();
+      setInterval(updateCurrentTime, 60000);
+    }
     
     // Carregar dados
     await loadWaterReadings();
@@ -3387,51 +3398,53 @@ function exportWaterReportPDF() {
       <title>Relatório de Controle de Água - Granja Vitta</title>
       <style>
         body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-        .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #3b82f6; padding-bottom: 20px; }
-        .header h1 { color: #3b82f6; margin: 0; font-size: 28px; }
-        .header p { color: #666; margin: 10px 0 0 0; }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #1a1a2e; padding-bottom: 20px; }
+        .header h1 { color: #1a1a2e; margin: 0; font-size: 28px; }
+        .header .subtitle { color: #666; margin: 10px 0 0 0; font-size: 14px; }
+        .header .period { color: #888; font-size: 12px; margin-top: 5px; }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; text-align: center; }
-        .stat-box h3 { margin: 0 0 10px 0; color: #3b82f6; font-size: 14px; }
-        .stat-box .value { font-size: 32px; font-weight: bold; color: #333; }
-        .stat-box .label { font-size: 12px; color: #666; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
-        th { background: #3b82f6; color: white; }
+        .stat-box { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; text-align: center; }
+        .stat-box h3 { margin: 0 0 10px 0; color: #333; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-box .value { font-size: 32px; font-weight: bold; color: #1a1a2e; }
+        .stat-box .label { font-size: 11px; color: #666; margin-top: 5px; }
+        .section-title { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 16px; margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 11px; }
+        th { background: #1a1a2e; color: white; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
         tr:nth-child(even) { background: #f8f9fa; }
-        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; }
-        .tank-aviarios { color: #3b82f6; font-weight: bold; }
-        .tank-recria { color: #10b981; font-weight: bold; }
+        .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+        .tank-aviarios { color: #1a1a2e; font-weight: 600; }
+        .tank-recria { color: #2d5a27; font-weight: 600; }
         @media print { body { padding: 20px; } }
       </style>
     </head>
     <body>
       <div class="header">
-        <h1>💧 Relatório de Controle de Água</h1>
-        <p><strong>Granja Vitta</strong> • Sistema Icarus</p>
-        <p>Período: ${getPeriodLabel()} • Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+        <h1>RELATÓRIO DE CONTROLE DE ÁGUA</h1>
+        <p class="subtitle"><strong>Granja Vitta</strong> — Sistema Icarus</p>
+        <p class="period">Período: ${getPeriodLabel()} | Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
       </div>
       
-      <h2 style="color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;">📊 Resumo de Consumo</h2>
+      <h2 class="section-title">RESUMO DE CONSUMO</h2>
       <div class="stats-grid">
         <div class="stat-box">
-          <h3>🏭 CAIXA AVIÁRIOS</h3>
-          <div class="value">${stats?.aviarios?.avg_daily?.toFixed(2) || '--'}</div>
+          <h3>CAIXA AVIÁRIOS</h3>
+          <div class="value">${stats?.aviarios?.avg_daily?.toFixed(2) || '0.00'}</div>
           <div class="label">m³/dia (média)</div>
         </div>
         <div class="stat-box">
-          <h3>🐣 CAIXA RECRIA</h3>
-          <div class="value">${stats?.recria?.avg_daily?.toFixed(2) || '--'}</div>
+          <h3>CAIXA RECRIA</h3>
+          <div class="value">${stats?.recria?.avg_daily?.toFixed(2) || '0.00'}</div>
           <div class="label">m³/dia (média)</div>
         </div>
         <div class="stat-box">
-          <h3>⚖️ TOTAL PERÍODO</h3>
+          <h3>TOTAL PERÍODO</h3>
           <div class="value">${((stats?.aviarios?.total_consumption || 0) + (stats?.recria?.total_consumption || 0)).toFixed(2)}</div>
           <div class="label">m³ consumidos</div>
         </div>
       </div>
       
-      <h2 style="color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;">📋 Histórico de Leituras</h2>
+      <h2 class="section-title">HISTÓRICO DE LEITURAS</h2>
       <table>
         <thead>
           <tr>
@@ -3449,7 +3462,7 @@ function exportWaterReportPDF() {
               <td>${new Date(r.reading_date).toLocaleDateString('pt-BR')}</td>
               <td>${r.reading_time}</td>
               <td class="tank-${r.tank_name}">${r.tank_name === 'aviarios' ? 'Aviários' : 'Recria'}</td>
-              <td><strong>${r.reading_value.toFixed(3)}</strong></td>
+              <td><strong>${r.reading_value.toFixed(0)}</strong></td>
               <td>${r.recorded_by_name || '-'}</td>
               <td>${r.notes || '-'}</td>
             </tr>
@@ -3458,8 +3471,8 @@ function exportWaterReportPDF() {
       </table>
       
       <div class="footer">
-        <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
-        <p>Desenvolvido por Guilherme Braga • © 2025</p>
+        <p>Relatório gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>
+        <p>Desenvolvido por Guilherme Braga | © 2025</p>
       </div>
     </body>
     </html>
@@ -3474,10 +3487,10 @@ function exportWaterReportPDF() {
     printWindow.print();
   }, 500);
   
-  showNotification('Relatório PDF gerado! 📄', 'success');
+  showNotification('Relatório PDF gerado!', 'success');
 }
 
-// Exportar relatório Excel (CSV)
+// Exportar relatório Excel (CSV) - Formato oficial Granja Vitta
 function exportWaterReportExcel() {
   const readings = state.waterReadings;
   
@@ -3486,16 +3499,88 @@ function exportWaterReportExcel() {
     return;
   }
   
-  // Criar CSV
-  const headers = ['Data', 'Horário', 'Caixa', 'Leitura (m³)', 'Registrado por', 'Observações'];
-  const rows = readings.map(r => [
-    new Date(r.reading_date).toLocaleDateString('pt-BR'),
-    r.reading_time,
-    r.tank_name === 'aviarios' ? 'Aviários' : 'Recria',
-    r.reading_value.toFixed(3),
-    r.recorded_by_name || '',
-    r.notes || ''
-  ]);
+  // Agrupar leituras por dia e calcular consumo
+  const dailyData = {};
+  const sortedReadings = [...readings].sort((a, b) => new Date(a.reading_date) - new Date(b.reading_date));
+  
+  sortedReadings.forEach(r => {
+    const dateKey = r.reading_date.split('T')[0];
+    if (!dailyData[dateKey]) {
+      dailyData[dateKey] = { aviarios: {}, recria: {} };
+    }
+    const timeKey = r.reading_time === '07:00' ? 'am' : 'pm';
+    dailyData[dateKey][r.tank_name][timeKey] = r.reading_value;
+  });
+  
+  // Gerar linhas no formato da planilha oficial
+  const rows = [];
+  const dates = Object.keys(dailyData).sort();
+  
+  dates.forEach((dateStr, idx) => {
+    const date = new Date(dateStr + 'T12:00:00');
+    const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase();
+    const formattedDate = date.toLocaleDateString('pt-BR');
+    const data = dailyData[dateStr];
+    
+    // Próximo dia para calcular consumo 24h
+    const nextDate = dates[idx + 1];
+    const nextData = nextDate ? dailyData[nextDate] : null;
+    
+    // RECRIA - 7AM-4PM (período de trabalho)
+    if (data.recria.am !== undefined && data.recria.pm !== undefined) {
+      const consumo = data.recria.pm - data.recria.am;
+      const ltPorHora = Math.round((consumo * 1000) / 9); // 9 horas de trabalho
+      rows.push([
+        formattedDate, dayOfWeek, 'RECRIA', '7AM - 4PM',
+        `${Math.round(data.recria.am)} - ${Math.round(data.recria.pm)}`,
+        ltPorHora.toLocaleString('pt-BR'),
+        (consumo * 1000).toLocaleString('pt-BR'),
+        'TRABALHO'
+      ]);
+    }
+    
+    // AVIARIOS - 7AM-4PM (período de trabalho)
+    if (data.aviarios.am !== undefined && data.aviarios.pm !== undefined) {
+      const consumo = data.aviarios.pm - data.aviarios.am;
+      const ltPorHora = Math.round((consumo * 1000) / 9);
+      rows.push([
+        formattedDate, dayOfWeek, 'AVIARIOS', '7AM - 4PM',
+        `${Math.round(data.aviarios.am)} - ${Math.round(data.aviarios.pm)}`,
+        ltPorHora.toLocaleString('pt-BR'),
+        (consumo * 1000).toLocaleString('pt-BR'),
+        'TRABALHO'
+      ]);
+    }
+    
+    // RECRIA - 24H (diário)
+    if (data.recria.am !== undefined && nextData?.recria?.am !== undefined) {
+      const consumo = nextData.recria.am - data.recria.am;
+      const ltPorHora = Math.round((consumo * 1000) / 24);
+      rows.push([
+        formattedDate, dayOfWeek, 'RECRIA', '24H',
+        `${Math.round(data.recria.am)} - ${Math.round(nextData.recria.am)}`,
+        ltPorHora.toLocaleString('pt-BR'),
+        (consumo * 1000).toLocaleString('pt-BR'),
+        'DIARIO'
+      ]);
+    }
+    
+    // AVIARIOS - 24H (diário)
+    if (data.aviarios.am !== undefined && nextData?.aviarios?.am !== undefined) {
+      const consumo = nextData.aviarios.am - data.aviarios.am;
+      const ltPorHora = Math.round((consumo * 1000) / 24);
+      rows.push([
+        formattedDate, dayOfWeek, 'AVIARIOS', '24H',
+        `${Math.round(data.aviarios.am)} - ${Math.round(nextData.aviarios.am)}`,
+        ltPorHora.toLocaleString('pt-BR'),
+        (consumo * 1000).toLocaleString('pt-BR'),
+        'DIARIO'
+      ]);
+    }
+  });
+  
+  // Criar CSV no formato oficial
+  const headers = ['DATA', 'DIA/SEMANA', 'CAIXA', 'HORAS', 'ENTRADA H (M³)', 'LT POR HORA', 'LT TOTAL', 'PERIODO'];
   
   const csv = [
     headers.join(';'),
@@ -3506,10 +3591,10 @@ function exportWaterReportExcel() {
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `controle_agua_granja_vitta_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `CONTROLE_DE_AGUA_GRANJA_VITTA_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
   
-  showNotification('Relatório Excel exportado! 📊', 'success');
+  showNotification('Planilha exportada com sucesso!', 'success');
 }
 
 // Obter label do período

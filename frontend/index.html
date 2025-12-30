@@ -2281,7 +2281,7 @@
           <span>Preventivas</span>
         </div>
         <div class="nav-item hidden" data-view="controle-agua">
-          <span class="nav-icon">💧</span>
+          <span class="nav-icon">◇</span>
           <span>Controle de Água</span>
         </div>
         <div class="nav-item hidden" data-view="checklists">
@@ -2594,10 +2594,10 @@
             </div>
             <div class="water-header-actions">
               <button class="btn-water-export" onclick="exportWaterReportPDF()">
-                <span>📄</span> Exportar PDF
+                Exportar PDF
               </button>
               <button class="btn-water-export" onclick="exportWaterReportExcel()">
-                <span>📊</span> Exportar Excel
+                Exportar Planilha
               </button>
             </div>
           </div>
@@ -2696,18 +2696,18 @@
           <div class="water-input-section">
             <div class="card water-input-card">
               <div class="card-header">
-                <h3 class="card-title">📝 Registrar Leitura do Relógio</h3>
+                <h3 class="card-title">Registrar Leitura do Relógio</h3>
                 <span class="water-input-time" id="current-time"></span>
               </div>
               
               <div class="water-input-grid">
                 <div class="water-input-group">
-                  <label>📆 Data da Leitura</label>
+                  <label>Data da Leitura</label>
                   <input type="date" id="water-reading-date" class="water-input">
                 </div>
                 
                 <div class="water-input-group">
-                  <label>⏰ Horário</label>
+                  <label>Horário</label>
                   <select id="water-reading-time" class="water-input">
                     <option value="07:00">07:00 - Manhã</option>
                     <option value="16:00">16:00 - Tarde</option>
@@ -2715,24 +2715,24 @@
                 </div>
                 
                 <div class="water-input-group">
-                  <label>🏭 Caixa Aviários (m³)</label>
+                  <label>Caixa Aviários (m³)</label>
                   <input type="number" step="0.001" id="water-aviarios-value" class="water-input" placeholder="Ex: 1234.567">
                 </div>
                 
                 <div class="water-input-group">
-                  <label>🐣 Caixa Recria (m³)</label>
+                  <label>Caixa Recria (m³)</label>
                   <input type="number" step="0.001" id="water-recria-value" class="water-input" placeholder="Ex: 567.890">
                 </div>
                 
                 <div class="water-input-group full-width">
-                  <label>📝 Observações (opcional)</label>
+                  <label>Observações (opcional)</label>
                   <input type="text" id="water-reading-notes" class="water-input" placeholder="Ex: Vazamento detectado, manutenção realizada...">
                 </div>
               </div>
               
               <div class="water-input-actions">
                 <button class="btn-water-save" onclick="saveWaterReading()">
-                  <span>💾</span> Salvar Leitura
+                  Salvar Leitura
                 </button>
               </div>
             </div>
@@ -2741,7 +2741,7 @@
           <!-- Gráfico Principal -->
           <div class="card water-chart-card">
             <div class="card-header">
-              <h3 class="card-title">📈 Gráfico de Consumo</h3>
+              <h3 class="card-title">Gráfico de Consumo</h3>
               <div class="chart-legend">
                 <span class="legend-item aviarios"><span class="legend-dot"></span> Aviários</span>
                 <span class="legend-item recria"><span class="legend-dot"></span> Recria</span>
@@ -2753,7 +2753,7 @@
           <!-- Histórico de Leituras -->
           <div class="card water-history-card">
             <div class="card-header">
-              <h3 class="card-title">📋 Histórico de Leituras</h3>
+              <h3 class="card-title">Histórico de Leituras</h3>
               <div class="history-filters">
                 <select id="history-tank-filter" class="water-select" onchange="filterWaterHistory()">
                   <option value="all">Todas as Caixas</option>
@@ -3333,7 +3333,7 @@
         <span class="mobile-nav-label">OS</span>
       </div>
       <div class="mobile-nav-item" data-view="controle-agua" onclick="navigateMobile('controle-agua')">
-        <svg class="mobile-nav-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z"/></svg>
+        <svg class="mobile-nav-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
         <span class="mobile-nav-label">Água</span>
       </div>
       <div class="mobile-nav-item" data-view="compras" onclick="navigateMobile('compras')">
