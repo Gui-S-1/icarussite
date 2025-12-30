@@ -3218,29 +3218,52 @@ function renderWaterStats() {
   const stats = state.waterStats;
   const readings = state.waterReadings;
   
-  // Pegar leituras mais recentes de cada horário
-  const today = new Date().toISOString().split('T')[0];
+  // Função para formatar data corretamente
+  function getDateKey(dateStr) {
+    const parts = dateStr.split('T')[0].split('-');
+    return parts.join('-'); // YYYY-MM-DD
+  }
+  
+  // Obter data mais recente das leituras
+  const sortedReadings = [...readings].sort((a, b) => {
+    const dateCompare = getDateKey(b.reading_date).localeCompare(getDateKey(a.reading_date));
+    if (dateCompare !== 0) return dateCompare;
+    return b.reading_time.localeCompare(a.reading_time);
+  });
   
   ['aviarios', 'recria'].forEach(tank => {
-    const tankReadings = readings.filter(r => r.tank_name === tank);
+    const tankReadings = sortedReadings.filter(r => r.tank_name === tank);
     
-    // Leitura das 7h (mais recente)
-    const leitura7h = tankReadings.find(r => r.reading_time === '07:00');
-    const leitura16h = tankReadings.find(r => r.reading_time === '16:00');
+    // Pegar data mais recente deste tanque
+    const latestDate = tankReadings.length > 0 ? getDateKey(tankReadings[0].reading_date) : null;
     
-    // Atualizar leituras
+    // Leitura das 7h e 16h DO MESMO DIA (mais recente)
+    const leitura7h = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === latestDate);
+    const leitura16h = tankReadings.find(r => r.reading_time === '16:00' && getDateKey(r.reading_date) === latestDate);
+    
+    // Se não tem 16h do dia mais recente, tentar do dia anterior
+    const leitura16hAlt = !leitura16h ? tankReadings.find(r => r.reading_time === '16:00') : null;
+    
+    // Atualizar leituras - garantir ordem correta (7h é menor que 16h)
     const el7h = document.getElementById(`${tank}-leitura-7h`);
     const el16h = document.getElementById(`${tank}-leitura-16h`);
-    if (el7h) el7h.textContent = leitura7h ? Math.round(leitura7h.reading_value).toLocaleString('pt-BR') : '--';
-    if (el16h) el16h.textContent = leitura16h ? Math.round(leitura16h.reading_value).toLocaleString('pt-BR') : '--';
+    
+    const val7h = leitura7h ? leitura7h.reading_value : null;
+    const val16h = (leitura16h || leitura16hAlt)?.reading_value || null;
+    
+    if (el7h) el7h.textContent = val7h !== null ? Math.round(val7h).toLocaleString('pt-BR') : '--';
+    if (el16h) el16h.textContent = val16h !== null ? Math.round(val16h).toLocaleString('pt-BR') : '--';
     
     // Calcular consumo do período de trabalho (7h-16h = 9 horas)
+    // Só calcula se ambas leituras são do mesmo dia
     let consumoTrabalho = '--';
     let ltHoraTrabalho = '--';
-    if (leitura7h && leitura16h && leitura7h.reading_date === leitura16h.reading_date) {
+    if (leitura7h && leitura16h && getDateKey(leitura7h.reading_date) === getDateKey(leitura16h.reading_date)) {
       const diff = leitura16h.reading_value - leitura7h.reading_value;
-      consumoTrabalho = diff.toFixed(0);
-      ltHoraTrabalho = Math.round((diff * 1000) / 9).toLocaleString('pt-BR');
+      if (diff >= 0) {
+        consumoTrabalho = diff.toFixed(0);
+        ltHoraTrabalho = Math.round((diff * 1000) / 9).toLocaleString('pt-BR');
+      }
     }
     
     const elConsumoTrab = document.getElementById(`${tank}-consumo-trabalho`);
@@ -3251,13 +3274,16 @@ function renderWaterStats() {
     // Calcular consumo 24h (7h de hoje - 7h de ontem)
     let consumo24h = '--';
     let ltHora24h = '--';
-    const leituras7h = tankReadings.filter(r => r.reading_time === '07:00').sort((a, b) => 
-      new Date(b.reading_date) - new Date(a.reading_date)
-    );
+    const leituras7h = tankReadings
+      .filter(r => r.reading_time === '07:00')
+      .sort((a, b) => getDateKey(b.reading_date).localeCompare(getDateKey(a.reading_date)));
+    
     if (leituras7h.length >= 2) {
       const diff = leituras7h[0].reading_value - leituras7h[1].reading_value;
-      consumo24h = diff.toFixed(0);
-      ltHora24h = Math.round((diff * 1000) / 24).toLocaleString('pt-BR');
+      if (diff >= 0) {
+        consumo24h = diff.toFixed(0);
+        ltHora24h = Math.round((diff * 1000) / 24).toLocaleString('pt-BR');
+      }
     }
     
     const elConsumo24h = document.getElementById(`${tank}-consumo-24h`);
@@ -3266,46 +3292,78 @@ function renderWaterStats() {
     if (elLtHora24h) elLtHora24h.textContent = ltHora24h;
   });
   
-  // Comparativo
-  if (stats) {
-    const aviariosTotal = stats.aviarios?.total_consumption || 0;
-    const recriaTotal = stats.recria?.total_consumption || 0;
-    const diferenca = Math.abs(aviariosTotal - recriaTotal).toFixed(0);
-    const total = (aviariosTotal + recriaTotal).toFixed(0);
-    const mediaGeral = ((stats.aviarios?.avg_daily || 0) + (stats.recria?.avg_daily || 0)).toFixed(0);
-    
-    document.getElementById('diferenca-consumo').textContent = diferenca;
-    document.getElementById('total-consumo').textContent = total;
-    document.getElementById('media-geral').textContent = mediaGeral;
-    
-    // Mini charts
-    renderMiniChart('aviarios', stats.aviarios?.daily_consumption || []);
-    renderMiniChart('recria', stats.recria?.daily_consumption || []);
+  // Comparativo - usar leituras do período selecionado
+  const aviariosReadings = sortedReadings.filter(r => r.tank_name === 'aviarios');
+  const recriaReadings = sortedReadings.filter(r => r.tank_name === 'recria');
+  
+  // Calcular totais baseado nas leituras 7h
+  let aviariosTotal = 0, recriaTotal = 0;
+  let aviariosDays = 0, recriaDays = 0;
+  
+  const aviarios7h = aviariosReadings.filter(r => r.reading_time === '07:00').sort((a, b) => getDateKey(a.reading_date).localeCompare(getDateKey(b.reading_date)));
+  const recria7h = recriaReadings.filter(r => r.reading_time === '07:00').sort((a, b) => getDateKey(a.reading_date).localeCompare(getDateKey(b.reading_date)));
+  
+  for (let i = 1; i < aviarios7h.length; i++) {
+    const diff = aviarios7h[i].reading_value - aviarios7h[i-1].reading_value;
+    if (diff >= 0) { aviariosTotal += diff; aviariosDays++; }
   }
+  for (let i = 1; i < recria7h.length; i++) {
+    const diff = recria7h[i].reading_value - recria7h[i-1].reading_value;
+    if (diff >= 0) { recriaTotal += diff; recriaDays++; }
+  }
+  
+  const diferenca = Math.abs(aviariosTotal - recriaTotal).toFixed(0);
+  const total = (aviariosTotal + recriaTotal).toFixed(0);
+  const mediaGeral = ((aviariosDays > 0 ? aviariosTotal/aviariosDays : 0) + (recriaDays > 0 ? recriaTotal/recriaDays : 0)).toFixed(0);
+  
+  const elDif = document.getElementById('diferenca-consumo');
+  const elTotal = document.getElementById('total-consumo');
+  const elMedia = document.getElementById('media-geral');
+  if (elDif) elDif.textContent = diferenca;
+  if (elTotal) elTotal.textContent = total;
+  if (elMedia) elMedia.textContent = mediaGeral;
+  
+  // Mini charts - gerar a partir das leituras filtradas pelo período
+  const period = state.waterPeriod || 'today';
+  renderMiniChartFromReadings('aviarios', aviarios7h, period);
+  renderMiniChartFromReadings('recria', recria7h, period);
 }
 
-// Obter última leitura de um tanque
-function getLastReading(tankName) {
-  const tankReadings = state.waterReadings.filter(r => r.tank_name === tankName);
-  if (tankReadings.length === 0) return '--';
-  return tankReadings[0].reading_value.toFixed(3);
-}
-
-// Renderizar mini chart
-function renderMiniChart(tank, consumptions) {
+// Renderizar mini chart a partir das leituras
+function renderMiniChartFromReadings(tank, readings7h, period) {
   const container = document.getElementById(`${tank}-mini-chart`);
   if (!container) return;
+  
+  if (readings7h.length < 2) {
+    container.innerHTML = '<span style="color: var(--text-secondary); font-size: 11px;">Sem dados</span>';
+    return;
+  }
+  
+  // Calcular consumos diários
+  const consumptions = [];
+  for (let i = 1; i < readings7h.length; i++) {
+    const diff = readings7h[i].reading_value - readings7h[i-1].reading_value;
+    if (diff >= 0) {
+      consumptions.push({ date: readings7h[i].reading_date, consumption: diff });
+    }
+  }
   
   if (consumptions.length === 0) {
     container.innerHTML = '<span style="color: var(--text-secondary); font-size: 11px;">Sem dados</span>';
     return;
   }
   
-  const maxConsumption = Math.max(...consumptions.map(c => c.consumption), 1);
+  // Filtrar pelo período
+  let numBars = 1;
+  if (period === 'week') numBars = 7;
+  else if (period === 'month') numBars = 30;
   
-  container.innerHTML = consumptions.slice(-7).map(c => {
+  const filteredConsumptions = consumptions.slice(-numBars);
+  const maxConsumption = Math.max(...filteredConsumptions.map(c => c.consumption), 1);
+  
+  container.innerHTML = filteredConsumptions.map(c => {
     const height = (c.consumption / maxConsumption) * 100;
-    return `<div class="tank-chart-bar" style="height: ${Math.max(height, 5)}%;" title="${c.date}: ${c.consumption.toFixed(2)} m³"></div>`;
+    return '<div class="tank-chart-bar" style="height: ' + Math.max(height, 5) + '%;" title="' + c.consumption.toFixed(2) + ' m³"></div>';
   }).join('');
 }
 
