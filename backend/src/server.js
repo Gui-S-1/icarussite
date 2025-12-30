@@ -250,9 +250,9 @@ app.get('/orders', requireAuth, async (req, res) => {
   try {
     let orders = await fetchOrders(req.user.keyId);
     
-    // Admin e os_manage_all veem todas as OS
+    // Admin, os_manage_all e os_view_all veem todas as OS
     const userRoles = req.user.roles || [];
-    const canSeeAll = userRoles.includes('admin') || userRoles.includes('os_manage_all');
+    const canSeeAll = userRoles.includes('admin') || userRoles.includes('os_manage_all') || userRoles.includes('os_view_all');
     
     if (!canSeeAll) {
       // Filtrar apenas OS criadas pelo usuário OU onde ele está atribuído

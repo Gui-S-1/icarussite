@@ -418,23 +418,111 @@ function updateDashboardStats() {
   if (statCompleted) statCompleted.textContent = completedInPeriod;
   if (statTotal) statTotal.textContent = createdInPeriod;
 
+  // Update period labels
+  const periodLabels = { daily: 'hoje', weekly: 'semana', monthly: 'mês' };
+  const periodLabel = periodLabels[state.dashboardFilter] || 'hoje';
+  const label1 = document.getElementById('stat-period-label');
+  const label2 = document.getElementById('stat-period-label2');
+  if (label1) label1.textContent = periodLabel;
+  if (label2) label2.textContent = 'do ' + periodLabel;
+
+  // Update dashboard date
+  const dashDate = document.getElementById('dashboard-date');
+  if (dashDate) {
+    const now = new Date();
+    dashDate.textContent = now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+  }
+
   // Productivity chart with filtered data
   renderProductivityChart(filteredOrders);
 
-  // Recent activity
-  const recent = state.orders.slice(0, 5);
-  let html = '';
-  if (recent.length > 0) {
-    html = `<table><thead><tr><th>ID</th><th>Status</th><th>Data</th></tr></thead><tbody>`;
-    for (const order of recent) {
-      html += `<tr><td>${order.id}</td><td>${order.status}</td><td>${order.created_at}</td></tr>`;
+  // Update summary stats
+  updateDashboardSummary(filteredOrders, completedInPeriod, createdInPeriod);
+
+  // Recent activity - compact format
+  renderRecentActivity();
+}
+
+function updateDashboardSummary(filteredOrders, completed, total) {
+  // Taxa de conclusão
+  const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const rateEl = document.getElementById('completion-rate');
+  if (rateEl) rateEl.textContent = rate + '%';
+
+  // OS Criadas
+  const createdEl = document.getElementById('created-count');
+  if (createdEl) createdEl.textContent = total;
+
+  // Técnico destaque (quem mais concluiu)
+  const completedOrders = filteredOrders.filter(o => o.status === 'completed');
+  const techStats = {};
+  completedOrders.forEach(order => {
+    if (order.assigned_users && Array.isArray(order.assigned_users)) {
+      order.assigned_users.forEach(user => {
+        const name = user.name || user.username;
+        techStats[name] = (techStats[name] || 0) + 1;
+      });
     }
-    html += `</tbody></table>`;
-  } else {
-    html = '<p style="color: var(--text-secondary);">Nenhuma atividade recente</p>';
+  });
+  const topTech = Object.entries(techStats).sort((a, b) => b[1] - a[1])[0];
+  const topTechEl = document.getElementById('top-tech');
+  if (topTechEl) topTechEl.textContent = topTech ? `${topTech[0]} (${topTech[1]})` : '-';
+
+  // Tempo médio (placeholder - precisa de finished_at no backend)
+  const avgTimeEl = document.getElementById('avg-time');
+  if (avgTimeEl) avgTimeEl.textContent = '-';
+}
+
+function renderRecentActivity() {
+  const recent = state.orders.slice(0, 6);
+  const container = document.getElementById('recent-activity');
+  if (!container) return;
+
+  if (recent.length === 0) {
+    container.innerHTML = '<div style="color: var(--text-secondary); font-size: 12px; padding: 20px; text-align: center;">Nenhuma atividade</div>';
+    return;
   }
-  const recentActivity = document.getElementById('recent-activity');
-  if (recentActivity) recentActivity.innerHTML = html;
+
+  const statusIcons = {
+    pending: '⏳',
+    in_progress: '🔧',
+    completed: '✅'
+  };
+
+  const statusColors = {
+    pending: 'var(--warning)',
+    in_progress: 'var(--info)',
+    completed: 'var(--success)'
+  };
+
+  container.innerHTML = recent.map(order => {
+    const icon = statusIcons[order.status] || '📋';
+    const color = statusColors[order.status] || 'var(--accent-gold)';
+    const time = formatTimeAgo(order.created_at);
+    const title = order.title.length > 30 ? order.title.substring(0, 30) + '...' : order.title;
+    
+    return `
+      <div class="activity-item" onclick="showOSDetail('${order.id}')" style="cursor: pointer;">
+        <div class="activity-icon" style="background: ${color}20; color: ${color};">${icon}</div>
+        <div class="activity-content">
+          <div class="activity-title">${title}</div>
+          <div class="activity-time">${time}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function formatTimeAgo(dateStr) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now - date) / 1000);
+  
+  if (diff < 60) return 'agora';
+  if (diff < 3600) return Math.floor(diff / 60) + 'min atrás';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h atrás';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd atrás';
+  return date.toLocaleDateString('pt-BR');
 }
 
 function renderProductivityChart(filteredOrders = state.orders) {
