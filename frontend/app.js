@@ -3106,9 +3106,14 @@ async function loadWaterControl() {
       inputSection.style.display = canEdit ? 'block' : 'none';
     }
     
-    // Definir data de hoje no input (só se pode editar)
+    // Definir data de hoje no input (formato local correto)
     if (canEdit) {
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
+      
       const dateInput = document.getElementById('water-reading-date');
       if (dateInput) dateInput.value = today;
       
@@ -3117,9 +3122,11 @@ async function loadWaterControl() {
       setInterval(updateCurrentTime, 60000);
     }
     
-    // Carregar dados
-    await loadWaterReadings();
-    await loadWaterStats();
+    // Carregar dados EM PARALELO (mais rápido)
+    await Promise.all([
+      loadWaterReadings(),
+      loadWaterStats()
+    ]);
     
     // Renderizar
     renderWaterStats();
@@ -3370,13 +3377,27 @@ function renderWaterHistory() {
   }
   
   if (filteredReadings.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Nenhuma leitura registrada</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">Nenhuma leitura registrada</td></tr>';
     return;
+  }
+  
+  // Função para formatar data corretamente (evitar timezone issues)
+  function formatDate(dateStr) {
+    // reading_date vem como "2025-12-30" ou "2025-12-30T00:00:00.000Z"
+    const parts = dateStr.split('T')[0].split('-');
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const day = parseInt(parts[2]);
+    const date = new Date(year, month, day, 12, 0, 0); // meio-dia para evitar DST
+    
+    const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
+    const formatted = date.toLocaleDateString('pt-BR');
+    return { formatted, dayOfWeek, dateObj: date };
   }
   
   // Calcular consumo 24h para cada leitura
   tbody.innerHTML = filteredReadings.slice(0, 50).map((reading, idx) => {
-    const date = new Date(reading.reading_date).toLocaleDateString('pt-BR');
+    const { formatted: date, dayOfWeek } = formatDate(reading.reading_date);
     const tankClass = reading.tank_name;
     const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
     
@@ -3403,6 +3424,7 @@ function renderWaterHistory() {
     return `
       <tr>
         <td>${date}</td>
+        <td><span style="color: var(--text-secondary); font-size: 11px;">${dayOfWeek}</span></td>
         <td>${reading.reading_time}</td>
         <td><span class="tank-badge ${tankClass}">${tankLabel}</span></td>
         <td><strong>${reading.reading_value.toFixed(3)}</strong></td>
