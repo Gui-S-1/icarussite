@@ -566,33 +566,41 @@
       background: var(--bg-primary);
     }
 
-    /* Subtle ambient lights in app */
+    /* Ambient golden lights in app - Premium style */
     #app-screen::before {
       content: '';
       position: fixed;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(212,175,55,0.25) 0%, rgba(212,175,55,0.1) 40%, transparent 70%);
       border-radius: 50%;
-      top: -100px;
+      top: -150px;
       right: -100px;
       pointer-events: none;
       z-index: 0;
-      filter: blur(60px);
+      filter: blur(80px);
+      animation: ambientPulse 8s ease-in-out infinite;
     }
 
     #app-screen::after {
       content: '';
       position: fixed;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 70%);
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.08) 40%, transparent 70%);
       border-radius: 50%;
-      bottom: 50px;
-      left: -50px;
+      bottom: -50px;
+      left: -100px;
       pointer-events: none;
       z-index: 0;
-      filter: blur(50px);
+      filter: blur(70px);
+      animation: ambientPulse 10s ease-in-out infinite;
+      animation-delay: -4s;
+    }
+
+    @keyframes ambientPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
     }
 
     /* Header */
@@ -680,6 +688,25 @@
       display: flex;
       flex: 1;
       overflow: hidden;
+      position: relative;
+    }
+
+    /* Third ambient light - center */
+    .main-layout::before {
+      content: '';
+      position: fixed;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, rgba(212,175,55,0.05) 40%, transparent 70%);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(100px);
+      animation: ambientPulse 12s ease-in-out infinite;
+      animation-delay: -6s;
     }
 
     /* Sidebar */
@@ -835,6 +862,7 @@
       background: var(--bg-secondary);
       padding: 3px;
       border-radius: 8px;
+      align-items: center;
     }
 
     .dash-filter {
@@ -858,6 +886,22 @@
       background: var(--accent-gold);
       color: #000;
       font-weight: 600;
+    }
+
+    .dash-month-select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 11px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .dash-month-select:focus {
+      outline: none;
+      border-color: var(--accent-gold);
     }
 
     /* Compact Stats Row */
@@ -1185,6 +1229,18 @@
     .btn-primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+      color: #fff;
+      border: none;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+      background: linear-gradient(135deg, #e04555 0%, #b71d2a 100%);
     }
 
     /* Productivity Chart */
@@ -1564,7 +1620,7 @@
       
       <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(212,175,55,0.2); text-align: center;">
         <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px; font-weight: 500;">
-          🔒 Não tem acesso?
+          ◈ Não tem acesso?
         </p>
         <button onclick="document.getElementById('premium-popup-overlay').classList.add('active'); document.body.style.overflow='hidden';" class="whatsapp-btn" style="border: none; cursor: pointer;">
           <svg class="whatsapp-icon" viewBox="0 0 24 24">
@@ -1573,7 +1629,7 @@
           Solicitar Acesso / Orçamento
         </button>
         <p style="color: var(--text-secondary); font-size: 12px; margin-top: 15px; opacity: 0.8;">
-          ⚡ Resposta rápida • 🏆 +47 empresas atendidas
+          ◇ Resposta rápida • ◇ +47 empresas atendidas
         </p>
       </div>
     </div>
@@ -1606,31 +1662,31 @@
       <!-- Sidebar -->
       <div class="sidebar">
         <div class="nav-item active" data-view="dashboard">
-          <span class="nav-icon">▣</span>
+          <span class="nav-icon">◈</span>
           <span>Dashboard</span>
         </div>
         <div class="nav-item" data-view="os">
-          <span class="nav-icon">☰</span>
+          <span class="nav-icon">◇</span>
           <span>Ordens de Serviço</span>
         </div>
         <div class="nav-item hidden" data-view="almoxarifado">
-          <span class="nav-icon">▦</span>
+          <span class="nav-icon">◫</span>
           <span>Almoxarifado</span>
         </div>
         <div class="nav-item hidden" data-view="compras">
-          <span class="nav-icon">▥</span>
+          <span class="nav-icon">◪</span>
           <span>Compras</span>
         </div>
         <div class="nav-item hidden" data-view="preventivas">
-          <span class="nav-icon">⚙</span>
+          <span class="nav-icon">◎</span>
           <span>Preventivas</span>
         </div>
         <div class="nav-item hidden" data-view="relatorios">
-          <span class="nav-icon">▤</span>
+          <span class="nav-icon">◧</span>
           <span>Relatórios</span>
         </div>
         <div class="nav-item hidden" data-view="configuracoes">
-          <span class="nav-icon">⚙</span>
+          <span class="nav-icon">◉</span>
           <span>Configurações</span>
         </div>
       </div>
@@ -1642,7 +1698,7 @@
           <!-- Compact Dashboard Header -->
           <div class="dash-header">
             <div class="dash-title-row">
-              <span class="dash-icon">📊</span>
+              <span class="dash-icon">◈</span>
               <h2>Dashboard</h2>
               <span class="dash-date" id="dashboard-date"></span>
             </div>
@@ -1650,6 +1706,9 @@
               <button class="dash-filter active" id="filter-daily" onclick="setDashboardFilter('daily')">Hoje</button>
               <button class="dash-filter" id="filter-weekly" onclick="setDashboardFilter('weekly')">Semana</button>
               <button class="dash-filter" id="filter-monthly" onclick="setDashboardFilter('monthly')">Mês</button>
+              <select id="filter-month" class="dash-month-select" onchange="setDashboardMonth(this.value)">
+                <option value="">Mês Atual</option>
+              </select>
             </div>
           </div>
           
@@ -1946,18 +2005,18 @@
             <!-- Card: Notificações -->
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">🔔 Notificações</h3>
+                <h3 class="card-title">◎ Notificações</h3>
               </div>
               <div style="padding: 20px; text-align: center;">
                 <div style="padding: 32px 20px;">
-                  <div style="font-size: 48px; margin-bottom: 16px;">🚀</div>
+                  <div style="font-size: 48px; margin-bottom: 16px; color: var(--primary);">◈</div>
                   <h4 style="color: var(--primary); margin-bottom: 8px; font-size: 18px;">Em Breve</h4>
                   <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
                     Estamos trabalhando em notificações inteligentes via WhatsApp.<br>
                     Você será avisado quando estiver disponível!
                   </p>
                   <div style="margin-top: 16px; padding: 12px 20px; background: rgba(212, 175, 55, 0.1); border-radius: 8px; border: 1px dashed var(--primary);">
-                    <span style="color: var(--primary); font-size: 13px;">✨ Novidade chegando em breve</span>
+                    <span style="color: var(--primary); font-size: 13px;">◇ Novidade chegando em breve</span>
                   </div>
                 </div>
               </div>
@@ -1966,20 +2025,20 @@
             <!-- Card: Suporte -->
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">💬 Suporte e Ajuda</h3>
+                <h3 class="card-title">◎ Suporte e Ajuda</h3>
               </div>
               <div style="padding: 20px;">
                 <p style="margin-bottom: 16px; color: var(--text-secondary);">
                   Precisa de ajuda? Entre em contato conosco!
                 </p>
                 <button class="btn-small btn-primary" onclick="openWhatsAppSupport()" style="width: 100%; margin-bottom: 8px;">
-                  📱 Falar com Suporte (WhatsApp)
+                  ◇ Falar com Suporte
                 </button>
                 <button class="btn-small" onclick="openDocumentation()" style="width: 100%; margin-bottom: 8px;">
-                  📖 Ver Documentação
+                  ◇ Ver Documentação
                 </button>
                 <button class="btn-small" onclick="reportBug()" style="width: 100%;">
-                  🐛 Reportar Problema
+                  ◇ Reportar Problema
                 </button>
               </div>
             </div>
@@ -1987,7 +2046,7 @@
             <!-- Card: Sobre -->
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">ℹ Sobre o Sistema</h3>
+                <h3 class="card-title">◎ Sobre o Sistema</h3>
               </div>
               <div style="padding: 20px;">
                 <div style="text-align: center; margin-bottom: 20px;">
@@ -2506,7 +2565,9 @@
     }
 
     window.selectOperator = function(operatorName) {
-      localStorage.setItem('selectedOperator', operatorName);
+      // Salva operador específico por username (salaovos_operator)
+      const username = localStorage.getItem('icarus_username') || 'default';
+      localStorage.setItem(`selectedOperator_${username}`, operatorName);
       document.getElementById('user-selection-overlay').classList.remove('active');
       document.body.style.overflow = '';
       // Continue with normal app flow
@@ -2519,7 +2580,7 @@
   <!-- User Selection Popup -->
   <div id="user-selection-overlay" class="premium-popup-overlay">
     <div class="premium-popup" onclick="event.stopPropagation()">
-      <div class="premium-popup-icon">👤</div>
+      <div class="premium-popup-icon" style="color: var(--primary);">◉</div>
       
       <h2>Selecione o <span>Operador</span></h2>
       
@@ -2529,10 +2590,10 @@
       
       <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
         <button onclick="selectOperator('Erica')" class="premium-cta-btn" style="margin-bottom: 0;">
-          <span>👩</span> Erica
+          <span>◇</span> Erica
         </button>
         <button onclick="selectOperator('Irene')" class="premium-cta-btn" style="margin-bottom: 0;">
-          <span>👩</span> Irene
+          <span>◇</span> Irene
         </button>
       </div>
       

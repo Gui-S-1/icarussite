@@ -10,6 +10,7 @@ const state = {
   purchases: [],
   currentView: 'dashboard',
   dashboardFilter: 'daily', // daily, weekly, monthly
+  dashboardMonth: null, // null = mês atual, ou 'YYYY-MM' para mês específico
   lastOrderCount: 0,
   lastPreventiveCheck: new Date()
 };
@@ -227,7 +228,9 @@ async function showApp() {
   document.getElementById('user-avatar').textContent = avatar;
   
   // If operator selected, show it in the name
-  const selectedOperator = localStorage.getItem('selectedOperator');
+  // Busca operador específico por username
+  const username = state.user?.username || localStorage.getItem('icarus_username') || 'default';
+  const selectedOperator = localStorage.getItem(`selectedOperator_${username}`);
   const displayName = selectedOperator ? `${state.user.name} (${selectedOperator})` : state.user.name;
   document.getElementById('user-name').textContent = displayName;
 
@@ -261,7 +264,7 @@ async function showApp() {
   // Adicionar indicador de atualização automática
   const statusBar = document.createElement('div');
   statusBar.id = 'auto-refresh-indicator';
-  statusBar.innerHTML = '🔄 Auto-refresh ativo';
+  statusBar.innerHTML = '◎ Sync ativo';
   statusBar.style.cssText = 'position: fixed; bottom: 10px; right: 10px; padding: 6px 12px; background: rgba(212, 175, 55, 0.1); border: 1px solid var(--accent-gold); border-radius: 6px; font-size: 11px; color: var(--accent-gold); z-index: 1000;';
   document.body.appendChild(statusBar);
   
@@ -315,18 +318,25 @@ function setDashboardFilter(filter) {
   const filterDaily = document.getElementById('filter-daily');
   const filterWeekly = document.getElementById('filter-weekly');
   const filterMonthly = document.getElementById('filter-monthly');
-  const filterBtn = document.getElementById(`filter-${filter}`);
   
-  if (filterDaily) filterDaily.classList.remove('btn-primary');
-  if (filterWeekly) filterWeekly.classList.remove('btn-primary');
-  if (filterMonthly) filterMonthly.classList.remove('btn-primary');
-  if (filterBtn) filterBtn.classList.add('btn-primary');
+  if (filterDaily) filterDaily.classList.remove('active');
+  if (filterWeekly) filterWeekly.classList.remove('active');
+  if (filterMonthly) filterMonthly.classList.remove('active');
+  
+  const filterBtn = document.getElementById(`filter-${filter}`);
+  if (filterBtn) filterBtn.classList.add('active');
+  
+  // Se escolheu mês específico, força monthly
+  if (state.dashboardMonth && filter !== 'monthly') {
+    state.dashboardMonth = null;
+    document.getElementById('filter-month').value = '';
+  }
   
   // Update labels
   const labels = {
-    daily: { period: 'Hoje', period2: 'do Dia', productivity: '(Hoje)' },
-    weekly: { period: 'na Semana', period2: 'da Semana', productivity: '(Esta Semana)' },
-    monthly: { period: 'no Mês', period2: 'do Mês', productivity: '(Este Mês)' }
+    daily: { period: 'hoje', period2: 'do dia', productivity: '(Hoje)' },
+    weekly: { period: 'semana', period2: 'da semana', productivity: '(Esta Semana)' },
+    monthly: { period: 'mês', period2: 'do mês', productivity: '(Este Mês)' }
   };
   
   const periodLabel = document.getElementById('stat-period-label');
@@ -341,9 +351,62 @@ function setDashboardFilter(filter) {
   updateDashboardStats();
 }
 
+function setDashboardMonth(monthValue) {
+  state.dashboardMonth = monthValue || null;
+  
+  if (monthValue) {
+    // Força filtro mensal quando seleciona mês específico
+    state.dashboardFilter = 'monthly';
+    document.getElementById('filter-daily').classList.remove('active');
+    document.getElementById('filter-weekly').classList.remove('active');
+    document.getElementById('filter-monthly').classList.add('active');
+    
+    // Atualiza label com nome do mês
+    const [year, month] = monthValue.split('-');
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const monthLabel = `${monthNames[parseInt(month) - 1]}/${year}`;
+    
+    const periodLabel = document.getElementById('stat-period-label');
+    const periodLabel2 = document.getElementById('stat-period-label2');
+    if (periodLabel) periodLabel.textContent = monthLabel;
+    if (periodLabel2) periodLabel2.textContent = 'de ' + monthLabel;
+  }
+  
+  updateDashboardStats();
+}
+
+function initMonthSelector() {
+  const select = document.getElementById('filter-month');
+  if (!select) return;
+  
+  const now = new Date();
+  const months = [];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  
+  // Últimos 12 meses
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    months.push({ value, label });
+  }
+  
+  select.innerHTML = '<option value="">Mês Atual</option>' + 
+    months.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
+}
+
 function getDateRange() {
   const now = new Date();
   let startDate, endDate;
+  
+  // Se tem mês específico selecionado
+  if (state.dashboardMonth) {
+    const [year, month] = state.dashboardMonth.split('-').map(Number);
+    startDate = new Date(year, month - 1, 1);
+    endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    return { startDate, endDate };
+  }
   
   switch(state.dashboardFilter) {
     case 'daily':
@@ -373,6 +436,9 @@ function getDateRange() {
 
 async function loadDashboard() {
   try {
+    // Inicializa seletor de meses
+    initMonthSelector();
+    
     const response = await fetch(`${API_URL}/orders`, {
       headers: {
         'Authorization': `Bearer ${state.token}`
@@ -484,9 +550,9 @@ function renderRecentActivity() {
   }
 
   const statusIcons = {
-    pending: '⏳',
-    in_progress: '🔧',
-    completed: '✅'
+    pending: '○',
+    in_progress: '◔',
+    completed: '●'
   };
 
   const statusColors = {
@@ -496,7 +562,7 @@ function renderRecentActivity() {
   };
 
   container.innerHTML = recent.map(order => {
-    const icon = statusIcons[order.status] || '📋';
+    const icon = statusIcons[order.status] || '○';
     const color = statusColors[order.status] || 'var(--accent-gold)';
     const time = formatTimeAgo(order.created_at);
     const title = order.title.length > 30 ? order.title.substring(0, 30) + '...' : order.title;
@@ -700,6 +766,12 @@ function showOSDetail(orderId) {
   
   if (canEdit && order.status === 'in_progress') {
     actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+  }
+  
+  // Botão excluir - criador pode excluir sua OS, manutenção pode excluir qualquer
+  const canDelete = order.requested_by === state.user.id || state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all');
+  if (canDelete) {
+    actions += `<button type="button" class="btn-small btn-danger" onclick="deleteOrder('${order.id}')">Excluir</button>`;
   }
   
   actionsContainer.innerHTML = actions;
@@ -1159,7 +1231,7 @@ function renderInventory() {
       </div>
       ${lowStock.length > 0 ? `
         <div style="background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <strong style="color: var(--danger);">⚠️ ${lowStock.length} itens com estoque baixo!</strong>
+          <strong style="color: var(--danger);">◆ ${lowStock.length} itens com estoque baixo!</strong>
         </div>
       ` : ''}
       <div class="table-container">
