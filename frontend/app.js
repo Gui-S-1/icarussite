@@ -4589,7 +4589,7 @@ function checkDieselAlerts() {
   if (!container) return;
   
   var stats = state.dieselStats || {};
-  var saldo = stats.saldoAtual || 0;
+  var saldo = stats.saldo_atual || stats.saldoAtual || 0;
   
   // Limites de alerta
   var LIMITE_CRITICO = 50;   // Crítico - vermelho
@@ -4618,13 +4618,17 @@ function renderDieselStats() {
   var elSaldoAtual = document.getElementById('diesel-saldo-atual');
   var elMediaDiaria = document.getElementById('diesel-media-diaria');
   
-  var saldo = stats.saldoAtual || 0;
+  // API retorna com underscores, converter para valores
+  var totalEntrada = stats.total_entrada || stats.totalEntrada || 0;
+  var totalSaida = stats.total_saida || stats.totalSaida || 0;
+  var saldo = stats.saldo_atual || stats.saldoAtual || 0;
+  var mediaDiaria = stats.media_diaria || stats.mediaDiaria || 0;
   
   if (elTotalEntrada) {
-    elTotalEntrada.textContent = (stats.totalEntrada || 0).toLocaleString('pt-BR') + ' L';
+    elTotalEntrada.textContent = totalEntrada.toLocaleString('pt-BR') + ' L';
   }
   if (elTotalSaida) {
-    elTotalSaida.textContent = (stats.totalSaida || 0).toLocaleString('pt-BR') + ' L';
+    elTotalSaida.textContent = totalSaida.toLocaleString('pt-BR') + ' L';
   }
   if (elSaldoAtual) {
     elSaldoAtual.textContent = saldo.toLocaleString('pt-BR') + ' L';
@@ -4640,7 +4644,7 @@ function renderDieselStats() {
     }
   }
   if (elMediaDiaria) {
-    elMediaDiaria.textContent = (stats.mediaDiaria || 0).toFixed(1) + ' L/dia';
+    elMediaDiaria.textContent = mediaDiaria.toFixed(1) + ' L/dia';
   }
 }
 
