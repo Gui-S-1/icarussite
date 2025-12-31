@@ -342,15 +342,20 @@ function setupPermissions() {
 
   if (navDashboard) navDashboard.classList.toggle('hidden', !canSeeDashboard);
   if (navOS) navOS.classList.remove('hidden'); // OS sempre visível para todos
-  if (navAlmox) navAlmox.classList.toggle('hidden', !(isAdmin || roles.includes('almoxarifado')));
-  if (navCompras) navCompras.classList.toggle('hidden', !(isAdmin || roles.includes('compras')));
-  if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas')));
+  if (navAlmox) navAlmox.classList.toggle('hidden', !(isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view')));
+  if (navCompras) navCompras.classList.toggle('hidden', !(isAdmin || roles.includes('compras') || roles.includes('compras_view')));
+  if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas') || roles.includes('preventivas_view')));
   if (navChecklists) navChecklists.classList.toggle('hidden', !canSeeChecklists);
   if (navWater) navWater.classList.toggle('hidden', !canSeeWater);
   if (navDiesel) navDiesel.classList.toggle('hidden', !canSeeDiesel);
   if (navGerador) navGerador.classList.toggle('hidden', !canSeeGerador);
   if (navRel) navRel.classList.toggle('hidden', !isAdmin);
   if (navCfg) navCfg.classList.remove('hidden');
+  
+  // Salvar permissões para edição (não só visualização)
+  state.canEditAlmox = isAdmin || roles.includes('almoxarifado');
+  state.canEditCompras = isAdmin || roles.includes('compras');
+  state.canEditPreventivas = isAdmin || roles.includes('preventivas');
   
   console.log('Permissões configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
 }
@@ -4463,10 +4468,13 @@ function getDieselPeriodDates() {
   if (state.dieselPeriod === 'today') {
     startDate = new Date(year, month, day, 0, 0, 0);
   } else if (state.dieselPeriod === 'week') {
-    startDate = new Date(year, month, day - 7, 0, 0, 0);
+    // 7 dias atrás
+    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    startDate.setHours(0, 0, 0, 0);
   } else {
-    // month
-    startDate = new Date(year, month - 1, day, 0, 0, 0);
+    // month - 30 dias atrás (não mês anterior para evitar problema de dias)
+    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    startDate.setHours(0, 0, 0, 0);
   }
   
   var startStr = startDate.getFullYear() + '-' + 
@@ -4572,6 +4580,33 @@ async function setDieselPeriod(period) {
   renderDieselStats();
   renderDieselChart();
   renderDieselHistory();
+  checkDieselAlerts();
+}
+
+// Verificar alertas de estoque de diesel
+function checkDieselAlerts() {
+  var container = document.getElementById('diesel-alert-container');
+  if (!container) return;
+  
+  var stats = state.dieselStats || {};
+  var saldo = stats.saldoAtual || 0;
+  
+  // Limites de alerta
+  var LIMITE_CRITICO = 50;   // Crítico - vermelho
+  var LIMITE_BAIXO = 100;    // Baixo - amarelo/laranja
+  var LIMITE_ATENCAO = 200;  // Atenção - amarelo
+  
+  if (saldo <= 0) {
+    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #f93943, #dc2626); border: 1px solid #f93943;"><div class="alert-icon">🚨</div><div class="alert-content"><strong>DIESEL ACABOU!</strong><span>Estoque zerado! Abasteça imediatamente.</span></div></div>';
+  } else if (saldo <= LIMITE_CRITICO) {
+    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #f93943, #dc2626); border: 1px solid #f93943;"><div class="alert-icon">⚠️</div><div class="alert-content"><strong>Estoque CRÍTICO!</strong><span>Apenas ' + saldo.toLocaleString('pt-BR') + ' L restantes. Abasteça urgente!</span></div></div>';
+  } else if (saldo <= LIMITE_BAIXO) {
+    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #f97316, #ea580c); border: 1px solid #f97316;"><div class="alert-icon">⚠️</div><div class="alert-content"><strong>Estoque BAIXO</strong><span>' + saldo.toLocaleString('pt-BR') + ' L restantes. Programe abastecimento.</span></div></div>';
+  } else if (saldo <= LIMITE_ATENCAO) {
+    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #eab308, #ca8a04); border: 1px solid #eab308;"><div class="alert-icon">📊</div><div class="alert-content"><strong>Estoque em atenção</strong><span>' + saldo.toLocaleString('pt-BR') + ' L restantes.</span></div></div>';
+  } else {
+    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #22c55e, #16a34a); border: 1px solid #22c55e;"><div class="alert-icon">✅</div><div class="alert-content"><strong>Estoque OK</strong><span>' + saldo.toLocaleString('pt-BR') + ' L disponíveis.</span></div></div>';
+  }
 }
 
 // Renderizar estatísticas do diesel
@@ -4583,6 +4618,8 @@ function renderDieselStats() {
   var elSaldoAtual = document.getElementById('diesel-saldo-atual');
   var elMediaDiaria = document.getElementById('diesel-media-diaria');
   
+  var saldo = stats.saldoAtual || 0;
+  
   if (elTotalEntrada) {
     elTotalEntrada.textContent = (stats.totalEntrada || 0).toLocaleString('pt-BR') + ' L';
   }
@@ -4590,7 +4627,17 @@ function renderDieselStats() {
     elTotalSaida.textContent = (stats.totalSaida || 0).toLocaleString('pt-BR') + ' L';
   }
   if (elSaldoAtual) {
-    elSaldoAtual.textContent = (stats.saldoAtual || 0).toLocaleString('pt-BR') + ' L';
+    elSaldoAtual.textContent = saldo.toLocaleString('pt-BR') + ' L';
+    // Mudar cor baseado no saldo
+    if (saldo <= 50) {
+      elSaldoAtual.style.color = '#f93943';
+    } else if (saldo <= 100) {
+      elSaldoAtual.style.color = '#f97316';
+    } else if (saldo <= 200) {
+      elSaldoAtual.style.color = '#eab308';
+    } else {
+      elSaldoAtual.style.color = '#22c55e';
+    }
   }
   if (elMediaDiaria) {
     elMediaDiaria.textContent = (stats.mediaDiaria || 0).toFixed(1) + ' L/dia';
