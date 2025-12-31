@@ -3322,21 +3322,27 @@ function renderWaterStats() {
     if (elConsumoTrab) elConsumoTrab.textContent = consumoTrabalho;
     if (elLtHoraTrab) elLtHoraTrab.textContent = ltHoraTrabalho;
     
-    // Calcular consumo 24h (7h de data mais recente - 7h do dia anterior)
+    // Calcular consumo 24h do ÚLTIMO DIA COMPLETO
+    // Consumo do dia X = Leitura 7h do dia (X+1) - Leitura 7h do dia X
+    // Se hoje é 31, mostramos consumo do dia 30 (leitura 7h dia 31 - leitura 7h dia 30)
+    // Só mostramos se latestDate é hoje (temos leitura de hoje) para calcular o dia anterior
     let consumo24h = '--';
     let ltHora24h = '--';
     
-    if (leitura7h && latestDate) {
-      // Calcular dia anterior à data mais recente
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (leitura7h && latestDate === today) {
+      // Calcular consumo do dia anterior (ontem)
       const parts = latestDate.split('-');
       const latestDateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
       latestDateObj.setDate(latestDateObj.getDate() - 1);
       const prevDayKey = latestDateObj.getFullYear() + '-' + String(latestDateObj.getMonth() + 1).padStart(2, '0') + '-' + String(latestDateObj.getDate()).padStart(2, '0');
       
-      const leitura7hAnterior = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === prevDayKey);
+      const leitura7hOntem = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === prevDayKey);
       
-      if (leitura7hAnterior) {
-        const diff = leitura7h.reading_value - leitura7hAnterior.reading_value;
+      if (leitura7hOntem) {
+        // Consumo do dia de ONTEM = leitura 7h HOJE - leitura 7h ONTEM
+        const diff = leitura7h.reading_value - leitura7hOntem.reading_value;
         if (diff >= 0) {
           consumo24h = diff.toFixed(0);
           ltHora24h = Math.round((diff * 1000) / 24).toLocaleString('pt-BR');
@@ -3539,6 +3545,14 @@ function renderWaterHistory() {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   
+  // Função para calcular o dia seguinte
+  function getNextDay(dateKey) {
+    const parts = dateKey.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+    d.setDate(d.getDate() + 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  
   // Ordenar por data DESC, horário DESC
   const sorted = [...filteredReadings].sort((a, b) => {
     const dateA = a.reading_date.split('T')[0];
@@ -3548,23 +3562,29 @@ function renderWaterHistory() {
   });
   
   // Calcular consumo 24h para cada leitura das 7h
+  // Consumo 24h do dia X = Leitura 7h do dia (X+1) - Leitura 7h do dia X
+  // Ou seja, só podemos mostrar consumo 24h se tivermos a leitura do dia SEGUINTE
+  const today = new Date().toISOString().split('T')[0];
+  
   tbody.innerHTML = sorted.slice(0, 50).map((reading) => {
     const { formatted: date, dayOfWeek, dateKey } = formatDate(reading.reading_date);
     const tankClass = reading.tank_name;
     const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
     
     // Calcular consumo 24h só para leituras das 7h
-    // Consumo = Leitura 7h de HOJE - Leitura 7h de ONTEM
+    // Consumo do DIA = Leitura 7h do dia SEGUINTE - Leitura 7h deste dia
+    // Se for hoje, não temos o dia seguinte ainda, então não mostra
     let consumption = '--';
-    if (reading.reading_time === '07:00') {
-      const prevDay = getPreviousDay(dateKey);
-      const prevReading = sorted.find(r => 
+    if (reading.reading_time === '07:00' && dateKey !== today) {
+      // Procurar leitura do dia seguinte
+      const nextDay = getNextDay(dateKey);
+      const nextReading = sorted.find(r => 
         r.tank_name === reading.tank_name && 
         r.reading_time === '07:00' &&
-        r.reading_date.split('T')[0] === prevDay
+        r.reading_date.split('T')[0] === nextDay
       );
-      if (prevReading) {
-        const diff = reading.reading_value - prevReading.reading_value;
+      if (nextReading) {
+        const diff = nextReading.reading_value - reading.reading_value;
         consumption = diff >= 0 
           ? '<span class="consumption-positive">' + diff.toFixed(0) + ' m³</span>'
           : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
