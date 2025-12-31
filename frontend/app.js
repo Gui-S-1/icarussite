@@ -3267,35 +3267,41 @@ function renderWaterStats() {
     return b.reading_time.localeCompare(a.reading_time);
   });
   
+  // Data de hoje
+  const today = new Date();
+  const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  
   ['aviarios', 'recria'].forEach(tank => {
     const tankReadings = sortedReadings.filter(r => r.tank_name === tank);
     
-    // Pegar data mais recente deste tanque
-    const latestDate = tankReadings.length > 0 ? getDateKey(tankReadings[0].reading_date) : null;
+    // Pegar leituras de hoje
+    const leitura7hHoje = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === todayKey);
+    const leitura16hHoje = tankReadings.find(r => r.reading_time === '16:00' && getDateKey(r.reading_date) === todayKey);
     
-    // Leitura das 7h e 16h DO MESMO DIA (mais recente)
-    const leitura7h = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === latestDate);
-    const leitura16h = tankReadings.find(r => r.reading_time === '16:00' && getDateKey(r.reading_date) === latestDate);
-    
-    // Se não tem 16h do dia mais recente, tentar do dia anterior
-    const leitura16hAlt = !leitura16h ? tankReadings.find(r => r.reading_time === '16:00') : null;
-    
-    // Atualizar leituras - garantir ordem correta (7h é menor que 16h)
+    // Atualizar leituras
     const el7h = document.getElementById(`${tank}-leitura-7h`);
     const el16h = document.getElementById(`${tank}-leitura-16h`);
     
-    const val7h = leitura7h ? leitura7h.reading_value : null;
-    const val16h = (leitura16h || leitura16hAlt)?.reading_value || null;
+    if (el7h) {
+      if (leitura7hHoje) {
+        el7h.textContent = Math.round(leitura7hHoje.reading_value).toLocaleString('pt-BR');
+      } else {
+        el7h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
+      }
+    }
+    if (el16h) {
+      if (leitura16hHoje) {
+        el16h.textContent = Math.round(leitura16hHoje.reading_value).toLocaleString('pt-BR');
+      } else {
+        el16h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
+      }
+    }
     
-    if (el7h) el7h.textContent = val7h !== null ? Math.round(val7h).toLocaleString('pt-BR') : '--';
-    if (el16h) el16h.textContent = val16h !== null ? Math.round(val16h).toLocaleString('pt-BR') : '--';
-    
-    // Calcular consumo do período de trabalho (7h-16h = 9 horas)
-    // Só calcula se ambas leituras são do mesmo dia
+    // Calcular consumo do período de trabalho (7h-16h = 9 horas) - só se ambos existem
     let consumoTrabalho = '--';
     let ltHoraTrabalho = '--';
-    if (leitura7h && leitura16h && getDateKey(leitura7h.reading_date) === getDateKey(leitura16h.reading_date)) {
-      const diff = leitura16h.reading_value - leitura7h.reading_value;
+    if (leitura7hHoje && leitura16hHoje) {
+      const diff = leitura16hHoje.reading_value - leitura7hHoje.reading_value;
       if (diff >= 0) {
         consumoTrabalho = diff.toFixed(0);
         ltHoraTrabalho = Math.round((diff * 1000) / 9).toLocaleString('pt-BR');
@@ -3310,12 +3316,16 @@ function renderWaterStats() {
     // Calcular consumo 24h (7h de hoje - 7h de ontem)
     let consumo24h = '--';
     let ltHora24h = '--';
-    const leituras7h = tankReadings
-      .filter(r => r.reading_time === '07:00')
-      .sort((a, b) => getDateKey(b.reading_date).localeCompare(getDateKey(a.reading_date)));
     
-    if (leituras7h.length >= 2) {
-      const diff = leituras7h[0].reading_value - leituras7h[1].reading_value;
+    // Calcular data de ontem
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = yesterday.getFullYear() + '-' + String(yesterday.getMonth() + 1).padStart(2, '0') + '-' + String(yesterday.getDate()).padStart(2, '0');
+    
+    const leitura7hOntem = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === yesterdayKey);
+    
+    if (leitura7hHoje && leitura7hOntem) {
+      const diff = leitura7hHoje.reading_value - leitura7hOntem.reading_value;
       if (diff >= 0) {
         consumo24h = diff.toFixed(0);
         ltHora24h = Math.round((diff * 1000) / 24).toLocaleString('pt-BR');
@@ -3498,56 +3508,67 @@ function renderWaterHistory() {
   
   // Função para formatar data corretamente (evitar timezone issues)
   function formatDate(dateStr) {
-    // reading_date vem como "2025-12-30" ou "2025-12-30T00:00:00.000Z"
     const parts = dateStr.split('T')[0].split('-');
     const year = parseInt(parts[0]);
     const month = parseInt(parts[1]) - 1;
     const day = parseInt(parts[2]);
-    const date = new Date(year, month, day, 12, 0, 0); // meio-dia para evitar DST
+    const date = new Date(year, month, day, 12, 0, 0);
     
     const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
     const formatted = date.toLocaleDateString('pt-BR');
-    return { formatted, dayOfWeek, dateObj: date };
+    return { formatted, dayOfWeek, dateObj: date, dateKey: dateStr.split('T')[0] };
   }
   
-  // Calcular consumo 24h para cada leitura
-  tbody.innerHTML = filteredReadings.slice(0, 50).map((reading, idx) => {
-    const { formatted: date, dayOfWeek } = formatDate(reading.reading_date);
+  // Função para calcular o dia anterior
+  function getPreviousDay(dateKey) {
+    const parts = dateKey.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+    d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  
+  // Ordenar por data DESC, horário DESC
+  const sorted = [...filteredReadings].sort((a, b) => {
+    const dateA = a.reading_date.split('T')[0];
+    const dateB = b.reading_date.split('T')[0];
+    if (dateA !== dateB) return dateB.localeCompare(dateA);
+    return b.reading_time.localeCompare(a.reading_time);
+  });
+  
+  // Calcular consumo 24h para cada leitura das 7h
+  tbody.innerHTML = sorted.slice(0, 50).map((reading) => {
+    const { formatted: date, dayOfWeek, dateKey } = formatDate(reading.reading_date);
     const tankClass = reading.tank_name;
     const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
     
-    // Calcular consumo 24h (leitura 7h anterior - leitura 7h atual)
-    // Hidrômetro aumenta, então consumo = leitura atual - leitura anterior
+    // Calcular consumo 24h só para leituras das 7h
+    // Consumo = Leitura 7h de HOJE - Leitura 7h de ONTEM
     let consumption = '--';
     if (reading.reading_time === '07:00') {
-      // Encontrar leitura 7h do dia anterior (mesmo tanque)
-      const prevReading = filteredReadings.find((r, i) => 
-        i < idx && 
+      const prevDay = getPreviousDay(dateKey);
+      const prevReading = sorted.find(r => 
         r.tank_name === reading.tank_name && 
-        r.reading_time === '07:00'
+        r.reading_time === '07:00' &&
+        r.reading_date.split('T')[0] === prevDay
       );
       if (prevReading) {
         const diff = reading.reading_value - prevReading.reading_value;
-        if (diff >= 0) {
-          consumption = `<span class="consumption-positive">${diff.toFixed(3)} m³</span>`;
-        } else {
-          consumption = `<span class="consumption-negative">${diff.toFixed(3)} m³</span>`;
-        }
+        consumption = diff >= 0 
+          ? '<span class="consumption-positive">' + diff.toFixed(0) + ' m³</span>'
+          : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
       }
     }
     
-    return `
-      <tr>
-        <td>${date}</td>
-        <td><span style="color: var(--text-secondary); font-size: 11px;">${dayOfWeek}</span></td>
-        <td>${reading.reading_time}</td>
-        <td><span class="tank-badge ${tankClass}">${tankLabel}</span></td>
-        <td><strong>${reading.reading_value.toFixed(3)}</strong></td>
-        <td>${consumption}</td>
-        <td>${reading.recorded_by_name || '-'}</td>
-        <td>${reading.notes || '-'}</td>
-      </tr>
-    `;
+    return '<tr>' +
+      '<td>' + date + '</td>' +
+      '<td><span style="color: var(--text-secondary); font-size: 11px;">' + dayOfWeek + '</span></td>' +
+      '<td>' + reading.reading_time + '</td>' +
+      '<td><span class="tank-badge ' + tankClass + '">' + tankLabel + '</span></td>' +
+      '<td><strong>' + reading.reading_value.toFixed(0) + '</strong></td>' +
+      '<td>' + consumption + '</td>' +
+      '<td>' + (reading.recorded_by_name || '-') + '</td>' +
+      '<td>' + (reading.notes || '-') + '</td>' +
+      '</tr>';
   }).join('');
 }
 
@@ -4516,6 +4537,9 @@ async function loadDieselControl() {
     renderDieselStats();
     renderDieselChart();
     renderDieselHistory();
+    checkDieselAlerts();
+    
+    console.log('Diesel carregado:', state.dieselRecords.length, 'registros', state.dieselStats);
     
   } catch (error) {
     console.error('Erro ao carregar controle de diesel:', error);
@@ -4743,9 +4767,11 @@ function renderDieselHistory() {
   });
   
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Nenhum registro encontrado</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Nenhum registro no período</td></tr>';
     return;
   }
+  
+  var diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
   
   var html = '';
   sorted.forEach(function(r) {
@@ -4753,16 +4779,23 @@ function renderDieselHistory() {
     var parts = dateStr.split('-');
     var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
     
+    // Calcular dia da semana
+    var diaSemana = '';
+    if (parts.length === 3) {
+      var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+      diaSemana = diasSemana[d.getDay()];
+    }
+    
     var typeClass = r.record_type === 'entrada' ? 'badge-success' : 'badge-danger';
     var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'Saída';
     
     html += '<tr>';
     html += '<td>' + formattedDate + '</td>';
+    html += '<td><span style="color: var(--text-secondary); font-size: 11px;">' + diaSemana + '</span></td>';
     html += '<td><span class="badge ' + typeClass + '">' + typeLabel + '</span></td>';
     html += '<td><strong>' + (parseFloat(r.quantity) || 0).toLocaleString('pt-BR') + ' L</strong></td>';
     html += '<td>' + (r.reason || '-') + '</td>';
     html += '<td>' + (r.recorded_by_name || '-') + '</td>';
-    html += '<td>' + (r.notes || '-') + '</td>';
     html += '</tr>';
   });
   
