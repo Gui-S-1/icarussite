@@ -319,11 +319,26 @@ function setupPermissions() {
   const navPrev = document.querySelector('[data-view="preventivas"]');
   const navChecklists = document.querySelector('[data-view="checklists"]');
   const navWater = document.querySelector('[data-view="controle-agua"]');
+  const navDiesel = document.querySelector('[data-view="controle-diesel"]');
+  const navGerador = document.querySelector('[data-view="controle-gerador"]');
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
-  // Controle de água: visível para preventivas, admin, os_manage_all
-  const canSeeWater = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
+  // Controle de água: visível para preventivas, admin, os_manage_all, os_view_all (visualização)
+  const canSeeWater = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  
+  // Diesel e Gerador: visível para manutenção (os_manage_all, preventivas, admin) e visualização (os_view_all)
+  const canSeeDiesel = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  const canSeeGerador = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  
+  // Edição só para manutenção (admin, os_manage_all, preventivas) - NÃO inclui os_view_all
+  const canEditDiesel = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
+  const canEditGerador = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
+  
+  // Salvar permissões no state para uso nas funções save
+  state.canEditDiesel = canEditDiesel;
+  state.canEditGerador = canEditGerador;
+  state.canEditWater = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
 
   if (navDashboard) navDashboard.classList.toggle('hidden', !canSeeDashboard);
   if (navOS) navOS.classList.remove('hidden'); // OS sempre visível para todos
@@ -332,10 +347,12 @@ function setupPermissions() {
   if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas')));
   if (navChecklists) navChecklists.classList.toggle('hidden', !canSeeChecklists);
   if (navWater) navWater.classList.toggle('hidden', !canSeeWater);
+  if (navDiesel) navDiesel.classList.toggle('hidden', !canSeeDiesel);
+  if (navGerador) navGerador.classList.toggle('hidden', !canSeeGerador);
   if (navRel) navRel.classList.toggle('hidden', !isAdmin);
   if (navCfg) navCfg.classList.remove('hidden');
   
-  console.log('Permissões configuradas. Roles:', roles);
+  console.log('Permissões configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
 }
 
 function showError(message) {
@@ -4465,6 +4482,12 @@ function getDieselPeriodDates() {
 // Carregar controle de diesel
 async function loadDieselControl() {
   try {
+    // Verificar permissão de edição e esconder/mostrar formulário
+    var formSection = document.getElementById('diesel-form-section');
+    if (formSection) {
+      formSection.classList.toggle('hidden', !state.canEditDiesel);
+    }
+    
     // Definir data de hoje no input
     var now = new Date();
     var year = now.getFullYear();
@@ -4698,6 +4721,12 @@ function renderDieselHistory() {
 // Salvar registro de diesel
 async function saveDieselRecord() {
   try {
+    // Verificar permissão de edição
+    if (!state.canEditDiesel) {
+      showNotification('Você não tem permissão para registrar diesel', 'error');
+      return;
+    }
+    
     var dateInput = document.getElementById('diesel-date');
     var typeInput = document.getElementById('diesel-type');
     var quantityInput = document.getElementById('diesel-quantity');
@@ -4923,6 +4952,12 @@ function getGeneratorPeriodDates() {
 // Carregar controle de gerador
 async function loadGeneratorControl() {
   try {
+    // Verificar permissão de edição e esconder/mostrar formulário
+    var formSection = document.getElementById('generator-form-section');
+    if (formSection) {
+      formSection.classList.toggle('hidden', !state.canEditGerador);
+    }
+    
     // Definir data de hoje no input
     var now = new Date();
     var year = now.getFullYear();
@@ -5091,6 +5126,12 @@ function renderGeneratorHistory() {
 // Salvar registro de gerador
 async function saveGeneratorRecord() {
   try {
+    // Verificar permissão de edição
+    if (!state.canEditGerador) {
+      showNotification('Você não tem permissão para registrar eventos do gerador', 'error');
+      return;
+    }
+    
     var dateInput = document.getElementById('generator-date');
     var typeInput = document.getElementById('generator-type');
     var timeInput = document.getElementById('generator-time');
