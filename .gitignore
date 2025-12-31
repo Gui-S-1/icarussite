@@ -22,11 +22,19 @@ DEPLOY.ps1
 DEPLOY.bat
 deploy.ps1
 
-# backend
-backend/node_modules/
-backend/.env
-backend/.env.production
-backend/npm-debug.log*
+# Backend - não expor no GitHub público
+backend/
+apps/electron/backend/
+
+# Arquivos de documentação sensíveis
+BACKEND_FUNCIONANDO.md
+COMANDOS_DROPLET.md
+DEPLOY.md
+README.md
+insert_water_data.js
+check-users.js
+update-bruno-walter.js
+*.sql
 
 # frontend
 frontend/.vercel/
