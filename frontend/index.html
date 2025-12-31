@@ -2248,6 +2248,184 @@
 
     /* ========== FIM ESTILOS CONTROLE DE ÁGUA ========== */
 
+    /* ========== CONTROLE DE DIESEL E GERADOR - ESTILOS ========== */
+    
+    /* Header Themes */
+    .water-control-header.diesel-theme {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.1) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .water-control-header.diesel-theme::before {
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+    }
+
+    .water-control-header.gerador-theme {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.1) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .water-control-header.gerador-theme::before {
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    }
+
+    /* Icon Badges */
+    .water-icon-badge.diesel {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+      color: #fff;
+    }
+
+    .water-icon-badge.gerador {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+      color: #fff;
+    }
+
+    /* Diesel Grid */
+    .water-stats-grid.diesel-grid,
+    .water-stats-grid.gerador-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+      .water-stats-grid.diesel-grid,
+      .water-stats-grid.gerador-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .water-stats-grid.diesel-grid,
+      .water-stats-grid.gerador-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Diesel Cards */
+    .water-tank-card.diesel-entrada::before {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+
+    .water-tank-card.diesel-saida::before {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    .water-tank-card.diesel-saldo::before {
+      background: linear-gradient(90deg, #3b82f6, #2563eb);
+    }
+
+    .water-tank-card.diesel-media::before {
+      background: linear-gradient(90deg, #a855f7, #9333ea);
+    }
+
+    /* Gerador Cards */
+    .water-tank-card.gerador-tempo::before {
+      background: linear-gradient(90deg, #6366f1, #4f46e5);
+    }
+
+    .water-tank-card.gerador-diesel::before {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .water-tank-card.gerador-media::before {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+
+    .water-tank-card.gerador-manutencao::before {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    /* Tank Icons - Diesel */
+    .tank-icon.entrada {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+
+    .tank-icon.saida {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .tank-icon.saldo {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+    }
+
+    .tank-icon.media {
+      background: rgba(168, 85, 247, 0.15);
+      color: #a855f7;
+    }
+
+    /* Tank Icons - Gerador */
+    .tank-icon.tempo {
+      background: rgba(99, 102, 241, 0.15);
+      color: #6366f1;
+    }
+
+    .tank-icon.diesel-consumo {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+    }
+
+    .tank-icon.gerador-avg {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+
+    .tank-icon.manutencao {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    /* Status Badges */
+    .tank-status-badge.entrada { color: #22c55e; }
+    .tank-status-badge.saida { color: #ef4444; }
+    .tank-status-badge.saldo { color: #3b82f6; }
+    .tank-status-badge.media { color: #a855f7; }
+    .tank-status-badge.tempo { color: #6366f1; }
+    .tank-status-badge.diesel-consumo { color: #f59e0b; }
+    .tank-status-badge.gerador-avg { color: #22c55e; }
+    .tank-status-badge.manutencao { color: #ef4444; }
+
+    /* Large Values */
+    .tank-value-large {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin: 12px 0 4px 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .tank-value-large.entrada { color: #22c55e; }
+    .tank-value-large.saida { color: #ef4444; }
+    .tank-value-large.saldo { color: #3b82f6; }
+    .tank-value-large.media { color: #a855f7; }
+    .tank-value-large.tempo { color: #6366f1; }
+    .tank-value-large.diesel-consumo { color: #f59e0b; }
+    .tank-value-large.gerador-avg { color: #22c55e; }
+    .tank-value-large.manutencao { color: #ef4444; }
+
+    .tank-unit {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Chart Legend for Diesel */
+    .legend-item.entrada .legend-dot {
+      background: #22c55e;
+    }
+
+    .legend-item.saida .legend-dot {
+      background: #ef4444;
+    }
+
+    /* ========== FIM ESTILOS DIESEL E GERADOR ========== */
+
     /* Hidden utility */
     .hidden { display: none !important; }
 
@@ -2508,15 +2686,29 @@
           <span>Preventivas</span>
         </div>
         <div class="nav-item hidden" data-view="controle-agua">
-          <span class="nav-icon">◇</span>
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+          </span>
           <span>Controle de Água</span>
         </div>
         <div class="nav-item hidden" data-view="controle-diesel">
-          <span class="nav-icon">⛽</span>
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 22h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/>
+              <path d="M18 14h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+              <path d="M9 7V2"/>
+            </svg>
+          </span>
           <span>Controle de Diesel</span>
         </div>
         <div class="nav-item hidden" data-view="controle-gerador">
-          <span class="nav-icon">🔌</span>
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </span>
           <span>Gerador</span>
         </div>
         <div class="nav-item hidden" data-view="checklists">
@@ -3067,142 +3259,170 @@
 
         <!-- ========== CONTROLE DE DIESEL - GRANJA VITTA ========== -->
         <div id="controle-diesel-view" class="view">
-          <div class="water-header">
-            <div class="water-header-content">
-              <div class="water-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                <span style="font-size: 28px;">⛽</span>
+          <!-- Header Premium com Gradiente -->
+          <div class="water-control-header diesel-theme">
+            <div class="water-header-left">
+              <div class="water-icon-badge diesel">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 22h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/>
+                  <path d="M18 14h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+                  <path d="M9 7V2"/>
+                </svg>
               </div>
-              <div class="water-header-text">
+              <div>
                 <h2 class="water-title">Controle de Diesel</h2>
-                <p class="water-subtitle">Sistema de Monitoramento • Granja Vitta</p>
+                <p class="water-subtitle">Sistema Inteligente de Monitoramento • Granja Vitta</p>
               </div>
             </div>
-            <div class="water-actions">
-              <button class="water-btn secondary" onclick="exportDieselReportPDF()">
-                <span>📄</span> Exportar PDF
+            <div class="water-header-actions">
+              <button class="btn-water-export" onclick="exportDieselReportPDF()">
+                Exportar PDF
               </button>
-              <button class="water-btn secondary" onclick="exportDieselReportExcel()">
-                <span>📊</span> Exportar Planilha
+              <button class="btn-water-export" onclick="exportDieselReportExcel()">
+                Exportar Planilha
               </button>
             </div>
           </div>
 
-          <!-- Filtros de período -->
-          <div class="water-period-tabs" style="margin-bottom: 16px;">
-            <button id="diesel-filter-today" class="water-filter-btn active" onclick="setDieselPeriod('today')">Hoje</button>
-            <button id="diesel-filter-week" class="water-filter-btn" onclick="setDieselPeriod('week')">Semana</button>
-            <button id="diesel-filter-month" class="water-filter-btn" onclick="setDieselPeriod('month')">Mês</button>
+          <!-- Filtros de Período -->
+          <div class="water-filters">
+            <button class="water-filter-btn active" id="diesel-filter-today" onclick="setDieselPeriod('today')">Hoje</button>
+            <button class="water-filter-btn" id="diesel-filter-week" onclick="setDieselPeriod('week')">Semana</button>
+            <button class="water-filter-btn" id="diesel-filter-month" onclick="setDieselPeriod('month')">Mês</button>
           </div>
 
-          <!-- Cards de estatísticas -->
-          <div class="water-stats-grid" style="grid-template-columns: repeat(4, 1fr);">
-            <div class="tank-card" style="border-top-color: #22c55e;">
+          <!-- Cards de Resumo -->
+          <div class="water-stats-grid diesel-grid">
+            <!-- Card Entradas -->
+            <div class="water-tank-card diesel-entrada">
               <div class="tank-header">
+                <div class="tank-icon entrada">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 3v18M5 10l7-7 7 7"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">📥</span>
-                  <div>
-                    <h3 class="tank-name">ENTRADAS</h3>
-                    <span class="tank-status" style="color: #22c55e;">Período</span>
-                  </div>
+                  <h3 class="tank-title-big">ENTRADAS</h3>
+                  <span class="tank-status-badge entrada">● Período</span>
                 </div>
               </div>
-              <div class="tank-value" id="diesel-total-entrada" style="color: #22c55e;">0</div>
-              <div class="tank-label">Litros</div>
+              <div class="tank-value-large entrada" id="diesel-total-entrada">0</div>
+              <div class="tank-unit">Litros</div>
             </div>
 
-            <div class="tank-card" style="border-top-color: #ef4444;">
+            <!-- Card Saídas -->
+            <div class="water-tank-card diesel-saida">
               <div class="tank-header">
+                <div class="tank-icon saida">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 21V3M5 14l7 7 7-7"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">📤</span>
-                  <div>
-                    <h3 class="tank-name">SAÍDAS</h3>
-                    <span class="tank-status" style="color: #ef4444;">Período</span>
-                  </div>
+                  <h3 class="tank-title-big">SAÍDAS</h3>
+                  <span class="tank-status-badge saida">● Período</span>
                 </div>
               </div>
-              <div class="tank-value" id="diesel-total-saida" style="color: #ef4444;">0</div>
-              <div class="tank-label">Litros</div>
+              <div class="tank-value-large saida" id="diesel-total-saida">0</div>
+              <div class="tank-unit">Litros</div>
             </div>
 
-            <div class="tank-card" style="border-top-color: #3b82f6;">
+            <!-- Card Saldo Atual -->
+            <div class="water-tank-card diesel-saldo">
               <div class="tank-header">
+                <div class="tank-icon saldo">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 22h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/>
+                    <rect x="6" y="12" width="6" height="6" fill="currentColor" opacity="0.3"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">🛢️</span>
-                  <div>
-                    <h3 class="tank-name">SALDO ATUAL</h3>
-                    <span class="tank-status" style="color: #3b82f6;">Estoque</span>
-                  </div>
+                  <h3 class="tank-title-big">SALDO ATUAL</h3>
+                  <span class="tank-status-badge saldo">● Estoque</span>
                 </div>
               </div>
-              <div class="tank-value" id="diesel-saldo-atual" style="color: #3b82f6;">0</div>
-              <div class="tank-label">Litros disponíveis</div>
+              <div class="tank-value-large saldo" id="diesel-saldo-atual">0</div>
+              <div class="tank-unit">Litros disponíveis</div>
             </div>
 
-            <div class="tank-card" style="border-top-color: #a855f7;">
+            <!-- Card Média Diária -->
+            <div class="water-tank-card diesel-media">
               <div class="tank-header">
+                <div class="tank-icon media">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18"/>
+                    <path d="M18 9l-5 5-4-4-3 3"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">📊</span>
-                  <div>
-                    <h3 class="tank-name">MÉDIA DIÁRIA</h3>
-                    <span class="tank-status" style="color: #a855f7;">Consumo</span>
-                  </div>
+                  <h3 class="tank-title-big">MÉDIA DIÁRIA</h3>
+                  <span class="tank-status-badge media">● Consumo</span>
                 </div>
               </div>
-              <div class="tank-value" id="diesel-media-diaria" style="color: #a855f7;">0</div>
-              <div class="tank-label">Litros/dia</div>
+              <div class="tank-value-large media" id="diesel-media-diaria">0</div>
+              <div class="tank-unit">Litros/dia</div>
             </div>
           </div>
 
-          <!-- Gráfico de consumo -->
-          <div class="water-chart-section" style="margin-top: 20px;">
-            <div class="water-chart-header">
-              <h3 class="water-chart-title">Movimentação de Diesel</h3>
-              <div class="water-chart-legend">
-                <span class="legend-item"><span class="legend-dot" style="background: #22c55e;"></span> Entrada</span>
-                <span class="legend-item"><span class="legend-dot" style="background: #ef4444;"></span> Saída</span>
+          <!-- Gráfico Principal -->
+          <div class="card water-chart-card">
+            <div class="card-header">
+              <h3 class="card-title">Movimentação de Diesel</h3>
+              <div class="chart-legend">
+                <span class="legend-item entrada"><span class="legend-dot"></span> Entrada</span>
+                <span class="legend-item saida"><span class="legend-dot"></span> Saída</span>
               </div>
             </div>
-            <div id="diesel-consumption-chart" class="water-chart-container">
-              <p style="color: var(--text-secondary); text-align: center; padding: 40px;">Carregando...</p>
-            </div>
+            <div class="water-main-chart" id="diesel-consumption-chart"></div>
           </div>
 
-          <!-- Formulário de registro -->
-          <div id="diesel-form-section" class="water-form-section">
-            <h3 class="water-form-title">Registrar Movimentação</h3>
-            <div class="water-form-grid">
-              <div class="form-group">
-                <label class="form-label">Data</label>
-                <input type="date" id="diesel-date" class="form-input">
+          <!-- Seção de Entrada de Dados -->
+          <div id="diesel-form-section" class="water-input-section">
+            <div class="card water-input-card">
+              <div class="card-header">
+                <h3 class="card-title">Registrar Movimentação</h3>
               </div>
-              <div class="form-group">
-                <label class="form-label">Tipo</label>
-                <select id="diesel-type" class="form-input">
-                  <option value="entrada">Entrada</option>
-                  <option value="saida">Saída</option>
-                </select>
+              
+              <div class="water-input-grid">
+                <div class="water-input-group">
+                  <label>Data</label>
+                  <input type="date" id="diesel-date" class="water-input">
+                </div>
+                
+                <div class="water-input-group">
+                  <label>Tipo</label>
+                  <select id="diesel-type" class="water-input">
+                    <option value="entrada">Entrada (Abastecimento)</option>
+                    <option value="saida">Saída (Consumo)</option>
+                  </select>
+                </div>
+                
+                <div class="water-input-group">
+                  <label>Quantidade (Litros)</label>
+                  <input type="number" step="0.01" id="diesel-quantity" class="water-input" placeholder="Ex: 100">
+                </div>
+                
+                <div class="water-input-group">
+                  <label>Motivo/Destino</label>
+                  <input type="text" id="diesel-reason" class="water-input" placeholder="Ex: Gerador, Trator Amarelo...">
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Quantidade (L)</label>
-                <input type="number" id="diesel-quantity" class="form-input" placeholder="Ex: 100" step="0.01">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Motivo/Destino</label>
-                <input type="text" id="diesel-reason" class="form-input" placeholder="Ex: Gerador, Trator...">
-              </div>
-              <div class="form-group">
-                <button class="water-btn primary" onclick="saveDieselRecord()" style="margin-top: 24px;">
-                  <span>💾</span> Salvar Registro
+              
+              <div class="water-input-actions">
+                <button class="btn-water-save" onclick="saveDieselRecord()">
+                  Salvar Registro
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Histórico -->
-          <div class="water-history-section">
-            <h3 class="water-section-title">Histórico de Movimentações</h3>
-            <div class="water-table-container">
-              <table class="water-table">
+          <!-- Histórico de Movimentações -->
+          <div class="card water-history-card">
+            <div class="card-header">
+              <h3 class="card-title">Histórico de Movimentações</h3>
+            </div>
+            <div class="water-history-table">
+              <table id="diesel-history-table">
                 <thead>
                   <tr>
                     <th>Data</th>
@@ -3222,131 +3442,161 @@
 
         <!-- ========== CONTROLE DO GERADOR - GRANJA VITTA ========== -->
         <div id="controle-gerador-view" class="view">
-          <div class="water-header">
-            <div class="water-header-content">
-              <div class="water-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
-                <span style="font-size: 28px;">🔌</span>
+          <!-- Header Premium com Gradiente -->
+          <div class="water-control-header gerador-theme">
+            <div class="water-header-left">
+              <div class="water-icon-badge gerador">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
               </div>
-              <div class="water-header-text">
+              <div>
                 <h2 class="water-title">Controle do Gerador</h2>
-                <p class="water-subtitle">Sistema de Monitoramento • Granja Vitta</p>
+                <p class="water-subtitle">Sistema Inteligente de Monitoramento • Granja Vitta</p>
               </div>
             </div>
-            <div class="water-actions">
-              <button class="water-btn secondary" onclick="exportGeneratorReportPDF()">
-                <span>📄</span> Exportar PDF
+            <div class="water-header-actions">
+              <button class="btn-water-export" onclick="exportGeneratorReportPDF()">
+                Exportar PDF
               </button>
             </div>
           </div>
 
-          <!-- Filtros -->
-          <div class="water-period-tabs" style="margin-bottom: 16px;">
-            <button id="generator-filter-today" class="water-filter-btn active" onclick="setGeneratorPeriod('today')">Hoje</button>
-            <button id="generator-filter-week" class="water-filter-btn" onclick="setGeneratorPeriod('week')">Semana</button>
-            <button id="generator-filter-month" class="water-filter-btn" onclick="setGeneratorPeriod('month')">Mês</button>
+          <!-- Filtros de Período -->
+          <div class="water-filters">
+            <button class="water-filter-btn active" id="generator-filter-today" onclick="setGeneratorPeriod('today')">Hoje</button>
+            <button class="water-filter-btn" id="generator-filter-week" onclick="setGeneratorPeriod('week')">Semana</button>
+            <button class="water-filter-btn" id="generator-filter-month" onclick="setGeneratorPeriod('month')">Mês</button>
           </div>
 
-          <!-- Cards de estatísticas -->
-          <div class="water-stats-grid" style="grid-template-columns: repeat(4, 1fr);">
-            <div class="tank-card" style="border-top-color: #6366f1;">
+          <!-- Cards de Resumo -->
+          <div class="water-stats-grid gerador-grid">
+            <!-- Card Tempo Ligado -->
+            <div class="water-tank-card gerador-tempo">
               <div class="tank-header">
+                <div class="tank-icon tempo">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">⏱️</span>
-                  <div>
-                    <h3 class="tank-name">TEMPO LIGADO</h3>
-                    <span class="tank-status" style="color: #6366f1;">Período</span>
-                  </div>
+                  <h3 class="tank-title-big">TEMPO LIGADO</h3>
+                  <span class="tank-status-badge tempo">● Período</span>
                 </div>
               </div>
-              <div class="tank-value" id="generator-total-hours" style="color: #6366f1;">0h</div>
-              <div class="tank-label">Horas de funcionamento</div>
+              <div class="tank-value-large tempo" id="generator-total-hours">0h</div>
+              <div class="tank-unit">Horas de funcionamento</div>
             </div>
 
-            <div class="tank-card" style="border-top-color: #f59e0b;">
+            <!-- Card Diesel Consumido -->
+            <div class="water-tank-card gerador-diesel">
               <div class="tank-header">
+                <div class="tank-icon diesel-consumo">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 22h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/>
+                    <path d="M18 14h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">⛽</span>
-                  <div>
-                    <h3 class="tank-name">DIESEL CONSUMIDO</h3>
-                    <span class="tank-status" style="color: #f59e0b;">Período</span>
-                  </div>
+                  <h3 class="tank-title-big">DIESEL CONSUMIDO</h3>
+                  <span class="tank-status-badge diesel-consumo">● Período</span>
                 </div>
               </div>
-              <div class="tank-value" id="generator-fuel-used" style="color: #f59e0b;">0</div>
-              <div class="tank-label">Litros</div>
+              <div class="tank-value-large diesel-consumo" id="generator-fuel-used">0</div>
+              <div class="tank-unit">Litros</div>
             </div>
 
-            <div class="tank-card" style="border-top-color: #22c55e;">
+            <!-- Card Média -->
+            <div class="water-tank-card gerador-media">
               <div class="tank-header">
+                <div class="tank-icon gerador-avg">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18"/>
+                    <path d="M18 9l-5 5-4-4-3 3"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">📈</span>
-                  <div>
-                    <h3 class="tank-name">MÉDIA</h3>
-                    <span class="tank-status" style="color: #22c55e;">Consumo</span>
-                  </div>
+                  <h3 class="tank-title-big">MÉDIA CONSUMO</h3>
+                  <span class="tank-status-badge gerador-avg">● Eficiência</span>
                 </div>
               </div>
-              <div class="tank-value" id="generator-avg-consumption" style="color: #22c55e;">0</div>
-              <div class="tank-label">Litros/hora</div>
+              <div class="tank-value-large gerador-avg" id="generator-avg-consumption">0</div>
+              <div class="tank-unit">Litros/hora</div>
             </div>
 
-            <div class="tank-card" style="border-top-color: #ef4444;">
+            <!-- Card Manutenções -->
+            <div class="water-tank-card gerador-manutencao">
               <div class="tank-header">
+                <div class="tank-icon manutencao">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
-                  <span style="font-size: 24px;">🔧</span>
-                  <div>
-                    <h3 class="tank-name">MANUTENÇÕES</h3>
-                    <span class="tank-status" style="color: #ef4444;">Período</span>
-                  </div>
+                  <h3 class="tank-title-big">MANUTENÇÕES</h3>
+                  <span class="tank-status-badge manutencao">● Registros</span>
                 </div>
               </div>
-              <div class="tank-value" id="generator-maintenance-count" style="color: #ef4444;">0</div>
-              <div class="tank-label">Registros</div>
+              <div class="tank-value-large manutencao" id="generator-maintenance-count">0</div>
+              <div class="tank-unit">No período</div>
             </div>
           </div>
 
-          <!-- Formulário de registro -->
-          <div id="generator-form-section" class="water-form-section">
-            <h3 class="water-form-title">Registrar Evento do Gerador</h3>
-            <div class="water-form-grid">
-              <div class="form-group">
-                <label class="form-label">Data</label>
-                <input type="date" id="generator-date" class="form-input">
+          <!-- Seção de Entrada de Dados -->
+          <div id="generator-form-section" class="water-input-section">
+            <div class="card water-input-card">
+              <div class="card-header">
+                <h3 class="card-title">Registrar Evento do Gerador</h3>
               </div>
-              <div class="form-group">
-                <label class="form-label">Tipo de Evento</label>
-                <select id="generator-type" class="form-input">
-                  <option value="ligado">Ligado</option>
-                  <option value="desligado">Desligado</option>
-                  <option value="abastecimento">Abastecimento</option>
-                  <option value="manutencao">Manutenção</option>
-                </select>
+              
+              <div class="water-input-grid">
+                <div class="water-input-group">
+                  <label>Data</label>
+                  <input type="date" id="generator-date" class="water-input">
+                </div>
+                
+                <div class="water-input-group">
+                  <label>Tipo de Evento</label>
+                  <select id="generator-type" class="water-input">
+                    <option value="ligado">⚡ Ligado</option>
+                    <option value="desligado">🔌 Desligado</option>
+                    <option value="abastecimento">⛽ Abastecimento</option>
+                    <option value="manutencao">🔧 Manutenção</option>
+                  </select>
+                </div>
+                
+                <div class="water-input-group">
+                  <label>Horário</label>
+                  <input type="time" id="generator-time" class="water-input">
+                </div>
+                
+                <div class="water-input-group">
+                  <label>Diesel Consumido (L)</label>
+                  <input type="number" step="0.01" id="generator-fuel" class="water-input" placeholder="Se houver consumo">
+                </div>
+                
+                <div class="water-input-group full-width">
+                  <label>Observações</label>
+                  <input type="text" id="generator-notes" class="water-input" placeholder="Ex: Limpeza realizada, problema no motor...">
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Horário</label>
-                <input type="time" id="generator-time" class="form-input">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Diesel (L)</label>
-                <input type="number" id="generator-fuel" class="form-input" placeholder="Se houver consumo" step="0.01">
-              </div>
-              <div class="form-group" style="grid-column: span 2;">
-                <label class="form-label">Observações</label>
-                <input type="text" id="generator-notes" class="form-input" placeholder="Ex: Limpeza realizada, problema no motor, etc.">
-              </div>
-              <div class="form-group">
-                <button class="water-btn primary" onclick="saveGeneratorRecord()" style="margin-top: 24px;">
-                  <span>💾</span> Salvar Registro
+              
+              <div class="water-input-actions">
+                <button class="btn-water-save" onclick="saveGeneratorRecord()">
+                  Salvar Registro
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Histórico -->
-          <div class="water-history-section">
-            <h3 class="water-section-title">Histórico do Gerador</h3>
-            <div class="water-table-container">
-              <table class="water-table">
+          <!-- Histórico do Gerador -->
+          <div class="card water-history-card">
+            <div class="card-header">
+              <h3 class="card-title">Histórico do Gerador</h3>
+            </div>
+            <div class="water-history-table">
+              <table id="generator-history-table">
                 <thead>
                   <tr>
                     <th>Data</th>
