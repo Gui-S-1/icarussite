@@ -2511,6 +2511,14 @@
           <span class="nav-icon">◇</span>
           <span>Controle de Água</span>
         </div>
+        <div class="nav-item hidden" data-view="controle-diesel">
+          <span class="nav-icon">⛽</span>
+          <span>Controle de Diesel</span>
+        </div>
+        <div class="nav-item hidden" data-view="controle-gerador">
+          <span class="nav-icon">🔌</span>
+          <span>Gerador</span>
+        </div>
         <div class="nav-item hidden" data-view="checklists">
           <span class="nav-icon">☑</span>
           <span>Checklists</span>
@@ -3056,6 +3064,305 @@
           </div>
         </div>
         <!-- ========== FIM CONTROLE DE ÁGUA ========== -->
+
+        <!-- ========== CONTROLE DE DIESEL - GRANJA VITTA ========== -->
+        <div id="controle-diesel-view" class="view">
+          <div class="water-header">
+            <div class="water-header-content">
+              <div class="water-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <span style="font-size: 28px;">⛽</span>
+              </div>
+              <div class="water-header-text">
+                <h2 class="water-title">Controle de Diesel</h2>
+                <p class="water-subtitle">Sistema de Monitoramento • Granja Vitta</p>
+              </div>
+            </div>
+            <div class="water-actions">
+              <button class="water-btn secondary" onclick="exportDieselReportPDF()">
+                <span>📄</span> Exportar PDF
+              </button>
+              <button class="water-btn secondary" onclick="exportDieselReportExcel()">
+                <span>📊</span> Exportar Planilha
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros de período -->
+          <div class="water-period-tabs" style="margin-bottom: 16px;">
+            <button id="diesel-filter-today" class="water-filter-btn active" onclick="setDieselPeriod('today')">Hoje</button>
+            <button id="diesel-filter-week" class="water-filter-btn" onclick="setDieselPeriod('week')">Semana</button>
+            <button id="diesel-filter-month" class="water-filter-btn" onclick="setDieselPeriod('month')">Mês</button>
+          </div>
+
+          <!-- Cards de estatísticas -->
+          <div class="water-stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="tank-card" style="border-top-color: #22c55e;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">📥</span>
+                  <div>
+                    <h3 class="tank-name">ENTRADAS</h3>
+                    <span class="tank-status" style="color: #22c55e;">Período</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="diesel-total-entrada" style="color: #22c55e;">0</div>
+              <div class="tank-label">Litros</div>
+            </div>
+
+            <div class="tank-card" style="border-top-color: #ef4444;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">📤</span>
+                  <div>
+                    <h3 class="tank-name">SAÍDAS</h3>
+                    <span class="tank-status" style="color: #ef4444;">Período</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="diesel-total-saida" style="color: #ef4444;">0</div>
+              <div class="tank-label">Litros</div>
+            </div>
+
+            <div class="tank-card" style="border-top-color: #3b82f6;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">🛢️</span>
+                  <div>
+                    <h3 class="tank-name">SALDO ATUAL</h3>
+                    <span class="tank-status" style="color: #3b82f6;">Estoque</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="diesel-saldo-atual" style="color: #3b82f6;">0</div>
+              <div class="tank-label">Litros disponíveis</div>
+            </div>
+
+            <div class="tank-card" style="border-top-color: #a855f7;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">📊</span>
+                  <div>
+                    <h3 class="tank-name">MÉDIA DIÁRIA</h3>
+                    <span class="tank-status" style="color: #a855f7;">Consumo</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="diesel-media-diaria" style="color: #a855f7;">0</div>
+              <div class="tank-label">Litros/dia</div>
+            </div>
+          </div>
+
+          <!-- Gráfico de consumo -->
+          <div class="water-chart-section" style="margin-top: 20px;">
+            <div class="water-chart-header">
+              <h3 class="water-chart-title">Movimentação de Diesel</h3>
+              <div class="water-chart-legend">
+                <span class="legend-item"><span class="legend-dot" style="background: #22c55e;"></span> Entrada</span>
+                <span class="legend-item"><span class="legend-dot" style="background: #ef4444;"></span> Saída</span>
+              </div>
+            </div>
+            <div id="diesel-consumption-chart" class="water-chart-container">
+              <p style="color: var(--text-secondary); text-align: center; padding: 40px;">Carregando...</p>
+            </div>
+          </div>
+
+          <!-- Formulário de registro -->
+          <div class="water-form-section">
+            <h3 class="water-form-title">Registrar Movimentação</h3>
+            <div class="water-form-grid">
+              <div class="form-group">
+                <label class="form-label">Data</label>
+                <input type="date" id="diesel-date" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo</label>
+                <select id="diesel-type" class="form-input">
+                  <option value="entrada">Entrada</option>
+                  <option value="saida">Saída</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quantidade (L)</label>
+                <input type="number" id="diesel-quantity" class="form-input" placeholder="Ex: 100" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Motivo/Destino</label>
+                <input type="text" id="diesel-reason" class="form-input" placeholder="Ex: Gerador, Trator...">
+              </div>
+              <div class="form-group">
+                <button class="water-btn primary" onclick="saveDieselRecord()" style="margin-top: 24px;">
+                  <span>💾</span> Salvar Registro
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Histórico -->
+          <div class="water-history-section">
+            <h3 class="water-section-title">Histórico de Movimentações</h3>
+            <div class="water-table-container">
+              <table class="water-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Dia</th>
+                    <th>Tipo</th>
+                    <th>Quantidade</th>
+                    <th>Motivo</th>
+                    <th>Registrado por</th>
+                  </tr>
+                </thead>
+                <tbody id="diesel-history-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- ========== FIM CONTROLE DE DIESEL ========== -->
+
+        <!-- ========== CONTROLE DO GERADOR - GRANJA VITTA ========== -->
+        <div id="controle-gerador-view" class="view">
+          <div class="water-header">
+            <div class="water-header-content">
+              <div class="water-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                <span style="font-size: 28px;">🔌</span>
+              </div>
+              <div class="water-header-text">
+                <h2 class="water-title">Controle do Gerador</h2>
+                <p class="water-subtitle">Sistema de Monitoramento • Granja Vitta</p>
+              </div>
+            </div>
+            <div class="water-actions">
+              <button class="water-btn secondary" onclick="exportGeneratorReportPDF()">
+                <span>📄</span> Exportar PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros -->
+          <div class="water-period-tabs" style="margin-bottom: 16px;">
+            <button id="generator-filter-today" class="water-filter-btn active" onclick="setGeneratorPeriod('today')">Hoje</button>
+            <button id="generator-filter-week" class="water-filter-btn" onclick="setGeneratorPeriod('week')">Semana</button>
+            <button id="generator-filter-month" class="water-filter-btn" onclick="setGeneratorPeriod('month')">Mês</button>
+          </div>
+
+          <!-- Cards de estatísticas -->
+          <div class="water-stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="tank-card" style="border-top-color: #6366f1;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">⏱️</span>
+                  <div>
+                    <h3 class="tank-name">TEMPO LIGADO</h3>
+                    <span class="tank-status" style="color: #6366f1;">Período</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="generator-total-hours" style="color: #6366f1;">0h</div>
+              <div class="tank-label">Horas de funcionamento</div>
+            </div>
+
+            <div class="tank-card" style="border-top-color: #f59e0b;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">⛽</span>
+                  <div>
+                    <h3 class="tank-name">DIESEL CONSUMIDO</h3>
+                    <span class="tank-status" style="color: #f59e0b;">Período</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="generator-fuel-used" style="color: #f59e0b;">0</div>
+              <div class="tank-label">Litros</div>
+            </div>
+
+            <div class="tank-card" style="border-top-color: #22c55e;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">📈</span>
+                  <div>
+                    <h3 class="tank-name">MÉDIA</h3>
+                    <span class="tank-status" style="color: #22c55e;">Consumo</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="generator-avg-consumption" style="color: #22c55e;">0</div>
+              <div class="tank-label">Litros/hora</div>
+            </div>
+
+            <div class="tank-card" style="border-top-color: #ef4444;">
+              <div class="tank-header">
+                <div class="tank-info">
+                  <span style="font-size: 24px;">🔧</span>
+                  <div>
+                    <h3 class="tank-name">MANUTENÇÕES</h3>
+                    <span class="tank-status" style="color: #ef4444;">Período</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tank-value" id="generator-maintenance-count" style="color: #ef4444;">0</div>
+              <div class="tank-label">Registros</div>
+            </div>
+          </div>
+
+          <!-- Formulário de registro -->
+          <div class="water-form-section">
+            <h3 class="water-form-title">Registrar Evento do Gerador</h3>
+            <div class="water-form-grid">
+              <div class="form-group">
+                <label class="form-label">Data</label>
+                <input type="date" id="generator-date" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de Evento</label>
+                <select id="generator-type" class="form-input">
+                  <option value="ligado">Ligado</option>
+                  <option value="desligado">Desligado</option>
+                  <option value="abastecimento">Abastecimento</option>
+                  <option value="manutencao">Manutenção</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Horário</label>
+                <input type="time" id="generator-time" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Diesel (L)</label>
+                <input type="number" id="generator-fuel" class="form-input" placeholder="Se houver consumo" step="0.01">
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label">Observações</label>
+                <input type="text" id="generator-notes" class="form-input" placeholder="Ex: Limpeza realizada, problema no motor, etc.">
+              </div>
+              <div class="form-group">
+                <button class="water-btn primary" onclick="saveGeneratorRecord()" style="margin-top: 24px;">
+                  <span>💾</span> Salvar Registro
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Histórico -->
+          <div class="water-history-section">
+            <h3 class="water-section-title">Histórico do Gerador</h3>
+            <div class="water-table-container">
+              <table class="water-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Horário</th>
+                    <th>Evento</th>
+                    <th>Diesel (L)</th>
+                    <th>Observações</th>
+                    <th>Registrado por</th>
+                  </tr>
+                </thead>
+                <tbody id="generator-history-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- ========== FIM CONTROLE DO GERADOR ========== -->
         
         <div id="relatorios-view" class="view">
           <h2>Relatórios</h2>

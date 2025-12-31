@@ -16,7 +16,15 @@ const state = {
   dashboardFilter: 'daily', // daily, weekly, monthly
   dashboardMonth: null, // null = mês atual, ou 'YYYY-MM' para mês específico
   lastOrderCount: 0,
-  lastPreventiveCheck: new Date()
+  lastPreventiveCheck: new Date(),
+  // Diesel Control
+  dieselRecords: [],
+  dieselStats: null,
+  dieselPeriod: 'month',
+  // Generator Control
+  generatorRecords: [],
+  generatorStats: null,
+  generatorPeriod: 'month'
 };
 
 const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
@@ -138,6 +146,12 @@ async function loadViewData(view) {
         break;
       case 'controle-agua':
         await loadWaterControl();
+        break;
+      case 'controle-diesel':
+        await loadDieselControl();
+        break;
+      case 'controle-gerador':
+        await loadGeneratorControl();
         break;
       case 'relatorios':
         await loadReports();
@@ -4417,6 +4431,838 @@ function getPeriodLabel() {
 }
 
 // ========== FIM CONTROLE DE ÁGUA ==========
+
+// ========== CONTROLE DE DIESEL ==========
+
+// Função auxiliar para obter datas do período (diesel)
+function getDieselPeriodDates() {
+  var now = new Date();
+  var year = now.getFullYear();
+  var month = now.getMonth();
+  var day = now.getDate();
+  var endDate = new Date(year, month, day, 23, 59, 59);
+  var startDate;
+  
+  if (state.dieselPeriod === 'today') {
+    startDate = new Date(year, month, day, 0, 0, 0);
+  } else if (state.dieselPeriod === 'week') {
+    startDate = new Date(year, month, day - 7, 0, 0, 0);
+  } else {
+    // month
+    startDate = new Date(year, month - 1, day, 0, 0, 0);
+  }
+  
+  var startStr = startDate.getFullYear() + '-' + 
+    String(startDate.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(startDate.getDate()).padStart(2, '0');
+  var endStr = endDate.getFullYear() + '-' + 
+    String(endDate.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(endDate.getDate()).padStart(2, '0');
+  
+  return { startDate: startStr, endDate: endStr };
+}
+
+// Carregar controle de diesel
+async function loadDieselControl() {
+  try {
+    // Definir data de hoje no input
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    var today = year + '-' + month + '-' + day;
+    
+    var dateInput = document.getElementById('diesel-date');
+    if (dateInput) dateInput.value = today;
+    
+    // Carregar dados
+    await Promise.all([
+      loadDieselRecords(),
+      loadDieselStats()
+    ]);
+    
+    // Renderizar
+    renderDieselStats();
+    renderDieselChart();
+    renderDieselHistory();
+    
+  } catch (error) {
+    console.error('Erro ao carregar controle de diesel:', error);
+  }
+}
+
+// Carregar registros de diesel
+async function loadDieselRecords() {
+  try {
+    var dates = getDieselPeriodDates();
+    var url = API_URL + '/diesel-records?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
+    
+    var response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      state.dieselRecords = data.records || [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar registros de diesel:', error);
+  }
+}
+
+// Carregar estatísticas de diesel
+async function loadDieselStats() {
+  try {
+    var dates = getDieselPeriodDates();
+    var url = API_URL + '/diesel-records/stats?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
+    
+    var response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      state.dieselStats = data.stats;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar estatísticas de diesel:', error);
+  }
+}
+
+// Alternar período do diesel
+async function setDieselPeriod(period) {
+  state.dieselPeriod = period;
+  
+  // Atualizar botões
+  document.querySelectorAll('.diesel-filter-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  var activeBtn = document.getElementById('diesel-filter-' + period);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  // Recarregar dados
+  await Promise.all([
+    loadDieselRecords(),
+    loadDieselStats()
+  ]);
+  
+  renderDieselStats();
+  renderDieselChart();
+  renderDieselHistory();
+}
+
+// Renderizar estatísticas do diesel
+function renderDieselStats() {
+  var stats = state.dieselStats || {};
+  
+  var elTotalEntrada = document.getElementById('diesel-total-entrada');
+  var elTotalSaida = document.getElementById('diesel-total-saida');
+  var elSaldoAtual = document.getElementById('diesel-saldo-atual');
+  var elMediaDiaria = document.getElementById('diesel-media-diaria');
+  
+  if (elTotalEntrada) {
+    elTotalEntrada.textContent = (stats.totalEntrada || 0).toLocaleString('pt-BR') + ' L';
+  }
+  if (elTotalSaida) {
+    elTotalSaida.textContent = (stats.totalSaida || 0).toLocaleString('pt-BR') + ' L';
+  }
+  if (elSaldoAtual) {
+    elSaldoAtual.textContent = (stats.saldoAtual || 0).toLocaleString('pt-BR') + ' L';
+  }
+  if (elMediaDiaria) {
+    elMediaDiaria.textContent = (stats.mediaDiaria || 0).toFixed(1) + ' L/dia';
+  }
+}
+
+// Renderizar gráfico de diesel (barras - entradas/saídas)
+function renderDieselChart() {
+  var canvas = document.getElementById('diesel-consumption-chart');
+  if (!canvas) return;
+  
+  var ctx = canvas.getContext('2d');
+  var records = state.dieselRecords || [];
+  
+  // Agrupar por data
+  var dailyData = {};
+  records.forEach(function(r) {
+    var dateKey = r.record_date ? r.record_date.split('T')[0] : '';
+    if (!dailyData[dateKey]) {
+      dailyData[dateKey] = { entrada: 0, saida: 0 };
+    }
+    if (r.record_type === 'entrada') {
+      dailyData[dateKey].entrada += parseFloat(r.quantity) || 0;
+    } else {
+      dailyData[dateKey].saida += parseFloat(r.quantity) || 0;
+    }
+  });
+  
+  var labels = Object.keys(dailyData).sort();
+  var entradasData = labels.map(function(d) { return dailyData[d].entrada; });
+  var saidasData = labels.map(function(d) { return dailyData[d].saida; });
+  
+  // Formatar labels para exibição
+  var formattedLabels = labels.map(function(d) {
+    var parts = d.split('-');
+    return parts[2] + '/' + parts[1];
+  });
+  
+  // Destruir gráfico anterior se existir
+  if (window.dieselChart) {
+    window.dieselChart.destroy();
+  }
+  
+  window.dieselChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: formattedLabels,
+      datasets: [
+        {
+          label: 'Entradas (L)',
+          data: entradasData,
+          backgroundColor: 'rgba(16, 185, 129, 0.7)',
+          borderColor: '#10b981',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'Saídas (L)',
+          data: saidasData,
+          backgroundColor: 'rgba(239, 68, 68, 0.7)',
+          borderColor: '#ef4444',
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#888' }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#888' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          ticks: { color: '#888' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        }
+      }
+    }
+  });
+}
+
+// Renderizar histórico do diesel
+function renderDieselHistory() {
+  var tbody = document.getElementById('diesel-history-tbody');
+  if (!tbody) return;
+  
+  var records = state.dieselRecords || [];
+  
+  // Ordenar por data (mais recente primeiro)
+  var sorted = records.slice().sort(function(a, b) {
+    return (b.record_date || '').localeCompare(a.record_date || '');
+  });
+  
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Nenhum registro encontrado</td></tr>';
+    return;
+  }
+  
+  var html = '';
+  sorted.forEach(function(r) {
+    var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
+    var parts = dateStr.split('-');
+    var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
+    
+    var typeClass = r.record_type === 'entrada' ? 'badge-success' : 'badge-danger';
+    var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'Saída';
+    
+    html += '<tr>';
+    html += '<td>' + formattedDate + '</td>';
+    html += '<td><span class="badge ' + typeClass + '">' + typeLabel + '</span></td>';
+    html += '<td><strong>' + (parseFloat(r.quantity) || 0).toLocaleString('pt-BR') + ' L</strong></td>';
+    html += '<td>' + (r.reason || '-') + '</td>';
+    html += '<td>' + (r.recorded_by_name || '-') + '</td>';
+    html += '<td>' + (r.notes || '-') + '</td>';
+    html += '</tr>';
+  });
+  
+  tbody.innerHTML = html;
+}
+
+// Salvar registro de diesel
+async function saveDieselRecord() {
+  try {
+    var dateInput = document.getElementById('diesel-date');
+    var typeInput = document.getElementById('diesel-type');
+    var quantityInput = document.getElementById('diesel-quantity');
+    var reasonInput = document.getElementById('diesel-reason');
+    
+    var recordDate = dateInput ? dateInput.value : '';
+    var recordType = typeInput ? typeInput.value : '';
+    var quantity = quantityInput ? parseFloat(quantityInput.value) : 0;
+    var reason = reasonInput ? reasonInput.value : '';
+    
+    if (!recordDate || !recordType || !quantity || quantity <= 0) {
+      showNotification('Preencha todos os campos obrigatórios', 'error');
+      return;
+    }
+    
+    var response = await fetch(API_URL + '/diesel-records', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({
+        record_date: recordDate,
+        record_type: recordType,
+        quantity: quantity,
+        reason: reason
+      })
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      showNotification('Registro de diesel salvo com sucesso!', 'success');
+      
+      // Limpar formulário
+      if (quantityInput) quantityInput.value = '';
+      if (reasonInput) reasonInput.value = '';
+      
+      // Recarregar dados
+      await loadDieselControl();
+    } else {
+      showNotification(data.error || 'Erro ao salvar registro', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar registro de diesel:', error);
+    showNotification('Erro ao salvar registro', 'error');
+  }
+}
+
+// Exportar relatório de diesel PDF
+function exportDieselReportPDF() {
+  var records = state.dieselRecords || [];
+  var stats = state.dieselStats || {};
+  
+  if (records.length === 0) {
+    showNotification('Nenhum dado para exportar', 'warning');
+    return;
+  }
+  
+  // Ordenar registros
+  var sorted = records.slice().sort(function(a, b) {
+    return (a.record_date || '').localeCompare(b.record_date || '');
+  });
+  
+  var periodLabel = state.dieselPeriod === 'today' ? 'Hoje' : 
+                    state.dieselPeriod === 'week' ? 'Última Semana' : 'Último Mês';
+  
+  var content = '<!DOCTYPE html>' +
+    '<html lang="pt-BR">' +
+    '<head>' +
+    '<meta charset="UTF-8">' +
+    '<title>Relatório de Diesel - Granja Vitta</title>' +
+    '<style>' +
+    'body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #333; }' +
+    '.header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #d4af37; padding-bottom: 20px; }' +
+    '.header h1 { color: #1a1a2e; margin-bottom: 5px; }' +
+    '.header p { color: #666; }' +
+    '.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }' +
+    '.stat-box { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; }' +
+    '.stat-box h3 { font-size: 12px; color: #666; margin-bottom: 5px; }' +
+    '.stat-box .value { font-size: 24px; font-weight: bold; color: #1a1a2e; }' +
+    'table { width: 100%; border-collapse: collapse; margin-top: 20px; }' +
+    'th { background: #1a1a2e; color: #d4af37; padding: 12px; text-align: left; font-size: 12px; }' +
+    'td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }' +
+    'tr:nth-child(even) { background: #f8f9fa; }' +
+    '.badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }' +
+    '.badge-entrada { background: #d4edda; color: #155724; }' +
+    '.badge-saida { background: #f8d7da; color: #721c24; }' +
+    '.footer { text-align: center; margin-top: 40px; color: #888; font-size: 11px; }' +
+    '@media print { body { padding: 20px; } }' +
+    '</style>' +
+    '</head>' +
+    '<body>' +
+    '<div class="header">' +
+    '<h1>⛽ CONTROLE DE DIESEL</h1>' +
+    '<p><strong>Granja Vitta</strong> | Período: ' + periodLabel + '</p>' +
+    '<p>Gerado em: ' + new Date().toLocaleString('pt-BR') + '</p>' +
+    '</div>' +
+    '<div class="stats-grid">' +
+    '<div class="stat-box"><h3>Total Entradas</h3><div class="value">' + (stats.totalEntrada || 0).toLocaleString('pt-BR') + ' L</div></div>' +
+    '<div class="stat-box"><h3>Total Saídas</h3><div class="value">' + (stats.totalSaida || 0).toLocaleString('pt-BR') + ' L</div></div>' +
+    '<div class="stat-box"><h3>Saldo Atual</h3><div class="value">' + (stats.saldoAtual || 0).toLocaleString('pt-BR') + ' L</div></div>' +
+    '<div class="stat-box"><h3>Média Diária</h3><div class="value">' + (stats.mediaDiaria || 0).toFixed(1) + ' L</div></div>' +
+    '</div>' +
+    '<h2 style="color:#1a1a2e;font-size:16px;margin-bottom:15px;">HISTÓRICO DE MOVIMENTAÇÕES</h2>' +
+    '<table>' +
+    '<thead><tr><th>Data</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Registrado por</th><th>Observações</th></tr></thead>' +
+    '<tbody>';
+  
+  sorted.forEach(function(r) {
+    var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
+    var parts = dateStr.split('-');
+    var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
+    var badgeClass = r.record_type === 'entrada' ? 'badge-entrada' : 'badge-saida';
+    var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'Saída';
+    
+    content += '<tr>';
+    content += '<td>' + formattedDate + '</td>';
+    content += '<td><span class="badge ' + badgeClass + '">' + typeLabel + '</span></td>';
+    content += '<td><strong>' + (parseFloat(r.quantity) || 0).toLocaleString('pt-BR') + ' L</strong></td>';
+    content += '<td>' + (r.reason || '-') + '</td>';
+    content += '<td>' + (r.recorded_by_name || '-') + '</td>';
+    content += '<td>' + (r.notes || '-') + '</td>';
+    content += '</tr>';
+  });
+  
+  content += '</tbody></table>' +
+    '<div class="footer">' +
+    '<p>Relatório gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>' +
+    '<p>Desenvolvido por Guilherme Braga | © 2025</p>' +
+    '</div>' +
+    '</body></html>';
+  
+  var printWindow = window.open('', '_blank');
+  printWindow.document.write(content);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(function() {
+    printWindow.print();
+  }, 500);
+  
+  showNotification('Relatório PDF gerado!', 'success');
+}
+
+// Exportar relatório de diesel Excel/CSV
+function exportDieselReportExcel() {
+  var records = state.dieselRecords || [];
+  
+  if (records.length === 0) {
+    showNotification('Nenhum dado para exportar', 'warning');
+    return;
+  }
+  
+  // Ordenar registros
+  var sorted = records.slice().sort(function(a, b) {
+    return (a.record_date || '').localeCompare(b.record_date || '');
+  });
+  
+  // Cabeçalhos
+  var headers = ['DATA', 'TIPO', 'QUANTIDADE (L)', 'MOTIVO', 'REGISTRADO POR', 'OBSERVACOES'];
+  
+  // Linhas de dados
+  var rows = sorted.map(function(r) {
+    var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
+    var parts = dateStr.split('-');
+    var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
+    var typeLabel = r.record_type === 'entrada' ? 'ENTRADA' : 'SAIDA';
+    
+    return [
+      formattedDate,
+      typeLabel,
+      (parseFloat(r.quantity) || 0).toString(),
+      r.reason || '',
+      r.recorded_by_name || '',
+      r.notes || ''
+    ].join(';');
+  });
+  
+  var csv = headers.join(';') + '\n' + rows.join('\n');
+  
+  // Criar blob e baixar
+  var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'CONTROLE_DIESEL_GRANJA_VITTA_' + new Date().toISOString().split('T')[0] + '.csv';
+  link.click();
+  
+  showNotification('Planilha exportada com sucesso!', 'success');
+}
+
+// ========== FIM CONTROLE DE DIESEL ==========
+
+// ========== CONTROLE DE GERADOR ==========
+
+// Função auxiliar para obter datas do período (gerador)
+function getGeneratorPeriodDates() {
+  var now = new Date();
+  var year = now.getFullYear();
+  var month = now.getMonth();
+  var day = now.getDate();
+  var endDate = new Date(year, month, day, 23, 59, 59);
+  var startDate;
+  
+  if (state.generatorPeriod === 'today') {
+    startDate = new Date(year, month, day, 0, 0, 0);
+  } else if (state.generatorPeriod === 'week') {
+    startDate = new Date(year, month, day - 7, 0, 0, 0);
+  } else {
+    // month
+    startDate = new Date(year, month - 1, day, 0, 0, 0);
+  }
+  
+  var startStr = startDate.getFullYear() + '-' + 
+    String(startDate.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(startDate.getDate()).padStart(2, '0');
+  var endStr = endDate.getFullYear() + '-' + 
+    String(endDate.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(endDate.getDate()).padStart(2, '0');
+  
+  return { startDate: startStr, endDate: endStr };
+}
+
+// Carregar controle de gerador
+async function loadGeneratorControl() {
+  try {
+    // Definir data de hoje no input
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    var today = year + '-' + month + '-' + day;
+    
+    var dateInput = document.getElementById('generator-date');
+    if (dateInput) dateInput.value = today;
+    
+    // Carregar dados
+    await Promise.all([
+      loadGeneratorRecords(),
+      loadGeneratorStats()
+    ]);
+    
+    // Renderizar
+    renderGeneratorStats();
+    renderGeneratorHistory();
+    
+  } catch (error) {
+    console.error('Erro ao carregar controle de gerador:', error);
+  }
+}
+
+// Carregar registros de gerador
+async function loadGeneratorRecords() {
+  try {
+    var dates = getGeneratorPeriodDates();
+    var url = API_URL + '/generator-records?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
+    
+    var response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      state.generatorRecords = data.records || [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar registros de gerador:', error);
+  }
+}
+
+// Carregar estatísticas de gerador
+async function loadGeneratorStats() {
+  try {
+    var dates = getGeneratorPeriodDates();
+    var url = API_URL + '/generator-records/stats?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
+    
+    var response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      state.generatorStats = data.stats;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar estatísticas de gerador:', error);
+  }
+}
+
+// Alternar período do gerador
+async function setGeneratorPeriod(period) {
+  state.generatorPeriod = period;
+  
+  // Atualizar botões
+  document.querySelectorAll('.generator-filter-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  var activeBtn = document.getElementById('generator-filter-' + period);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  // Recarregar dados
+  await Promise.all([
+    loadGeneratorRecords(),
+    loadGeneratorStats()
+  ]);
+  
+  renderGeneratorStats();
+  renderGeneratorHistory();
+}
+
+// Renderizar estatísticas do gerador
+function renderGeneratorStats() {
+  var stats = state.generatorStats || {};
+  
+  var elTotalHours = document.getElementById('generator-total-hours');
+  var elFuelUsed = document.getElementById('generator-fuel-used');
+  var elAvgConsumption = document.getElementById('generator-avg-consumption');
+  var elMaintenanceCount = document.getElementById('generator-maintenance-count');
+  
+  if (elTotalHours) {
+    var hours = stats.totalHours || 0;
+    var hoursInt = Math.floor(hours);
+    var minutes = Math.round((hours - hoursInt) * 60);
+    elTotalHours.textContent = hoursInt + 'h ' + minutes + 'min';
+  }
+  if (elFuelUsed) {
+    elFuelUsed.textContent = (stats.fuelUsed || 0).toLocaleString('pt-BR') + ' L';
+  }
+  if (elAvgConsumption) {
+    elAvgConsumption.textContent = (stats.avgConsumption || 0).toFixed(1) + ' L/h';
+  }
+  if (elMaintenanceCount) {
+    elMaintenanceCount.textContent = (stats.maintenanceCount || 0).toString();
+  }
+}
+
+// Renderizar histórico do gerador
+function renderGeneratorHistory() {
+  var tbody = document.getElementById('generator-history-tbody');
+  if (!tbody) return;
+  
+  var records = state.generatorRecords || [];
+  
+  // Ordenar por data (mais recente primeiro)
+  var sorted = records.slice().sort(function(a, b) {
+    return (b.record_date || '').localeCompare(a.record_date || '');
+  });
+  
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">Nenhum registro encontrado</td></tr>';
+    return;
+  }
+  
+  var html = '';
+  sorted.forEach(function(r) {
+    var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
+    var parts = dateStr.split('-');
+    var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
+    
+    var typeLabel = '';
+    var typeClass = '';
+    if (r.record_type === 'ligado') {
+      typeLabel = 'Ligado';
+      typeClass = 'badge-success';
+    } else if (r.record_type === 'desligado') {
+      typeLabel = 'Desligado';
+      typeClass = 'badge-warning';
+    } else if (r.record_type === 'manutencao') {
+      typeLabel = 'Manutenção';
+      typeClass = 'badge-info';
+    } else {
+      typeLabel = r.record_type || '-';
+      typeClass = 'badge-secondary';
+    }
+    
+    var runTime = r.run_time ? (parseFloat(r.run_time).toFixed(1) + 'h') : '-';
+    var fuelUsed = r.fuel_used ? (parseFloat(r.fuel_used).toLocaleString('pt-BR') + ' L') : '-';
+    
+    html += '<tr>';
+    html += '<td>' + formattedDate + '</td>';
+    html += '<td><span class="badge ' + typeClass + '">' + typeLabel + '</span></td>';
+    html += '<td>' + runTime + '</td>';
+    html += '<td>' + fuelUsed + '</td>';
+    html += '<td>' + (r.recorded_by_name || '-') + '</td>';
+    html += '<td>' + (r.notes || '-') + '</td>';
+    html += '</tr>';
+  });
+  
+  tbody.innerHTML = html;
+}
+
+// Salvar registro de gerador
+async function saveGeneratorRecord() {
+  try {
+    var dateInput = document.getElementById('generator-date');
+    var typeInput = document.getElementById('generator-type');
+    var timeInput = document.getElementById('generator-time');
+    var fuelInput = document.getElementById('generator-fuel');
+    var notesInput = document.getElementById('generator-notes');
+    
+    var recordDate = dateInput ? dateInput.value : '';
+    var recordType = typeInput ? typeInput.value : '';
+    var runTime = timeInput ? parseFloat(timeInput.value) || 0 : 0;
+    var fuelUsed = fuelInput ? parseFloat(fuelInput.value) || 0 : 0;
+    var notes = notesInput ? notesInput.value : '';
+    
+    if (!recordDate || !recordType) {
+      showNotification('Preencha os campos obrigatórios (data e tipo)', 'error');
+      return;
+    }
+    
+    var response = await fetch(API_URL + '/generator-records', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({
+        record_date: recordDate,
+        record_type: recordType,
+        run_time: runTime,
+        fuel_used: fuelUsed,
+        notes: notes
+      })
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      showNotification('Registro de gerador salvo com sucesso!', 'success');
+      
+      // Limpar formulário
+      if (timeInput) timeInput.value = '';
+      if (fuelInput) fuelInput.value = '';
+      if (notesInput) notesInput.value = '';
+      
+      // Recarregar dados
+      await loadGeneratorControl();
+    } else {
+      showNotification(data.error || 'Erro ao salvar registro', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar registro de gerador:', error);
+    showNotification('Erro ao salvar registro', 'error');
+  }
+}
+
+// Exportar relatório de gerador PDF
+function exportGeneratorReportPDF() {
+  var records = state.generatorRecords || [];
+  var stats = state.generatorStats || {};
+  
+  if (records.length === 0) {
+    showNotification('Nenhum dado para exportar', 'warning');
+    return;
+  }
+  
+  // Ordenar registros
+  var sorted = records.slice().sort(function(a, b) {
+    return (a.record_date || '').localeCompare(b.record_date || '');
+  });
+  
+  var periodLabel = state.generatorPeriod === 'today' ? 'Hoje' : 
+                    state.generatorPeriod === 'week' ? 'Última Semana' : 'Último Mês';
+  
+  var totalHours = stats.totalHours || 0;
+  var hoursInt = Math.floor(totalHours);
+  var minutes = Math.round((totalHours - hoursInt) * 60);
+  var hoursFormatted = hoursInt + 'h ' + minutes + 'min';
+  
+  var content = '<!DOCTYPE html>' +
+    '<html lang="pt-BR">' +
+    '<head>' +
+    '<meta charset="UTF-8">' +
+    '<title>Relatório de Gerador - Granja Vitta</title>' +
+    '<style>' +
+    'body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #333; }' +
+    '.header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #d4af37; padding-bottom: 20px; }' +
+    '.header h1 { color: #1a1a2e; margin-bottom: 5px; }' +
+    '.header p { color: #666; }' +
+    '.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }' +
+    '.stat-box { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; }' +
+    '.stat-box h3 { font-size: 12px; color: #666; margin-bottom: 5px; }' +
+    '.stat-box .value { font-size: 24px; font-weight: bold; color: #1a1a2e; }' +
+    'table { width: 100%; border-collapse: collapse; margin-top: 20px; }' +
+    'th { background: #1a1a2e; color: #d4af37; padding: 12px; text-align: left; font-size: 12px; }' +
+    'td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }' +
+    'tr:nth-child(even) { background: #f8f9fa; }' +
+    '.badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }' +
+    '.badge-ligado { background: #d4edda; color: #155724; }' +
+    '.badge-desligado { background: #fff3cd; color: #856404; }' +
+    '.badge-manutencao { background: #cce5ff; color: #004085; }' +
+    '.footer { text-align: center; margin-top: 40px; color: #888; font-size: 11px; }' +
+    '@media print { body { padding: 20px; } }' +
+    '</style>' +
+    '</head>' +
+    '<body>' +
+    '<div class="header">' +
+    '<h1>🔌 CONTROLE DE GERADOR</h1>' +
+    '<p><strong>Granja Vitta</strong> | Período: ' + periodLabel + '</p>' +
+    '<p>Gerado em: ' + new Date().toLocaleString('pt-BR') + '</p>' +
+    '</div>' +
+    '<div class="stats-grid">' +
+    '<div class="stat-box"><h3>Total de Horas</h3><div class="value">' + hoursFormatted + '</div></div>' +
+    '<div class="stat-box"><h3>Combustível Usado</h3><div class="value">' + (stats.fuelUsed || 0).toLocaleString('pt-BR') + ' L</div></div>' +
+    '<div class="stat-box"><h3>Consumo Médio</h3><div class="value">' + (stats.avgConsumption || 0).toFixed(1) + ' L/h</div></div>' +
+    '<div class="stat-box"><h3>Manutenções</h3><div class="value">' + (stats.maintenanceCount || 0) + '</div></div>' +
+    '</div>' +
+    '<h2 style="color:#1a1a2e;font-size:16px;margin-bottom:15px;">HISTÓRICO DE OPERAÇÕES</h2>' +
+    '<table>' +
+    '<thead><tr><th>Data</th><th>Tipo</th><th>Tempo</th><th>Combustível</th><th>Registrado por</th><th>Observações</th></tr></thead>' +
+    '<tbody>';
+  
+  sorted.forEach(function(r) {
+    var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
+    var parts = dateStr.split('-');
+    var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
+    
+    var typeLabel = '';
+    var badgeClass = '';
+    if (r.record_type === 'ligado') {
+      typeLabel = 'Ligado';
+      badgeClass = 'badge-ligado';
+    } else if (r.record_type === 'desligado') {
+      typeLabel = 'Desligado';
+      badgeClass = 'badge-desligado';
+    } else if (r.record_type === 'manutencao') {
+      typeLabel = 'Manutenção';
+      badgeClass = 'badge-manutencao';
+    } else {
+      typeLabel = r.record_type || '-';
+      badgeClass = '';
+    }
+    
+    var runTime = r.run_time ? (parseFloat(r.run_time).toFixed(1) + 'h') : '-';
+    var fuelUsed = r.fuel_used ? (parseFloat(r.fuel_used).toLocaleString('pt-BR') + ' L') : '-';
+    
+    content += '<tr>';
+    content += '<td>' + formattedDate + '</td>';
+    content += '<td><span class="badge ' + badgeClass + '">' + typeLabel + '</span></td>';
+    content += '<td>' + runTime + '</td>';
+    content += '<td>' + fuelUsed + '</td>';
+    content += '<td>' + (r.recorded_by_name || '-') + '</td>';
+    content += '<td>' + (r.notes || '-') + '</td>';
+    content += '</tr>';
+  });
+  
+  content += '</tbody></table>' +
+    '<div class="footer">' +
+    '<p>Relatório gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>' +
+    '<p>Desenvolvido por Guilherme Braga | © 2025</p>' +
+    '</div>' +
+    '</body></html>';
+  
+  var printWindow = window.open('', '_blank');
+  printWindow.document.write(content);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(function() {
+    printWindow.print();
+  }, 500);
+  
+  showNotification('Relatório PDF gerado!', 'success');
+}
+
+// ========== FIM CONTROLE DE GERADOR ==========
 
 // ========== EXPORTAÇÃO DASHBOARD ==========
 
