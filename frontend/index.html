@@ -3336,10 +3336,15 @@
           <div id="diesel-alert-container"></div>
 
           <!-- Filtros de Período -->
-          <div class="water-filters">
-            <button class="water-filter-btn" id="diesel-filter-today" onclick="setDieselPeriod('today')">Hoje</button>
+          <div class="water-filters" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button class="water-filter-btn active" id="diesel-filter-today" onclick="setDieselPeriod('today')">Hoje</button>
             <button class="water-filter-btn" id="diesel-filter-week" onclick="setDieselPeriod('week')">Semana</button>
-            <button class="water-filter-btn active" id="diesel-filter-month" onclick="setDieselPeriod('month')">Mês</button>
+            <button class="water-filter-btn" id="diesel-filter-month" onclick="setDieselPeriod('month')">Mês</button>
+            <span style="color: var(--text-secondary); margin: 0 8px;">|</span>
+            <select id="diesel-month-select" onchange="setDieselMonth(this.value)" style="padding: 10px 16px; border: none; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;">
+              <option value="">Mês Específico...</option>
+              <!-- Opções serão preenchidas dinamicamente -->
+            </select>
           </div>
 
           <!-- Cards de Resumo -->

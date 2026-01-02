@@ -20,7 +20,8 @@ const state = {
   // Diesel Control
   dieselRecords: [],
   dieselStats: null,
-  dieselPeriod: 'month',
+  dieselPeriod: 'today',
+  dieselSelectedMonth: null, // null = período atual, ou 'YYYY-MM' para mês específico
   // Generator Control
   generatorRecords: [],
   generatorStats: null,
@@ -4509,25 +4510,43 @@ function getPeriodLabel() {
 
 // ========== CONTROLE DE DIESEL ==========
 
+// Estado adicional para mês selecionado no diesel
+if (typeof state.dieselSelectedMonth === 'undefined') {
+  state.dieselSelectedMonth = null; // null = mês atual, ou 'YYYY-MM' para mês específico
+}
+
 // Função auxiliar para obter datas do período (diesel)
 function getDieselPeriodDates() {
   var now = new Date();
-  var year = now.getFullYear();
-  var month = now.getMonth();
-  var day = now.getDate();
-  var endDate = new Date(year, month, day, 23, 59, 59);
-  var startDate;
+  var year, month, day, endDate, startDate;
   
-  if (state.dieselPeriod === 'today') {
-    startDate = new Date(year, month, day, 0, 0, 0);
-  } else if (state.dieselPeriod === 'week') {
-    // 7 dias atrás
-    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    startDate.setHours(0, 0, 0, 0);
+  // Se um mês específico foi selecionado
+  if (state.dieselSelectedMonth) {
+    var parts = state.dieselSelectedMonth.split('-');
+    year = parseInt(parts[0]);
+    month = parseInt(parts[1]) - 1; // 0-indexed
+    
+    // Para mês específico, sempre retorna o mês inteiro
+    startDate = new Date(year, month, 1, 0, 0, 0);
+    // Último dia do mês
+    endDate = new Date(year, month + 1, 0, 23, 59, 59);
   } else {
-    // month - 30 dias atrás (não mês anterior para evitar problema de dias)
-    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    startDate.setHours(0, 0, 0, 0);
+    // Comportamento original para hoje/semana/mês atual
+    year = now.getFullYear();
+    month = now.getMonth();
+    day = now.getDate();
+    endDate = new Date(year, month, day, 23, 59, 59);
+    
+    if (state.dieselPeriod === 'today') {
+      startDate = new Date(year, month, day, 0, 0, 0);
+    } else if (state.dieselPeriod === 'week') {
+      // 7 dias atrás
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      startDate.setHours(0, 0, 0, 0);
+    } else {
+      // month - mês atual inteiro (do dia 1 até hoje)
+      startDate = new Date(year, month, 1, 0, 0, 0);
+    }
   }
   
   var startStr = startDate.getFullYear() + '-' + 
@@ -4559,6 +4578,12 @@ async function loadDieselControl() {
     var dateInput = document.getElementById('diesel-date');
     if (dateInput) dateInput.value = today;
     
+    // Preencher dropdown de meses (últimos 12 meses)
+    populateDieselMonthSelect();
+    
+    // Atualizar estado dos botões de período
+    updateDieselPeriodButtons();
+    
     // Carregar dados
     await Promise.all([
       loadDieselRecords(),
@@ -4576,6 +4601,49 @@ async function loadDieselControl() {
   } catch (error) {
     console.error('Erro ao carregar controle de diesel:', error);
   }
+}
+
+// Preencher dropdown de meses do diesel
+function populateDieselMonthSelect() {
+  var select = document.getElementById('diesel-month-select');
+  if (!select) return;
+  
+  var now = new Date();
+  var meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  
+  var html = '<option value="">Mês Específico...</option>';
+  
+  // Últimos 12 meses
+  for (var i = 0; i < 12; i++) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    var value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    var label = meses[d.getMonth()] + ' ' + d.getFullYear();
+    html += '<option value="' + value + '">' + label + '</option>';
+  }
+  
+  select.innerHTML = html;
+  
+  // Se já há um mês selecionado, marcar
+  if (state.dieselSelectedMonth) {
+    select.value = state.dieselSelectedMonth;
+  }
+}
+
+// Atualizar estado visual dos botões de período do diesel
+function updateDieselPeriodButtons() {
+  ['today', 'week', 'month'].forEach(function(p) {
+    var btn = document.getElementById('diesel-filter-' + p);
+    if (btn) {
+      if (state.dieselSelectedMonth) {
+        btn.classList.remove('active');
+      } else if (p === state.dieselPeriod) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+  });
 }
 
 // Carregar registros de diesel
@@ -4619,13 +4687,49 @@ async function loadDieselStats() {
 // Alternar período do diesel
 async function setDieselPeriod(period) {
   state.dieselPeriod = period;
+  state.dieselSelectedMonth = null; // Limpar seleção de mês específico
   
-  // Atualizar botões
-  document.querySelectorAll('.diesel-filter-btn').forEach(function(btn) {
-    btn.classList.remove('active');
+  // Atualizar botões - usar IDs que começam com diesel-filter
+  ['today', 'week', 'month'].forEach(function(p) {
+    var btn = document.getElementById('diesel-filter-' + p);
+    if (btn) btn.classList.remove('active');
   });
   var activeBtn = document.getElementById('diesel-filter-' + period);
   if (activeBtn) activeBtn.classList.add('active');
+  
+  // Limpar seleção do dropdown de mês
+  var monthSelect = document.getElementById('diesel-month-select');
+  if (monthSelect) monthSelect.value = '';
+  
+  // Recarregar dados
+  await Promise.all([
+    loadDieselRecords(),
+    loadDieselStats()
+  ]);
+  
+  renderDieselStats();
+  renderDieselChart();
+  renderDieselHistory();
+  checkDieselAlerts();
+}
+
+// Selecionar mês específico do diesel
+async function setDieselMonth(monthValue) {
+  if (!monthValue) {
+    // Voltou para "mês atual"
+    state.dieselSelectedMonth = null;
+    state.dieselPeriod = 'month';
+    setDieselPeriod('month');
+    return;
+  }
+  
+  state.dieselSelectedMonth = monthValue; // formato YYYY-MM
+  
+  // Remover active de todos os botões de período
+  ['today', 'week', 'month'].forEach(function(p) {
+    var btn = document.getElementById('diesel-filter-' + p);
+    if (btn) btn.classList.remove('active');
+  });
   
   // Recarregar dados
   await Promise.all([
