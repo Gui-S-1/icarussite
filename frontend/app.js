@@ -20,7 +20,7 @@ const state = {
   // Diesel Control
   dieselRecords: [],
   dieselStats: null,
-  dieselPeriod: 'today',
+  dieselPeriod: 'month',
   dieselSelectedMonth: null, // null = período atual, ou 'YYYY-MM' para mês específico
   // Generator Control
   generatorRecords: [],
@@ -4772,17 +4772,18 @@ function checkDieselAlerts() {
 // Renderizar estatísticas do diesel
 function renderDieselStats() {
   var stats = state.dieselStats || {};
+  var records = state.dieselRecords || [];
   
   var elTotalEntrada = document.getElementById('diesel-total-entrada');
   var elTotalSaida = document.getElementById('diesel-total-saida');
   var elSaldoAtual = document.getElementById('diesel-saldo-atual');
-  var elMediaDiaria = document.getElementById('diesel-media-diaria');
+  var elUltimaMov = document.getElementById('diesel-ultima-mov');
+  var elUltimaMovTipo = document.getElementById('diesel-ultima-mov-tipo');
   
   // API retorna com underscores, converter para valores
   var totalEntrada = stats.total_entrada || stats.totalEntrada || 0;
   var totalSaida = stats.total_saida || stats.totalSaida || 0;
   var saldo = stats.saldo_atual || stats.saldoAtual || 0;
-  var mediaDiaria = stats.media_diaria || stats.mediaDiaria || 0;
   
   if (elTotalEntrada) {
     elTotalEntrada.textContent = totalEntrada.toLocaleString('pt-BR') + ' L';
@@ -4803,8 +4804,35 @@ function renderDieselStats() {
       elSaldoAtual.style.color = '#22c55e';
     }
   }
-  if (elMediaDiaria) {
-    elMediaDiaria.textContent = mediaDiaria.toFixed(1) + ' L/dia';
+  
+  // Última movimentação
+  if (elUltimaMov && elUltimaMovTipo) {
+    if (records.length > 0) {
+      // Ordenar por data e pegar o mais recente
+      var sorted = records.slice().sort(function(a, b) {
+        return (b.record_date || '').localeCompare(a.record_date || '');
+      });
+      var ultimo = sorted[0];
+      var dateStr = ultimo.record_date ? ultimo.record_date.split('T')[0] : '';
+      var parts = dateStr.split('-');
+      var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1]) : dateStr;
+      
+      elUltimaMov.textContent = formattedDate;
+      var tipoTexto = ultimo.record_type === 'entrada' ? 'Entrada' : 'Saída';
+      var qtd = (parseFloat(ultimo.quantity) || 0).toLocaleString('pt-BR');
+      elUltimaMovTipo.textContent = tipoTexto + ': ' + qtd + ' L';
+      
+      // Cor baseada no tipo
+      if (ultimo.record_type === 'entrada') {
+        elUltimaMov.style.color = '#10b981';
+      } else {
+        elUltimaMov.style.color = '#ef4444';
+      }
+    } else {
+      elUltimaMov.textContent = '-';
+      elUltimaMovTipo.textContent = 'Sem registros no período';
+      elUltimaMov.style.color = '#888';
+    }
   }
 }
 

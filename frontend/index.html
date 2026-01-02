@@ -3337,9 +3337,9 @@
 
           <!-- Filtros de Período -->
           <div class="water-filters" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button class="water-filter-btn active" id="diesel-filter-today" onclick="setDieselPeriod('today')">Hoje</button>
+            <button class="water-filter-btn" id="diesel-filter-today" onclick="setDieselPeriod('today')">Hoje</button>
             <button class="water-filter-btn" id="diesel-filter-week" onclick="setDieselPeriod('week')">Semana</button>
-            <button class="water-filter-btn" id="diesel-filter-month" onclick="setDieselPeriod('month')">Mês</button>
+            <button class="water-filter-btn active" id="diesel-filter-month" onclick="setDieselPeriod('month')">Mês</button>
             <span style="color: var(--text-secondary); margin: 0 8px;">|</span>
             <select id="diesel-month-select" onchange="setDieselMonth(this.value)" style="padding: 10px 16px; border: none; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;">
               <option value="">Mês Específico...</option>
@@ -3401,22 +3401,22 @@
               <div class="tank-unit">Litros disponíveis</div>
             </div>
 
-            <!-- Card Média Diária -->
+            <!-- Card Última Movimentação -->
             <div class="water-tank-card diesel-media">
               <div class="tank-header">
                 <div class="tank-icon media">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 3v18h18"/>
-                    <path d="M18 9l-5 5-4-4-3 3"/>
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
                   </svg>
                 </div>
                 <div class="tank-info">
-                  <h3 class="tank-title-big">MÉDIA DIÁRIA</h3>
-                  <span class="tank-status-badge media">● Consumo</span>
+                  <h3 class="tank-title-big">ÚLTIMA MOVIMENTAÇÃO</h3>
+                  <span class="tank-status-badge media">● Registro</span>
                 </div>
               </div>
-              <div class="tank-value-large media" id="diesel-media-diaria">0</div>
-              <div class="tank-unit">Litros/dia</div>
+              <div class="tank-value-large media" id="diesel-ultima-mov" style="font-size: 1.5rem;">-</div>
+              <div class="tank-unit" id="diesel-ultima-mov-tipo">Aguardando dados</div>
             </div>
           </div>
 
