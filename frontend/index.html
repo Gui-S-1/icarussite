@@ -1855,6 +1855,38 @@
       align-items: center;
       justify-content: center;
       font-size: 24px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .tank-icon:hover {
+      transform: scale(1.1);
+    }
+    
+    .tank-icon.aviarios-icon {
+      color: #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
+    }
+    
+    .tank-icon.aviarios-icon:hover {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+    
+    .tank-icon.recria-icon {
+      color: #22c55e;
+      background: rgba(34, 197, 94, 0.15);
+    }
+    
+    .tank-icon.recria-icon:hover {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+    }
+    
+    .tank-icon.pico-icon {
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.15);
+    }
+    
+    .tank-icon.pico-icon:hover {
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
     }
 
     .tank-info h3 {
@@ -2244,6 +2276,20 @@
     .tank-badge.recria {
       background: rgba(16, 185, 129, 0.2);
       color: #10b981;
+    }
+
+    /* Cores alternadas por dia na tabela de histórico */
+    #water-history-table tr.day-even {
+      background: var(--bg-primary);
+    }
+    
+    #water-history-table tr.day-odd {
+      background: rgba(59, 130, 246, 0.06);
+    }
+    
+    #water-history-table tr.day-even:hover,
+    #water-history-table tr.day-odd:hover {
+      background: rgba(59, 130, 246, 0.12);
     }
 
     /* ========== FIM ESTILOS CONTROLE DE ÁGUA ========== */
@@ -3087,18 +3133,6 @@
           <!-- Alerta de Consumo (se houver) -->
           <div id="water-alert-container"></div>
 
-          <!-- Abas de Tipo de Visualização -->
-          <div class="water-view-tabs">
-            <button class="water-view-tab active" id="tab-trabalho" onclick="setWaterViewType('trabalho')">
-              <span class="tab-icon">⏰</span>
-              <span class="tab-text">Período Trabalho (7h-16h)</span>
-            </button>
-            <button class="water-view-tab" id="tab-24h" onclick="setWaterViewType('24h')">
-              <span class="tab-icon">📊</span>
-              <span class="tab-text">Consumo 24 Horas</span>
-            </button>
-          </div>
-
           <!-- Filtros de Período -->
           <div class="water-filters">
             <button class="water-filter-btn active" id="water-filter-day" onclick="setWaterPeriod('day')">Hoje</button>
@@ -3111,7 +3145,11 @@
             <!-- Card Aviários -->
             <div class="water-tank-card aviarios">
               <div class="tank-header">
-                <div class="tank-icon">🏭</div>
+                <div class="tank-icon aviarios-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
                   <h3 class="tank-title-big">CAIXA AVIÁRIOS</h3>
                   <span class="tank-status-badge">● Monitorando</span>
@@ -3151,7 +3189,14 @@
             <!-- Card Recria -->
             <div class="water-tank-card recria">
               <div class="tank-header">
-                <div class="tank-icon">🐣</div>
+                <div class="tank-icon recria-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <ellipse cx="12" cy="14" rx="8" ry="6"/>
+                    <path d="M12 8c0-2.5-1.5-5-4-6 2 1 3 2.5 4 6M12 8c0-2.5 1.5-5 4-6-2 1-3 2.5-4 6"/>
+                    <circle cx="10" cy="13" r="1" fill="currentColor"/>
+                    <circle cx="14" cy="13" r="1" fill="currentColor"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
                   <h3 class="tank-title-big">CAIXA RECRIA</h3>
                   <span class="tank-status-badge">● Monitorando</span>
@@ -3191,7 +3236,11 @@
             <!-- Card Pico de Consumo -->
             <div class="water-tank-card difference">
               <div class="tank-header">
-                <div class="tank-icon">🔥</div>
+                <div class="tank-icon pico-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="rgba(251, 191, 36, 0.2)"/>
+                  </svg>
+                </div>
                 <div class="tank-info">
                   <h3 class="tank-title-big">MAIOR CONSUMO</h3>
                   <span class="tank-status-badge secondary">Pico no Período</span>

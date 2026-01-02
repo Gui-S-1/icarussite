@@ -3611,10 +3611,18 @@ function renderWaterHistory() {
   // Ou seja, só podemos mostrar consumo 24h se tivermos a leitura do dia SEGUINTE
   const today = new Date().toISOString().split('T')[0];
   
+  // Criar mapa de datas únicas para cores alternadas
+  const uniqueDates = [...new Set(sorted.map(r => r.reading_date.split('T')[0]))];
+  const dateColorMap = {};
+  uniqueDates.forEach((date, index) => {
+    dateColorMap[date] = index % 2 === 0 ? 'day-even' : 'day-odd';
+  });
+  
   tbody.innerHTML = sorted.slice(0, 50).map((reading) => {
     const { formatted: date, dayOfWeek, dateKey } = formatDate(reading.reading_date);
     const tankClass = reading.tank_name;
     const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
+    const dayClass = dateColorMap[dateKey] || 'day-even';
     
     // Calcular consumo 24h só para leituras das 7h
     // Consumo do DIA = Leitura 7h do dia SEGUINTE - Leitura 7h deste dia
@@ -3636,7 +3644,7 @@ function renderWaterHistory() {
       }
     }
     
-    return '<tr>' +
+    return '<tr class="' + dayClass + '">' +
       '<td>' + date + '</td>' +
       '<td><span style="color: var(--text-secondary); font-size: 11px;">' + dayOfWeek + '</span></td>' +
       '<td>' + reading.reading_time + '</td>' +
