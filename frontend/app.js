@@ -25,7 +25,15 @@ const state = {
   // Generator Control
   generatorRecords: [],
   generatorStats: null,
-  generatorPeriod: 'month'
+  generatorPeriod: 'month',
+  // Aditiva Control
+  additiveTasks: [],
+  additiveStats: null,
+  additiveFilter: 'active', // 'active' ou 'archived'
+  // Relatórios
+  reports: [],
+  reportCategory: 'all',
+  currentReport: null
 };
 
 const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
@@ -154,8 +162,11 @@ async function loadViewData(view) {
       case 'controle-gerador':
         await loadGeneratorControl();
         break;
+      case 'aditiva':
+        await loadAditiva();
+        break;
       case 'relatorios':
-        await loadReports();
+        await loadRelatorios();
         break;
       case 'configuracoes':
         loadConfigurations();
@@ -347,6 +358,14 @@ function setupPermissions() {
   const canSeeGerador = isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
   const canEditGerador = isAdmin || roles.includes('gerador_manage') || roles.includes('preventivas') || roles.includes('os_manage_all');
 
+  // Aditiva: aditiva_view (ver), aditiva (editar - só manutenção)
+  const canSeeAditiva = isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  const canEditAditiva = isAdmin || roles.includes('aditiva') || roles.includes('os_manage_all');
+
+  // Relatórios: relatorios (ver), relatorios_write (escrever - só manutenção)
+  const canSeeRelatorios = isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  const canWriteRelatorios = isAdmin || roles.includes('relatorios_write') || roles.includes('os_manage_all');
+
   // Elementos de navegação
   const navDashboard = document.querySelector('[data-view="dashboard"]');
   const navOS = document.querySelector('[data-view="os"]');
@@ -357,6 +376,7 @@ function setupPermissions() {
   const navWater = document.querySelector('[data-view="controle-agua"]');
   const navDiesel = document.querySelector('[data-view="controle-diesel"]');
   const navGerador = document.querySelector('[data-view="controle-gerador"]');
+  const navAditiva = document.querySelector('[data-view="aditiva"]');
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
@@ -370,7 +390,8 @@ function setupPermissions() {
   if (navWater) navWater.classList.toggle('hidden', !canSeeWater);
   if (navDiesel) navDiesel.classList.toggle('hidden', !canSeeDiesel);
   if (navGerador) navGerador.classList.toggle('hidden', !canSeeGerador);
-  if (navRel) navRel.classList.toggle('hidden', !isAdmin);
+  if (navAditiva) navAditiva.classList.toggle('hidden', !canSeeAditiva);
+  if (navRel) navRel.classList.toggle('hidden', !canSeeRelatorios);
   if (navCfg) navCfg.classList.remove('hidden');
   
   // Salvar permissões de edição no state para uso nas funções save
@@ -381,6 +402,8 @@ function setupPermissions() {
   state.canEditCompras = canEditCompras;
   state.canEditPreventivas = canEditPrev;
   state.canEditChecklists = canEditChecklists;
+  state.canEditAditiva = canEditAditiva;
+  state.canWriteRelatorios = canWriteRelatorios;
   
   console.log('Permissões configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
 }
@@ -6055,5 +6078,436 @@ function exportAlmoxarifadoReport() {
   newWindow.document.close();
   
   showNotification('Relatório e planilha exportados!', 'success');
+}
+
+// ========== TAREFAS ADITIVAS ==========
+
+async function loadAditiva() {
+  try {
+    // Esconder/mostrar botão de nova tarefa baseado em permissão
+    var headerActions = document.querySelector('#aditiva-view .water-header-actions');
+    if (headerActions) {
+      headerActions.style.display = state.canEditAditiva ? 'flex' : 'none';
+    }
+    
+    await Promise.all([
+      loadAdditiveTasks(),
+      loadAdditiveStats()
+    ]);
+    
+    renderAdditiveTasks();
+    renderAdditiveStats();
+    
+  } catch (error) {
+    console.error('Erro ao carregar aditiva:', error);
+  }
+}
+
+async function loadAdditiveTasks() {
+  try {
+    var archived = state.additiveFilter === 'archived' ? 'true' : 'false';
+    var url = API_URL + '/additive-tasks?archived=' + archived;
+    
+    var response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      state.additiveTasks = data.tasks || [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar tarefas aditivas:', error);
+  }
+}
+
+async function loadAdditiveStats() {
+  try {
+    var response = await fetch(API_URL + '/additive-tasks/stats', {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      state.additiveStats = data.stats;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar stats aditiva:', error);
+  }
+}
+
+function renderAdditiveStats() {
+  var stats = state.additiveStats || {};
+  
+  var elPending = document.getElementById('aditiva-pending');
+  var elProgress = document.getElementById('aditiva-progress');
+  var elCompleted = document.getElementById('aditiva-completed');
+  
+  if (elPending) elPending.textContent = stats.pending || 0;
+  if (elProgress) elProgress.textContent = stats.in_progress || 0;
+  if (elCompleted) elCompleted.textContent = stats.completed_month || 0;
+}
+
+function renderAdditiveTasks() {
+  var container = document.getElementById('aditiva-tasks-list');
+  if (!container) return;
+  
+  var tasks = state.additiveTasks || [];
+  
+  if (tasks.length === 0) {
+    container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Nenhuma tarefa encontrada</div>';
+    return;
+  }
+  
+  var html = '';
+  tasks.forEach(function(task) {
+    var dateStr = task.created_at ? new Date(task.created_at).toLocaleDateString('pt-BR') : '';
+    var statusLabel = task.status === 'pending' ? 'Pendente' : task.status === 'in_progress' ? 'Em Andamento' : 'Concluída';
+    var priorityLabel = task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa';
+    
+    html += '<div class="aditiva-task-item" onclick="openAdditiveTask(\'' + task.id + '\')">' +
+      '<div class="task-priority-indicator ' + task.priority + '"></div>' +
+      '<div class="task-info">' +
+        '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
+        '<div class="task-meta">' +
+          '<span>' + (task.sector || 'Sem setor') + '</span>' +
+          '<span>•</span>' +
+          '<span>' + dateStr + '</span>' +
+          '<span>•</span>' +
+          '<span>' + priorityLabel + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<span class="task-status-badge ' + task.status + '">' + statusLabel + '</span>' +
+      (state.canEditAditiva ? '<div class="task-actions">' +
+        '<button class="task-action-btn" onclick="event.stopPropagation(); updateTaskStatus(\'' + task.id + '\', \'completed\')" title="Concluir">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>' +
+        '</button>' +
+      '</div>' : '') +
+    '</div>';
+  });
+  
+  container.innerHTML = html;
+}
+
+function setAditivaFilter(filter) {
+  state.additiveFilter = filter;
+  
+  document.querySelectorAll('.aditiva-filter-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  event.target.closest('.aditiva-filter-btn').classList.add('active');
+  
+  loadAdditiveTasks().then(function() {
+    renderAdditiveTasks();
+  });
+}
+
+function showNewAdditiveModal() {
+  if (!state.canEditAditiva) {
+    showNotification('Você não tem permissão para criar tarefas', 'error');
+    return;
+  }
+  
+  // Limpar formulário
+  document.getElementById('additive-title').value = '';
+  document.getElementById('additive-description').value = '';
+  document.getElementById('additive-sector').value = '';
+  document.getElementById('additive-priority').value = 'medium';
+  document.getElementById('additive-notes').value = '';
+  
+  document.getElementById('additive-modal').classList.add('active');
+}
+
+function closeAdditiveModal() {
+  document.getElementById('additive-modal').classList.remove('active');
+}
+
+async function saveAdditiveTask() {
+  try {
+    var title = document.getElementById('additive-title').value.trim();
+    var description = document.getElementById('additive-description').value.trim();
+    var sector = document.getElementById('additive-sector').value;
+    var priority = document.getElementById('additive-priority').value;
+    var notes = document.getElementById('additive-notes').value.trim();
+    
+    if (!title) {
+      showNotification('Título é obrigatório', 'error');
+      return;
+    }
+    
+    var response = await fetch(API_URL + '/additive-tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({ title: title, description: description, sector: sector, priority: priority, notes: notes })
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      state.additiveTasks = data.tasks || [];
+      closeAdditiveModal();
+      renderAdditiveTasks();
+      loadAdditiveStats().then(renderAdditiveStats);
+      showNotification('Tarefa criada com sucesso!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao criar tarefa', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar tarefa:', error);
+    showNotification('Erro ao salvar tarefa', 'error');
+  }
+}
+
+async function updateTaskStatus(taskId, status) {
+  try {
+    var response = await fetch(API_URL + '/additive-tasks/' + taskId, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({ status: status })
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      state.additiveTasks = data.tasks || [];
+      renderAdditiveTasks();
+      loadAdditiveStats().then(renderAdditiveStats);
+      showNotification('Tarefa atualizada!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao atualizar', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar tarefa:', error);
+    showNotification('Erro ao atualizar', 'error');
+  }
+}
+
+function openAdditiveTask(taskId) {
+  var task = state.additiveTasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+  
+  // Por enquanto só mostra detalhes via alert, pode expandir para modal de edição
+  var msg = 'Título: ' + task.title + '\n' +
+    'Descrição: ' + (task.description || '-') + '\n' +
+    'Setor: ' + (task.sector || '-') + '\n' +
+    'Status: ' + task.status + '\n' +
+    'Prioridade: ' + task.priority + '\n' +
+    'Criado por: ' + (task.created_by_name || '-') + '\n' +
+    (task.executed_by_name ? 'Executado por: ' + task.executed_by_name : '');
+  alert(msg);
+}
+
+// ========== RELATÓRIOS ==========
+
+async function loadRelatorios() {
+  try {
+    // Esconder/mostrar botão de novo relatório baseado em permissão
+    var writeActions = document.getElementById('relatorios-write-actions');
+    if (writeActions) {
+      writeActions.style.display = state.canWriteRelatorios ? 'flex' : 'none';
+    }
+    
+    await loadReportsData();
+    renderReports();
+    
+  } catch (error) {
+    console.error('Erro ao carregar relatórios:', error);
+  }
+}
+
+async function loadReportsData() {
+  try {
+    var url = API_URL + '/maintenance-reports';
+    if (state.reportCategory && state.reportCategory !== 'all') {
+      url += '?category=' + state.reportCategory;
+    }
+    
+    var response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      state.reports = data.reports || [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar relatórios:', error);
+  }
+}
+
+function renderReports() {
+  var container = document.getElementById('relatorios-list');
+  var viewer = document.getElementById('report-viewer');
+  if (!container) return;
+  
+  // Mostrar lista, esconder viewer
+  container.classList.remove('hidden');
+  if (viewer) viewer.classList.add('hidden');
+  
+  var reports = state.reports || [];
+  
+  if (reports.length === 0) {
+    container.innerHTML = '<div style="padding: 60px; text-align: center; color: var(--text-secondary); grid-column: 1/-1;">Nenhum relatório encontrado</div>';
+    return;
+  }
+  
+  var categoryColors = {
+    'geral': '#22d3ee',
+    'manutencao': '#a855f7',
+    'incidente': '#ef4444',
+    'melhoria': '#22c55e'
+  };
+  
+  var categoryLabels = {
+    'geral': 'Geral',
+    'manutencao': 'Manutenção',
+    'incidente': 'Incidente',
+    'melhoria': 'Melhoria'
+  };
+  
+  var html = '';
+  reports.forEach(function(report) {
+    var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR') : '';
+    var catColor = categoryColors[report.category] || '#22d3ee';
+    var catLabel = categoryLabels[report.category] || 'Geral';
+    var preview = (report.content || '').substring(0, 150);
+    
+    html += '<div class="report-card" onclick="openReport(\'' + report.id + '\')">' +
+      '<div class="report-card-header">' +
+        '<span class="report-card-category" style="background: rgba(' + hexToRgb(catColor) + ', 0.15); color: ' + catColor + ';">' +
+          '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/></svg>' +
+          catLabel +
+        '</span>' +
+        '<h3 class="report-card-title">' + escapeHtml(report.title) + '</h3>' +
+      '</div>' +
+      '<div class="report-card-body">' +
+        '<p class="report-card-preview">' + escapeHtml(preview) + (report.content.length > 150 ? '...' : '') + '</p>' +
+      '</div>' +
+      '<div class="report-card-footer">' +
+        '<div class="report-card-author">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+          (report.created_by_name || 'Anônimo') +
+        '</div>' +
+        '<span class="report-card-date">' + dateStr + '</span>' +
+      '</div>' +
+    '</div>';
+  });
+  
+  container.innerHTML = html;
+}
+
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) : '34, 211, 238';
+}
+
+function setReportCategory(category) {
+  state.reportCategory = category;
+  
+  document.querySelectorAll('.relatorios-filter-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  loadReportsData().then(renderReports);
+}
+
+function openReport(reportId) {
+  var report = state.reports.find(function(r) { return r.id === reportId; });
+  if (!report) return;
+  
+  state.currentReport = report;
+  
+  var container = document.getElementById('relatorios-list');
+  var viewer = document.getElementById('report-viewer');
+  
+  if (container) container.classList.add('hidden');
+  if (viewer) viewer.classList.remove('hidden');
+  
+  var categoryLabels = { 'geral': 'Geral', 'manutencao': 'Manutenção', 'incidente': 'Incidente', 'melhoria': 'Melhoria' };
+  var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR') : '';
+  
+  document.getElementById('viewer-category').textContent = categoryLabels[report.category] || 'Geral';
+  document.getElementById('viewer-date').textContent = dateStr;
+  document.getElementById('viewer-title').textContent = report.title;
+  document.getElementById('viewer-author').textContent = report.created_by_name || 'Anônimo';
+  document.getElementById('viewer-content').textContent = report.content || '';
+}
+
+function closeReportViewer() {
+  var container = document.getElementById('relatorios-list');
+  var viewer = document.getElementById('report-viewer');
+  
+  if (container) container.classList.remove('hidden');
+  if (viewer) viewer.classList.add('hidden');
+  
+  state.currentReport = null;
+}
+
+function showNewReportModal() {
+  if (!state.canWriteRelatorios) {
+    showNotification('Você não tem permissão para criar relatórios', 'error');
+    return;
+  }
+  
+  document.getElementById('report-title').value = '';
+  document.getElementById('report-category').value = 'geral';
+  document.getElementById('report-content').value = '';
+  
+  document.getElementById('report-modal').classList.add('active');
+}
+
+function closeReportModal() {
+  document.getElementById('report-modal').classList.remove('active');
+}
+
+async function saveReport() {
+  try {
+    var title = document.getElementById('report-title').value.trim();
+    var category = document.getElementById('report-category').value;
+    var content = document.getElementById('report-content').value.trim();
+    
+    if (!title || !content) {
+      showNotification('Título e conteúdo são obrigatórios', 'error');
+      return;
+    }
+    
+    var response = await fetch(API_URL + '/maintenance-reports', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({ title: title, category: category, content: content })
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      state.reports = data.reports || [];
+      closeReportModal();
+      renderReports();
+      showNotification('Relatório publicado com sucesso!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao publicar relatório', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar relatório:', error);
+    showNotification('Erro ao salvar relatório', 'error');
+  }
+}
+
+// Helper para escapar HTML
+function escapeHtml(text) {
+  if (!text) return '';
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 

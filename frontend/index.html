@@ -2472,6 +2472,474 @@
 
     /* ========== FIM ESTILOS DIESEL E GERADOR ========== */
 
+    /* ========== ESTILOS ADITIVA E RELATÓRIOS ========== */
+    
+    /* Theme Aditiva */
+    .water-control-header.aditiva-theme {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .water-control-header.aditiva-theme::before {
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+    }
+    .water-icon-badge.aditiva {
+      background: linear-gradient(135deg, #a855f7, #8b5cf6);
+      box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+    }
+
+    /* Theme Relatórios */
+    .water-control-header.relatorios-theme {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+    .water-control-header.relatorios-theme::before {
+      background: radial-gradient(circle, rgba(34, 211, 238, 0.2) 0%, transparent 70%);
+    }
+    .water-icon-badge.relatorios {
+      background: linear-gradient(135deg, #22d3ee, #06b6d4);
+      box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+    }
+
+    /* Aditiva Filters */
+    .aditiva-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .aditiva-filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .aditiva-filter-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    .aditiva-filter-btn.active {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.2));
+      border-color: #a855f7;
+      color: #a855f7;
+    }
+
+    /* Aditiva Stats Grid */
+    .aditiva-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .aditiva-stat-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+    .aditiva-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .aditiva-stat-card.pending { border-left: 3px solid #f59e0b; }
+    .aditiva-stat-card.progress { border-left: 3px solid #3b82f6; }
+    .aditiva-stat-card.completed { border-left: 3px solid #22c55e; }
+    
+    .aditiva-stat-icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+    .aditiva-stat-card.pending .aditiva-stat-icon { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .aditiva-stat-card.progress .aditiva-stat-icon { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .aditiva-stat-card.completed .aditiva-stat-icon { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    
+    .aditiva-stat-info { display: flex; flex-direction: column; }
+    .aditiva-stat-value { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+    .aditiva-stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Aditiva Tasks Container */
+    .aditiva-tasks-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .aditiva-tasks-header {
+      padding: 16px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .aditiva-tasks-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .aditiva-tasks-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Task Item */
+    .aditiva-task-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .aditiva-task-item:hover {
+      background: var(--bg-secondary);
+    }
+    .aditiva-task-item:last-child {
+      border-bottom: none;
+    }
+    .task-priority-indicator {
+      width: 4px;
+      height: 40px;
+      border-radius: 2px;
+    }
+    .task-priority-indicator.high { background: #ef4444; }
+    .task-priority-indicator.medium { background: #f59e0b; }
+    .task-priority-indicator.low { background: #22c55e; }
+    
+    .task-info { flex: 1; min-width: 0; }
+    .task-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .task-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-secondary); }
+    
+    .task-status-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .task-status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .task-status-badge.in_progress { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .task-status-badge.completed { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .task-action-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .task-action-btn:hover {
+      background: var(--accent-gold);
+      color: var(--bg-primary);
+      border-color: var(--accent-gold);
+    }
+
+    /* Relatórios Filters */
+    .relatorios-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .relatorios-filter-btn {
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .relatorios-filter-btn:hover {
+      background: var(--bg-secondary);
+    }
+    .relatorios-filter-btn.active {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(6, 182, 212, 0.2));
+      border-color: #22d3ee;
+      color: #22d3ee;
+    }
+
+    /* Relatórios Grid */
+    .relatorios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    /* Report Card - Discord Premium Style */
+    .report-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .report-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      border-color: rgba(34, 211, 238, 0.4);
+    }
+    .report-card-header {
+      padding: 16px;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .report-card-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(34, 211, 238, 0.15);
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #22d3ee;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .report-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      line-height: 1.4;
+    }
+    .report-card-body {
+      padding: 16px;
+    }
+    .report-card-preview {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .report-card-footer {
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+    }
+    .report-card-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .report-card-author svg { opacity: 0.7; }
+    .report-card-date {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Report Viewer */
+    .report-viewer {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .report-viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .btn-back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-back:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    .report-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .report-category {
+      padding: 4px 12px;
+      background: rgba(34, 211, 238, 0.15);
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #22d3ee;
+      text-transform: uppercase;
+    }
+    .report-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .report-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 16px 0;
+    }
+    .report-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    .report-content {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 560px;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .modal-close:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: white;
+    }
+    .modal-body {
+      padding: 24px;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding: 16px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+    }
+    .btn-modal-cancel {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-modal-cancel:hover {
+      background: var(--bg-secondary);
+    }
+    .btn-modal-save {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--accent-gold), #b8860b);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg-primary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-modal-save:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    }
+
+    /* ========== FIM ESTILOS ADITIVA E RELATÓRIOS ========== */
+
     /* Hidden utility */
     .hidden { display: none !important; }
 
@@ -2807,6 +3275,15 @@
             </svg>
           </span>
           <span>Relatórios</span>
+        </div>
+        <div class="nav-item hidden" data-view="aditiva">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M2 12h20"/>
+              <circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/>
+            </svg>
+          </span>
+          <span>Aditiva</span>
         </div>
         <div class="nav-item" data-view="configuracoes">
           <span class="nav-icon">
@@ -3753,6 +4230,174 @@
           </div>
         </div>
 
+        <!-- ========== TAREFAS ADITIVAS ========== -->
+        <div id="aditiva-view" class="view">
+          <!-- Header Premium -->
+          <div class="water-control-header aditiva-theme">
+            <div class="water-header-left">
+              <div class="water-icon-badge aditiva">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M2 12h20"/>
+                  <circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="water-title">Tarefas Aditivas</h2>
+                <p class="water-subtitle">Problemas Repentinos & Ações Corretivas • Granja Vitta</p>
+              </div>
+            </div>
+            <div class="water-header-actions">
+              <button class="btn-water-export" onclick="showNewAdditiveModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Nova Tarefa
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros -->
+          <div class="aditiva-filters">
+            <button class="aditiva-filter-btn active" onclick="setAditivaFilter('active')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              Ativas
+            </button>
+            <button class="aditiva-filter-btn" onclick="setAditivaFilter('archived')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 8v13H3V8"/>
+                <path d="M1 3h22v5H1z"/>
+                <path d="M10 12h4"/>
+              </svg>
+              Arquivadas
+            </button>
+          </div>
+
+          <!-- Cards de Stats -->
+          <div class="aditiva-stats-grid">
+            <div class="aditiva-stat-card pending">
+              <div class="aditiva-stat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="aditiva-stat-info">
+                <span class="aditiva-stat-value" id="aditiva-pending">0</span>
+                <span class="aditiva-stat-label">Pendentes</span>
+              </div>
+            </div>
+            <div class="aditiva-stat-card progress">
+              <div class="aditiva-stat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+              </div>
+              <div class="aditiva-stat-info">
+                <span class="aditiva-stat-value" id="aditiva-progress">0</span>
+                <span class="aditiva-stat-label">Em Andamento</span>
+              </div>
+            </div>
+            <div class="aditiva-stat-card completed">
+              <div class="aditiva-stat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <path d="M22 4L12 14.01l-3-3"/>
+                </svg>
+              </div>
+              <div class="aditiva-stat-info">
+                <span class="aditiva-stat-value" id="aditiva-completed">0</span>
+                <span class="aditiva-stat-label">Concluídas (30d)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista de Tarefas -->
+          <div class="aditiva-tasks-container">
+            <div class="aditiva-tasks-header">
+              <h3>Lista de Tarefas</h3>
+            </div>
+            <div id="aditiva-tasks-list" class="aditiva-tasks-list">
+              <!-- Tarefas serão renderizadas aqui -->
+            </div>
+          </div>
+        </div>
+        <!-- ========== FIM TAREFAS ADITIVAS ========== -->
+
+        <!-- ========== RELATÓRIOS ========== -->
+        <div id="relatorios-view" class="view">
+          <!-- Header Premium -->
+          <div class="water-control-header relatorios-theme">
+            <div class="water-header-left">
+              <div class="water-icon-badge relatorios">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
+                  <path d="M16 13H8"/>
+                  <path d="M16 17H8"/>
+                  <path d="M10 9H8"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="water-title">Relatórios</h2>
+                <p class="water-subtitle">Documentação & Registros da Manutenção • Granja Vitta</p>
+              </div>
+            </div>
+            <div class="water-header-actions" id="relatorios-write-actions">
+              <button class="btn-water-export" onclick="showNewReportModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Novo Relatório
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros de Categoria -->
+          <div class="relatorios-filters">
+            <button class="relatorios-filter-btn active" onclick="setReportCategory('all')">Todos</button>
+            <button class="relatorios-filter-btn" onclick="setReportCategory('geral')">Geral</button>
+            <button class="relatorios-filter-btn" onclick="setReportCategory('manutencao')">Manutenção</button>
+            <button class="relatorios-filter-btn" onclick="setReportCategory('incidente')">Incidentes</button>
+            <button class="relatorios-filter-btn" onclick="setReportCategory('melhoria')">Melhorias</button>
+          </div>
+
+          <!-- Lista de Relatórios -->
+          <div class="relatorios-grid" id="relatorios-list">
+            <!-- Relatórios serão renderizados aqui -->
+          </div>
+
+          <!-- Visualização de Relatório -->
+          <div id="report-viewer" class="report-viewer hidden">
+            <div class="report-viewer-header">
+              <button class="btn-back" onclick="closeReportViewer()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Voltar
+              </button>
+              <div class="report-meta">
+                <span class="report-category" id="viewer-category">Geral</span>
+                <span class="report-date" id="viewer-date">--</span>
+              </div>
+            </div>
+            <h1 class="report-title" id="viewer-title">Título do Relatório</h1>
+            <div class="report-author">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <span id="viewer-author">--</span>
+            </div>
+            <div class="report-content" id="viewer-content">
+              <!-- Conteúdo do relatório -->
+            </div>
+          </div>
+        </div>
+        <!-- ========== FIM RELATÓRIOS ========== -->
+
         <div id="configuracoes-view" class="view">
           <div class="settings-grid">
             <!-- Card: Conta -->
@@ -4458,6 +5103,96 @@
       <div class="premium-guarantee" style="margin-top: 20px;">
         <span class="premium-guarantee-icon">✓</span>
         <span>Rastreamento de atividades</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nova Tarefa Aditiva -->
+  <div id="additive-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Nova Tarefa Aditiva</h2>
+        <button class="modal-close" onclick="closeAdditiveModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Título *</label>
+          <input type="text" id="additive-title" placeholder="Ex: Correção de vazamento na tubulação">
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea id="additive-description" placeholder="Descreva o problema e a solução aplicada..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Setor</label>
+            <select id="additive-sector">
+              <option value="">Selecione...</option>
+              <option value="Aviários">Aviários</option>
+              <option value="Recria">Recria</option>
+              <option value="Incubatório">Incubatório</option>
+              <option value="Manutenção">Manutenção</option>
+              <option value="Geral">Geral</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prioridade</label>
+            <select id="additive-priority">
+              <option value="low">Baixa</option>
+              <option value="medium" selected>Média</option>
+              <option value="high">Alta</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea id="additive-notes" placeholder="Notas adicionais..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" onclick="closeAdditiveModal()">Cancelar</button>
+        <button class="btn-modal-save" onclick="saveAdditiveTask()">Salvar Tarefa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Novo Relatório -->
+  <div id="report-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Novo Relatório</h2>
+        <button class="modal-close" onclick="closeReportModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Título *</label>
+          <input type="text" id="report-title" placeholder="Ex: Relatório de Manutenção Semanal">
+        </div>
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="report-category">
+            <option value="geral">Geral</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="incidente">Incidente</option>
+            <option value="melhoria">Melhoria</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Conteúdo *</label>
+          <textarea id="report-content" style="min-height: 200px;" placeholder="Escreva o conteúdo do relatório..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" onclick="closeReportModal()">Cancelar</button>
+        <button class="btn-modal-save" onclick="saveReport()">Publicar Relatório</button>
       </div>
     </div>
   </div>
