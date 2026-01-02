@@ -4857,11 +4857,21 @@ function renderDieselStats() {
   var stats = state.dieselStats || {};
   var records = state.dieselRecords || [];
   
+  console.log('[Diesel] renderDieselStats chamado - stats:', stats, 'records:', records.length);
+  
   var elTotalEntrada = document.getElementById('diesel-total-entrada');
   var elTotalSaida = document.getElementById('diesel-total-saida');
   var elSaldoAtual = document.getElementById('diesel-saldo-atual');
   var elUltimaMov = document.getElementById('diesel-ultima-mov');
   var elUltimaMovTipo = document.getElementById('diesel-ultima-mov-tipo');
+  
+  console.log('[Diesel] Elementos encontrados:', {
+    entrada: !!elTotalEntrada, 
+    saida: !!elTotalSaida, 
+    saldo: !!elSaldoAtual, 
+    mov: !!elUltimaMov, 
+    movTipo: !!elUltimaMovTipo
+  });
   
   // API retorna com underscores, converter para valores
   var totalEntrada = stats.total_entrada || stats.totalEntrada || 0;
