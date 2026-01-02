@@ -3558,6 +3558,13 @@ function renderWaterHistory() {
   
   const readings = state.waterReadings;
   const filterTank = document.getElementById('history-tank-filter')?.value || 'all';
+  const filterConsumption = document.getElementById('history-consumption-filter')?.value || '24h';
+  
+  // Atualizar header da coluna de consumo
+  const consumptionHeader = document.getElementById('consumption-column-header');
+  if (consumptionHeader) {
+    consumptionHeader.textContent = filterConsumption === '24h' ? 'Consumo 24h' : 'Consumo 9h';
+  }
   
   let filteredReadings = readings;
   if (filterTank !== 'all') {
@@ -3624,23 +3631,41 @@ function renderWaterHistory() {
     const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
     const dayClass = dateColorMap[dateKey] || 'day-even';
     
-    // Calcular consumo 24h só para leituras das 7h
-    // Consumo do DIA = Leitura 7h do dia SEGUINTE - Leitura 7h deste dia
-    // Se for hoje, não temos o dia seguinte ainda, então não mostra
+    // Calcular consumo baseado no filtro selecionado
     let consumption = '--';
-    if (reading.reading_time === '07:00' && dateKey !== today) {
-      // Procurar leitura do dia seguinte
-      const nextDay = getNextDay(dateKey);
-      const nextReading = sorted.find(r => 
-        r.tank_name === reading.tank_name && 
-        r.reading_time === '07:00' &&
-        r.reading_date.split('T')[0] === nextDay
-      );
-      if (nextReading) {
-        const diff = nextReading.reading_value - reading.reading_value;
-        consumption = diff >= 0 
-          ? '<span class="consumption-positive">' + diff.toFixed(0) + ' m³</span>'
-          : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
+    
+    if (filterConsumption === '24h') {
+      // Consumo 24h: só para leituras das 7h
+      // Consumo do DIA = Leitura 7h do dia SEGUINTE - Leitura 7h deste dia
+      if (reading.reading_time === '07:00' && dateKey !== today) {
+        const nextDay = getNextDay(dateKey);
+        const nextReading = sorted.find(r => 
+          r.tank_name === reading.tank_name && 
+          r.reading_time === '07:00' &&
+          r.reading_date.split('T')[0] === nextDay
+        );
+        if (nextReading) {
+          const diff = nextReading.reading_value - reading.reading_value;
+          consumption = diff >= 0 
+            ? '<span class="consumption-positive">' + diff.toFixed(0) + ' m³</span>'
+            : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
+        }
+      }
+    } else {
+      // Consumo 9h (7h às 16h): só para leituras das 16h
+      // Consumo 9h = Leitura 16h - Leitura 7h do MESMO dia
+      if (reading.reading_time === '16:00') {
+        const reading7h = sorted.find(r => 
+          r.tank_name === reading.tank_name && 
+          r.reading_time === '07:00' &&
+          r.reading_date.split('T')[0] === dateKey
+        );
+        if (reading7h) {
+          const diff = reading.reading_value - reading7h.reading_value;
+          consumption = diff >= 0 
+            ? '<span class="consumption-positive">' + diff.toFixed(0) + ' m³</span>'
+            : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
+        }
       }
     }
     

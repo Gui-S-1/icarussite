@@ -3330,6 +3330,10 @@
             <div class="card-header">
               <h3 class="card-title">Histórico de Leituras</h3>
               <div class="history-filters">
+                <select id="history-consumption-filter" class="water-select" onchange="filterWaterHistory()">
+                  <option value="24h">Consumo 24h</option>
+                  <option value="9h">Consumo 9h (7h-16h)</option>
+                </select>
                 <select id="history-tank-filter" class="water-select" onchange="filterWaterHistory()">
                   <option value="all">Todas as Caixas</option>
                   <option value="aviarios">Aviários</option>
@@ -3346,7 +3350,7 @@
                     <th>Horário</th>
                     <th>Caixa</th>
                     <th>Leitura (m³)</th>
-                    <th>Consumo 24h</th>
+                    <th id="consumption-column-header">Consumo 24h</th>
                     <th>Registrado por</th>
                     <th>Obs</th>
                   </tr>
