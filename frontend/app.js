@@ -4934,6 +4934,12 @@ function renderDieselChart() {
   var canvas = document.getElementById('diesel-consumption-chart');
   if (!canvas) return;
   
+  // Verificar se Chart.js está disponível
+  if (typeof Chart === 'undefined') {
+    console.warn('[Diesel] Chart.js não disponível, pulando gráfico');
+    return;
+  }
+  
   var ctx = canvas.getContext('2d');
   var records = state.dieselRecords || [];
   
