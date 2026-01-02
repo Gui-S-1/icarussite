@@ -43,7 +43,13 @@
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      transition: opacity 0.5s;
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+    
+    #loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .loader {
@@ -5508,5 +5514,21 @@
   
   <script src="config.js"></script>
   <script src="app.js"></script>
+  
+  <!-- Fallback: garantir que loading seja removido mesmo se app.js falhar -->
+  <script>
+    setTimeout(function() {
+      var loading = document.getElementById('loading-screen');
+      var auth = document.getElementById('auth-screen');
+      if (loading && !loading.classList.contains('hidden')) {
+        loading.classList.add('hidden');
+        loading.style.display = 'none';
+        loading.style.pointerEvents = 'none';
+      }
+      if (auth && auth.classList.contains('hidden') && !document.getElementById('app-screen').style.display) {
+        auth.classList.remove('hidden');
+      }
+    }, 2000);
+  </script>
 </body>
 </html>
