@@ -308,11 +308,46 @@ async function showApp() {
 function setupPermissions() {
   const roles = state.user.roles || [];
   const isAdmin = roles.includes('admin');
-  const canSeeDashboard = isAdmin || roles.includes('os_manage_all') || roles.includes('os_view_all');
   
-  // Checklists: manutenção pode editar, sala de ovos pode executar, bruno/josewalter podem ver
-  const canSeeChecklists = isAdmin || roles.includes('os_manage_all') || roles.includes('os_view_all') || roles.includes('checklist');
+  // ========== SISTEMA DE PERMISSÕES POR ABA ==========
+  // Cada aba tem uma role específica para VER e outra para EDITAR
+  // Role 'admin' tem acesso total a tudo
+  
+  // Dashboard: dashboard (ver)
+  const canSeeDashboard = isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  
+  // Ordens de Serviço: os (ver/criar), os_manage_all (gerenciar todas)
+  // OS sempre visível para todos os usuários
+  
+  // Almoxarifado: almoxarifado_view (ver), almoxarifado (editar)
+  const canSeeAlmox = isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view');
+  const canEditAlmox = isAdmin || roles.includes('almoxarifado');
+  
+  // Compras: compras_view (ver), compras (editar)
+  const canSeeCompras = isAdmin || roles.includes('compras') || roles.includes('compras_view');
+  const canEditCompras = isAdmin || roles.includes('compras');
+  
+  // Preventivas: preventivas_view (ver), preventivas (editar)
+  const canSeePrev = isAdmin || roles.includes('preventivas') || roles.includes('preventivas_view');
+  const canEditPrev = isAdmin || roles.includes('preventivas');
+  
+  // Checklists: checklist (ver), checklist_manage (editar)
+  const canSeeChecklists = isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  const canEditChecklists = isAdmin || roles.includes('checklist_manage') || roles.includes('os_manage_all');
+  
+  // Controle de Água: agua (ver), agua_manage (editar)
+  const canSeeWater = isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  const canEditWater = isAdmin || roles.includes('agua_manage') || roles.includes('preventivas') || roles.includes('os_manage_all');
+  
+  // Controle de Diesel: diesel (ver), diesel_manage (editar)
+  const canSeeDiesel = isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  const canEditDiesel = isAdmin || roles.includes('diesel_manage') || roles.includes('preventivas') || roles.includes('os_manage_all');
+  
+  // Gerador: gerador (ver), gerador_manage (editar)
+  const canSeeGerador = isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  const canEditGerador = isAdmin || roles.includes('gerador_manage') || roles.includes('preventivas') || roles.includes('os_manage_all');
 
+  // Elementos de navegação
   const navDashboard = document.querySelector('[data-view="dashboard"]');
   const navOS = document.querySelector('[data-view="os"]');
   const navAlmox = document.querySelector('[data-view="almoxarifado"]');
@@ -325,27 +360,12 @@ function setupPermissions() {
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
-  // Controle de água: visível para preventivas, admin, os_manage_all, os_view_all (visualização)
-  const canSeeWater = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
-  
-  // Diesel e Gerador: visível para manutenção (os_manage_all, preventivas, admin) e visualização (os_view_all)
-  const canSeeDiesel = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
-  const canSeeGerador = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all') || roles.includes('os_view_all');
-  
-  // Edição só para manutenção (admin, os_manage_all, preventivas) - NÃO inclui os_view_all
-  const canEditDiesel = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
-  const canEditGerador = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
-  
-  // Salvar permissões no state para uso nas funções save
-  state.canEditDiesel = canEditDiesel;
-  state.canEditGerador = canEditGerador;
-  state.canEditWater = isAdmin || roles.includes('preventivas') || roles.includes('os_manage_all');
-
+  // Aplicar visibilidade das abas
   if (navDashboard) navDashboard.classList.toggle('hidden', !canSeeDashboard);
   if (navOS) navOS.classList.remove('hidden'); // OS sempre visível para todos
-  if (navAlmox) navAlmox.classList.toggle('hidden', !(isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view')));
-  if (navCompras) navCompras.classList.toggle('hidden', !(isAdmin || roles.includes('compras') || roles.includes('compras_view')));
-  if (navPrev) navPrev.classList.toggle('hidden', !(isAdmin || roles.includes('preventivas') || roles.includes('preventivas_view')));
+  if (navAlmox) navAlmox.classList.toggle('hidden', !canSeeAlmox);
+  if (navCompras) navCompras.classList.toggle('hidden', !canSeeCompras);
+  if (navPrev) navPrev.classList.toggle('hidden', !canSeePrev);
   if (navChecklists) navChecklists.classList.toggle('hidden', !canSeeChecklists);
   if (navWater) navWater.classList.toggle('hidden', !canSeeWater);
   if (navDiesel) navDiesel.classList.toggle('hidden', !canSeeDiesel);
@@ -353,10 +373,14 @@ function setupPermissions() {
   if (navRel) navRel.classList.toggle('hidden', !isAdmin);
   if (navCfg) navCfg.classList.remove('hidden');
   
-  // Salvar permissões para edição (não só visualização)
-  state.canEditAlmox = isAdmin || roles.includes('almoxarifado');
-  state.canEditCompras = isAdmin || roles.includes('compras');
-  state.canEditPreventivas = isAdmin || roles.includes('preventivas');
+  // Salvar permissões de edição no state para uso nas funções save
+  state.canEditDiesel = canEditDiesel;
+  state.canEditGerador = canEditGerador;
+  state.canEditWater = canEditWater;
+  state.canEditAlmox = canEditAlmox;
+  state.canEditCompras = canEditCompras;
+  state.canEditPreventivas = canEditPrev;
+  state.canEditChecklists = canEditChecklists;
   
   console.log('Permissões configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
 }
