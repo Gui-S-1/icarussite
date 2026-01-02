@@ -1,5 +1,11 @@
-/* MOBILE RESPONSIVE DESIGN */
+/* ========================================
+   ICARUS SYSTEM - COMPLETE MOBILE RESPONSIVE
+   All functionality working on mobile
+   ======================================== */
 
+/* ========================================
+   MOBILE MENU TOGGLE
+   ======================================== */
 .mobile-menu-toggle {
   display: none;
   position: fixed;
@@ -25,7 +31,9 @@
   transition: all 0.3s;
 }
 
-/* Mobile Bottom Navigation */
+/* ========================================
+   MOBILE BOTTOM NAVIGATION
+   ======================================== */
 .mobile-bottom-nav {
   display: none;
   position: fixed;
@@ -41,7 +49,6 @@
   backdrop-filter: blur(20px);
 }
 
-/* Hide nav on login screen */
 body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   display: none !important;
 }
@@ -52,6 +59,7 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   align-items: center;
   max-width: 500px;
   margin: 0 auto;
+  padding: 0 4px;
 }
 
 .mobile-nav-item {
@@ -59,12 +67,12 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 10px;
+  padding: 8px 6px;
   color: var(--text-secondary);
   text-decoration: none;
   border-radius: 12px;
   transition: all 0.3s ease;
-  min-width: 55px;
+  min-width: 50px;
   cursor: pointer;
   position: relative;
 }
@@ -114,6 +122,35 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   letter-spacing: 0.3px;
 }
 
+/* ========================================
+   TABLET BREAKPOINT (768px - 1024px)
+   ======================================== */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+  
+  .content {
+    margin-left: 200px;
+  }
+  
+  .water-stats-grid,
+  .aditiva-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .relatorios-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ========================================
+   MOBILE BREAKPOINT (max-width: 768px)
+   ======================================== */
 @media (max-width: 768px) {
   body {
     overflow-y: auto;
@@ -128,15 +165,48 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     display: block;
   }
 
-  /* Add padding at bottom for fixed nav */
-  .content {
-    padding-bottom: 100px !important;
+  /* ========================================
+     SIDEBAR MOBILE
+     ======================================== */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
   }
 
+  .sidebar.mobile-open {
+    left: 0;
+  }
+
+  .main-layout {
+    flex-direction: column;
+  }
+
+  /* ========================================
+     CONTENT AREA
+     ======================================== */
+  .content {
+    margin-left: 0;
+    padding: 15px;
+    padding-bottom: 100px !important;
+    width: 100%;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  /* ========================================
+     HEADER RESPONSIVE
+     ======================================== */
   .header {
     flex-wrap: wrap;
     padding: 10px 15px;
     height: auto;
+    gap: 10px;
   }
 
   .logo {
@@ -144,9 +214,17 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     margin-left: 60px;
   }
 
-  /* Fix text overflow */
   .header-logo-text {
     font-size: 16px !important;
+  }
+
+  .header-left h1 {
+    font-size: 18px;
+  }
+
+  .header-left h1::before {
+    width: 24px;
+    height: 24px;
   }
 
   .user-panel {
@@ -172,195 +250,1016 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     text-overflow: ellipsis;
   }
 
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: -280px;
-    width: 280px;
-    height: 100vh;
-    z-index: 1000;
-    transition: left 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  .header-right {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
   }
 
-  .sidebar.mobile-open {
-    left: 0;
+  .user-info {
+    gap: 6px;
+    padding: 6px 10px;
   }
 
-  .main-layout {
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .user-name {
+    font-size: 12px;
+  }
+
+  .user-role {
+    font-size: 9px;
+  }
+
+  /* ========================================
+     PAGE HEADER RESPONSIVE
+     ======================================== */
+  .page-header {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
-  .content {
-    margin-left: 0;
-    padding: 15px;
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-actions {
     width: 100%;
-    height: auto;
-    overflow-y: visible;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
+  .page-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  /* ========================================
+     DASHBOARD GRID
+     ======================================== */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ========================================
+     CARDS RESPONSIVE
+     ======================================== */
   .card {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     overflow: hidden;
+    border-radius: 12px;
   }
 
   .card-header {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     align-items: flex-start;
+    padding: 12px;
   }
 
   .card-title {
-    font-size: 16px;
+    font-size: 15px;
     word-break: break-word;
   }
 
-  /* Fix text overflow in cards */
   .card-body {
     overflow-x: auto;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    padding: 12px;
   }
 
+  /* ========================================
+     STATS GRID RESPONSIVE
+     ======================================== */
   .stats-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 
   .stat-card {
-    padding: 12px;
+    padding: 12px 10px;
     overflow: hidden;
+    border-radius: 10px;
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
   }
 
   .stat-label {
-    font-size: 10px;
+    font-size: 9px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .stat-value {
+    font-size: 18px;
+  }
+
+  /* ========================================
+     WATER CONTROL HEADER RESPONSIVE
+     ======================================== */
+  .water-control-header {
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    text-align: center;
+    border-radius: 12px;
+  }
+
+  .water-control-header::before {
+    width: 200px;
+    height: 200px;
+  }
+
+  .water-header-left {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .water-icon-badge {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    border-radius: 12px;
+  }
+
+  .water-icon-badge svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .water-title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .water-subtitle {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .water-header-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-water-export {
+    padding: 8px 14px;
+    font-size: 12px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* ========================================
+     WATER STATS GRID
+     ======================================== */
+  .water-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .water-stats-grid.diesel-grid,
+  .water-stats-grid.gerador-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ========================================
+     WATER TANK CARD
+     ======================================== */
+  .water-tank-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .tank-header {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .tank-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    border-radius: 10px;
+  }
+
+  .tank-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .tank-info h3 {
+    font-size: 14px;
+  }
+
+  .tank-title-big {
+    font-size: 15px !important;
+  }
+
+  .tank-subtitle {
+    font-size: 11px;
+  }
+
+  .tank-value {
+    font-size: 28px !important;
+  }
+
+  .tank-unit {
+    font-size: 12px;
+  }
+
+  /* ========================================
+     WATER FILTERS
+     ======================================== */
+  .water-filters {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px;
+    margin-bottom: 14px;
+  }
+
+  .water-filter-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* ========================================
+     WATER VIEW TABS
+     ======================================== */
+  .water-view-tabs {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .water-view-tab {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .water-view-tab .tab-icon {
+    font-size: 18px;
+  }
+
+  .water-view-tab .tab-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ========================================
+     WATER ALERT
+     ======================================== */
+  .water-alert {
+    flex-direction: column;
+    text-align: center;
+    padding: 12px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+
+  .water-alert-icon {
     font-size: 20px;
   }
 
+  .water-alert-title {
+    font-size: 13px;
+  }
+
+  .water-alert-desc {
+    font-size: 11px;
+  }
+
+  /* ========================================
+     DIESEL & GERADOR THEMES
+     ======================================== */
+  .water-control-header.diesel-theme,
+  .water-control-header.gerador-theme,
+  .water-control-header.aditiva-theme,
+  .water-control-header.relatorios-theme {
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+
+  /* ========================================
+     ADITIVA RESPONSIVE
+     ======================================== */
+  .aditiva-filters {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .aditiva-filter-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex: 1;
+    min-width: 80px;
+    justify-content: center;
+  }
+
+  .aditiva-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .aditiva-stat-card {
+    padding: 14px;
+    gap: 12px;
+    border-radius: 10px;
+  }
+
+  .aditiva-stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+  }
+
+  .aditiva-stat-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .aditiva-stat-value {
+    font-size: 22px;
+  }
+
+  .aditiva-stat-label {
+    font-size: 10px;
+  }
+
+  /* Aditiva Tasks Container */
+  .aditiva-tasks-container {
+    border-radius: 12px;
+  }
+
+  .aditiva-tasks-header {
+    padding: 12px 14px;
+  }
+
+  .aditiva-tasks-header h3 {
+    font-size: 13px;
+  }
+
+  .aditiva-task-item {
+    padding: 12px 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .task-priority-indicator {
+    width: 3px;
+    height: 30px;
+  }
+
+  .task-info {
+    flex: 1;
+    min-width: calc(100% - 60px);
+  }
+
+  .task-title {
+    font-size: 13px;
+  }
+
+  .task-meta {
+    font-size: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .task-status-badge {
+    padding: 3px 8px;
+    font-size: 9px;
+  }
+
+  .task-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .task-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .task-action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ========================================
+     RELATÓRIOS RESPONSIVE
+     ======================================== */
+  .relatorios-filters {
+    gap: 6px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .relatorios-filter-btn {
+    padding: 8px 12px;
+    font-size: 11px;
+    border-radius: 16px;
+  }
+
+  .relatorios-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  /* Report Card */
+  .report-card {
+    border-radius: 12px;
+  }
+
+  .report-card-header {
+    padding: 12px;
+  }
+
+  .report-card-category {
+    padding: 3px 8px;
+    font-size: 10px;
+    margin-bottom: 8px;
+  }
+
+  .report-card-title {
+    font-size: 14px;
+  }
+
+  .report-card-body {
+    padding: 12px;
+  }
+
+  .report-card-preview {
+    font-size: 12px;
+    -webkit-line-clamp: 2;
+  }
+
+  .report-card-footer {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .report-author {
+    font-size: 11px;
+  }
+
+  .report-date {
+    font-size: 10px;
+  }
+
+  /* ========================================
+     TABLES RESPONSIVE
+     ======================================== */
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    margin: -12px;
+    padding: 12px;
   }
 
   table {
-    font-size: 12px;
+    font-size: 11px;
     min-width: 600px;
   }
 
   table th,
   table td {
-    padding: 8px;
+    padding: 8px 6px;
     white-space: nowrap;
   }
 
+  table th {
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* ========================================
+     BUTTONS RESPONSIVE
+     ======================================== */
   .btn-small {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: 8px 10px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+
+  .btn-small svg {
+    width: 14px;
+    height: 14px;
   }
 
   .btn {
-    padding: 12px 20px;
-    font-size: 14px;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 8px;
   }
 
-  .nav-item {
-    padding: 12px 20px;
+  .btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-primary,
+  .btn-success,
+  .btn-danger {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  /* ========================================
+     MODALS RESPONSIVE
+     ======================================== */
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-start;
+    padding-top: 5vh;
   }
 
   .modal {
-    width: 95%;
-    max-width: 95%;
-    max-height: 90vh;
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh;
     overflow-y: auto;
-    margin: 5vh auto;
+    margin: 0;
+    border-radius: 16px;
   }
 
   .modal-header {
-    padding: 15px;
+    padding: 14px 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    z-index: 10;
   }
 
   .modal-title {
+    font-size: 16px;
+  }
+
+  .modal-close {
+    width: 32px;
+    height: 32px;
     font-size: 18px;
   }
 
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-card);
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+  }
+
+  /* ========================================
+     FORMS RESPONSIVE
+     ======================================== */
   .form-row {
     flex-direction: column;
+    gap: 12px;
   }
 
   .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   .form-group input,
   .form-group select,
   .form-group textarea {
     font-size: 16px;
-    padding: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
   }
 
   .form-group label {
     font-size: 12px;
     margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .form-group textarea {
+    min-height: 100px;
+  }
+
+  /* ========================================
+     AUTH PAGE RESPONSIVE
+     ======================================== */
+  .auth-container {
+    padding: 20px;
   }
 
   .auth-card {
-    width: 95%;
-    max-width: 95%;
-    padding: 25px;
+    width: 100%;
+    max-width: 100%;
+    padding: 24px 20px;
+    border-radius: 16px;
   }
 
   .auth-card h1 {
-    font-size: 28px;
+    font-size: 24px;
   }
 
+  .auth-card p {
+    font-size: 13px;
+  }
+
+  /* ========================================
+     OS (SERVICE ORDERS) RESPONSIVE
+     ======================================== */
   .os-info-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .os-info-item {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .os-info-label {
+    font-size: 10px;
+  }
+
+  .os-info-value {
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  .os-card {
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+
+  .os-card-header {
+    padding: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .os-number {
+    font-size: 14px;
+  }
+
+  .os-status-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
+  /* ========================================
+     CHECKBOX GRID RESPONSIVE
+     ======================================== */
+  .checkbox-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .checkbox-item {
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  /* ========================================
+     CHART RESPONSIVE
+     ======================================== */
+  .chart-container {
+    height: 220px !important;
+    min-height: 200px;
+  }
+
+  canvas {
+    max-height: 220px;
+  }
+
+  /* ========================================
+     AUTO REFRESH INDICATOR
+     ======================================== */
+  #auto-refresh-indicator {
+    bottom: 75px !important;
+    right: 8px !important;
+    font-size: 9px;
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+
+  /* ========================================
+     DROPDOWN & SELECT MOBILE
+     ======================================== */
+  select {
+    font-size: 16px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  .month-selector,
+  .filter-select {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  /* ========================================
+     COMPRAS (PURCHASES) RESPONSIVE
+     ======================================== */
+  .compras-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .compra-card {
+    border-radius: 12px;
+  }
+
+  .compra-card-header {
+    padding: 12px;
+  }
+
+  .compra-item-name {
+    font-size: 14px;
+  }
+
+  .compra-item-qty {
+    font-size: 12px;
+  }
+
+  /* ========================================
+     CHECKLIST RESPONSIVE
+     ======================================== */
+  .checklist-container {
+    border-radius: 12px;
+  }
+
+  .checklist-header {
+    padding: 12px 14px;
+  }
+
+  .checklist-item {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .checklist-checkbox {
+    width: 20px;
+    height: 20px;
+  }
+
+  .checklist-text {
+    font-size: 13px;
+  }
+
+  /* ========================================
+     CONFIGURAÇÕES (SETTINGS) RESPONSIVE
+     ======================================== */
+  .settings-section {
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .settings-section h3 {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+
+  .settings-item {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .settings-label {
+    font-size: 13px;
+  }
+
+  .settings-description {
+    font-size: 11px;
+  }
+
+  /* ========================================
+     NAV ITEM PADDING FIX
+     ======================================== */
+  .nav-item {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .nav-item svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* ========================================
+     SVG ICONS CONSISTENT SIZING
+     ======================================== */
+  svg {
+    flex-shrink: 0;
+  }
+
+  .btn svg,
+  .btn-small svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tank-icon svg,
+  .stat-icon svg,
+  .aditiva-stat-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ========================================
+     HIDE DECORATIVE ELEMENTS
+     ======================================== */
+  .card-title span:not(.card-icon) {
+    display: none;
+  }
+
+  /* ========================================
+     DIESEL CONTROLS
+     ======================================== */
+  .diesel-month-selector {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .diesel-actions {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .diesel-actions .btn {
+    width: 100%;
+  }
+
+  /* ========================================
+     GENERATOR CONTROLS
+     ======================================== */
+  .gerador-info-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  /* Fix text in info items */
-  .os-info-item {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .os-info-label {
-    font-size: 11px;
-  }
-
-  .os-info-value {
-    font-size: 13px;
-    word-break: break-word;
-  }
-
-  .checkbox-grid {
-    grid-template-columns: 1fr 1fr;
+  /* ========================================
+     CONSUMPTION FILTER
+     ======================================== */
+  .consumption-filter-group {
+    flex-direction: column;
     gap: 8px;
+    width: 100%;
   }
 
-  #auto-refresh-indicator {
-    bottom: 70px !important;
-    right: 10px !important;
-    font-size: 10px;
-    padding: 5px 10px;
-  }
-
-  .card-title span {
-    display: none;
+  .consumption-filter-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-/* Touch Improvements */
+/* ========================================
+   EXTRA SMALL SCREENS (max-width: 380px)
+   ======================================== */
+@media (max-width: 380px) {
+  .content {
+    padding: 10px;
+    padding-bottom: 100px !important;
+  }
+
+  .header-logo-text {
+    font-size: 14px !important;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .water-title {
+    font-size: 18px;
+  }
+
+  .tank-value {
+    font-size: 24px !important;
+  }
+
+  .aditiva-stat-value {
+    font-size: 20px;
+  }
+
+  .mobile-nav-item {
+    padding: 6px 4px;
+    min-width: 45px;
+  }
+
+  .mobile-nav-svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-nav-label {
+    font-size: 8px;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    border-radius: 12px;
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-success {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  table {
+    font-size: 10px;
+  }
+
+  table th,
+  table td {
+    padding: 6px 4px;
+  }
+
+  .water-icon-badge {
+    width: 42px;
+    height: 42px;
+  }
+
+  .tank-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tank-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ========================================
+   TOUCH IMPROVEMENTS
+   ======================================== */
 @media (hover: none) and (pointer: coarse) {
   .btn,
   .btn-small,
-  .nav-item {
+  .nav-item,
+  .mobile-nav-item,
+  .task-action-btn,
+  .aditiva-filter-btn,
+  .relatorios-filter-btn,
+  .water-filter-btn,
+  .water-view-tab {
     min-height: 44px;
     display: flex;
     align-items: center;
@@ -368,8 +1267,84 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   .nav-item:active,
-  .btn:active {
+  .btn:active,
+  .mobile-nav-item:active,
+  .task-action-btn:active,
+  .water-tank-card:active,
+  .report-card:active,
+  .aditiva-task-item:active {
     transform: scale(0.98);
-    opacity: 0.8;
+    opacity: 0.9;
+  }
+
+  a, button, input, select, textarea {
+    touch-action: manipulation;
+  }
+
+  .water-tank-card:hover,
+  .report-card:hover,
+  .aditiva-stat-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* ========================================
+   LANDSCAPE MODE ADJUSTMENTS
+   ======================================== */
+@media (max-width: 900px) and (orientation: landscape) {
+  .content {
+    padding-bottom: 80px !important;
+  }
+
+  .modal {
+    max-height: 80vh;
+  }
+
+  .water-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .aditiva-stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .chart-container {
+    height: 180px !important;
+  }
+}
+
+/* ========================================
+   SAFE AREA INSETS (for notched devices)
+   ======================================== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-bottom-nav {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .content {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+  .mobile-bottom-nav,
+  .mobile-menu-toggle,
+  .sidebar {
+    display: none !important;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .btn,
+  .btn-small,
+  .task-actions {
+    display: none;
   }
 }

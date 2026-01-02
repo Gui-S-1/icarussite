@@ -15,6 +15,7 @@ const state = {
   currentView: 'dashboard',
   dashboardFilter: 'daily', // daily, weekly, monthly
   dashboardMonth: null, // null = mês atual, ou 'YYYY-MM' para mês específico
+  dashboardRankings: [], // Rankings de produtividade (OS + Aditiva)
   lastOrderCount: 0,
   lastPreventiveCheck: new Date(),
   // Diesel Control
@@ -603,8 +604,8 @@ function updateDashboardStats() {
     dashDate.textContent = now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
   }
 
-  // Productivity chart with filtered data
-  renderProductivityChart(filteredOrders);
+  // Productivity chart with combined OS + Aditiva stats
+  loadDashboardStats();
 
   // Update summary stats
   updateDashboardSummary(filteredOrders, completedInPeriod, createdInPeriod);
@@ -695,7 +696,61 @@ function formatTimeAgo(dateStr) {
   return date.toLocaleDateString('pt-BR');
 }
 
-function renderProductivityChart(filteredOrders = state.orders) {
+async function loadDashboardStats() {
+  try {
+    const period = state.dashboardFilter || 'monthly';
+    const response = await fetch(`${API_URL}/dashboard/stats?period=${period}`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    const data = await response.json();
+    if (data.ok) {
+      state.dashboardRankings = data.rankings || [];
+      renderProductivityChart();
+    }
+  } catch (error) {
+    console.error('Erro ao carregar stats:', error);
+    // Fallback para método antigo se endpoint não existir
+    renderProductivityChartLegacy(state.orders);
+  }
+}
+
+function renderProductivityChart() {
+  const rankings = state.dashboardRankings || [];
+  const container = document.getElementById('productivity-chart');
+  if (!container) return;
+  
+  if (rankings.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;">Nenhuma tarefa concluída ainda</p>';
+    return;
+  }
+  
+  const maxCount = rankings[0]?.total_tasks || 1;
+  
+  const chartHtml = rankings.map(user => {
+    const percentage = (user.total_tasks / maxCount) * 100;
+    const avgTime = user.avg_minutes_per_task > 0 ? `~${user.avg_minutes_per_task}min` : '';
+    
+    return `
+      <div class="productivity-bar">
+        <div class="productivity-name">${escapeHtml(user.user_name)}</div>
+        <div class="productivity-bar-container">
+          <div class="productivity-bar-fill" style="width: ${percentage}%">
+            <span class="productivity-count">${user.total_tasks}</span>
+          </div>
+        </div>
+        <div class="productivity-details" style="display: flex; gap: 8px; font-size: 11px; color: var(--text-secondary);">
+          <span title="OS Concluídas">🔧 ${user.os_completed}</span>
+          <span title="Aditivas">⚡ ${user.aditiva_completed}</span>
+          ${avgTime ? `<span title="Tempo médio por tarefa">⏱ ${avgTime}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML = chartHtml;
+}
+
+function renderProductivityChartLegacy(filteredOrders = state.orders) {
   const completedOrders = filteredOrders.filter(o => o.status === 'completed');
   
   // Contar OS por usuário (assigned_users) - todos os usuários da equipe de manutenção
@@ -821,6 +876,60 @@ function showOSDetail(orderId) {
   const priorityBadge = document.getElementById('detail-os-priority');
   priorityBadge.textContent = getPriorityText(order.priority);
   priorityBadge.className = `badge ${order.priority}`;
+
+  // Horários de início, fim e tempo total
+  const startedRow = document.getElementById('detail-os-started-row');
+  const finishedRow = document.getElementById('detail-os-finished-row');
+  const tempoRow = document.getElementById('detail-os-tempo-row');
+  const startedEl = document.getElementById('detail-os-started');
+  const finishedEl = document.getElementById('detail-os-finished');
+  const tempoEl = document.getElementById('detail-os-tempo');
+
+  const startedAt = order.started_at ? new Date(order.started_at) : null;
+  const finishedAt = order.finished_at ? new Date(order.finished_at) : null;
+
+  if (startedAt) {
+    startedEl.textContent = startedAt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    startedRow.style.display = '';
+  } else {
+    startedRow.style.display = 'none';
+  }
+
+  if (finishedAt) {
+    finishedEl.textContent = finishedAt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    finishedRow.style.display = '';
+  } else {
+    finishedRow.style.display = 'none';
+  }
+
+  // Calcular tempo total
+  if (startedAt && finishedAt) {
+    const diffMs = finishedAt - startedAt;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    let tempoTotal;
+    if (diffHours > 24) {
+      const days = Math.floor(diffHours / 24);
+      const hours = diffHours % 24;
+      tempoTotal = `${days}d ${hours}h ${diffMinutes}min`;
+    } else {
+      tempoTotal = `${diffHours}h ${diffMinutes}min`;
+    }
+    tempoEl.textContent = tempoTotal;
+    tempoRow.style.display = '';
+  } else if (startedAt && !finishedAt) {
+    // Em andamento - mostrar tempo decorrido
+    const now = new Date();
+    const diffMs = now - startedAt;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    tempoEl.textContent = `${diffHours}h ${diffMinutes}min (em andamento)`;
+    tempoEl.style.color = 'var(--info)';
+    tempoRow.style.display = '';
+  } else {
+    tempoRow.style.display = 'none';
+  }
 
   // Nota de progresso/comentário
   const noteField = document.getElementById('detail-os-note');
@@ -3636,19 +3745,30 @@ function renderWaterHistory() {
     return b.reading_time.localeCompare(a.reading_time);
   });
   
+  // Filtrar leituras baseado no tipo de consumo selecionado
+  // Se 24h: mostrar apenas leituras das 7h
+  // Se 9h: mostrar apenas leituras das 16h
+  // Se 'all' ou não definido: mostrar todas
+  let displayReadings = sorted;
+  if (filterConsumption === '24h') {
+    displayReadings = sorted.filter(r => r.reading_time === '07:00');
+  } else if (filterConsumption === '9h') {
+    displayReadings = sorted.filter(r => r.reading_time === '16:00');
+  }
+  
   // Calcular consumo 24h para cada leitura das 7h
   // Consumo 24h do dia X = Leitura 7h do dia (X+1) - Leitura 7h do dia X
   // Ou seja, só podemos mostrar consumo 24h se tivermos a leitura do dia SEGUINTE
   const today = new Date().toISOString().split('T')[0];
   
   // Criar mapa de datas únicas para cores alternadas
-  const uniqueDates = [...new Set(sorted.map(r => r.reading_date.split('T')[0]))];
+  const uniqueDates = [...new Set(displayReadings.map(r => r.reading_date.split('T')[0]))];
   const dateColorMap = {};
   uniqueDates.forEach((date, index) => {
     dateColorMap[date] = index % 2 === 0 ? 'day-even' : 'day-odd';
   });
   
-  tbody.innerHTML = sorted.slice(0, 50).map((reading) => {
+  tbody.innerHTML = displayReadings.slice(0, 50).map((reading) => {
     const { formatted: date, dayOfWeek, dateKey } = formatDate(reading.reading_date);
     const tankClass = reading.tank_name;
     const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
@@ -3674,7 +3794,7 @@ function renderWaterHistory() {
             : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
         }
       }
-    } else {
+    } else if (filterConsumption === '9h') {
       // Consumo 9h (7h às 16h): só para leituras das 16h
       // Consumo 9h = Leitura 16h - Leitura 7h do MESMO dia
       if (reading.reading_time === '16:00') {
@@ -6164,6 +6284,7 @@ function renderAdditiveTasks() {
     var dateStr = task.created_at ? new Date(task.created_at).toLocaleDateString('pt-BR') : '';
     var statusLabel = task.status === 'pending' ? 'Pendente' : task.status === 'in_progress' ? 'Em Andamento' : 'Concluída';
     var priorityLabel = task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa';
+    var executedByName = task.executed_by_name || '';
     
     html += '<div class="aditiva-task-item" onclick="openAdditiveTask(\'' + task.id + '\')">' +
       '<div class="task-priority-indicator ' + task.priority + '"></div>' +
@@ -6175,11 +6296,12 @@ function renderAdditiveTasks() {
           '<span>' + dateStr + '</span>' +
           '<span>•</span>' +
           '<span>' + priorityLabel + '</span>' +
+          (executedByName ? '<span>•</span><span style="color: var(--success);">✓ ' + escapeHtml(executedByName) + '</span>' : '') +
         '</div>' +
       '</div>' +
       '<span class="task-status-badge ' + task.status + '">' + statusLabel + '</span>' +
-      (state.canEditAditiva ? '<div class="task-actions">' +
-        '<button class="task-action-btn" onclick="event.stopPropagation(); updateTaskStatus(\'' + task.id + '\', \'completed\')" title="Concluir">' +
+      (state.canEditAditiva && task.status !== 'completed' ? '<div class="task-actions">' +
+        '<button class="task-action-btn" onclick="event.stopPropagation(); showCompleteAdditiveModal(\'' + task.id + '\')" title="Concluir">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>' +
         '</button>' +
       '</div>' : '') +
@@ -6187,6 +6309,63 @@ function renderAdditiveTasks() {
   });
   
   container.innerHTML = html;
+}
+
+// Modal para concluir tarefa aditiva com seleção de executor
+function showCompleteAdditiveModal(taskId) {
+  state.currentAdditiveTaskId = taskId;
+  
+  // Carregar usuários para o select
+  var select = document.getElementById('additive-executor');
+  if (select && state.users) {
+    var options = '<option value="">Selecione quem executou...</option>';
+    state.users.forEach(function(user) {
+      options += '<option value="' + user.id + '">' + escapeHtml(user.name) + '</option>';
+    });
+    select.innerHTML = options;
+  }
+  
+  document.getElementById('complete-additive-modal').classList.add('active');
+}
+
+function closeCompleteAdditiveModal() {
+  document.getElementById('complete-additive-modal').classList.remove('active');
+  state.currentAdditiveTaskId = null;
+}
+
+async function confirmCompleteAdditive() {
+  var executorId = document.getElementById('additive-executor').value;
+  
+  if (!executorId) {
+    showNotification('Selecione quem executou a tarefa', 'error');
+    return;
+  }
+  
+  try {
+    var response = await fetch(API_URL + '/additive-tasks/' + state.currentAdditiveTaskId, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({ status: 'completed', executed_by_id: executorId })
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      state.additiveTasks = data.tasks || [];
+      closeCompleteAdditiveModal();
+      renderAdditiveTasks();
+      loadAdditiveStats().then(renderAdditiveStats);
+      showNotification('Tarefa concluída!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao concluir', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao concluir tarefa:', error);
+    showNotification('Erro ao concluir', 'error');
+  }
 }
 
 function setAditivaFilter(filter) {
@@ -6217,6 +6396,7 @@ function showNewAdditiveModal() {
   
   document.getElementById('additive-modal').classList.add('active');
 }
+
 
 function closeAdditiveModal() {
   document.getElementById('additive-modal').classList.remove('active');
