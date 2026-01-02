@@ -3385,32 +3385,52 @@ function renderWaterStats() {
   const aviariosReadings = sortedReadings.filter(r => r.tank_name === 'aviarios');
   const recriaReadings = sortedReadings.filter(r => r.tank_name === 'recria');
   
-  // Calcular totais baseado nas leituras 7h
+  // Calcular totais e picos baseado nas leituras 7h
   let aviariosTotal = 0, recriaTotal = 0;
   let aviariosDays = 0, recriaDays = 0;
+  let picoAviarios = { valor: 0, data: '--' };
+  let picoRecria = { valor: 0, data: '--' };
   
   const aviarios7h = aviariosReadings.filter(r => r.reading_time === '07:00').sort((a, b) => getDateKey(a.reading_date).localeCompare(getDateKey(b.reading_date)));
   const recria7h = recriaReadings.filter(r => r.reading_time === '07:00').sort((a, b) => getDateKey(a.reading_date).localeCompare(getDateKey(b.reading_date)));
   
   for (let i = 1; i < aviarios7h.length; i++) {
     const diff = aviarios7h[i].reading_value - aviarios7h[i-1].reading_value;
-    if (diff >= 0) { aviariosTotal += diff; aviariosDays++; }
+    if (diff >= 0) { 
+      aviariosTotal += diff; 
+      aviariosDays++;
+      // Verificar se é o pico
+      if (diff > picoAviarios.valor) {
+        picoAviarios.valor = diff;
+        const parts = getDateKey(aviarios7h[i].reading_date).split('-');
+        picoAviarios.data = parts[2] + '/' + parts[1];
+      }
+    }
   }
   for (let i = 1; i < recria7h.length; i++) {
     const diff = recria7h[i].reading_value - recria7h[i-1].reading_value;
-    if (diff >= 0) { recriaTotal += diff; recriaDays++; }
+    if (diff >= 0) { 
+      recriaTotal += diff; 
+      recriaDays++;
+      // Verificar se é o pico
+      if (diff > picoRecria.valor) {
+        picoRecria.valor = diff;
+        const parts = getDateKey(recria7h[i].reading_date).split('-');
+        picoRecria.data = parts[2] + '/' + parts[1];
+      }
+    }
   }
   
-  const diferenca = Math.abs(aviariosTotal - recriaTotal).toFixed(0);
-  const total = (aviariosTotal + recriaTotal).toFixed(0);
-  const mediaGeral = ((aviariosDays > 0 ? aviariosTotal/aviariosDays : 0) + (recriaDays > 0 ? recriaTotal/recriaDays : 0)).toFixed(0);
+  // Atualizar card de Maior Consumo (Pico)
+  const elPicoAviariosValor = document.getElementById('pico-aviarios-valor');
+  const elPicoAviariosData = document.getElementById('pico-aviarios-data');
+  const elPicoRecriaValor = document.getElementById('pico-recria-valor');
+  const elPicoRecriaData = document.getElementById('pico-recria-data');
   
-  const elDif = document.getElementById('diferenca-consumo');
-  const elTotal = document.getElementById('total-consumo');
-  const elMedia = document.getElementById('media-geral');
-  if (elDif) elDif.textContent = diferenca;
-  if (elTotal) elTotal.textContent = total;
-  if (elMedia) elMedia.textContent = mediaGeral;
+  if (elPicoAviariosValor) elPicoAviariosValor.textContent = picoAviarios.valor > 0 ? picoAviarios.valor.toFixed(0) : '--';
+  if (elPicoAviariosData) elPicoAviariosData.textContent = picoAviarios.data;
+  if (elPicoRecriaValor) elPicoRecriaValor.textContent = picoRecria.valor > 0 ? picoRecria.valor.toFixed(0) : '--';
+  if (elPicoRecriaData) elPicoRecriaData.textContent = picoRecria.data;
   
   // Mini charts - gerar a partir das leituras filtradas pelo período
   const period = state.waterPeriod || 'today';
