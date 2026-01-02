@@ -4728,14 +4728,17 @@ async function loadDieselRecords() {
   try {
     var dates = getDieselPeriodDates();
     var url = API_URL + '/diesel-records?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
+    console.log('[Diesel] Carregando registros:', url);
     
     var response = await fetch(url, {
       headers: { 'Authorization': 'Bearer ' + state.token }
     });
     
     var data = await response.json();
+    console.log('[Diesel] Resposta registros:', data);
     if (data.ok) {
       state.dieselRecords = data.records || [];
+      console.log('[Diesel] Registros carregados:', state.dieselRecords.length);
     }
   } catch (error) {
     console.error('Erro ao carregar registros de diesel:', error);
@@ -4747,14 +4750,17 @@ async function loadDieselStats() {
   try {
     var dates = getDieselPeriodDates();
     var url = API_URL + '/diesel-records/stats?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
+    console.log('[Diesel] Carregando stats:', url);
     
     var response = await fetch(url, {
       headers: { 'Authorization': 'Bearer ' + state.token }
     });
     
     var data = await response.json();
+    console.log('[Diesel] Resposta stats:', data);
     if (data.ok) {
       state.dieselStats = data.stats;
+      console.log('[Diesel] Stats carregados:', state.dieselStats);
     }
   } catch (error) {
     console.error('Erro ao carregar estatísticas de diesel:', error);
