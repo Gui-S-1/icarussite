@@ -1452,68 +1452,93 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     border-radius: 14px;
   }
   
+  .forum-header-bg {
+    display: none; /* Esconder orbs decorativos no mobile */
+  }
+  
   .forum-header-content {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
   }
   
   .forum-icon-badge {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    margin: 0 auto;
   }
   
   .forum-icon-badge svg {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
   }
   
   .forum-title-group {
     width: 100%;
+    text-align: center;
   }
   
   .forum-title {
-    font-size: 20px;
+    font-size: 22px;
+    margin-bottom: 4px;
   }
   
   .forum-subtitle {
-    font-size: 11px;
+    font-size: 12px;
+    opacity: 0.7;
   }
   
   .forum-stats {
     width: 100%;
     display: flex;
-    gap: 12px;
+    gap: 10px;
+    justify-content: center;
   }
   
   .forum-stat {
     flex: 1;
-    padding: 10px 12px;
-    border-radius: 10px;
+    max-width: 120px;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
   }
   
   .forum-stat-value {
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: 700;
+    display: block;
   }
   
   .forum-stat-label {
-    font-size: 9px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
   }
   
   .forum-header-actions {
     width: 100%;
+    padding-top: 4px;
   }
   
   .forum-new-post-btn {
     width: 100%;
     justify-content: center;
-    padding: 12px 16px;
-    font-size: 13px;
-    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 12px;
+    gap: 10px;
   }
   
-  /* Toolbar do Fórum */
+  .forum-new-post-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Toolbar do Fórum - Filtros */
   .forum-toolbar {
     flex-direction: column;
     gap: 12px;
@@ -1522,11 +1547,12 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   
   .forum-filters {
     width: 100%;
+    display: flex;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding-bottom: 8px;
+    gap: 8px;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    flex-wrap: nowrap;
   }
   
   .forum-filters::-webkit-scrollbar {
@@ -1534,234 +1560,533 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
   
   .forum-filter-chip {
-    padding: 8px 12px;
-    font-size: 11px;
+    padding: 10px 14px;
+    font-size: 12px;
     white-space: nowrap;
     flex-shrink: 0;
-    border-radius: 20px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  
+  .forum-filter-chip.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+    border-color: #6366f1;
+    color: #a78bfa;
+  }
+  
+  .forum-filter-chip svg {
+    width: 14px;
+    height: 14px;
   }
   
   .forum-search {
     width: 100%;
-    padding: 10px 14px;
-    border-radius: 10px;
+    padding: 12px 16px;
+    border-radius: 25px;
     min-width: unset;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+  }
+  
+  .forum-search svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--text-secondary);
   }
   
   .forum-search input {
     font-size: 14px;
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
   }
   
   /* Posts do Fórum */
-  .forum-post {
+  .forum-posts-container {
+    min-height: 200px;
+  }
+  
+  .forum-posts-list {
+    display: flex;
     flex-direction: column;
-    padding: 14px;
     gap: 12px;
-    border-radius: 12px;
+  }
+  
+  .forum-post {
+    position: relative;
+    flex-direction: column;
+    padding: 16px;
+    padding-left: 60px;
+    gap: 8px;
+    border-radius: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
   }
   
   .forum-post-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
     position: absolute;
-    top: 14px;
-    left: 14px;
+    top: 16px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
   }
   
   .forum-post-content {
-    padding-left: 46px;
+    padding-left: 0;
+    min-width: 0;
   }
   
   .forum-post-header {
+    display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
   }
   
   .forum-post-category {
-    font-size: 9px;
-    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  .forum-post-category.geral {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a78bfa;
+  }
+  
+  .forum-post-category.manutencao {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+  }
+  
+  .forum-post-category.incidente {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
+  
+  .forum-post-category.melhoria {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
   }
   
   .forum-post-meta {
-    font-size: 10px;
+    font-size: 11px;
+    color: var(--text-muted);
   }
   
   .forum-post-title {
-    font-size: 14px;
-    line-height: 1.3;
-    margin-bottom: 4px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    color: var(--text-primary);
   }
   
   .forum-post-preview {
-    font-size: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: -webkit-box;
     -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   
   .forum-post-footer {
-    margin-top: 8px;
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    gap: 10px;
     flex-wrap: wrap;
   }
   
   .forum-post-author {
-    font-size: 11px;
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .forum-post-author svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+  }
+  
+  .forum-post-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
   }
   
   .forum-post-action {
-    padding: 5px 10px;
-    font-size: 10px;
-    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .forum-post-action:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
   }
   
   /* Viewer de Artigo */
+  .forum-post-viewer {
+    padding-bottom: 20px;
+  }
+  
   .forum-viewer-header {
+    display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    padding-bottom: 14px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    justify-content: space-between;
+    align-items: center;
   }
   
   .forum-back-btn {
-    padding: 10px 14px;
-    font-size: 12px;
-    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .forum-back-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .forum-viewer-actions {
+    display: flex;
+    gap: 8px;
   }
   
   .forum-action-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .forum-action-btn svg {
+    width: 18px;
+    height: 18px;
   }
   
   .forum-article {
-    padding: 16px;
-    border-radius: 14px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+  }
+  
+  .forum-article-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
   }
   
   .forum-article-category {
-    font-size: 10px;
-    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
   }
   
   .forum-article-date {
-    font-size: 11px;
+    font-size: 12px;
+    color: var(--text-muted);
   }
   
   .forum-article-title {
-    font-size: 22px;
-    margin-bottom: 14px;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    line-height: 1.3;
+    color: var(--text-primary);
   }
   
   .forum-article-author {
-    gap: 10px;
-    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
   }
   
   .forum-author-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  
+  .forum-author-info {
+    flex: 1;
   }
   
   .forum-author-name {
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
   }
   
   .forum-author-role {
-    font-size: 11px;
+    font-size: 12px;
+    color: var(--text-muted);
   }
   
   .forum-article-body {
-    font-size: 14px;
-    line-height: 1.7;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
   }
   
   /* Empty state */
   .forum-empty {
-    padding: 40px 20px;
+    padding: 50px 24px;
+    text-align: center;
   }
   
   .forum-empty h3 {
-    font-size: 16px;
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
   }
   
   .forum-empty p {
-    font-size: 13px;
+    font-size: 14px;
+    color: var(--text-secondary);
   }
   
   /* ========================================
-     CHECKLIST MOBILE FIXES
+     CHECKLIST MOBILE - COMPLETE FIX
      ======================================== */
+  #checklists-view {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  #checklists-view.active {
+    display: block !important;
+  }
+  
   #checklists-view .card {
     border-radius: 12px;
     padding: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    display: block !important;
+    visibility: visible !important;
   }
   
   #checklists-view .card-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
+    display: flex !important;
+    margin-bottom: 12px;
   }
   
   #checklists-view .card-title {
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block !important;
   }
   
   #checklists-view #btn-create-checklist {
     width: 100%;
-    padding: 10px 16px;
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dim) 100%);
+    color: var(--bg-primary);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+  
+  #checklists-view p {
     font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    display: block !important;
   }
   
   #checklists-list {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     gap: 12px;
+    visibility: visible !important;
   }
   
+  /* Checklist Card - Renderizado por JS */
+  #checklists-list > div,
   .checklist-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px;
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    padding: 14px !important;
+    display: block !important;
+    visibility: visible !important;
+    margin-bottom: 0 !important;
   }
   
-  .checklist-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .checklist-card-title {
-    font-size: 15px;
+  #checklists-list h4 {
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
-    flex: 1;
+    margin: 0 0 6px 0;
   }
   
-  .checklist-card-actions {
+  #checklists-list p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0 0 8px 0;
+  }
+  
+  #checklists-list .badge {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+  
+  /* Itens preview do checklist */
+  #checklists-list > div > div:nth-child(3) {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    margin-bottom: 12px;
   }
   
-  .checklist-card-actions button {
-    padding: 6px 10px;
-    font-size: 11px;
-    border-radius: 6px;
-  }
-  
-  .checklist-items-count {
-    font-size: 12px;
+  #checklists-list > div > div:nth-child(3) span {
+    font-size: 10px !important;
+    padding: 4px 8px;
+    background: var(--bg-card);
+    border-radius: 4px;
     color: var(--text-secondary);
-    margin-bottom: 10px;
   }
   
-  /* Execução de checklist */
+  /* Botões do checklist */
+  #checklists-list > div > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  
+  #checklists-list .btn-small {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    padding: 10px 12px;
+    font-size: 12px;
+    text-align: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+  
+  #checklists-list .btn-primary {
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dim) 100%);
+    color: var(--bg-primary);
+  }
+  
+  #checklists-list .btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  
+  /* Histórico de Checklist */
+  #checklist-history-card {
+    margin-top: 16px;
+  }
+  
+  #checklist-history-card .card-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  #checklist-executions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  #checklist-executions-list > div {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  
+  /* Execução de checklist modal */
   .checklist-execution {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -1786,12 +2111,36 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     width: 22px;
     height: 22px;
     flex-shrink: 0;
+    accent-color: var(--accent-gold);
   }
   
   .checklist-execution-item label {
     font-size: 13px;
     line-height: 1.4;
     flex: 1;
+  }
+  
+  /* Checkbox items dentro do modal */
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .checkbox-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent-gold);
+  }
+  
+  .checkbox-item label {
+    font-size: 13px;
+    flex: 1;
+    color: var(--text-primary);
   }
 }
 

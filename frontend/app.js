@@ -41,6 +41,25 @@ const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
   ? window.ICARUS_API_URL
   : 'http://localhost:4000';
 
+// ========================================
+// SECURITY: Sanitization Functions
+// ========================================
+
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text) {
+  if (text === null || text === undefined) return '';
+  if (typeof text !== 'string') text = String(text);
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Sanitize a string for use in HTML attributes (IDs, onclick, etc)
+function sanitizeId(str) {
+  if (!str) return '';
+  return String(str).replace(/[^a-zA-Z0-9\-_]/g, '');
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   // Setup navigation PRIMEIRO (antes de qualquer coisa)
@@ -670,10 +689,11 @@ function renderRecentActivity() {
     const icon = statusIcons[order.status] || '○';
     const color = statusColors[order.status] || 'var(--accent-gold)';
     const time = formatTimeAgo(order.created_at);
-    const title = order.title.length > 30 ? order.title.substring(0, 30) + '...' : order.title;
+    const titleRaw = order.title.length > 30 ? order.title.substring(0, 30) + '...' : order.title;
+    const title = escapeHtml(titleRaw);
     
     return `
-      <div class="activity-item" onclick="showOSDetail('${order.id}')" style="cursor: pointer;">
+      <div class="activity-item" onclick="showOSDetail('${sanitizeId(order.id)}')" style="cursor: pointer;">
         <div class="activity-icon" style="background: ${color}20; color: ${color};">${icon}</div>
         <div class="activity-content">
           <div class="activity-title">${title}</div>
@@ -842,18 +862,18 @@ function renderOrdersTable() {
 
   tbody.innerHTML = activeOrders.map(order => {
     const assigned = order.assigned_users && order.assigned_users.length > 0
-      ? (order.assigned_users[0].name || order.assigned_users[0].username)
+      ? escapeHtml(order.assigned_users[0].name || order.assigned_users[0].username)
       : '-';
     return `
-      <tr onclick="showOSDetail('${order.id}')" style="cursor: pointer;">
+      <tr onclick="showOSDetail('${sanitizeId(order.id)}')" style="cursor: pointer;">
         <td>
-          <div><strong>${order.title}</strong></div>
-          <div style="font-size: 12px; color: var(--text-secondary);">${order.sector || '-'}</div>
+          <div><strong>${escapeHtml(order.title)}</strong></div>
+          <div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(order.sector) || '-'}</div>
         </td>
-        <td><span class="badge ${order.priority}">${getPriorityText(order.priority)}</span></td>
+        <td><span class="badge ${sanitizeId(order.priority)}">${getPriorityText(order.priority)}</span></td>
         <td>${assigned}</td>
         <td>${formatDate(order.created_at)}</td>
-        <td><span class="badge ${order.status}">${getStatusText(order.status)}</span></td>
+        <td><span class="badge ${sanitizeId(order.status)}">${getStatusText(order.status)}</span></td>
       </tr>
     `;
   }).join('');
@@ -941,7 +961,7 @@ function showOSDetail(orderId) {
   const assignedContainer = document.getElementById('detail-os-assigned');
   if (order.assigned_users && order.assigned_users.length > 0) {
     assignedContainer.innerHTML = order.assigned_users.map(u => 
-      `<span class="user-chip">${u.name || u.username}</span>`
+      `<span class="user-chip">${escapeHtml(u.name || u.username)}</span>`
     ).join('');
   } else {
     assignedContainer.innerHTML = '<span style="color: var(--text-secondary);">Nenhum técnico atribuído</span>';
@@ -1041,7 +1061,7 @@ async function updateOSAssignments(orderId) {
       // Atualizar visualização dos técnicos atribuídos se necessário
       if (data.assigned_users) {
         const assignedContainer = document.getElementById('detail-os-assigned');
-        assignedContainer.innerHTML = data.assigned_users.map(u => `<span class="user-chip">${u.name || u.username}</span>`).join('');
+        assignedContainer.innerHTML = data.assigned_users.map(u => `<span class="user-chip">${escapeHtml(u.name || u.username)}</span>`).join('');
       }
     } else {
       showNotification('Erro ao atualizar: ' + (data.error || 'Erro desconhecido'), 'error');
@@ -1087,16 +1107,16 @@ async function loadHistoryInOS() {
     
     // Quem executou
     const executores = o.assigned_users && o.assigned_users.length > 0
-      ? o.assigned_users.map(u => u.name || u.username).join(', ')
+      ? escapeHtml(o.assigned_users.map(u => u.name || u.username).join(', '))
       : '-';
     
     return `
-      <tr onclick="showOSDetail('${o.id}')" style="cursor: pointer;">
+      <tr onclick="showOSDetail('${sanitizeId(o.id)}')" style="cursor: pointer;">
         <td>
-          <div><strong>${o.title}</strong></div>
+          <div><strong>${escapeHtml(o.title)}</strong></div>
           <div style="font-size: 11px; color: var(--text-secondary);">Executado por: ${executores}</div>
         </td>
-        <td>${o.sector || '-'}</td>
+        <td>${escapeHtml(o.sector) || '-'}</td>
         <td>${startedAt ? startedAt.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
         <td>${finishedAt ? finishedAt.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
         <td><strong>${tempoTotal}</strong></td>
@@ -1795,19 +1815,19 @@ function renderInventoryTable() {
   };
 
   tbody.innerHTML = state.inventory.map(item => `
-    <tr onclick="showItemDetail(${item.id})" style="cursor: pointer;" title="Clique para ver detalhes">
-      <td>${item.sku || '-'}</td>
-      <td>${item.name}</td>
-      <td><span class="badge badge-info">${categoryLabels[item.category] || item.category || '-'}</span></td>
-      <td>${item.brand || '-'}</td>
+    <tr onclick="showItemDetail('${sanitizeId(item.id)}')" style="cursor: pointer;" title="Clique para ver detalhes">
+      <td>${escapeHtml(item.sku) || '-'}</td>
+      <td>${escapeHtml(item.name)}</td>
+      <td><span class="badge badge-info">${escapeHtml(categoryLabels[item.category] || item.category) || '-'}</span></td>
+      <td>${escapeHtml(item.brand) || '-'}</td>
       <td>
         <div style="display:flex; align-items:center; gap:6px;">
-          <strong>${item.quantity}</strong>
-          <span style="color: var(--text-secondary); font-size:12px;">min ${item.min_stock || 0}${item.max_stock ? ` / max ${item.max_stock}` : ''}</span>
+          <strong>${escapeHtml(item.quantity)}</strong>
+          <span style="color: var(--text-secondary); font-size:12px;">min ${escapeHtml(item.min_stock) || 0}${item.max_stock ? ` / max ${escapeHtml(item.max_stock)}` : ''}</span>
         </div>
       </td>
-      <td>${item.unit}</td>
-      <td>${item.location || '-'}</td>
+      <td>${escapeHtml(item.unit)}</td>
+      <td>${escapeHtml(item.location) || '-'}</td>
       <td>
         <span class="badge ${item.quantity <= (item.min_stock || 0) ? 'badge-high' : 'badge-low'}">
           ${item.quantity <= (item.min_stock || 0) ? 'Baixo' : 'OK'}
@@ -2881,8 +2901,8 @@ function showQuickSearch() {
       document.getElementById('quick-search-results').innerHTML = results.slice(0, 10).map(r => `
         <div onclick="(${r.action.toString()})()" style="padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;" 
           onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
-          <span style="color: var(--accent-gold); font-weight: bold;">[${r.type}]</span> ${r.title}
-          ${r.id ? `<span style="color: var(--text-secondary); font-size: 12px;"> • ${r.id}</span>` : ''}
+          <span style="color: var(--accent-gold); font-weight: bold;">[${escapeHtml(r.type)}]</span> ${escapeHtml(r.title)}
+          ${r.id ? `<span style="color: var(--text-secondary); font-size: 12px;"> • ${escapeHtml(r.id)}</span>` : ''}
         </div>
       `).join('');
     }
@@ -3000,33 +3020,33 @@ function renderChecklists() {
     <div class="checklist-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div>
-          <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">${cl.name}</h4>
+          <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">${escapeHtml(cl.name)}</h4>
           <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">
-            ${cl.sector || 'Sem setor'} • ${frequencyLabels[cl.frequency] || cl.frequency} • ${cl.items?.length || 0} itens
+            ${escapeHtml(cl.sector) || 'Sem setor'} • ${escapeHtml(frequencyLabels[cl.frequency] || cl.frequency)} • ${cl.items?.length || 0} itens
           </p>
         </div>
         <span class="badge" style="background: rgba(212, 175, 55, 0.2); color: var(--accent-gold);">
-          ${frequencyLabels[cl.frequency] || cl.frequency}
+          ${escapeHtml(frequencyLabels[cl.frequency] || cl.frequency)}
         </span>
       </div>
       
-      ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${cl.description}</p>` : ''}
+      ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${escapeHtml(cl.description)}</p>` : ''}
       
       <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
         ${(cl.items || []).slice(0, 4).map(item => `
           <span style="font-size: 11px; padding: 4px 8px; background: var(--bg-card); border-radius: 4px; color: var(--text-secondary);">
-            ☐ ${item.description}
+            ☐ ${escapeHtml(item.description)}
           </span>
         `).join('')}
         ${(cl.items?.length || 0) > 4 ? `<span style="font-size: 11px; padding: 4px 8px; color: var(--text-secondary);">+${cl.items.length - 4} mais</span>` : ''}
       </div>
       
       <div style="display: flex; gap: 8px;">
-        <button class="btn-small btn-primary" onclick="openExecuteChecklist('${cl.id}')">☑ Executar</button>
-        <button class="btn-small" onclick="viewChecklistHistory('${cl.id}')">Histórico</button>
+        <button class="btn-small btn-primary" onclick="openExecuteChecklist('${sanitizeId(cl.id)}')">☑ Executar</button>
+        <button class="btn-small" onclick="viewChecklistHistory('${sanitizeId(cl.id)}')">Histórico</button>
         ${canEdit ? `
-          <button class="btn-small" onclick="editChecklist('${cl.id}')">Editar</button>
-          <button class="btn-small btn-danger" onclick="deleteChecklist('${cl.id}')">Excluir</button>
+          <button class="btn-small" onclick="editChecklist('${sanitizeId(cl.id)}')">Editar</button>
+          <button class="btn-small btn-danger" onclick="deleteChecklist('${sanitizeId(cl.id)}')">Excluir</button>
         ` : ''}
       </div>
     </div>
@@ -3095,8 +3115,8 @@ function openExecuteChecklist(checklistId) {
   const container = document.getElementById('execute-checklist-items');
   container.innerHTML = (checklist.items || []).map((item, idx) => `
     <div class="checkbox-item" style="margin-bottom: 8px;">
-      <input type="checkbox" id="exec-item-${idx}" data-item-id="${item.id}">
-      <label for="exec-item-${idx}" style="flex: 1;">${item.description}</label>
+      <input type="checkbox" id="exec-item-${idx}" data-item-id="${sanitizeId(item.id)}">
+      <label for="exec-item-${idx}" style="flex: 1;">${escapeHtml(item.description)}</label>
     </div>
   `).join('');
   
@@ -3169,17 +3189,17 @@ async function viewChecklistHistory(checklistId) {
           return `
             <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; margin-bottom: 8px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong>${exec.executed_by_name || 'Usuário'}</strong>
+                <strong>${escapeHtml(exec.executed_by_name) || 'Usuário'}</strong>
                 <span style="font-size: 12px; color: var(--text-secondary);">${formatDate(exec.executed_at)}</span>
               </div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 ${(exec.items || []).map(item => `
                   <span style="font-size: 11px; padding: 3px 6px; background: ${item.checked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${item.checked ? 'var(--success)' : 'var(--danger)'}; border-radius: 4px;">
-                    ${item.checked ? '✓' : '✗'} ${item.description}
+                    ${item.checked ? '✓' : '✗'} ${escapeHtml(item.description)}
                   </span>
                 `).join('')}
               </div>
-              ${exec.notes ? `<p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">${exec.notes}</p>` : ''}
+              ${exec.notes ? `<p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">${escapeHtml(exec.notes)}</p>` : ''}
               <div style="margin-top: 8px; font-size: 12px; color: var(--accent-gold);">
                 ${checkedCount}/${totalCount} itens verificados
               </div>
@@ -6824,11 +6844,4 @@ async function saveReport() {
   }
 }
 
-// Helper para escapar HTML
-function escapeHtml(text) {
-  if (!text) return '';
-  var div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
+// escapeHtml function moved to top of file for security
