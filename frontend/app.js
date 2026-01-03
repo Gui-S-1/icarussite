@@ -6532,17 +6532,31 @@ function renderReports() {
   
   var reports = state.reports || [];
   
+  // Atualizar stats do header
+  var totalEl = document.getElementById('forum-total-posts');
+  var monthEl = document.getElementById('forum-this-month');
+  if (totalEl) totalEl.textContent = reports.length;
+  
+  // Contar posts deste mês
+  var now = new Date();
+  var thisMonth = reports.filter(function(r) {
+    var d = new Date(r.created_at);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  if (monthEl) monthEl.textContent = thisMonth;
+  
   if (reports.length === 0) {
-    container.innerHTML = '<div style="padding: 60px; text-align: center; color: var(--text-secondary); grid-column: 1/-1;">Nenhum relatório encontrado</div>';
+    container.innerHTML = '<div class="forum-empty">' +
+      '<div class="forum-empty-icon">' +
+        '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+          '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
+        '</svg>' +
+      '</div>' +
+      '<h3>Nenhum post ainda</h3>' +
+      '<p>Seja o primeiro a publicar um relatório!</p>' +
+    '</div>';
     return;
   }
-  
-  var categoryColors = {
-    'geral': '#22d3ee',
-    'manutencao': '#a855f7',
-    'incidente': '#ef4444',
-    'melhoria': '#22c55e'
-  };
   
   var categoryLabels = {
     'geral': 'Geral',
@@ -6553,28 +6567,33 @@ function renderReports() {
   
   var html = '';
   reports.forEach(function(report) {
-    var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR') : '';
-    var catColor = categoryColors[report.category] || '#22d3ee';
+    var dateStr = report.created_at ? formatRelativeDate(new Date(report.created_at)) : '';
     var catLabel = categoryLabels[report.category] || 'Geral';
-    var preview = (report.content || '').substring(0, 150);
+    var preview = (report.content || '').substring(0, 180);
+    var authorName = report.created_by_name || 'Anônimo';
+    var initials = authorName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
     
-    html += '<div class="report-card" onclick="openReport(\'' + report.id + '\')">' +
-      '<div class="report-card-header">' +
-        '<span class="report-card-category" style="background: rgba(' + hexToRgb(catColor) + ', 0.15); color: ' + catColor + ';">' +
-          '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/></svg>' +
-          catLabel +
-        '</span>' +
-        '<h3 class="report-card-title">' + escapeHtml(report.title) + '</h3>' +
-      '</div>' +
-      '<div class="report-card-body">' +
-        '<p class="report-card-preview">' + escapeHtml(preview) + (report.content.length > 150 ? '...' : '') + '</p>' +
-      '</div>' +
-      '<div class="report-card-footer">' +
-        '<div class="report-card-author">' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
-          (report.created_by_name || 'Anônimo') +
+    html += '<div class="forum-post" onclick="openReport(\'' + report.id + '\')">' +
+      '<div class="forum-post-avatar">' + initials + '</div>' +
+      '<div class="forum-post-content">' +
+        '<div class="forum-post-header">' +
+          '<span class="forum-post-category ' + (report.category || 'geral') + '">' + catLabel + '</span>' +
+          '<span class="forum-post-meta">' + dateStr + '</span>' +
         '</div>' +
-        '<span class="report-card-date">' + dateStr + '</span>' +
+        '<h3 class="forum-post-title">' + escapeHtml(report.title) + '</h3>' +
+        '<p class="forum-post-preview">' + escapeHtml(preview) + (report.content && report.content.length > 180 ? '...' : '') + '</p>' +
+        '<div class="forum-post-footer">' +
+          '<div class="forum-post-author">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+            authorName +
+          '</div>' +
+          '<div class="forum-post-actions">' +
+            '<span class="forum-post-action" onclick="event.stopPropagation(); openReport(\'' + report.id + '\')">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' +
+              'Ler' +
+            '</span>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
   });
@@ -6582,52 +6601,174 @@ function renderReports() {
   container.innerHTML = html;
 }
 
+// Função para formatar data relativa
+function formatRelativeDate(date) {
+  var now = new Date();
+  var diff = now - date;
+  var seconds = Math.floor(diff / 1000);
+  var minutes = Math.floor(seconds / 60);
+  var hours = Math.floor(minutes / 60);
+  var days = Math.floor(hours / 24);
+  
+  if (days > 7) {
+    return date.toLocaleDateString('pt-BR');
+  } else if (days > 0) {
+    return days === 1 ? 'Ontem' : 'Há ' + days + ' dias';
+  } else if (hours > 0) {
+    return 'Há ' + hours + (hours === 1 ? ' hora' : ' horas');
+  } else if (minutes > 0) {
+    return 'Há ' + minutes + ' min';
+  } else {
+    return 'Agora';
+  }
+}
+
 function hexToRgb(hex) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) : '34, 211, 238';
 }
 
-function setReportCategory(category) {
+function setReportCategory(category, btn) {
   state.reportCategory = category;
   
-  document.querySelectorAll('.relatorios-filter-btn').forEach(function(btn) {
-    btn.classList.remove('active');
+  document.querySelectorAll('.forum-filter-chip').forEach(function(b) {
+    b.classList.remove('active');
   });
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
   
   loadReportsData().then(renderReports);
 }
 
+// Buscar relatórios
+function searchReports(query) {
+  var container = document.getElementById('relatorios-list');
+  if (!container) return;
+  
+  var posts = container.querySelectorAll('.forum-post');
+  query = query.toLowerCase();
+  
+  posts.forEach(function(post) {
+    var title = post.querySelector('.forum-post-title');
+    var preview = post.querySelector('.forum-post-preview');
+    var text = (title ? title.textContent : '') + ' ' + (preview ? preview.textContent : '');
+    
+    if (text.toLowerCase().indexOf(query) !== -1 || query === '') {
+      post.style.display = 'flex';
+    } else {
+      post.style.display = 'none';
+    }
+  });
+}
+
 function openReport(reportId) {
-  var report = state.reports.find(function(r) { return r.id === reportId; });
+  var report = state.reports.find(function(r) { return r.id == reportId; });
   if (!report) return;
   
   state.currentReport = report;
   
   var container = document.getElementById('relatorios-list');
+  var toolbar = document.querySelector('.forum-toolbar');
   var viewer = document.getElementById('report-viewer');
   
   if (container) container.classList.add('hidden');
+  if (toolbar) toolbar.classList.add('hidden');
   if (viewer) viewer.classList.remove('hidden');
   
   var categoryLabels = { 'geral': 'Geral', 'manutencao': 'Manutenção', 'incidente': 'Incidente', 'melhoria': 'Melhoria' };
-  var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR') : '';
+  var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  }) : '';
   
-  document.getElementById('viewer-category').textContent = categoryLabels[report.category] || 'Geral';
+  var catEl = document.getElementById('viewer-category');
+  if (catEl) {
+    catEl.textContent = categoryLabels[report.category] || 'Geral';
+    catEl.className = 'forum-article-category ' + (report.category || 'geral');
+  }
   document.getElementById('viewer-date').textContent = dateStr;
   document.getElementById('viewer-title').textContent = report.title;
   document.getElementById('viewer-author').textContent = report.created_by_name || 'Anônimo';
   document.getElementById('viewer-content').textContent = report.content || '';
+  
+  // Mostrar/esconder botão de deletar baseado em permissão
+  var deleteBtn = document.getElementById('btn-delete-report');
+  if (deleteBtn) {
+    deleteBtn.style.display = state.canWriteRelatorios ? 'flex' : 'none';
+  }
 }
 
 function closeReportViewer() {
   var container = document.getElementById('relatorios-list');
+  var toolbar = document.querySelector('.forum-toolbar');
   var viewer = document.getElementById('report-viewer');
   
   if (container) container.classList.remove('hidden');
+  if (toolbar) toolbar.classList.remove('hidden');
   if (viewer) viewer.classList.add('hidden');
   
   state.currentReport = null;
+}
+
+// Função para imprimir relatório como PDF
+function printReport() {
+  var article = document.getElementById('forum-article-content');
+  if (!article || !state.currentReport) return;
+  
+  var printWindow = window.open('', '_blank');
+  var report = state.currentReport;
+  var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR') : '';
+  
+  printWindow.document.write('<html><head><title>' + report.title + '</title>');
+  printWindow.document.write('<style>');
+  printWindow.document.write('body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #333; }');
+  printWindow.document.write('.header { border-bottom: 2px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }');
+  printWindow.document.write('.logo { font-size: 24px; font-weight: bold; color: #6366f1; margin-bottom: 5px; }');
+  printWindow.document.write('.subtitle { font-size: 12px; color: #888; }');
+  printWindow.document.write('.category { display: inline-block; padding: 4px 12px; background: #f0f0f0; border-radius: 15px; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; }');
+  printWindow.document.write('.title { font-size: 28px; font-weight: bold; margin: 0 0 15px 0; color: #111; }');
+  printWindow.document.write('.meta { font-size: 13px; color: #666; margin-bottom: 30px; }');
+  printWindow.document.write('.content { font-size: 14px; line-height: 1.8; white-space: pre-wrap; }');
+  printWindow.document.write('.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999; }');
+  printWindow.document.write('</style></head><body>');
+  printWindow.document.write('<div class="header"><div class="logo">✡ ICARUS</div><div class="subtitle">Central de Relatórios • Granja Vitta</div></div>');
+  printWindow.document.write('<div class="category">' + (report.category || 'Geral') + '</div>');
+  printWindow.document.write('<h1 class="title">' + escapeHtml(report.title) + '</h1>');
+  printWindow.document.write('<div class="meta">Por <strong>' + (report.created_by_name || 'Anônimo') + '</strong> em ' + dateStr + '</div>');
+  printWindow.document.write('<div class="content">' + escapeHtml(report.content) + '</div>');
+  printWindow.document.write('<div class="footer">Relatório gerado pelo Sistema Icarus em ' + new Date().toLocaleDateString('pt-BR') + '</div>');
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  
+  setTimeout(function() {
+    printWindow.print();
+  }, 250);
+}
+
+// Função para deletar relatório
+async function deleteReport() {
+  if (!state.currentReport || !state.canWriteRelatorios) return;
+  
+  if (!confirm('Tem certeza que deseja excluir este relatório?')) return;
+  
+  try {
+    var response = await fetch(API_URL + '/maintenance-reports/' + state.currentReport.id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      closeReportViewer();
+      await loadReportsData();
+      renderReports();
+      showNotification('Relatório excluído com sucesso!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao excluir relatório', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao excluir relatório:', error);
+    showNotification('Erro ao excluir relatório', 'error');
+  }
 }
 
 function showNewReportModal() {
