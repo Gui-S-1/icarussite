@@ -1929,14 +1929,10 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   /* ========================================
      CHECKLIST MOBILE - COMPLETE FIX
      ======================================== */
-  #checklists-view {
+  #checklists-view.active {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-  }
-  
-  #checklists-view.active {
-    display: block !important;
   }
   
   #checklists-view .card {
