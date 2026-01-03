@@ -3437,57 +3437,50 @@ function renderWaterStats() {
     return parts.join('-'); // YYYY-MM-DD
   }
   
-  // Obter data mais recente das leituras
+  // Data de HOJE (sempre mostrar dados de hoje)
+  const today = new Date();
+  const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  
+  // Ordenar leituras
   const sortedReadings = [...readings].sort((a, b) => {
     const dateCompare = getDateKey(b.reading_date).localeCompare(getDateKey(a.reading_date));
     if (dateCompare !== 0) return dateCompare;
     return b.reading_time.localeCompare(a.reading_time);
   });
   
-  // Data de hoje
-  const today = new Date();
-  const todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-  
   ['aviarios', 'recria'].forEach(tank => {
     const tankReadings = sortedReadings.filter(r => r.tank_name === tank);
     
-    // Pegar data mais recente do tanque
-    const latestDate = tankReadings.length > 0 ? getDateKey(tankReadings[0].reading_date) : null;
-    const isToday = latestDate === todayKey;
+    // SEMPRE usar data de HOJE para exibição principal
+    const leitura7hHoje = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === todayKey);
+    const leitura16hHoje = tankReadings.find(r => r.reading_time === '16:00' && getDateKey(r.reading_date) === todayKey);
     
-    // Pegar leituras da data mais recente
-    const leitura7h = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === latestDate);
-    const leitura16h = tankReadings.find(r => r.reading_time === '16:00' && getDateKey(r.reading_date) === latestDate);
-    
-    // Atualizar leituras
+    // Atualizar leituras - sempre mostra HOJE
     const el7h = document.getElementById(`${tank}-leitura-7h`);
     const el16h = document.getElementById(`${tank}-leitura-16h`);
     
     if (el7h) {
-      if (leitura7h) {
-        el7h.textContent = Math.round(leitura7h.reading_value).toLocaleString('pt-BR');
-      } else if (isToday) {
-        el7h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
+      if (leitura7hHoje) {
+        el7h.textContent = Math.round(leitura7hHoje.reading_value).toLocaleString('pt-BR');
       } else {
-        el7h.textContent = '--';
+        // Sempre mostra Pendente para hoje se não tem leitura
+        el7h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
       }
     }
     if (el16h) {
-      if (leitura16h) {
-        el16h.textContent = Math.round(leitura16h.reading_value).toLocaleString('pt-BR');
-      } else if (isToday || (leitura7h && !leitura16h)) {
-        // Pendente se é hoje ou se tem 7h mas não tem 16h
-        el16h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
+      if (leitura16hHoje) {
+        el16h.textContent = Math.round(leitura16hHoje.reading_value).toLocaleString('pt-BR');
       } else {
-        el16h.textContent = '--';
+        // Sempre mostra Pendente para hoje se não tem leitura
+        el16h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
       }
     }
     
-    // Calcular consumo do período de trabalho (7h-16h = 9 horas) - só se ambos existem
+    // Calcular consumo do período de trabalho (7h-16h = 9 horas) - só se ambos existem HOJE
     let consumoTrabalho = '--';
     let ltHoraTrabalho = '--';
-    if (leitura7h && leitura16h && getDateKey(leitura7h.reading_date) === getDateKey(leitura16h.reading_date)) {
-      const diff = leitura16h.reading_value - leitura7h.reading_value;
+    if (leitura7hHoje && leitura16hHoje) {
+      const diff = leitura16hHoje.reading_value - leitura7hHoje.reading_value;
       if (diff >= 0) {
         consumoTrabalho = diff.toFixed(0);
         ltHoraTrabalho = Math.round((diff * 1000) / 9).toLocaleString('pt-BR');
@@ -3499,27 +3492,21 @@ function renderWaterStats() {
     if (elConsumoTrab) elConsumoTrab.textContent = consumoTrabalho;
     if (elLtHoraTrab) elLtHoraTrab.textContent = ltHoraTrabalho;
     
-    // Calcular consumo 24h do ÚLTIMO DIA COMPLETO
-    // Consumo do dia X = Leitura 7h do dia (X+1) - Leitura 7h do dia X
-    // Se hoje é 31, mostramos consumo do dia 30 (leitura 7h dia 31 - leitura 7h dia 30)
-    // Só mostramos se latestDate é hoje (temos leitura de hoje) para calcular o dia anterior
+    // Calcular consumo 24h do ÚLTIMO DIA COMPLETO (ontem)
+    // Consumo de ontem = Leitura 7h HOJE - Leitura 7h ONTEM
     let consumo24h = '--';
     let ltHora24h = '--';
     
-    const today = new Date().toISOString().split('T')[0];
-    
-    if (leitura7h && latestDate === today) {
-      // Calcular consumo do dia anterior (ontem)
-      const parts = latestDate.split('-');
-      const latestDateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
-      latestDateObj.setDate(latestDateObj.getDate() - 1);
-      const prevDayKey = latestDateObj.getFullYear() + '-' + String(latestDateObj.getMonth() + 1).padStart(2, '0') + '-' + String(latestDateObj.getDate()).padStart(2, '0');
+    if (leitura7hHoje) {
+      // Calcular data de ontem
+      const ontem = new Date(today);
+      ontem.setDate(ontem.getDate() - 1);
+      const ontemKey = ontem.getFullYear() + '-' + String(ontem.getMonth() + 1).padStart(2, '0') + '-' + String(ontem.getDate()).padStart(2, '0');
       
-      const leitura7hOntem = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === prevDayKey);
+      const leitura7hOntem = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === ontemKey);
       
       if (leitura7hOntem) {
-        // Consumo do dia de ONTEM = leitura 7h HOJE - leitura 7h ONTEM
-        const diff = leitura7h.reading_value - leitura7hOntem.reading_value;
+        const diff = leitura7hHoje.reading_value - leitura7hOntem.reading_value;
         if (diff >= 0) {
           consumo24h = diff.toFixed(0);
           ltHora24h = Math.round((diff * 1000) / 24).toLocaleString('pt-BR');
