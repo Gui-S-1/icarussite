@@ -321,6 +321,63 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
+     DASHBOARD HEADER MOBILE
+     ======================================== */
+  .dash-header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  .dash-title-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+  
+  .dash-title-row h2 {
+    font-size: 18px;
+    flex: none;
+    width: auto;
+  }
+  
+  .dash-date {
+    font-size: 11px;
+    order: 3;
+    width: 100%;
+    margin-top: 4px;
+  }
+  
+  .btn-export-dash {
+    font-size: 11px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    order: 2;
+  }
+  
+  .dash-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+  
+  .dash-filter {
+    flex: 1;
+    min-width: 60px;
+    padding: 8px 10px;
+    font-size: 12px;
+    text-align: center;
+  }
+  
+  .dash-month-select {
+    flex: 1;
+    min-width: 100px;
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  /* ========================================
      DASHBOARD GRID
      ======================================== */
   .dashboard-grid {
@@ -1341,6 +1398,49 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
 
   .content {
     padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+  
+  /* ========================================
+     PHOTO UPLOAD MOBILE - COMPRAS
+     ======================================== */
+  #purchase-photo {
+    width: 100%;
+    padding: 0;
+    border: 2px dashed rgba(212, 175, 55, 0.4);
+    border-radius: 12px;
+    background: rgba(212, 175, 55, 0.05);
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+  
+  #purchase-photo::file-selector-button {
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 12px;
+    transition: all 0.2s;
+  }
+  
+  #purchase-photo::file-selector-button:active {
+    transform: scale(0.95);
+  }
+  
+  #purchase-photo-preview {
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,0.2);
+  }
+  
+  #purchase-photo-preview img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
   }
 }
 
