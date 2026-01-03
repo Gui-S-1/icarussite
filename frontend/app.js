@@ -849,14 +849,54 @@ function updateOSBadge() {
   }
 }
 
+function updateOSStats() {
+  // Calculate stats
+  const urgentes = state.orders.filter(o => o.priority === 'high' && o.status !== 'completed').length;
+  const emAndamento = state.orders.filter(o => o.status === 'in_progress').length;
+  const pendentes = state.orders.filter(o => o.status === 'pending').length;
+  
+  // Get completed this month
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const concluidasMes = state.orders.filter(o => {
+    if (o.status !== 'completed' || !o.finished_at) return false;
+    const finishedDate = new Date(o.finished_at);
+    return finishedDate >= startOfMonth;
+  }).length;
+  
+  // Update UI
+  const urgentesEl = document.getElementById('os-urgentes');
+  const emAndamentoEl = document.getElementById('os-em-andamento');
+  const pendentesEl = document.getElementById('os-pendentes');
+  const concluidasEl = document.getElementById('os-concluidas-mes');
+  
+  if (urgentesEl) urgentesEl.textContent = urgentes;
+  if (emAndamentoEl) emAndamentoEl.textContent = emAndamento;
+  if (pendentesEl) pendentesEl.textContent = pendentes;
+  if (concluidasEl) concluidasEl.textContent = concluidasMes;
+}
+
 function renderOrdersTable() {
   const tbody = document.querySelector('#os-table tbody');
+  
+  // Update stats
+  updateOSStats();
   
   // Filtrar apenas OS ativas (não concluídas)
   const activeOrders = state.orders.filter(o => o.status !== 'completed');
   
   if (activeOrders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Nenhuma OS ativa</td></tr>';
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; margin-bottom: 12px;">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+          <div style="font-size: 14px;">Nenhuma OS ativa no momento</div>
+          <div style="font-size: 12px; margin-top: 4px;">Clique em "Nova OS" para criar</div>
+        </td>
+      </tr>
+    `;
     return;
   }
 
@@ -1132,17 +1172,13 @@ function toggleOSView(view) {
   const contentHistorico = document.getElementById('os-historico-content');
   
   if (view === 'ativas') {
-    btnAtivas.classList.add('btn-primary');
-    btnAtivas.classList.remove('btn-secondary');
-    btnHistorico.classList.remove('btn-primary');
-    btnHistorico.classList.add('btn-secondary');
+    btnAtivas.classList.add('active');
+    btnHistorico.classList.remove('active');
     contentAtivas.classList.remove('hidden');
     contentHistorico.classList.add('hidden');
   } else {
-    btnHistorico.classList.add('btn-primary');
-    btnHistorico.classList.remove('btn-secondary');
-    btnAtivas.classList.remove('btn-primary');
-    btnAtivas.classList.add('btn-secondary');
+    btnHistorico.classList.add('active');
+    btnAtivas.classList.remove('active');
     contentHistorico.classList.remove('hidden');
     contentAtivas.classList.add('hidden');
     loadHistoryInOS(); // Carregar histórico ao mostrar
@@ -3002,11 +3038,29 @@ function renderChecklists() {
   // Hide/show create button based on permission
   const createBtn = document.getElementById('btn-create-checklist');
   if (createBtn) {
-    createBtn.style.display = canEdit ? 'block' : 'none';
+    createBtn.style.display = canEdit ? 'flex' : 'none';
   }
   
+  // Update stats
+  const totalEl = document.getElementById('checklists-total');
+  const pendentesEl = document.getElementById('checklists-pendentes');
+  const concluidosEl = document.getElementById('checklists-concluidos');
+  
+  if (totalEl) totalEl.textContent = state.checklists.length;
+  if (pendentesEl) pendentesEl.textContent = state.checklists.length; // Simplified: all are pending
+  if (concluidosEl) concluidosEl.textContent = '0';
+  
   if (state.checklists.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-secondary); padding: 20px; text-align: center;">Nenhum checklist cadastrado</p>';
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; margin-bottom: 16px;">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+        <p style="margin: 0 0 8px 0; font-size: 16px;">Nenhum checklist cadastrado</p>
+        <p style="margin: 0; font-size: 13px;">Clique em "Novo Checklist" para começar</p>
+      </div>
+    `;
     return;
   }
   
@@ -3016,37 +3070,70 @@ function renderChecklists() {
     mensal: 'Mensal'
   };
   
+  const frequencyIcons = {
+    diario: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    semanal: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    mensal: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>'
+  };
+  
   container.innerHTML = state.checklists.map(cl => `
-    <div class="checklist-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 12px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-        <div>
-          <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">${escapeHtml(cl.name)}</h4>
-          <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">
-            ${escapeHtml(cl.sector) || 'Sem setor'} • ${escapeHtml(frequencyLabels[cl.frequency] || cl.frequency)} • ${cl.items?.length || 0} itens
-          </p>
+    <div class="checklist-item-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; margin-bottom: 14px; transition: all 0.2s;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+        <div style="display: flex; gap: 14px; align-items: flex-start;">
+          <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"/>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+            </svg>
+          </div>
+          <div>
+            <h4 style="margin: 0 0 4px 0; color: var(--text-primary); font-size: 16px; font-weight: 600;">${escapeHtml(cl.name)}</h4>
+            <p style="margin: 0; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ${escapeHtml(cl.sector) || 'Sem setor'}
+              </span>
+              <span style="opacity: 0.5;">•</span>
+              <span>${cl.items?.length || 0} itens</span>
+            </p>
+          </div>
         </div>
-        <span class="badge" style="background: rgba(212, 175, 55, 0.2); color: var(--accent-gold);">
+        <span style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border-radius: 20px; font-size: 12px; font-weight: 500;">
+          ${frequencyIcons[cl.frequency] || ''}
           ${escapeHtml(frequencyLabels[cl.frequency] || cl.frequency)}
         </span>
       </div>
       
-      ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${escapeHtml(cl.description)}</p>` : ''}
+      ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 14px 0; padding-left: 58px;">${escapeHtml(cl.description)}</p>` : ''}
       
-      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; padding-left: 58px;">
         ${(cl.items || []).slice(0, 4).map(item => `
-          <span style="font-size: 11px; padding: 4px 8px; background: var(--bg-card); border-radius: 4px; color: var(--text-secondary);">
-            ☐ ${escapeHtml(item.description)}
+          <span style="font-size: 12px; padding: 6px 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+            ${escapeHtml(item.description)}
           </span>
         `).join('')}
-        ${(cl.items?.length || 0) > 4 ? `<span style="font-size: 11px; padding: 4px 8px; color: var(--text-secondary);">+${cl.items.length - 4} mais</span>` : ''}
+        ${(cl.items?.length || 0) > 4 ? `<span style="font-size: 12px; padding: 6px 10px; color: var(--text-secondary);">+${cl.items.length - 4} mais</span>` : ''}
       </div>
       
-      <div style="display: flex; gap: 8px;">
-        <button class="btn-small btn-primary" onclick="openExecuteChecklist('${sanitizeId(cl.id)}')">☑ Executar</button>
-        <button class="btn-small" onclick="viewChecklistHistory('${sanitizeId(cl.id)}')">Histórico</button>
+      <div style="display: flex; gap: 10px; padding-left: 58px;">
+        <button class="btn-checklist-execute" onclick="openExecuteChecklist('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Executar
+        </button>
+        <button class="btn-checklist-secondary" onclick="viewChecklistHistory('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Histórico
+        </button>
         ${canEdit ? `
-          <button class="btn-small" onclick="editChecklist('${sanitizeId(cl.id)}')">Editar</button>
-          <button class="btn-small btn-danger" onclick="deleteChecklist('${sanitizeId(cl.id)}')">Excluir</button>
+          <button class="btn-checklist-secondary" onclick="editChecklist('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+          </button>
+          <button class="btn-checklist-danger" onclick="deleteChecklist('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; font-size: 13px; cursor: pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Excluir
+          </button>
         ` : ''}
       </div>
     </div>

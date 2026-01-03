@@ -2312,6 +2312,469 @@
 
     /* ========== FIM ESTILOS CONTROLE DE ÁGUA ========== */
 
+    /* ========== CHECKLISTS - ESTILOS MODERNOS ========== */
+    
+    .checklist-control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.1) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .checklist-control-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .checklist-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 1;
+    }
+
+    .checklist-icon-badge {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    }
+
+    .checklist-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .checklist-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      margin: 4px 0 0 0;
+    }
+
+    .checklist-header-actions {
+      display: flex;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .btn-checklist-action {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-checklist-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Checklist Stats Grid */
+    .checklist-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .checklist-stat-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      transition: all 0.3s;
+    }
+
+    .checklist-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .checklist-stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .checklist-stat-icon.pending {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
+      color: #f59e0b;
+    }
+
+    .checklist-stat-icon.completed {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
+      color: #10b981;
+    }
+
+    .checklist-stat-icon.total {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.1) 100%);
+      color: #6366f1;
+    }
+
+    .checklist-stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .checklist-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .checklist-stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Checklist Main Card */
+    .checklist-main-card,
+    .checklist-history-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .checklist-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .checklist-card-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .checklist-card-header h3 svg {
+      color: #10b981;
+    }
+
+    .checklist-card-header p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 6px 0 0 0;
+    }
+
+    .btn-checklist-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-checklist-back:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    /* ========== ORDENS DE SERVIÇO - ESTILOS MODERNOS ========== */
+    
+    .os-control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .os-control-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .os-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 1;
+    }
+
+    .os-icon-badge {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+    }
+
+    .os-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .os-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      margin: 4px 0 0 0;
+    }
+
+    .os-header-actions {
+      display: flex;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .btn-os-filter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-os-filter:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-os-filter.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #fff;
+    }
+
+    .btn-os-create {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-os-create:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    }
+
+    /* OS Stats Grid */
+    .os-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .os-stat-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      transition: all 0.3s;
+    }
+
+    .os-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .os-stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .os-stat-card.urgent .os-stat-icon {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%);
+      color: #ef4444;
+    }
+
+    .os-stat-card.progress .os-stat-icon {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%);
+      color: #3b82f6;
+    }
+
+    .os-stat-card.pending .os-stat-icon {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
+      color: #f59e0b;
+    }
+
+    .os-stat-card.completed .os-stat-icon {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
+      color: #10b981;
+    }
+
+    .os-stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .os-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .os-stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* OS Main Card */
+    .os-main-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .os-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .os-card-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .os-card-header h3 svg {
+      color: #8b5cf6;
+    }
+
+    /* OS Modern Table */
+    .os-modern-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .os-modern-table thead th {
+      text-align: left;
+      padding: 12px 16px;
+      background: rgba(139, 92, 246, 0.1);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .os-modern-table thead th:first-child {
+      border-radius: 8px 0 0 8px;
+    }
+
+    .os-modern-table thead th:last-child {
+      border-radius: 0 8px 8px 0;
+    }
+
+    .os-modern-table tbody tr {
+      transition: all 0.2s;
+    }
+
+    .os-modern-table tbody tr:hover {
+      background: rgba(139, 92, 246, 0.05);
+    }
+
+    .os-modern-table tbody td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* ========== FIM ESTILOS OS ========== */
+
     /* ========== CONTROLE DE DIESEL E GERADOR - ESTILOS ========== */
     
     /* Header Themes */
@@ -3976,52 +4439,149 @@
           </div>
         </div>
 
-        <!-- OS View -->
+        <!-- OS View - Modern Design -->
         <div id="os-view" class="view">
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Ordens de Serviço 
-                <span style="color: var(--text-secondary); font-size: 12px; font-weight: normal; margin-left: 8px;">Atalho: Ctrl+K para buscar</span>
+          <!-- Header Premium com Gradiente -->
+          <div class="os-control-header">
+            <div class="os-header-left">
+              <div class="os-icon-badge">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="os-title">Ordens de Serviço</h2>
+                <p class="os-subtitle">Gestão de Manutenção e Reparos • Atalho: Ctrl+K</p>
+              </div>
+            </div>
+            <div class="os-header-actions">
+              <button class="btn-os-filter active" id="btn-os-ativas" onclick="toggleOSView('ativas')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                Ativas
+              </button>
+              <button class="btn-os-filter" id="btn-os-historico" onclick="toggleOSView('historico')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                Histórico (<span id="historico-count">0</span>)
+              </button>
+              <button class="btn-os-create" onclick="showCreateOS()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nova OS
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="os-stats-grid">
+            <div class="os-stat-card urgent">
+              <div class="os-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div class="os-stat-info">
+                <span class="os-stat-value" id="os-urgentes">0</span>
+                <span class="os-stat-label">Urgentes</span>
+              </div>
+            </div>
+            <div class="os-stat-card progress">
+              <div class="os-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </div>
+              <div class="os-stat-info">
+                <span class="os-stat-value" id="os-em-andamento">0</span>
+                <span class="os-stat-label">Em Andamento</span>
+              </div>
+            </div>
+            <div class="os-stat-card pending">
+              <div class="os-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="os-stat-info">
+                <span class="os-stat-value" id="os-pendentes">0</span>
+                <span class="os-stat-label">Pendentes</span>
+              </div>
+            </div>
+            <div class="os-stat-card completed">
+              <div class="os-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <div class="os-stat-info">
+                <span class="os-stat-value" id="os-concluidas-mes">0</span>
+                <span class="os-stat-label">Concluídas (Mês)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Principal - Ativas -->
+          <div class="os-main-card" id="os-ativas-content">
+            <div class="os-card-header">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+                Ordens Ativas
               </h3>
-              <div style="display: flex; gap: 12px;">
-                <button class="btn-small" id="btn-os-ativas" onclick="toggleOSView('ativas')">Ativas</button>
-                <button class="btn-small" id="btn-os-historico" onclick="toggleOSView('historico')">Histórico (<span id="historico-count">0</span>)</button>
-                <button class="btn-small btn-primary" onclick="showCreateOS()">+ Nova OS</button>
-              </div>
             </div>
-            
-            <div id="os-ativas-content">
-              <div class="table-container">
-                <table id="os-table">
-                  <thead>
-                    <tr>
-                      <th>Título / Setor</th>
-                      <th>Urgência</th>
-                      <th>Técnico</th>
-                      <th>Criada</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
+            <div class="table-container">
+              <table id="os-table" class="os-modern-table">
+                <thead>
+                  <tr>
+                    <th>Título / Setor</th>
+                    <th>Urgência</th>
+                    <th>Técnico</th>
+                    <th>Criada</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
             </div>
-            
-            <div id="os-historico-content" class="hidden">
-              <div class="table-container">
-                <table id="os-historico-table">
-                  <thead>
-                    <tr>
-                      <th>Título</th>
-                      <th>Setor</th>
-                      <th>Iniciada em</th>
-                      <th>Concluída em</th>
-                      <th>Tempo Total</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
+          </div>
+          
+          <!-- Card Histórico -->
+          <div class="os-main-card hidden" id="os-historico-content">
+            <div class="os-card-header">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Histórico de OS Concluídas
+              </h3>
+            </div>
+            <div class="table-container">
+              <table id="os-historico-table" class="os-modern-table">
+                <thead>
+                  <tr>
+                    <th>Título</th>
+                    <th>Setor</th>
+                    <th>Iniciada em</th>
+                    <th>Concluída em</th>
+                    <th>Tempo Total</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -4154,24 +4714,110 @@
         
         <!-- Checklists View -->
         <div id="checklists-view" class="view">
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">☑ Checklists de Verificação</h3>
-              <button class="btn-small btn-primary" id="btn-create-checklist" onclick="showCreateChecklist()">+ Novo Checklist</button>
+          <!-- Header Premium com Gradiente -->
+          <div class="checklist-control-header">
+            <div class="checklist-header-left">
+              <div class="checklist-icon-badge">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11l3 3L22 4"/>
+                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="checklist-title">Checklists de Verificação</h2>
+                <p class="checklist-subtitle">Controle de Inspeções e Verificações Diárias</p>
+              </div>
             </div>
-            <p style="color: var(--text-secondary); margin-bottom: 16px;">
-              Cadastre e execute checklists de verificação diária (ex: lubrificação, inspeção, etc.)
-            </p>
+            <div class="checklist-header-actions">
+              <button class="btn-checklist-action" id="btn-create-checklist" onclick="showCreateChecklist()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Novo Checklist
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="checklist-stats-grid">
+            <div class="checklist-stat-card">
+              <div class="checklist-stat-icon pending">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="checklist-stat-info">
+                <span class="checklist-stat-value" id="checklists-pendentes">0</span>
+                <span class="checklist-stat-label">Pendentes Hoje</span>
+              </div>
+            </div>
+            <div class="checklist-stat-card">
+              <div class="checklist-stat-icon completed">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <div class="checklist-stat-info">
+                <span class="checklist-stat-value" id="checklists-concluidos">0</span>
+                <span class="checklist-stat-label">Concluídos Hoje</span>
+              </div>
+            </div>
+            <div class="checklist-stat-card">
+              <div class="checklist-stat-icon total">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <div class="checklist-stat-info">
+                <span class="checklist-stat-value" id="checklists-total">0</span>
+                <span class="checklist-stat-label">Total Cadastrados</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Principal -->
+          <div class="checklist-main-card">
+            <div class="checklist-card-header">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                Meus Checklists
+              </h3>
+              <p>Cadastre e execute checklists de verificação diária (ex: lubrificação, inspeção, etc.)</p>
+            </div>
             
             <!-- Lista de Checklists -->
             <div id="checklists-list"></div>
           </div>
           
           <!-- Histórico de Execuções -->
-          <div class="card" id="checklist-history-card" style="display: none;">
-            <div class="card-header">
-              <h3 class="card-title">📋 Histórico de Execuções</h3>
-              <button class="btn-small" onclick="closeChecklistHistory()">Voltar</button>
+          <div class="checklist-history-card" id="checklist-history-card" style="display: none;">
+            <div class="checklist-card-header">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Histórico de Execuções
+              </h3>
+              <button class="btn-checklist-back" onclick="closeChecklistHistory()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="19" y1="12" x2="5" y2="12"/>
+                  <polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Voltar
+              </button>
             </div>
             <div id="checklist-executions-list"></div>
           </div>
