@@ -153,8 +153,16 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
    ======================================== */
 @media (max-width: 768px) {
   body {
-    overflow-y: auto;
-    height: auto;
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh;
+    position: relative;
+  }
+  
+  #app-screen {
+    height: auto !important;
+    min-height: 100vh;
+    overflow: visible !important;
   }
 
   .mobile-menu-toggle {
@@ -185,6 +193,8 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
 
   .main-layout {
     flex-direction: column;
+    overflow: visible !important;
+    height: auto !important;
   }
 
   /* ========================================
@@ -193,10 +203,17 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   .content {
     margin-left: 0;
     padding: 15px;
-    padding-bottom: 100px !important;
+    padding-bottom: 120px !important;
     width: 100%;
-    height: auto;
-    overflow-y: visible;
+    height: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    min-height: calc(100vh - 140px);
+  }
+  
+  .view.active {
+    min-height: auto;
+    overflow: visible;
   }
 
   /* ========================================
