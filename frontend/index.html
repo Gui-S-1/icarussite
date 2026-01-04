@@ -802,417 +802,6 @@
       gap: 20px;
     }
 
-    /* ========== SETTINGS PREMIUM STYLES ========== */
-    .settings-premium-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 24px;
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(20, 20, 20, 0.95) 100%);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      border-radius: 16px;
-      margin-bottom: 24px;
-    }
-
-    .settings-header-icon {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dim) 100%);
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--bg-primary);
-      animation: settingsRotate 10s linear infinite;
-    }
-
-    @keyframes settingsRotate {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .settings-header-icon:hover {
-      animation-play-state: paused;
-    }
-
-    .settings-header-text h2 {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    .settings-header-text p {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .settings-grid-modern {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-    }
-
-    .settings-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .settings-card:hover {
-      border-color: rgba(212, 175, 55, 0.3);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .settings-card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .settings-card-header h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .settings-card-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .settings-card-icon.account {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
-      color: #3b82f6;
-    }
-
-    .settings-card-icon.notifications {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
-      color: #f59e0b;
-    }
-
-    .settings-card-icon.support {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
-      color: #10b981;
-    }
-
-    .settings-card-icon.about {
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
-      color: var(--accent-gold);
-    }
-
-    .settings-card-body {
-      padding: 20px;
-    }
-
-    .settings-field {
-      margin-bottom: 16px;
-    }
-
-    .settings-field label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .settings-field input {
-      width: 100%;
-      padding: 12px 14px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-size: 14px;
-    }
-
-    .settings-field input:read-only {
-      opacity: 0.7;
-    }
-
-    .settings-toggle-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px;
-      background: rgba(255,255,255,0.02);
-      border-radius: 12px;
-      margin-bottom: 16px;
-    }
-
-    .settings-toggle-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--text-secondary);
-    }
-
-    .settings-toggle-info > div {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .settings-toggle-info span {
-      font-size: 14px;
-      color: var(--text-primary);
-    }
-
-    .settings-toggle-info small {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    .settings-toggle {
-      width: 44px;
-      height: 24px;
-      appearance: none;
-      background: var(--border-color);
-      border-radius: 12px;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.3s;
-    }
-
-    .settings-toggle::before {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 20px;
-      height: 20px;
-      background: var(--text-primary);
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
-
-    .settings-toggle:checked {
-      background: var(--accent-gold);
-    }
-
-    .settings-toggle:checked::before {
-      left: 22px;
-    }
-
-    .settings-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .settings-btn.primary {
-      background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dim) 100%);
-      color: var(--bg-primary);
-    }
-
-    .settings-btn.primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-    }
-
-    .settings-btn.secondary {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-    }
-
-    .settings-btn.secondary:hover {
-      border-color: rgba(212, 175, 55, 0.3);
-      background: rgba(212, 175, 55, 0.1);
-    }
-
-    .settings-btn.danger {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-    }
-
-    .settings-btn.danger:hover {
-      background: rgba(239, 68, 68, 0.25);
-    }
-
-    .settings-buttons-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .settings-description {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-bottom: 16px;
-    }
-
-    .settings-coming-soon {
-      text-align: center;
-      padding: 30px 20px;
-    }
-
-    .coming-soon-icon {
-      color: var(--accent-gold);
-      margin-bottom: 16px;
-      opacity: 0.8;
-    }
-
-    .settings-coming-soon h4 {
-      color: var(--accent-gold);
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-
-    .settings-coming-soon p {
-      color: var(--text-secondary);
-      font-size: 13px;
-      line-height: 1.6;
-      margin-bottom: 16px;
-    }
-
-    .coming-soon-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: rgba(212, 175, 55, 0.1);
-      border: 1px dashed var(--accent-gold);
-      border-radius: 8px;
-      color: var(--accent-gold);
-      font-size: 12px;
-    }
-
-    .about-logo-section {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .about-logo-icon {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 12px;
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, transparent 100%);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent-gold);
-    }
-
-    .about-logo-section h4 {
-      font-size: 28px;
-      font-weight: 300;
-      color: var(--accent-gold);
-      letter-spacing: 6px;
-      margin-bottom: 4px;
-    }
-
-    .about-logo-section p {
-      font-size: 11px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .about-info-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 16px;
-      background: rgba(255,255,255,0.02);
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-
-    .about-info-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      text-align: center;
-    }
-
-    .about-info-item svg {
-      color: var(--text-secondary);
-      margin-bottom: 4px;
-    }
-
-    .about-info-item span {
-      font-size: 10px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-    }
-
-    .about-info-item strong {
-      font-size: 13px;
-      color: var(--text-primary);
-    }
-
-    .about-developer {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .developer-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      background: rgba(255,255,255,0.02);
-      border-radius: 10px;
-    }
-
-    .developer-info svg {
-      color: var(--accent-gold);
-    }
-
-    .developer-info > div {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .developer-info small {
-      font-size: 10px;
-      color: var(--text-secondary);
-    }
-
-    .developer-info strong {
-      font-size: 13px;
-      color: var(--text-primary);
-    }
-
-    .about-copyright {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 16px;
-      font-size: 11px;
-      color: var(--text-secondary);
-    }
-
     .stat-card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -2447,34 +2036,6 @@
     .water-input-card {
       background: linear-gradient(135deg, var(--bg-card) 0%, rgba(59, 130, 246, 0.05) 100%);
       border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-
-    /* Retroactive Date Hint */
-    .retroactive-hint {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      margin: 16px;
-      margin-bottom: 0;
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
-      border: 1px solid rgba(212, 175, 55, 0.25);
-      border-radius: 10px;
-      font-size: 13px;
-      color: var(--accent-gold);
-    }
-
-    .retroactive-hint svg {
-      flex-shrink: 0;
-      opacity: 0.8;
-    }
-
-    .input-hint {
-      display: block;
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-top: 6px;
-      opacity: 0.8;
     }
 
     .water-input-time {
@@ -4630,17 +4191,8 @@
       <div id="auth-error" class="error-msg hidden"></div>
       
       <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(212,175,55,0.2); text-align: center;">
-        <div style="margin-bottom: 16px;">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color: var(--accent-gold); filter: drop-shadow(0 0 10px rgba(212,175,55,0.5));">
-            <polygon points="12,2 14.09,8.26 21,9.27 16,14.14 17.18,21.02 12,17.77 6.82,21.02 8,14.14 3,9.27 9.91,8.26"/>
-            <polygon points="12,6 13.09,9.26 16.5,9.64 14,12.14 14.59,15.51 12,14.02 9.41,15.51 10,12.14 7.5,9.64 10.91,9.26" fill="currentColor" opacity="0.3"/>
-          </svg>
-        </div>
-        <p style="color: var(--accent-gold); font-size: 15px; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.5px;">
-          ✦ A sua imaginação é o limite ✦
-        </p>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 18px; line-height: 1.5;">
-          do gerenciamento da sua empresa
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px; font-weight: 500;">
+          ◈ Não tem acesso?
         </p>
         <button onclick="document.getElementById('premium-popup-overlay').classList.add('active'); document.body.style.overflow='hidden';" class="whatsapp-btn" style="border: none; cursor: pointer;">
           <svg class="whatsapp-icon" viewBox="0 0 24 24">
@@ -4648,8 +4200,8 @@
           </svg>
           Solicitar Acesso / Orçamento
         </button>
-        <p style="color: var(--text-secondary); font-size: 11px; margin-top: 14px; opacity: 0.7;">
-          ◇ Resposta rápida • ◇ Personalização total
+        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 15px; opacity: 0.8;">
+          ◇ Resposta rápida • ◇ +47 empresas atendidas
         </p>
       </div>
     </div>
@@ -5437,22 +4989,10 @@
                 <span class="water-input-time" id="current-time"></span>
               </div>
               
-              <!-- Aviso de data retroativa -->
-              <div class="retroactive-hint">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
-                <span>Você pode registrar leituras de dias anteriores escolhendo a data desejada</span>
-              </div>
-              
               <div class="water-input-grid">
                 <div class="water-input-group">
-                  <label>📅 Data da Leitura</label>
+                  <label>Data da Leitura</label>
                   <input type="date" id="water-reading-date" class="water-input">
-                  <small class="input-hint">Escolha a data do registro (pode ser retroativa)</small>
-                </div>
                 </div>
                 
                 <div class="water-input-group">
@@ -5672,22 +5212,10 @@
                 <h3 class="card-title">Registrar Movimentação</h3>
               </div>
               
-              <!-- Aviso de data retroativa -->
-              <div class="retroactive-hint">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
-                <span>Você pode registrar movimentações de dias anteriores escolhendo a data desejada</span>
-              </div>
-              
               <div class="water-input-grid">
                 <div class="water-input-group">
-                  <label>📅 Data</label>
+                  <label>Data</label>
                   <input type="date" id="diesel-date" class="water-input">
-                  <small class="input-hint">Escolha a data do registro (pode ser retroativa)</small>
-                </div>
                 </div>
                 
                 <div class="water-input-group">
@@ -6155,224 +5683,100 @@
         <!-- ========== FIM RELATÓRIOS ========== -->
 
         <div id="configuracoes-view" class="view">
-          <!-- Header Premium Configurações -->
-          <div class="settings-premium-header">
-            <div class="settings-header-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-            </div>
-            <div class="settings-header-text">
-              <h2>Configurações</h2>
-              <p>Personalize sua experiência no sistema</p>
-            </div>
-          </div>
-
-          <div class="settings-grid-modern">
+          <div class="settings-grid">
             <!-- Card: Conta -->
-            <div class="settings-card">
-              <div class="settings-card-header">
-                <div class="settings-card-icon account">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                </div>
-                <h3>Conta e Sistema</h3>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">⚙ Conta e Sistema</h3>
               </div>
-              <div class="settings-card-body">
-                <div class="settings-field">
-                  <label>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    Usuário Conectado
+              <div style="padding: 20px;">
+                <div class="form-group">
+                  <label>Usuário Conectado</label>
+                  <input type="text" id="config-username" readonly style="background: var(--bg-secondary);">
+                </div>
+                <div class="form-group">
+                  <label>Licença Ativa</label>
+                  <input type="text" id="config-key" readonly style="background: var(--bg-secondary);">
+                </div>
+                <div class="form-group">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="config-remember-me">
+                    <span>Salvar login automaticamente</span>
                   </label>
-                  <input type="text" id="config-username" readonly>
+                  <small style="color: var(--text-secondary); margin-top: 4px; display: block;">
+                    Manterá você conectado ao abrir o sistema
+                  </small>
                 </div>
-                <div class="settings-field">
-                  <label>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                    Licença Ativa
-                  </label>
-                  <input type="text" id="config-key" readonly>
-                </div>
-                <div class="settings-toggle-item">
-                  <div class="settings-toggle-info">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <div>
-                      <span>Salvar login automaticamente</span>
-                      <small>Manterá você conectado ao abrir</small>
-                    </div>
-                  </div>
-                  <input type="checkbox" id="config-remember-me" class="settings-toggle">
-                </div>
-                <button class="settings-btn danger" onclick="logout()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                  </svg>
-                  Sair da Conta
-                </button>
+                <button class="btn-small btn-danger" onclick="logout()" style="margin-top: 12px;">Sair da Conta</button>
               </div>
             </div>
 
             <!-- Card: Notificações -->
-            <div class="settings-card">
-              <div class="settings-card-header">
-                <div class="settings-card-icon notifications">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                  </svg>
-                </div>
-                <h3>Notificações</h3>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">◎ Notificações</h3>
               </div>
-              <div class="settings-card-body settings-coming-soon">
-                <div class="coming-soon-icon">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                  </svg>
-                </div>
-                <h4>Em Breve</h4>
-                <p>Estamos trabalhando em notificações inteligentes via WhatsApp. Você será avisado quando estiver disponível!</p>
-                <div class="coming-soon-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                  Novidade chegando em breve
+              <div style="padding: 20px; text-align: center;">
+                <div style="padding: 32px 20px;">
+                  <div style="font-size: 48px; margin-bottom: 16px; color: var(--primary);">◈</div>
+                  <h4 style="color: var(--primary); margin-bottom: 8px; font-size: 18px;">Em Breve</h4>
+                  <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                    Estamos trabalhando em notificações inteligentes via WhatsApp.<br>
+                    Você será avisado quando estiver disponível!
+                  </p>
+                  <div style="margin-top: 16px; padding: 12px 20px; background: rgba(212, 175, 55, 0.1); border-radius: 8px; border: 1px dashed var(--primary);">
+                    <span style="color: var(--primary); font-size: 13px;">◇ Novidade chegando em breve</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Card: Suporte -->
-            <div class="settings-card">
-              <div class="settings-card-header">
-                <div class="settings-card-icon support">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                </div>
-                <h3>Suporte e Ajuda</h3>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">◎ Suporte e Ajuda</h3>
               </div>
-              <div class="settings-card-body">
-                <p class="settings-description">Precisa de ajuda? Entre em contato conosco!</p>
-                <div class="settings-buttons-stack">
-                  <button class="settings-btn primary" onclick="openWhatsAppSupport()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                    </svg>
-                    Falar com Suporte
-                  </button>
-                  <button class="settings-btn secondary" onclick="openDocumentation()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/>
-                      <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                    Ver Documentação
-                  </button>
-                  <button class="settings-btn secondary" onclick="reportBug()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    Reportar Problema
-                  </button>
-                </div>
+              <div style="padding: 20px;">
+                <p style="margin-bottom: 16px; color: var(--text-secondary);">
+                  Precisa de ajuda? Entre em contato conosco!
+                </p>
+                <button class="btn-small btn-primary" onclick="openWhatsAppSupport()" style="width: 100%; margin-bottom: 8px;">
+                  ◇ Falar com Suporte
+                </button>
+                <button class="btn-small" onclick="openDocumentation()" style="width: 100%; margin-bottom: 8px;">
+                  ◇ Ver Documentação
+                </button>
+                <button class="btn-small" onclick="reportBug()" style="width: 100%;">
+                  ◇ Reportar Problema
+                </button>
               </div>
             </div>
 
             <!-- Card: Sobre -->
-            <div class="settings-card about-card">
-              <div class="settings-card-header">
-                <div class="settings-card-icon about">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="16" x2="12" y2="12"/>
-                    <line x1="12" y1="8" x2="12.01" y2="8"/>
-                  </svg>
-                </div>
-                <h3>Sobre o Sistema</h3>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">◎ Sobre o Sistema</h3>
               </div>
-              <div class="settings-card-body">
-                <div class="about-logo-section">
-                  <div class="about-logo-icon">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                      <polygon points="12,2 14.09,8.26 21,9.27 16,14.14 17.18,21.02 12,17.77 6.82,21.02 8,14.14 3,9.27 9.91,8.26"/>
-                    </svg>
-                  </div>
-                  <h4>ICARUS</h4>
-                  <p>Sistema Integrado de Gestão de Manutenção</p>
+              <div style="padding: 20px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <h4 style="color: var(--primary); margin-bottom: 4px; font-size: 28px; letter-spacing: 3px;">ICARUS</h4>
+                  <p style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    Sistema Integrado de Gestão de Manutenção
+                  </p>
                 </div>
-                <div class="about-info-grid">
-                  <div class="about-info-item">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="16 18 22 12 16 6"/>
-                      <polyline points="8 6 2 12 8 18"/>
-                    </svg>
-                    <span>Versão</span>
-                    <strong>1.0.0</strong>
-                  </div>
-                  <div class="about-info-item">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                      <line x1="16" y1="2" x2="16" y2="6"/>
-                      <line x1="8" y1="2" x2="8" y2="6"/>
-                      <line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    <span>Build</span>
-                    <strong>2026.01.04</strong>
-                  </div>
-                  <div class="about-info-item">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                    </svg>
-                    <span>Servidor</span>
-                    <strong id="config-server-status" style="color: #4CAF50;">● Conectado</strong>
-                  </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                  <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Versão</span> <strong>1.0.0</strong></div>
+                  <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Build</span> <strong>2025.12.15</strong></div>
+                  <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Servidor</span> <span id="config-server-status" style="color: #4CAF50;">● Conectado</span></div>
                 </div>
-                <div class="about-developer">
-                  <div class="developer-info">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <div>
-                      <small>Desenvolvido por</small>
-                      <strong>Guilherme Braga</strong>
-                    </div>
-                  </div>
-                  <div class="developer-info">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                      <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <div>
-                      <small>Fornecido para</small>
-                      <strong>Granja Vitta</strong>
-                    </div>
-                  </div>
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                  <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Desenvolvido por</p>
+                  <p style="font-size: 14px; color: var(--primary); font-weight: 600; margin-bottom: 12px;">Guilherme Braga</p>
+                  <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Fornecido para</p>
+                  <p style="font-size: 14px; color: #fff; font-weight: 500;">Granja Vitta</p>
                 </div>
-                <div class="about-copyright">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M14.83 14.83a4 4 0 1 1 0-5.66"/>
-                  </svg>
-                  2026 Todos os direitos reservados
+                <div style="margin-top: 16px; text-align: center;">
+                  <span style="font-size: 11px; color: var(--text-secondary);">© 2025 Todos os direitos reservados</span>
                 </div>
               </div>
             </div>
