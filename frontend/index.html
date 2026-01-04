@@ -4194,15 +4194,23 @@
         <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px; font-weight: 500;">
           ◈ Não tem acesso?
         </p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" style="opacity: 0.7;">
+            <polygon points="50,5 61,35 95,35 68,57 79,90 50,70 21,90 32,57 5,35 39,35" fill="none" stroke="var(--accent-gold)" stroke-width="3"/>
+          </svg>
+          <p style="color: var(--text-secondary); font-size: 13px; font-style: italic; max-width: 200px; line-height: 1.4;">
+            A sua imaginação é o limite do gerenciamento da sua empresa
+          </p>
+          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" style="opacity: 0.7;">
+            <polygon points="50,5 61,35 95,35 68,57 79,90 50,70 21,90 32,57 5,35 39,35" fill="none" stroke="var(--accent-gold)" stroke-width="3"/>
+          </svg>
+        </div>
         <button onclick="document.getElementById('premium-popup-overlay').classList.add('active'); document.body.style.overflow='hidden';" class="whatsapp-btn" style="border: none; cursor: pointer;">
           <svg class="whatsapp-icon" viewBox="0 0 24 24">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
           </svg>
           Solicitar Acesso / Orçamento
         </button>
-        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 15px; opacity: 0.8;">
-          ◇ Resposta rápida • ◇ +47 empresas atendidas
-        </p>
       </div>
     </div>
   </div>
@@ -4993,6 +5001,9 @@
                 <div class="water-input-group">
                   <label>Data da Leitura</label>
                   <input type="date" id="water-reading-date" class="water-input">
+                  <small style="display: block; margin-top: 6px; color: var(--accent-gold); font-size: 11px; opacity: 0.85;">
+                    💡 Pode selecionar datas passadas para registros retroativos
+                  </small>
                 </div>
                 
                 <div class="water-input-group">
@@ -5216,6 +5227,9 @@
                 <div class="water-input-group">
                   <label>Data</label>
                   <input type="date" id="diesel-date" class="water-input">
+                  <small style="display: block; margin-top: 6px; color: var(--accent-gold); font-size: 11px; opacity: 0.85;">
+                    💡 Pode selecionar datas passadas para registros retroativos
+                  </small>
                 </div>
                 
                 <div class="water-input-group">
@@ -5683,11 +5697,31 @@
         <!-- ========== FIM RELATÓRIOS ========== -->
 
         <div id="configuracoes-view" class="view">
+          <!-- Header da Página -->
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 20px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(20, 20, 20, 0.95) 100%); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 14px;">
+            <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent-gold) 0%, #b8962e 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 0;">Configurações</h2>
+              <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Personalize sua experiência no sistema</p>
+            </div>
+          </div>
+          
           <div class="settings-grid">
             <!-- Card: Conta -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">⚙ Conta e Sistema</h3>
+            <div class="card" style="border-radius: 14px; overflow: hidden;">
+              <div class="card-header" style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(180deg, rgba(59, 130, 246, 0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(59, 130, 246, 0.15);">
+                <div style="width: 40px; height: 40px; background: rgba(59, 130, 246, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <h3 class="card-title" style="margin: 0; font-size: 16px;">Conta e Sistema</h3>
               </div>
               <div style="padding: 20px;">
                 <div class="form-group">
@@ -5712,9 +5746,15 @@
             </div>
 
             <!-- Card: Notificações -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">◎ Notificações</h3>
+            <div class="card" style="border-radius: 14px; overflow: hidden;">
+              <div class="card-header" style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(245, 158, 11, 0.15);">
+                <div style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                </div>
+                <h3 class="card-title" style="margin: 0; font-size: 16px;">Notificações</h3>
               </div>
               <div style="padding: 20px; text-align: center;">
                 <div style="padding: 32px 20px;">
@@ -5732,9 +5772,16 @@
             </div>
 
             <!-- Card: Suporte -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">◎ Suporte e Ajuda</h3>
+            <div class="card" style="border-radius: 14px; overflow: hidden;">
+              <div class="card-header" style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.15);">
+                <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                </div>
+                <h3 class="card-title" style="margin: 0; font-size: 16px;">Suporte e Ajuda</h3>
               </div>
               <div style="padding: 20px;">
                 <p style="margin-bottom: 16px; color: var(--text-secondary);">
@@ -5753,9 +5800,16 @@
             </div>
 
             <!-- Card: Sobre -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">◎ Sobre o Sistema</h3>
+            <div class="card" style="border-radius: 14px; overflow: hidden;">
+              <div class="card-header" style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(212, 175, 55, 0.15);">
+                <div style="width: 40px; height: 40px; background: rgba(212, 175, 55, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                  </svg>
+                </div>
+                <h3 class="card-title" style="margin: 0; font-size: 16px;">Sobre o Sistema</h3>
               </div>
               <div style="padding: 20px;">
                 <div style="text-align: center; margin-bottom: 20px;">

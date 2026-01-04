@@ -1232,6 +1232,222 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     width: 100%;
     justify-content: center;
   }
+
+  /* ========================================
+     OS (ORDENS DE SERVIÇO) MOBILE
+     ======================================== */
+  .os-control-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    text-align: center;
+    border-radius: 14px;
+  }
+
+  .os-header-left {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .os-icon-badge {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+  }
+
+  .os-title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .os-subtitle {
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .os-header-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-os-filter {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    padding: 10px 12px;
+    font-size: 12px;
+    justify-content: center;
+  }
+
+  .btn-os-create {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 13px;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .os-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .os-stat-card {
+    padding: 14px;
+    gap: 10px;
+    border-radius: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .os-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .os-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .os-stat-label {
+    font-size: 11px;
+  }
+
+  .os-main-card {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .os-card-header {
+    padding: 14px;
+  }
+
+  .os-card-header h3 {
+    font-size: 15px;
+  }
+
+  #os-view .table-container {
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .os-modern-table {
+    min-width: 700px;
+    font-size: 12px;
+  }
+
+  .os-modern-table th,
+  .os-modern-table td {
+    padding: 10px 8px;
+    white-space: nowrap;
+  }
+
+  /* ========================================
+     CHECKLIST MOBILE
+     ======================================== */
+  #checklists-view .checklist-header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  #checklists-view .checklist-header h2 {
+    font-size: 20px;
+  }
+
+  #checklists-view .checklist-header p {
+    font-size: 12px;
+  }
+
+  #checklists-view .checklist-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  #checklists-view .stat-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  #checklists-view .stat-value {
+    font-size: 24px;
+  }
+
+  #checklists-view .stat-label {
+    font-size: 11px;
+  }
+
+  #checklists-view .checklist-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ========================================
+     FÓRUM MOBILE
+     ======================================== */
+  #forum-view .forum-header {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  #forum-view .forum-categories {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  #forum-view .category-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  #forum-view .forum-posts {
+    gap: 12px;
+  }
+
+  #forum-view .forum-post {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  #forum-view .post-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  #forum-view .post-title {
+    font-size: 15px;
+  }
+
+  #forum-view .post-meta {
+    font-size: 11px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #forum-view .post-stats {
+    font-size: 11px;
+    gap: 12px;
+  }
+
+  /* ========================================
+     SETTINGS MOBILE
+     ======================================== */
+  .settings-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 /* ========================================
