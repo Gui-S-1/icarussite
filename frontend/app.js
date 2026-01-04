@@ -5592,30 +5592,57 @@ function exportDieselReportExcel() {
     return;
   }
   
-  // Ordenar registros
+  // Ordenar registros por data
   var sorted = records.slice().sort(function(a, b) {
     return (a.record_date || '').localeCompare(b.record_date || '');
   });
   
+  // Calcular totais
+  var totalEntrada = 0, totalSaida = 0;
+  sorted.forEach(function(r) {
+    var qty = parseFloat(r.quantity) || 0;
+    if (r.record_type === 'entrada') totalEntrada += qty;
+    else totalSaida += qty;
+  });
+  
   // Cabeçalhos
-  var headers = ['DATA', 'TIPO', 'QUANTIDADE (L)', 'MOTIVO', 'REGISTRADO POR', 'OBSERVACOES'];
+  var headers = ['DATA', 'DIA', 'TIPO', 'QUANTIDADE (L)', 'MOTIVO', 'REGISTRADO POR', 'OBSERVACOES'];
+  
+  // Nomes dos dias
+  var diasSemana = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO'];
   
   // Linhas de dados
   var rows = sorted.map(function(r) {
     var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
     var parts = dateStr.split('-');
     var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
+    
+    // Calcular dia da semana
+    var dayOfWeek = '';
+    if (parts.length === 3) {
+      var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+      dayOfWeek = diasSemana[d.getDay()];
+    }
+    
     var typeLabel = r.record_type === 'entrada' ? 'ENTRADA' : 'SAIDA';
     
     return [
       formattedDate,
+      dayOfWeek,
       typeLabel,
-      (parseFloat(r.quantity) || 0).toString(),
-      r.reason || '',
-      r.recorded_by_name || '',
-      r.notes || ''
+      (parseFloat(r.quantity) || 0).toFixed(1),
+      r.reason || '-',
+      r.recorded_by_name || '-',
+      r.notes || '-'
     ].join(';');
   });
+  
+  // Adicionar linha de totais
+  rows.push('');
+  rows.push('RESUMO;;;;');
+  rows.push('Total Entradas;;;' + totalEntrada.toFixed(1) + ' L;;');
+  rows.push('Total Saidas;;;' + totalSaida.toFixed(1) + ' L;;');
+  rows.push('Saldo;;;' + (totalEntrada - totalSaida).toFixed(1) + ' L;;');
   
   var csv = headers.join(';') + '\n' + rows.join('\n');
   
@@ -5623,10 +5650,123 @@ function exportDieselReportExcel() {
   var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   var link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'CONTROLE_DIESEL_GRANJA_VITTA_' + new Date().toISOString().split('T')[0] + '.csv';
+  
+  var today = new Date();
+  var fileName = 'CONTROLE_DIESEL_GRANJA_VITTA_' + 
+    today.getFullYear() + '-' + 
+    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(today.getDate()).padStart(2, '0') + '.csv';
+  link.download = fileName;
   link.click();
   
-  showNotification('Planilha exportada com sucesso!', 'success');
+  showNotification('Planilha exportada: ' + sorted.length + ' registros', 'success');
+  
+  // Gerar relatório HTML interativo também
+  generateDieselInteractiveReport(sorted, totalEntrada, totalSaida);
+}
+
+// Gerar relatório HTML interativo para Diesel
+function generateDieselInteractiveReport(records, totalEntrada, totalSaida) {
+  var diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  
+  // Agrupar por mês para gráfico
+  var monthlyData = {};
+  records.forEach(function(r) {
+    var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
+    var parts = dateStr.split('-');
+    if (parts.length === 3) {
+      var monthKey = parts[0] + '-' + parts[1];
+      if (!monthlyData[monthKey]) monthlyData[monthKey] = { entrada: 0, saida: 0 };
+      var qty = parseFloat(r.quantity) || 0;
+      if (r.record_type === 'entrada') monthlyData[monthKey].entrada += qty;
+      else monthlyData[monthKey].saida += qty;
+    }
+  });
+  
+  // Gerar linhas da tabela
+  var tableRows = records.map(function(r) {
+    var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
+    var parts = dateStr.split('-');
+    var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
+    var dayOfWeek = '';
+    if (parts.length === 3) {
+      var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+      dayOfWeek = diasSemana[d.getDay()];
+    }
+    var typeClass = r.record_type === 'entrada' ? 'entrada' : 'saida';
+    var typeLabel = r.record_type === 'entrada' ? '⬆ ENTRADA' : '⬇ SAÍDA';
+    
+    return '<tr>' +
+      '<td>' + formattedDate + '</td>' +
+      '<td>' + dayOfWeek + '</td>' +
+      '<td class="' + typeClass + '">' + typeLabel + '</td>' +
+      '<td class="qty">' + (parseFloat(r.quantity) || 0).toFixed(1) + ' L</td>' +
+      '<td>' + (r.reason || '-') + '</td>' +
+      '<td>' + (r.recorded_by_name || '-') + '</td>' +
+      '</tr>';
+  }).join('');
+  
+  var saldo = totalEntrada - totalSaida;
+  var saldoClass = saldo >= 0 ? 'positive' : 'negative';
+  
+  var html = '<!DOCTYPE html>' +
+    '<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>Relatório de Diesel - Granja Vitta</title>' +
+    '<style>' +
+    '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+    'body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; min-height: 100vh; padding: 40px 20px; }' +
+    '.container { max-width: 1200px; margin: 0 auto; }' +
+    '.header { text-align: center; margin-bottom: 40px; padding: 40px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 20px; }' +
+    '.header h1 { font-size: 2.5rem; background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }' +
+    '.header p { color: #94a3b8; font-size: 1.1rem; }' +
+    '.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }' +
+    '.stat-card { background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; text-align: center; }' +
+    '.stat-card.entrada { border-color: rgba(34, 197, 94, 0.3); background: linear-gradient(180deg, rgba(34, 197, 94, 0.1) 0%, transparent 100%); }' +
+    '.stat-card.saida { border-color: rgba(239, 68, 68, 0.3); background: linear-gradient(180deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%); }' +
+    '.stat-card.saldo { border-color: rgba(59, 130, 246, 0.3); background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%); }' +
+    '.stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }' +
+    '.stat-card.entrada .stat-value { color: #4ade80; }' +
+    '.stat-card.saida .stat-value { color: #f87171; }' +
+    '.stat-card.saldo .stat-value { color: #60a5fa; }' +
+    '.stat-label { color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }' +
+    '.table-card { background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden; }' +
+    '.table-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }' +
+    '.table-header h2 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }' +
+    'table { width: 100%; border-collapse: collapse; }' +
+    'th { background: rgba(0,0,0,0.3); padding: 14px 16px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }' +
+    'td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }' +
+    'tr:hover { background: rgba(255,255,255,0.02); }' +
+    '.entrada { color: #4ade80; font-weight: 600; }' +
+    '.saida { color: #f87171; font-weight: 600; }' +
+    '.qty { font-weight: 700; font-size: 1.1rem; }' +
+    '.footer { margin-top: 40px; text-align: center; color: #64748b; font-size: 0.85rem; }' +
+    '@media print { body { background: white; color: #1e293b; } .stat-card, .table-card { border: 1px solid #e2e8f0; background: white; } }' +
+    '</style></head><body>' +
+    '<div class="container">' +
+    '<div class="header">' +
+    '<h1>🛢️ Controle de Diesel</h1>' +
+    '<p>Granja Vitta • Relatório gerado em ' + new Date().toLocaleDateString('pt-BR') + '</p>' +
+    '</div>' +
+    '<div class="stats-grid">' +
+    '<div class="stat-card entrada"><div class="stat-value">+' + totalEntrada.toFixed(1) + ' L</div><div class="stat-label">Total Entradas</div></div>' +
+    '<div class="stat-card saida"><div class="stat-value">-' + totalSaida.toFixed(1) + ' L</div><div class="stat-label">Total Saídas</div></div>' +
+    '<div class="stat-card saldo"><div class="stat-value">' + saldo.toFixed(1) + ' L</div><div class="stat-label">Saldo</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + records.length + '</div><div class="stat-label">Registros</div></div>' +
+    '</div>' +
+    '<div class="table-card">' +
+    '<div class="table-header"><h2>📋 Histórico de Movimentações</h2></div>' +
+    '<table><thead><tr><th>Data</th><th>Dia</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Responsável</th></tr></thead>' +
+    '<tbody>' + tableRows + '</tbody></table>' +
+    '</div>' +
+    '<div class="footer"><p>Sistema ICARUS • Desenvolvido por Guilherme Braga</p></div>' +
+    '</div></body></html>';
+  
+  // Abrir em nova aba
+  var newWindow = window.open('', '_blank');
+  if (newWindow) {
+    newWindow.document.write(html);
+    newWindow.document.close();
+  }
 }
 
 // ========== FIM CONTROLE DE DIESEL ==========
