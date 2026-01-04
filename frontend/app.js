@@ -1833,49 +1833,171 @@ function renderInventoryTable() {
   const tbody = document.querySelector('#almoxarifado-table tbody');
   if (!tbody) return;
 
+  // Atualizar estatísticas
+  updateAlmoxarifadoStats();
+  
+  // Atualizar lista de marcas no filtro
+  updateMarcasFilter();
+
   if (state.inventory.length === 0) {
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">Nenhum item cadastrado</td></tr>';
+    updateShowingCount(0);
     return;
   }
 
   const categoryLabels = {
-    eletrico: 'Elétrico',
+    ferramentas: '🔧 Ferramentas',
+    eletrica: '⚡ Elétrica',
+    hidraulica: '💧 Hidráulica',
+    rolamentos: '⚙️ Rolamentos',
+    parafusos: '🔩 Parafusos',
+    lubrificantes: '🛢️ Lubrificantes',
+    epis: '🦺 EPIs',
+    outros: '📦 Outros',
+    // Categorias antigas para compatibilidade
+    eletrico: '⚡ Elétrico',
     pneumatico: 'Pneumático',
-    hidraulico: 'Hidráulico',
+    hidraulico: '💧 Hidráulico',
     mecanico: 'Mecânico',
-    rolamento: 'Rolamento',
-    ferramenta: 'Ferramenta',
-    epi: 'EPI',
+    rolamento: '⚙️ Rolamento',
+    ferramenta: '🔧 Ferramenta',
+    epi: '🦺 EPI',
     limpeza: 'Limpeza',
-    outro: 'Outro'
+    outro: '📦 Outro'
   };
 
-  tbody.innerHTML = state.inventory.map(item => `
-    <tr onclick="showItemDetail('${sanitizeId(item.id)}')" style="cursor: pointer;" title="Clique para ver detalhes">
-      <td>${escapeHtml(item.sku) || '-'}</td>
-      <td>${escapeHtml(item.name)}</td>
-      <td><span class="badge badge-info">${escapeHtml(categoryLabels[item.category] || item.category) || '-'}</span></td>
-      <td>${escapeHtml(item.brand) || '-'}</td>
-      <td>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <strong>${escapeHtml(item.quantity)}</strong>
-          <span style="color: var(--text-secondary); font-size:12px;">min ${escapeHtml(item.min_stock) || 0}${item.max_stock ? ` / max ${escapeHtml(item.max_stock)}` : ''}</span>
-        </div>
-      </td>
-      <td>${escapeHtml(item.unit)}</td>
-      <td>${escapeHtml(item.location) || '-'}</td>
-      <td>
-        <span class="badge ${item.quantity <= (item.min_stock || 0) ? 'badge-high' : 'badge-low'}">
-          ${item.quantity <= (item.min_stock || 0) ? 'Baixo' : 'OK'}
-        </span>
-      </td>
-      <td onclick="event.stopPropagation()">
-        <button class="btn-small" onclick="adjustStock(${item.id}, -1)" title="Remover 1">▼</button>
-        <button class="btn-small" onclick="adjustStock(${item.id}, 1)" title="Adicionar 1">▲</button>
-        <button class="btn-small btn-danger" onclick="deleteItem(${item.id})">Excluir</button>
-      </td>
-    </tr>
-  `).join('');
+  const categoryClasses = {
+    ferramentas: 'ferramentas',
+    eletrica: 'eletrica',
+    hidraulica: 'hidraulica',
+    rolamentos: 'rolamentos',
+    parafusos: 'parafusos',
+    lubrificantes: 'lubrificantes',
+    epis: 'epis',
+    outros: 'outros',
+    eletrico: 'eletrica',
+    hidraulico: 'hidraulica',
+    rolamento: 'rolamentos',
+    ferramenta: 'ferramentas',
+    epi: 'epis',
+    outro: 'outros'
+  };
+
+  // Aplicar filtros
+  var itemsToShow = filterInventoryItems(state.inventory);
+  updateShowingCount(itemsToShow.length);
+
+  if (itemsToShow.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: var(--text-secondary);">Nenhum item encontrado com os filtros selecionados</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = itemsToShow.map(item => {
+    var catClass = categoryClasses[item.category] || 'outros';
+    var statusClass = item.quantity <= 0 ? 'badge-high' : (item.quantity <= (item.min_stock || 0) ? 'badge-warning' : 'badge-low');
+    var statusText = item.quantity <= 0 ? '🔴 Zerado' : (item.quantity <= (item.min_stock || 0) ? '⚠️ Baixo' : '✅ OK');
+    
+    return '<tr onclick="showItemDetail(\'' + sanitizeId(item.id) + '\')" style="cursor: pointer;" title="Clique para ver detalhes">' +
+      '<td><code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-size: 11px;">' + escapeHtml(item.sku || '-') + '</code></td>' +
+      '<td><strong>' + escapeHtml(item.name) + '</strong></td>' +
+      '<td><span class="category-badge ' + catClass + '">' + escapeHtml(categoryLabels[item.category] || item.category || '-') + '</span></td>' +
+      '<td>' + escapeHtml(item.brand || '-') + '</td>' +
+      '<td><div style="display:flex; align-items:center; gap:6px;">' +
+        '<strong style="font-size: 16px;">' + escapeHtml(item.quantity) + '</strong>' +
+        '<span style="color: var(--text-secondary); font-size:11px;">min ' + (item.min_stock || 0) + (item.max_stock ? ' / max ' + item.max_stock : '') + '</span>' +
+      '</div></td>' +
+      '<td>' + escapeHtml(item.unit) + '</td>' +
+      '<td><span style="font-size: 12px;">' + escapeHtml(item.location || '-') + '</span></td>' +
+      '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
+      '<td onclick="event.stopPropagation()">' +
+        '<button class="btn-small" onclick="adjustStock(' + item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">−</button>' +
+        '<button class="btn-small" onclick="adjustStock(' + item.id + ', 1)" title="Adicionar 1" style="padding: 4px 8px;">+</button>' +
+        '<button class="btn-small btn-danger" onclick="deleteItem(' + item.id + ')" style="padding: 4px 8px;">🗑️</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function updateAlmoxarifadoStats() {
+  var totalItems = state.inventory.length;
+  var estoqueBaixo = state.inventory.filter(function(i) { return i.quantity <= (i.min_stock || 0); }).length;
+  var categorias = [...new Set(state.inventory.map(function(i) { return i.category; }))].length;
+  var marcas = [...new Set(state.inventory.filter(function(i) { return i.brand; }).map(function(i) { return i.brand; }))].length;
+  
+  var elTotal = document.getElementById('almox-total-items');
+  var elBaixo = document.getElementById('almox-estoque-baixo');
+  var elCat = document.getElementById('almox-categorias');
+  var elMarcas = document.getElementById('almox-marcas');
+  
+  if (elTotal) elTotal.textContent = totalItems;
+  if (elBaixo) elBaixo.textContent = estoqueBaixo;
+  if (elCat) elCat.textContent = categorias;
+  if (elMarcas) elMarcas.textContent = marcas;
+}
+
+function updateMarcasFilter() {
+  var select = document.getElementById('almox-filter-marca');
+  if (!select) return;
+  
+  var marcas = [...new Set(state.inventory.filter(function(i) { return i.brand; }).map(function(i) { return i.brand; }))].sort();
+  
+  // Manter valor selecionado
+  var currentValue = select.value;
+  
+  select.innerHTML = '<option value="">Todas</option>';
+  marcas.forEach(function(marca) {
+    var option = document.createElement('option');
+    option.value = marca;
+    option.textContent = marca;
+    if (marca === currentValue) option.selected = true;
+    select.appendChild(option);
+  });
+}
+
+function updateShowingCount(count) {
+  var el = document.getElementById('almox-showing-count');
+  if (el) el.textContent = count + ' ' + (count === 1 ? 'item' : 'itens');
+}
+
+function filterInventoryItems(items) {
+  var searchInput = document.getElementById('almox-search-input');
+  var catFilter = document.getElementById('almox-filter-categoria');
+  var marcaFilter = document.getElementById('almox-filter-marca');
+  var statusFilter = document.getElementById('almox-filter-status');
+  
+  var search = (searchInput && searchInput.value) ? searchInput.value.toLowerCase() : '';
+  var categoria = catFilter ? catFilter.value : '';
+  var marca = marcaFilter ? marcaFilter.value : '';
+  var status = statusFilter ? statusFilter.value : '';
+  
+  return items.filter(function(item) {
+    // Filtro de busca
+    if (search) {
+      var searchFields = [item.name, item.sku, item.brand, item.category, item.location].join(' ').toLowerCase();
+      if (searchFields.indexOf(search) === -1) return false;
+    }
+    
+    // Filtro de categoria
+    if (categoria && item.category !== categoria) return false;
+    
+    // Filtro de marca
+    if (marca && item.brand !== marca) return false;
+    
+    // Filtro de status
+    if (status) {
+      var isLow = item.quantity <= (item.min_stock || 0);
+      var isCritical = item.quantity <= 0;
+      if (status === 'normal' && isLow) return false;
+      if (status === 'baixo' && (!isLow || isCritical)) return false;
+      if (status === 'critico' && !isCritical) return false;
+    }
+    
+    return true;
+  });
+}
+
+function filterAlmoxarifado() {
+  renderInventoryTable();
 }
 
 function showItemDetail(itemId) {
@@ -4241,36 +4363,55 @@ function exportWaterReportExcel() {
     return;
   }
   
-  // Função para formatar data corretamente (evitar timezone issues)
+  // Função para formatar data corretamente no padrão DD/MM/YYYY
   function formatDateExcel(dateStr) {
+    if (!dateStr) return { formatted: '', dayOfWeek: '', key: '' };
     var parts = dateStr.split('T')[0].split('-');
+    if (parts.length < 3) return { formatted: '', dayOfWeek: '', key: '' };
     var year = parseInt(parts[0]);
     var month = parseInt(parts[1]) - 1;
     var day = parseInt(parts[2]);
     var date = new Date(year, month, day, 12, 0, 0);
-    var dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase().split('-')[0];
-    var formatted = date.toLocaleDateString('pt-BR');
+    
+    // Dia da semana por extenso
+    var diasSemana = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+    var dayOfWeek = diasSemana[date.getDay()];
+    
+    // Data no formato DD/MM/YYYY
+    var formatted = String(day).padStart(2, '0') + '/' + String(month + 1).padStart(2, '0') + '/' + year;
+    
     return { formatted: formatted, dayOfWeek: dayOfWeek, dateObj: date, key: parts.join('-') };
   }
   
-  // Agrupar leituras por dia e calcular consumo
+  // Agrupar leituras por dia e por tanque
   var dailyData = {};
   var sortedReadings = [...readings].sort(function(a, b) {
-    return formatDateExcel(a.reading_date).key.localeCompare(formatDateExcel(b.reading_date).key);
+    var keyA = formatDateExcel(a.reading_date).key;
+    var keyB = formatDateExcel(b.reading_date).key;
+    return keyA.localeCompare(keyB);
   });
   
   sortedReadings.forEach(function(r) {
     var dateInfo = formatDateExcel(r.reading_date);
+    if (!dateInfo.key) return;
     var dateKey = dateInfo.key;
     
     if (!dailyData[dateKey]) {
-      dailyData[dateKey] = { aviarios: {}, recria: {}, dateFormatted: dateInfo.formatted, dayOfWeek: dateInfo.dayOfWeek };
+      dailyData[dateKey] = { 
+        aviarios: {}, 
+        recria: {}, 
+        dateFormatted: dateInfo.formatted, 
+        dayOfWeek: dateInfo.dayOfWeek 
+      };
     }
+    
+    // Mapear tank_name para chave correta
+    var tankKey = r.tank_name.toLowerCase().includes('recria') ? 'recria' : 'aviarios';
     var timeKey = r.reading_time === '07:00' ? 'am' : 'pm';
-    dailyData[dateKey][r.tank_name][timeKey] = r.reading_value;
+    dailyData[dateKey][tankKey][timeKey] = parseFloat(r.reading_value) || 0;
   });
   
-  // Gerar linhas no formato da planilha oficial
+  // Gerar linhas organizadas por data
   var rows = [];
   var dates = Object.keys(dailyData).sort();
   
@@ -4283,79 +4424,66 @@ function exportWaterReportExcel() {
     var nextDate = dates[idx + 1];
     var nextData = nextDate ? dailyData[nextDate] : null;
     
-    // RECRIA - 7AM-4PM (período de trabalho)
+    // RECRIA - Período de trabalho (7AM-4PM)
     if (data.recria.am !== undefined && data.recria.pm !== undefined) {
-      const consumoM3 = data.recria.pm - data.recria.am;
-      const consumoLitros = consumoM3 * 1000;
-      const ltPorHora = Math.round(consumoLitros / 9); // 9 horas de trabalho
-      rows.push([
-        formattedDate, dayOfWeek, 'RECRIA', '7AM - 4PM',
-        `${Math.round(data.recria.am)} - ${Math.round(data.recria.pm)}`,
-        ltPorHora,
-        consumoLitros.toFixed(0),
-        'TRABALHO'
-      ]);
+      var consumoM3 = Math.max(0, data.recria.pm - data.recria.am);
+      var consumoLitros = Math.round(consumoM3 * 1000);
+      var ltPorHora = Math.round(consumoLitros / 9);
+      var entradaRange = Math.round(data.recria.am) + ' - ' + Math.round(data.recria.pm);
+      rows.push([formattedDate, dayOfWeek, 'RECRIA', '7AM - 4PM', entradaRange, ltPorHora, consumoLitros, 'TRABALHO']);
     }
     
-    // AVIARIOS - 7AM-4PM (período de trabalho)
+    // AVIARIOS - Período de trabalho (7AM-4PM)
     if (data.aviarios.am !== undefined && data.aviarios.pm !== undefined) {
-      const consumoM3 = data.aviarios.pm - data.aviarios.am;
-      const consumoLitros = consumoM3 * 1000;
-      const ltPorHora = Math.round(consumoLitros / 9);
-      rows.push([
-        formattedDate, dayOfWeek, 'AVIARIOS', '7AM - 4PM',
-        `${Math.round(data.aviarios.am)} - ${Math.round(data.aviarios.pm)}`,
-        ltPorHora,
-        consumoLitros.toFixed(0),
-        'TRABALHO'
-      ]);
+      var consumoM3 = Math.max(0, data.aviarios.pm - data.aviarios.am);
+      var consumoLitros = Math.round(consumoM3 * 1000);
+      var ltPorHora = Math.round(consumoLitros / 9);
+      var entradaRange = Math.round(data.aviarios.am) + ' - ' + Math.round(data.aviarios.pm);
+      rows.push([formattedDate, dayOfWeek, 'AVIARIOS', '7AM - 4PM', entradaRange, ltPorHora, consumoLitros, 'TRABALHO']);
     }
     
-    // RECRIA - 24H (7h dia X até 7h dia X+1 = consumo do dia X)
-    if (data.recria.am !== undefined && nextData?.recria?.am !== undefined) {
-      const consumoM3 = nextData.recria.am - data.recria.am;
-      const consumoLitros = consumoM3 * 1000;
-      const ltPorHora = Math.round(consumoLitros / 24);
-      rows.push([
-        formattedDate, dayOfWeek, 'RECRIA', '24H',
-        `${Math.round(data.recria.am)} - ${Math.round(nextData.recria.am)}`,
-        ltPorHora,
-        consumoLitros.toFixed(0),
-        'DIARIO'
-      ]);
+    // RECRIA - Consumo 24H
+    if (data.recria.am !== undefined && nextData && nextData.recria && nextData.recria.am !== undefined) {
+      var consumoM3 = Math.max(0, nextData.recria.am - data.recria.am);
+      var consumoLitros = Math.round(consumoM3 * 1000);
+      var ltPorHora = Math.round(consumoLitros / 24);
+      var entradaRange = Math.round(data.recria.am) + ' - ' + Math.round(nextData.recria.am);
+      rows.push([formattedDate, dayOfWeek, 'RECRIA', '24H', entradaRange, ltPorHora, consumoLitros, 'DIARIO']);
     }
     
-    // AVIARIOS - 24H (7h dia X até 7h dia X+1 = consumo do dia X)
-    if (data.aviarios.am !== undefined && nextData?.aviarios?.am !== undefined) {
-      const consumoM3 = nextData.aviarios.am - data.aviarios.am;
-      const consumoLitros = consumoM3 * 1000;
-      const ltPorHora = Math.round(consumoLitros / 24);
-      rows.push([
-        formattedDate, dayOfWeek, 'AVIARIOS', '24H',
-        `${Math.round(data.aviarios.am)} - ${Math.round(nextData.aviarios.am)}`,
-        ltPorHora,
-        consumoLitros.toFixed(0),
-        'DIARIO'
-      ]);
+    // AVIARIOS - Consumo 24H
+    if (data.aviarios.am !== undefined && nextData && nextData.aviarios && nextData.aviarios.am !== undefined) {
+      var consumoM3 = Math.max(0, nextData.aviarios.am - data.aviarios.am);
+      var consumoLitros = Math.round(consumoM3 * 1000);
+      var ltPorHora = Math.round(consumoLitros / 24);
+      var entradaRange = Math.round(data.aviarios.am) + ' - ' + Math.round(nextData.aviarios.am);
+      rows.push([formattedDate, dayOfWeek, 'AVIARIOS', '24H', entradaRange, ltPorHora, consumoLitros, 'DIARIO']);
     }
   });
   
-  // Criar CSV no formato oficial
-  const headers = ['DATA', 'DIA/SEMANA', 'CAIXA', 'HORAS', 'ENTRADA H (M³)', 'LT POR HORA', 'LT TOTAL', 'PERIODO'];
+  // Criar CSV com cabeçalhos claros
+  var headers = ['DATA', 'DIA/SEMANA', 'CAIXA', 'HORAS', 'ENTRADA (M3)', 'LT POR HORA', 'LT TOTAL', 'PERIODO'];
   
-  const csv = [
-    headers.join(';'),
-    ...rows.map(row => row.join(';'))
-  ].join('\n');
+  var csvContent = headers.join(';') + '\n';
+  rows.forEach(function(row) {
+    csvContent += row.join(';') + '\n';
+  });
   
   // Criar blob e baixar
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
+  var blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `CONTROLE_DE_AGUA_GRANJA_VITTA_${new Date().toISOString().split('T')[0]}.csv`;
+  
+  // Nome do arquivo com data atual
+  var today = new Date();
+  var fileName = 'CONTROLE_DE_AGUA_GRANJA_VITTA_' + 
+    today.getFullYear() + '-' + 
+    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(today.getDate()).padStart(2, '0') + '.csv';
+  link.download = fileName;
   link.click();
   
-  showNotification('Planilha exportada com sucesso!', 'success');
+  showNotification('Planilha exportada com sucesso! ' + rows.length + ' registros.', 'success');
   
   // Também gerar relatório HTML interativo
   generateInteractiveReport(rows, dailyData, dates);
