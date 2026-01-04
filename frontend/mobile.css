@@ -217,6 +217,157 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
+     OS (ORDENS DE SERVIÇO) MOBILE - COMPLETE FIX
+     ======================================== */
+  .os-control-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    text-align: center;
+    border-radius: 14px;
+  }
+
+  .os-control-header::before {
+    width: 150px;
+    height: 150px;
+    top: -30%;
+    right: -10%;
+  }
+
+  .os-header-left {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .os-icon-badge {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+  }
+
+  .os-icon-badge svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .os-title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .os-subtitle {
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .os-header-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-os-filter {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    padding: 10px 12px;
+    font-size: 12px;
+    justify-content: center;
+  }
+
+  .btn-os-create {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 13px;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  /* OS Stats Grid Mobile */
+  .os-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .os-stat-card {
+    padding: 14px;
+    gap: 10px;
+    border-radius: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .os-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .os-stat-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .os-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .os-stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  /* OS Main Card Mobile */
+  .os-main-card {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .os-card-header {
+    padding: 14px;
+  }
+
+  .os-card-header h3 {
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .os-card-header h3 svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* OS Table Mobile */
+  #os-view .table-container {
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .os-modern-table {
+    min-width: 700px;
+    font-size: 12px;
+  }
+
+  .os-modern-table th,
+  .os-modern-table td {
+    padding: 10px 8px;
+    white-space: nowrap;
+  }
+
+  .os-modern-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ========================================
      HEADER RESPONSIVE
      ======================================== */
   .header {
@@ -1126,7 +1277,7 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
-     CONFIGURAÇÕES (SETTINGS) RESPONSIVE
+     CONFIGURAÇÕES (SETTINGS) RESPONSIVE - MODERN
      ======================================== */
   .settings-section {
     padding: 16px;
@@ -1151,6 +1302,149 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
 
   .settings-description {
     font-size: 11px;
+  }
+
+  /* New Modern Settings Styles */
+  .settings-premium-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px 16px;
+    gap: 12px;
+  }
+
+  .settings-header-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    margin: 0 auto;
+  }
+
+  .settings-header-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .settings-header-text h2 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .settings-header-text p {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .settings-grid-modern {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .settings-card {
+    border-radius: 14px;
+  }
+
+  .settings-card-header {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .settings-card-header h3 {
+    font-size: 14px;
+  }
+
+  .settings-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .settings-card-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .settings-card-body {
+    padding: 16px;
+  }
+
+  .settings-field {
+    margin-bottom: 14px;
+  }
+
+  .settings-field label {
+    font-size: 11px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .settings-field input {
+    padding: 11px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .settings-toggle-item {
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+  }
+
+  .settings-toggle-info {
+    gap: 10px;
+  }
+
+  .settings-toggle-info span {
+    font-size: 13px;
+  }
+
+  .settings-toggle-info small {
+    font-size: 10px;
+  }
+
+  .settings-btn {
+    padding: 11px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .settings-buttons-stack {
+    gap: 8px;
+  }
+
+  .about-logo-section h4 {
+    font-size: 24px;
+    letter-spacing: 4px;
+  }
+
+  .about-info-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .about-info-item {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .about-info-item:last-child {
+    border-bottom: none;
+  }
+
+  .about-developer {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .developer-info {
+    padding: 10px;
+  }
+
+  .about-copyright {
+    font-size: 10px;
+    margin-top: 14px;
   }
 
   /* ========================================
@@ -1448,7 +1742,7 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
      ======================================== */
   .forum-header {
     padding: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     border-radius: 14px;
   }
   
@@ -1460,19 +1754,19 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 14px;
+    gap: 12px;
   }
   
   .forum-icon-badge {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     margin: 0 auto;
   }
   
   .forum-icon-badge svg {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
   }
   
   .forum-title-group {
@@ -1481,64 +1775,64 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
   
   .forum-title {
-    font-size: 22px;
-    margin-bottom: 4px;
+    font-size: 20px;
+    margin-bottom: 2px;
   }
   
   .forum-subtitle {
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.7;
   }
   
   .forum-stats {
     width: 100%;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
   }
   
   .forum-stat {
     flex: 1;
-    max-width: 120px;
-    padding: 12px;
-    border-radius: 12px;
+    max-width: 100px;
+    padding: 10px 8px;
+    border-radius: 10px;
     text-align: center;
   }
   
   .forum-stat-value {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     display: block;
   }
   
   .forum-stat-label {
-    font-size: 10px;
+    font-size: 9px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     opacity: 0.7;
   }
   
   .forum-header-actions {
     width: 100%;
-    padding-top: 16px;
-    margin-top: 12px;
+    padding-top: 12px;
+    margin-top: 8px;
     border-top: 1px solid rgba(255,255,255,0.1);
   }
   
   .forum-new-post-btn {
     width: 100%;
     justify-content: center;
-    padding: 14px 20px;
-    font-size: 14px;
+    padding: 12px 18px;
+    font-size: 13px;
     font-weight: 600;
-    border-radius: 12px;
-    gap: 10px;
-    margin-top: 8px;
+    border-radius: 10px;
+    gap: 8px;
+    margin-top: 0;
   }
   
   .forum-new-post-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
   
   /* Toolbar do Fórum - Filtros */
@@ -1616,7 +1910,7 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     color: var(--text-primary);
   }
   
-  /* Posts do Fórum */
+  /* Posts do Fórum - COMPACTO E ORGANIZADO */
   .forum-posts-container {
     min-height: 200px;
   }
@@ -1624,29 +1918,31 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   .forum-posts-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
   
   .forum-post {
     position: relative;
-    flex-direction: column;
-    padding: 16px;
-    padding-left: 60px;
-    gap: 8px;
-    border-radius: 14px;
+    flex-direction: row;
+    padding: 14px;
+    gap: 12px;
+    border-radius: 12px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
+    display: flex;
+    align-items: flex-start;
   }
   
   .forum-post-avatar {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
     font-weight: 700;
-    border-radius: 12px;
-    position: absolute;
-    top: 16px;
-    left: 12px;
+    border-radius: 10px;
+    position: relative;
+    top: 0;
+    left: 0;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1657,6 +1953,7 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   .forum-post-content {
     padding-left: 0;
     min-width: 0;
+    flex: 1;
   }
   
   .forum-post-header {
@@ -1929,6 +2226,143 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   /* ========================================
      CHECKLIST MOBILE - COMPLETE FIX
      ======================================== */
+  
+  /* Checklist Header Mobile */
+  .checklist-control-header {
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    text-align: center;
+    border-radius: 14px;
+  }
+
+  .checklist-control-header::before {
+    width: 150px;
+    height: 150px;
+    top: -30%;
+    right: -10%;
+  }
+
+  .checklist-header-left {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .checklist-icon-badge {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+
+  .checklist-icon-badge svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .checklist-title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .checklist-subtitle {
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .checklist-header-actions {
+    width: 100%;
+  }
+
+  .btn-checklist-action {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  /* Checklist Stats Grid Mobile */
+  .checklist-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .checklist-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+
+  .checklist-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .checklist-stat-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .checklist-stat-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .checklist-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .checklist-stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Checklist Main Card Mobile */
+  .checklist-main-card {
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    margin-bottom: 16px;
+  }
+
+  .checklist-card-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .checklist-card-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .checklist-card-header h3 svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .checklist-card-header p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  
   #checklists-view.active {
     display: block !important;
     visibility: visible !important;
