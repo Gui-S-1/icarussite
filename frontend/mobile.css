@@ -1419,18 +1419,15 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   #checklists-list {
-    display: block !important;
     padding: 14px;
-    visibility: visible !important;
   }
 
-  /* Garantir que todo conteúdo do checklist apareça */
-  #checklists-view * {
+  /* Garantir que todo conteúdo do checklist apareça quando ativo */
+  #checklists-view.active * {
     visibility: visible;
   }
 
   .checklist-item-card {
-    display: block !important;
     padding: 14px !important;
     margin-bottom: 12px !important;
     border-radius: 12px !important;
@@ -1448,10 +1445,8 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     flex-direction: column;
   }
 
-  /* Checklist Main Card Mobile */
+  /* Checklist Main Card Mobile - apenas estilos, não forçar display */
   .checklist-main-card {
-    display: block !important;
-    visibility: visible !important;
     padding: 14px;
   }
 
@@ -1460,10 +1455,9 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     margin-top: 8px;
   }
 
-  /* Lista de checklists vazia */
-  #checklists-list > div {
-    display: block !important;
-    visibility: visible !important;
+  /* Lista de checklists vazia - remover regras de display forçado */
+  #checklists-view.active #checklists-list > div {
+    display: block;
   }
 
   /* ========================================
@@ -1525,21 +1519,15 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
-     CHECKLIST VIEW - GARANTIR VISIBILIDADE
+     CHECKLIST VIEW - VISIBILIDADE APENAS QUANDO ATIVA
      ======================================== */
-  #checklists-view {
-    display: block !important;
-    visibility: visible !important;
-  }
-
   #checklists-view.active {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
 
-  #checklists-view > * {
-    display: block !important;
+  #checklists-view.active > * {
     visibility: visible !important;
   }
 

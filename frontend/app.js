@@ -4466,7 +4466,16 @@ function exportWaterReportExcel() {
   
   var csvContent = headers.join(';') + '\n';
   rows.forEach(function(row) {
-    csvContent += row.join(';') + '\n';
+    // Formatar a data como texto puro para o Excel não interpretar errado
+    // Prefixar com = para for\u00e7ar texto no Excel
+    var formattedRow = row.map(function(cell, idx) {
+      if (idx === 0 && cell) {
+        // Coluna DATA - formatar como texto puro entre aspas
+        return '"' + cell + '"';
+      }
+      return cell;
+    });
+    csvContent += formattedRow.join(';') + '\n';
   });
   
   // Criar blob e baixar
