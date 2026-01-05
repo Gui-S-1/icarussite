@@ -3528,7 +3528,7 @@ async function loadWaterControl() {
       inputSection.style.display = canEdit ? 'block' : 'none';
     }
     
-    // Definir data de hoje no input (formato local correto)
+    // Definir data de hoje no input APENAS se estiver vazio (formato local correto)
     if (canEdit) {
       const now = new Date();
       const year = now.getFullYear();
@@ -3537,7 +3537,7 @@ async function loadWaterControl() {
       const today = `${year}-${month}-${day}`;
       
       const dateInput = document.getElementById('water-reading-date');
-      if (dateInput) dateInput.value = today;
+      if (dateInput && !dateInput.value) dateInput.value = today;
       
       // Atualizar horário atual
       updateCurrentTime();
@@ -5019,7 +5019,7 @@ async function loadDieselControl() {
       formSection.classList.toggle('hidden', !state.canEditDiesel);
     }
     
-    // Definir data de hoje no input
+    // Definir data de hoje no input APENAS se estiver vazio
     var now = new Date();
     var year = now.getFullYear();
     var month = String(now.getMonth() + 1).padStart(2, '0');
@@ -5027,7 +5027,7 @@ async function loadDieselControl() {
     var today = year + '-' + month + '-' + day;
     
     var dateInput = document.getElementById('diesel-date');
-    if (dateInput) dateInput.value = today;
+    if (dateInput && !dateInput.value) dateInput.value = today;
     
     // Preencher dropdown de meses (últimos 12 meses)
     populateDieselMonthSelect();
