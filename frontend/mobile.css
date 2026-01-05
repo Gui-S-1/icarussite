@@ -494,6 +494,28 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     padding: 12px;
   }
 
+  /* Resumo do Período - Grid Responsivo */
+  .summary-content {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .summary-item {
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+  }
+
+  .summary-value {
+    font-size: 20px !important;
+  }
+
+  .summary-label {
+    font-size: 11px !important;
+  }
+
   /* ========================================
      CARDS RESPONSIVE
      ======================================== */
@@ -1734,7 +1756,7 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
-     CHECKLIST VIEW - VISIBILIDADE APENAS QUANDO ATIVA
+     CHECKLIST VIEW - VISIBILIDADE COMPLETA QUANDO ATIVA
      ======================================== */
   #checklists-view.active {
     display: block !important;
@@ -1743,7 +1765,29 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   #checklists-view.active > * {
+    display: block !important;
     visibility: visible !important;
+  }
+
+  #checklists-view.active .checklist-control-header {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  #checklists-view.active .checklist-stats-grid {
+    display: grid !important;
+  }
+
+  #checklists-view.active .checklist-main-card {
+    display: block !important;
+  }
+
+  #checklists-view.active #checklists-list {
+    display: block !important;
+  }
+
+  #checklists-view.active .checklist-item-card {
+    display: block !important;
   }
 
   /* Esconder elementos não utilizados do checklist antigo */
