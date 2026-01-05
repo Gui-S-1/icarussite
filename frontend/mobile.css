@@ -386,6 +386,115 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
+     DASHBOARD PREMIUM HEADER MOBILE
+     ======================================== */
+  .dashboard-premium-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .dashboard-header-left {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dashboard-icon-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+  }
+
+  .dashboard-title {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .dashboard-subtitle {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .dashboard-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .dashboard-filter-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .btn-dashboard-export {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  /* Dashboard Stats Grid Mobile */
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .dashboard-stat-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 14px 10px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .dashboard-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+
+  .dashboard-stat-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .dashboard-stat-value {
+    font-size: 24px;
+  }
+
+  .dashboard-stat-label {
+    font-size: 11px;
+  }
+
+  /* Dashboard Panels Mobile */
+  .dashboard-panels {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-panel {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .dashboard-panel-header {
+    padding: 14px;
+    font-size: 14px;
+  }
+
+  .dash-chart,
+  .dash-activity {
+    padding: 12px;
+  }
+
+  /* ========================================
      CARDS RESPONSIVE
      ======================================== */
   .card {
@@ -1098,6 +1207,112 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
 
   .compra-item-qty {
     font-size: 12px;
+  }
+
+  /* ========================================
+     COMPRAS PREMIUM HEADER MOBILE
+     ======================================== */
+  .compras-premium-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .compras-header-left {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .compras-icon-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+  }
+
+  .compras-title {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .compras-subtitle {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .compras-header-actions {
+    width: 100%;
+  }
+
+  .btn-compras-new {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+
+  /* Compras Stats Grid Mobile */
+  .compras-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .compras-stat-card {
+    padding: 14px 12px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .compras-stat-header {
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .compras-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .compras-stat-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .compras-stat-value {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .compras-stat-label {
+    font-size: 11px;
+  }
+
+  /* Compras Main Card Mobile */
+  .compras-main-card {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .compras-card-header {
+    padding: 14px 16px;
+  }
+
+  .compras-card-header h3 {
+    font-size: 15px;
+    gap: 8px;
+  }
+
+  #compras-table {
+    font-size: 12px;
+  }
+
+  #compras-table th,
+  #compras-table td {
+    padding: 10px 8px;
   }
 
   /* ========================================
