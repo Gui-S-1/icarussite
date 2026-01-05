@@ -3841,7 +3841,17 @@ function renderWaterChart() {
     return dateStr.split('T')[0];
   }
   
+  // Função para calcular o dia anterior
+  function getPreviousDay(dateKey) {
+    var parts = dateKey.split('-');
+    var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+    d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  
   // Calcular consumo diário a partir das leituras 7h
+  // O consumo do DIA X é a diferença: Leitura 7h do dia (X+1) - Leitura 7h do dia X
+  // Então atribuímos o consumo ao DIA ANTERIOR da leitura nova
   function calcularConsumos(tank) {
     var tankReadings = readings
       .filter(function(r) { return r.tank_name === tank && r.reading_time === '07:00'; })
@@ -3851,8 +3861,9 @@ function renderWaterChart() {
     for (var i = 1; i < tankReadings.length; i++) {
       var diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
       if (diff >= 0) {
-        var dateKey = getDateKey(tankReadings[i].reading_date);
-        consumos[dateKey] = diff;
+        // Consumo é atribuído ao dia ANTERIOR (dia X, não dia X+1)
+        var consumptionDate = getDateKey(tankReadings[i-1].reading_date);
+        consumos[consumptionDate] = diff;
       }
     }
     return consumos;
@@ -4028,6 +4039,12 @@ function renderWaterHistory() {
       }
     }
     
+    // Botão de delete (só para admin ou quem tem permissão)
+    const canDelete = state.user && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all'));
+    const deleteBtn = canDelete 
+      ? '<button class="delete-reading-btn" onclick="deleteWaterReading(\'' + reading.id + '\')" title="Excluir leitura">×</button>'
+      : '';
+    
     return '<tr class="' + dayClass + '">' +
       '<td>' + date + '</td>' +
       '<td><span style="color: var(--text-secondary); font-size: 11px;">' + dayOfWeek + '</span></td>' +
@@ -4037,6 +4054,7 @@ function renderWaterHistory() {
       '<td>' + consumption + '</td>' +
       '<td>' + (reading.recorded_by_name || '-') + '</td>' +
       '<td>' + (reading.notes || '-') + '</td>' +
+      '<td class="delete-cell">' + deleteBtn + '</td>' +
       '</tr>';
   }).join('');
 }
@@ -4044,6 +4062,34 @@ function renderWaterHistory() {
 // Filtrar histórico
 function filterWaterHistory() {
   renderWaterHistory();
+}
+
+// Excluir leitura de água
+async function deleteWaterReading(id) {
+  if (!confirm('Tem certeza que deseja excluir esta leitura?')) return;
+  
+  try {
+    const response = await fetch(API_URL + '/water-readings/' + id, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + state.token
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.ok) {
+      state.waterReadings = data.readings;
+      renderWaterHistory();
+      renderWaterChart();
+      showNotification('Leitura excluída com sucesso!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao excluir leitura', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao excluir leitura:', error);
+    showNotification('Erro ao excluir leitura', 'error');
+  }
 }
 
 // Verificar alertas
@@ -5426,6 +5472,12 @@ function renderDieselHistory() {
     var typeClass = r.record_type === 'entrada' ? 'badge-success' : 'badge-danger';
     var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'Saída';
     
+    // Botão de delete (só para admin ou quem tem permissão)
+    var canDelete = state.user && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all') || state.user.roles.includes('diesel'));
+    var deleteBtn = canDelete 
+      ? '<button class="delete-reading-btn" onclick="deleteDieselRecord(\'' + r.id + '\')" title="Excluir registro">×</button>'
+      : '';
+    
     html += '<tr>';
     html += '<td>' + formattedDate + '</td>';
     html += '<td><span style="color: var(--text-secondary); font-size: 11px;">' + diaSemana + '</span></td>';
@@ -5433,6 +5485,7 @@ function renderDieselHistory() {
     html += '<td><strong>' + (parseFloat(r.quantity) || 0).toLocaleString('pt-BR') + ' L</strong></td>';
     html += '<td>' + (r.reason || '-') + '</td>';
     html += '<td>' + (r.recorded_by_name || '-') + '</td>';
+    html += '<td class="delete-cell">' + deleteBtn + '</td>';
     html += '</tr>';
   });
   
@@ -5494,6 +5547,35 @@ async function saveDieselRecord() {
   } catch (error) {
     console.error('Erro ao salvar registro de diesel:', error);
     showNotification('Erro ao salvar registro', 'error');
+  }
+}
+
+// Excluir registro de diesel
+async function deleteDieselRecord(id) {
+  if (!confirm('Tem certeza que deseja excluir este registro de diesel?')) return;
+  
+  try {
+    var response = await fetch(API_URL + '/diesel-records/' + id, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + state.token
+      }
+    });
+    
+    var data = await response.json();
+    
+    if (data.ok) {
+      state.dieselRecords = data.records;
+      renderDieselHistory();
+      // Recarregar estatísticas
+      await loadDieselControl();
+      showNotification('Registro de diesel excluído com sucesso!', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao excluir registro', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao excluir registro de diesel:', error);
+    showNotification('Erro ao excluir registro', 'error');
   }
 }
 

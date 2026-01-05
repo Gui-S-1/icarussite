@@ -3234,6 +3234,30 @@
       font-size: 13px;
     }
 
+    /* Botão de delete nas tabelas */
+    .delete-reading-btn {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 4px;
+      opacity: 0.6;
+      transition: all 0.2s;
+    }
+
+    .delete-reading-btn:hover {
+      opacity: 1;
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .delete-cell {
+      text-align: center;
+      padding: 0 !important;
+    }
+
     .consumption-positive {
       color: #10b981;
       font-weight: 600;
@@ -6352,6 +6376,7 @@
                     <th id="consumption-column-header">Consumo 24h</th>
                     <th>Registrado por</th>
                     <th>Obs</th>
+                    <th style="width: 40px;"></th>
                   </tr>
                 </thead>
                 <tbody id="water-history-tbody"></tbody>
@@ -6548,6 +6573,7 @@
                     <th>Quantidade</th>
                     <th>Motivo</th>
                     <th>Registrado por</th>
+                    <th style="width: 40px;"></th>
                   </tr>
                 </thead>
                 <tbody id="diesel-history-tbody"></tbody>
