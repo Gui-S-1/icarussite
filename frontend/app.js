@@ -4052,7 +4052,7 @@ function renderWaterHistory() {
       '<td><span class="tank-badge ' + tankClass + '">' + tankLabel + '</span></td>' +
       '<td><strong>' + reading.reading_value.toFixed(0) + '</strong></td>' +
       '<td>' + consumption + '</td>' +
-      '<td>' + (reading.recorded_by_name || '-') + '</td>' +
+      '<td>' + (reading.temperature !== null ? reading.temperature + '°C' : '-') + '</td>' +
       '<td>' + (reading.notes || '-') + '</td>' +
       '<td class="delete-cell">' + deleteBtn + '</td>' +
       '</tr>';
@@ -4145,6 +4145,7 @@ async function saveWaterReading() {
   const time = document.getElementById('water-reading-time').value;
   const aviariosValue = document.getElementById('water-aviarios-value').value;
   const recriaValue = document.getElementById('water-recria-value').value;
+  const temperatureValue = document.getElementById('water-temperature').value;
   const notes = document.getElementById('water-reading-notes').value;
   
   if (!date || !time) {
@@ -4156,6 +4157,8 @@ async function saveWaterReading() {
     showNotification('Preencha pelo menos uma leitura', 'error');
     return;
   }
+  
+  const temperature = temperatureValue ? parseFloat(temperatureValue) : null;
   
   try {
     // Salvar leitura de Aviários
@@ -4171,6 +4174,7 @@ async function saveWaterReading() {
           reading_value: parseFloat(aviariosValue),
           reading_time: time,
           reading_date: date,
+          temperature: temperature,
           notes: notes
         })
       });
@@ -4189,6 +4193,7 @@ async function saveWaterReading() {
           reading_value: parseFloat(recriaValue),
           reading_time: time,
           reading_date: date,
+          temperature: temperature,
           notes: notes
         })
       });
@@ -4202,6 +4207,7 @@ async function saveWaterReading() {
     // Limpar campos
     document.getElementById('water-aviarios-value').value = '';
     document.getElementById('water-recria-value').value = '';
+    document.getElementById('water-temperature').value = '';
     document.getElementById('water-reading-notes').value = '';
     
     // Recarregar dados
