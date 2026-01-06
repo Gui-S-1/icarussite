@@ -762,21 +762,18 @@
 
     .view {
       display: none !important;
-      visibility: hidden;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      opacity: 0;
-      pointer-events: none;
+      height: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
     }
 
     .view.active {
       display: block !important;
-      visibility: visible;
-      position: relative;
-      opacity: 1;
-      pointer-events: auto;
+      height: auto !important;
+      overflow: visible !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
 
     /* Cards */
