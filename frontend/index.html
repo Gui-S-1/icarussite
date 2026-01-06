@@ -757,15 +757,26 @@
       flex: 1;
       overflow-y: auto;
       padding: 24px;
+      position: relative;
     }
 
     .view {
       display: none !important;
-      position: relative;
+      visibility: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .view.active {
       display: block !important;
+      visibility: visible;
+      position: relative;
+      opacity: 1;
+      pointer-events: auto;
     }
 
     /* Cards */

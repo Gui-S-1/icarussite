@@ -137,23 +137,23 @@ function navigateTo(view) {
   // Update active view - ESCONDER TODAS primeiro
   document.querySelectorAll('.view').forEach(v => {
     v.classList.remove('active');
-    v.style.display = 'none'; // Forçar esconder
   });
 
   const activeView = document.getElementById(`${view}-view`);
   console.log('View encontrada:', activeView);
   if (activeView) {
     activeView.classList.add('active');
-    activeView.style.display = 'block'; // Forçar mostrar
     console.log('View ativada com sucesso');
   } else {
     console.error('View não encontrada para:', view);
   }
 
-  // SCROLL PARA O TOPO ao trocar de view
+  // SCROLL PARA O TOPO ao trocar de view - IMPORTANTE!
+  const contentContainer = document.querySelector('.content');
+  if (contentContainer) {
+    contentContainer.scrollTop = 0;
+  }
   window.scrollTo(0, 0);
-  document.querySelector('.main-content')?.scrollTo(0, 0);
-  document.querySelector('.content')?.scrollTo(0, 0);
 
   loadViewData(view).catch(err => console.error('Erro ao carregar view:', err));
 }
