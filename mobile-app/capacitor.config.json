@@ -1,0 +1,19 @@
+{
+  "appId": "com.granjavitta.icarus",
+  "appName": "Icarus",
+  "webDir": "../frontend",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#d4af37"
+    }
+  },
+  "server": {
+    "url": "https://icarus-sys.vercel.app",
+    "cleartext": true
+  }
+}

@@ -34,12 +34,89 @@ const state = {
   // Relatórios
   reports: [],
   reportCategory: 'all',
-  currentReport: null
+  currentReport: null,
+  // Offline/Online status
+  isOnline: navigator.onLine
 };
 
 const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
   ? window.ICARUS_API_URL
   : 'http://localhost:4000';
+
+// ========================================
+// CACHE OFFLINE - Salva dados localmente
+// ========================================
+
+const CACHE_KEYS = {
+  orders: 'icarus_cache_orders',
+  purchases: 'icarus_cache_purchases',
+  inventory: 'icarus_cache_inventory',
+  preventives: 'icarus_cache_preventives',
+  waterReadings: 'icarus_cache_water',
+  dieselRecords: 'icarus_cache_diesel'
+};
+
+// Salvar dados no localStorage (comprimido)
+function saveToCache(key, data) {
+  try {
+    const cacheData = {
+      timestamp: Date.now(),
+      data: data
+    };
+    localStorage.setItem(key, JSON.stringify(cacheData));
+  } catch (e) {
+    console.warn('Erro ao salvar cache:', e);
+    // Se localStorage cheio, limpar caches antigos
+    clearOldCache();
+  }
+}
+
+// Carregar dados do cache
+function loadFromCache(key) {
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+    const parsed = JSON.parse(cached);
+    // Cache válido por 24 horas
+    if (Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsed.data;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Limpar caches antigos
+function clearOldCache() {
+  Object.values(CACHE_KEYS).forEach(key => {
+    try {
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp > 48 * 60 * 60 * 1000) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (e) {}
+  });
+}
+
+// Detectar mudança online/offline
+window.addEventListener('online', () => {
+  state.isOnline = true;
+  showNotification('🌐 Conectado! Atualizando dados...', 'success');
+  // Recarregar dados quando voltar online
+  if (state.token) {
+    loadViewData(state.currentView);
+  }
+});
+
+window.addEventListener('offline', () => {
+  state.isOnline = false;
+  showNotification('📴 Modo offline - usando dados salvos', 'warning');
+});
 
 // ========================================
 // SECURITY: Sanitization Functions
@@ -78,6 +155,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (savedUsername) {
     const userInput = document.getElementById('username-input');
     if (userInput) userInput.value = savedUsername;
+  }
+  
+  // Carregar senha salva se existir
+  const savedPassword = localStorage.getItem('icarus_password_enc');
+  if (savedPassword && savedUsername) {
+    const passInput = document.getElementById('password-input');
+    if (passInput) passInput.value = atob(savedPassword); // Decodificar base64
+    const rememberCheck = document.getElementById('remember-login');
+    if (rememberCheck) rememberCheck.checked = true;
   }
 
   if (savedToken && savedUser) {
@@ -226,6 +312,10 @@ async function validateKey() {
     if (data.ok) {
       state.keyId = data.key_id;
       localStorage.setItem('icarus_key', key);
+      // Salvar nome da empresa se retornado
+      if (data.company_name) {
+        localStorage.setItem('icarus_company', data.company_name);
+      }
       document.getElementById('key-validation-form').classList.add('hidden');
       document.getElementById('login-form').classList.remove('hidden');
       errorDiv.classList.add('hidden');
@@ -266,13 +356,21 @@ async function login() {
     
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Salvar senha se checkbox marcado
+      const rememberCheck = document.getElementById('remember-login');
+      if (rememberCheck && rememberCheck.checked) {
+        localStorage.setItem('icarus_password_enc', btoa(password)); // Codificar em base64
+      } else {
+        localStorage.removeItem('icarus_password_enc');
+      }
 
       // Check if salaovos user - show operator selection popup
       if (username.toLowerCase() === 'salaovos') {
-        window.afterUserSelection = showApp;
+        window.afterUserSelection = showAppWithWelcome;
         openUserSelectionPopup();
       } else {
-        showApp();
+        showAppWithWelcome();
       }
     } else {
       showError(data.error || 'Login inválido');
@@ -282,8 +380,37 @@ async function login() {
   }
 }
 
+// Mostrar tela de boas-vindas animada antes do app
+async function showAppWithWelcome() {
+  // Esconder tela de auth
+  document.getElementById('auth-screen').classList.add('hidden');
+  
+  // Preparar tela de boas-vindas
+  const welcomeScreen = document.getElementById('welcome-screen');
+  const welcomeUserName = document.getElementById('welcome-user-name');
+  const welcomeCompanyName = document.getElementById('welcome-company-name');
+  
+  // Pegar nome do usuário e empresa
+  const userName = state.user?.name || 'Usuário';
+  const companyName = localStorage.getItem('icarus_company') || 'Granja Vitta';
+  
+  if (welcomeUserName) welcomeUserName.textContent = userName;
+  if (welcomeCompanyName) welcomeCompanyName.textContent = companyName;
+  
+  // Mostrar tela de boas-vindas
+  welcomeScreen.classList.remove('hidden');
+  
+  // Aguardar animação (3.5 segundos) e depois mostrar o app
+  setTimeout(() => {
+    welcomeScreen.classList.add('hidden');
+    showApp();
+  }, 3500);
+}
+
 async function showApp() {
   document.getElementById('auth-screen').classList.add('hidden');
+  const welcomeScreen = document.getElementById('welcome-screen');
+  if (welcomeScreen) welcomeScreen.classList.add('hidden');
   document.getElementById('app-screen').style.display = 'flex';
 
   // Setup user info
@@ -822,6 +949,17 @@ function renderProductivityChartLegacy(filteredOrders = state.orders) {
 // Orders
 async function loadOrders() {
   try {
+    // Tentar carregar do cache primeiro se offline
+    if (!state.isOnline) {
+      const cached = loadFromCache(CACHE_KEYS.orders);
+      if (cached) {
+        state.orders = cached;
+        renderOrdersTable();
+        updateOSBadge();
+        return;
+      }
+    }
+    
     const response = await fetch(`${API_URL}/orders`, {
       headers: {
         'Authorization': `Bearer ${state.token}`
@@ -831,11 +969,19 @@ async function loadOrders() {
     const data = await response.json();
     if (data.ok) {
       state.orders = data.orders;
+      saveToCache(CACHE_KEYS.orders, data.orders); // Salvar no cache
       renderOrdersTable();
       updateOSBadge(); // Atualizar badge no header
     }
   } catch (error) {
     console.error('Erro ao carregar OS:', error);
+    // Fallback para cache em caso de erro
+    const cached = loadFromCache(CACHE_KEYS.orders);
+    if (cached) {
+      state.orders = cached;
+      renderOrdersTable();
+      updateOSBadge();
+    }
   }
 }
 
@@ -1479,23 +1625,9 @@ async function backupOrdersToTXT() {
 }
 
 // History
-// Inventory (Almoxarifado)
-async function loadInventory() {
-  try {
-    const response = await fetch(`${API_URL}/inventory`, {
-      headers: { 'Authorization': `Bearer ${state.token}` }
-    });
-    const data = await response.json();
-    if (data.ok) {
-      state.inventory = data.items || [];
-      renderInventory();
-    }
-  } catch (error) {
-    console.error('Erro ao carregar inventário:', error);
-  }
-}
+// NOTA: loadInventory() real está mais abaixo no arquivo
 
-function renderInventory() {
+function renderInventoryOld() {
   const view = document.getElementById('almoxarifado-view');
   const lowStock = state.inventory.filter(i => i.quantity < i.min_stock);
   
@@ -1547,35 +1679,7 @@ function renderInventory() {
   view.innerHTML = html;
 }
 
-// Purchases (Compras)
-async function loadPurchases() {
-  // TODO: Criar endpoint /purchases no backend
-  const view = document.getElementById('compras-view');
-  view.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">Requisições de Compra</h3>
-        <button class="btn-small btn-primary" onclick="alert('Nova requisição em breve')">+ Nova Requisição</button>
-      </div>
-      <p style="color: var(--text-secondary);">Módulo de compras será implementado em breve...</p>
-    </div>
-  `;
-}
-
-// Preventives (Preventivas)
-async function loadPreventives() {
-  // TODO: Criar endpoint /preventives no backend
-  const view = document.getElementById('preventivas-view');
-  view.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">Manutenções Preventivas</h3>
-        <button class="btn-small btn-primary" onclick="alert('Nova preventiva em breve')">+ Nova Preventiva</button>
-      </div>
-      <p style="color: var(--text-secondary);">Módulo de preventivas será implementado em breve...</p>
-    </div>
-  `;
-}
+// NOTA: Funções loadPurchases() e loadPreventives() reais estão mais abaixo no arquivo
 
 // Reports (Relatórios)
 async function loadReports() {
@@ -1821,6 +1925,17 @@ function formatDate(dateString) {
 // Almoxarifado Module
 async function loadInventory() {
   try {
+    // Se offline, carregar do cache
+    if (!state.isOnline) {
+      const cached = loadFromCache(CACHE_KEYS.inventory);
+      if (cached) {
+        state.inventory = cached;
+        renderInventoryTable();
+        showNotification('Modo offline - dados do cache', 'warning');
+        return;
+      }
+    }
+
     const response = await fetch(`${API_URL}/inventory`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
@@ -1828,11 +1943,20 @@ async function loadInventory() {
     const data = await response.json();
     if (data.ok) {
       state.inventory = data.items;
+      saveToCache(CACHE_KEYS.inventory, data.items); // Salvar no cache
       renderInventoryTable();
     }
   } catch (error) {
     console.error('Erro ao carregar almoxarifado:', error);
-    showNotification('Erro ao carregar almoxarifado', 'error');
+    // Tentar carregar do cache em caso de erro
+    const cached = loadFromCache(CACHE_KEYS.inventory);
+    if (cached) {
+      state.inventory = cached;
+      renderInventoryTable();
+      showNotification('Sem conexão - usando dados salvos', 'warning');
+    } else {
+      showNotification('Erro ao carregar almoxarifado', 'error');
+    }
   }
 }
 
@@ -2194,6 +2318,18 @@ async function backupInventoryToTXT() {
 // Compras Module
 async function loadPurchases() {
   try {
+    // Se offline, carregar do cache
+    if (!state.isOnline) {
+      const cached = loadFromCache(CACHE_KEYS.purchases);
+      if (cached) {
+        state.purchases = cached;
+        renderPurchasesTable();
+        updateFinancialDashboard();
+        showNotification('Modo offline - dados do cache', 'warning');
+        return;
+      }
+    }
+
     const response = await fetch(`${API_URL}/purchases`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
@@ -2201,13 +2337,23 @@ async function loadPurchases() {
     const data = await response.json();
     if (data.ok) {
       state.purchases = data.purchases;
+      saveToCache(CACHE_KEYS.purchases, data.purchases); // Salvar no cache
       renderPurchasesTable();
       updateFinancialDashboard();
       // await backupPurchasesToTXT(); // Desabilitado temporariamente
     }
   } catch (error) {
     console.error('Erro ao carregar compras:', error);
-    showNotification('Erro ao carregar compras', 'error');
+    // Tentar carregar do cache em caso de erro
+    const cached = loadFromCache(CACHE_KEYS.purchases);
+    if (cached) {
+      state.purchases = cached;
+      renderPurchasesTable();
+      updateFinancialDashboard();
+      showNotification('Sem conexão - usando dados salvos', 'warning');
+    } else {
+      showNotification('Erro ao carregar compras', 'error');
+    }
   }
 }
 
@@ -2642,6 +2788,18 @@ async function backupPurchasesToTXT() {
 // Preventivas Module
 async function loadPreventives() {
   try {
+    // Se offline, carregar do cache
+    if (!state.isOnline) {
+      const cached = loadFromCache(CACHE_KEYS.preventives);
+      if (cached) {
+        state.preventives = cached;
+        renderPreventivesTable();
+        updatePreventiveDashboard();
+        showNotification('Modo offline - dados do cache', 'warning');
+        return;
+      }
+    }
+
     const response = await fetch(`${API_URL}/preventives`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
@@ -2649,12 +2807,22 @@ async function loadPreventives() {
     const data = await response.json();
     if (data.ok) {
       state.preventives = data.preventives || [];
+      saveToCache(CACHE_KEYS.preventives, state.preventives); // Salvar no cache
       renderPreventivesTable();
       updatePreventiveDashboard();
     }
   } catch (error) {
     console.error('Erro ao carregar preventivas:', error);
-    showNotification('Erro ao carregar preventivas', 'error');
+    // Tentar carregar do cache em caso de erro
+    const cached = loadFromCache(CACHE_KEYS.preventives);
+    if (cached) {
+      state.preventives = cached;
+      renderPreventivesTable();
+      updatePreventiveDashboard();
+      showNotification('Sem conexão - usando dados salvos', 'warning');
+    } else {
+      showNotification('Erro ao carregar preventivas', 'error');
+    }
   }
 }
 
@@ -3650,6 +3818,15 @@ function updateCurrentTime() {
 // Carregar leituras de água
 async function loadWaterReadings() {
   try {
+    // Se offline, carregar do cache
+    if (!state.isOnline) {
+      const cached = loadFromCache(CACHE_KEYS.waterReadings);
+      if (cached) {
+        state.waterReadings = cached;
+        return;
+      }
+    }
+
     const response = await fetch(`${API_URL}/water-readings`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
@@ -3657,9 +3834,15 @@ async function loadWaterReadings() {
     const data = await response.json();
     if (data.ok) {
       state.waterReadings = data.readings || [];
+      saveToCache(CACHE_KEYS.waterReadings, state.waterReadings); // Salvar no cache
     }
   } catch (error) {
     console.error('Erro ao carregar leituras:', error);
+    // Tentar carregar do cache em caso de erro
+    const cached = loadFromCache(CACHE_KEYS.waterReadings);
+    if (cached) {
+      state.waterReadings = cached;
+    }
   }
 }
 
