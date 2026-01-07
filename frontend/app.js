@@ -2392,6 +2392,43 @@ function previewPurchasePhoto(input) {
   }
 }
 
+// Função para comprimir imagem antes de enviar
+function compressImage(file, maxWidth = 800, quality = 0.7) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Redimensionar se maior que maxWidth
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        if (height > maxWidth) {
+          width = Math.round((width * maxWidth) / height);
+          height = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Converter para JPEG comprimido
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedDataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function clearPurchasePhoto() {
   document.getElementById('purchase-photo').value = '';
   document.getElementById('purchase-photo-preview').style.display = 'none';
@@ -2406,21 +2443,13 @@ async function createPurchaseFromForm(event) {
   const unitPrice = parseFloat(formData.get('price')) || null;
   const totalCost = unitPrice ? quantity * unitPrice : null;
   
-  // Converter foto para base64 se existir
+  // Converter foto para base64 se existir (com compressão automática)
   let photoUrl = null;
   const photoInput = document.getElementById('purchase-photo');
   if (photoInput && photoInput.files && photoInput.files[0]) {
     const file = photoInput.files[0];
-    // Limitar tamanho a 500KB para não sobrecarregar
-    if (file.size > 500 * 1024) {
-      showNotification('Imagem muito grande. Máximo 500KB.', 'error');
-      return;
-    }
-    photoUrl = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.readAsDataURL(file);
-    });
+    // Comprimir imagem automaticamente (máx 800px, qualidade 70%)
+    photoUrl = await compressImage(file, 800, 0.7);
   }
   
   const purchaseData = {
