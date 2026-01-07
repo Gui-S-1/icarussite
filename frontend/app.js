@@ -2268,13 +2268,25 @@ function renderPurchasesTable() {
   tbody.innerHTML = state.purchases.map(purchase => {
     const unitPrice = purchase.unit_price || 0;
     const totalCost = purchase.total_cost || 0;
+    // Criar thumbnail da foto se existir
+    const photoHtml = purchase.photo_url 
+      ? `<img src="${purchase.photo_url}" class="purchase-photo-thumb" onclick="showPurchasePhoto('${purchase.id}')" title="Clique para ampliar" alt="Foto da peça">`
+      : '<span style="color: var(--text-secondary); font-size: 11px;">Sem foto</span>';
     return `
     <tr>
-      <td>${purchase.item_name}</td>
-      <td>${purchase.quantity} ${purchase.unit}</td>
+      <td class="purchase-item-cell">
+        <div class="purchase-item-info">
+          <div class="purchase-photo-container">${photoHtml}</div>
+          <div class="purchase-item-details">
+            <strong>${escapeHtml(purchase.item_name)}</strong>
+            <span class="purchase-item-qty">${purchase.quantity} ${purchase.unit}</span>
+            ${purchase.notes ? `<span class="purchase-item-notes">${escapeHtml(purchase.notes.substring(0, 50))}${purchase.notes.length > 50 ? '...' : ''}</span>` : ''}
+          </div>
+        </div>
+      </td>
       <td>R$ ${unitPrice.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
       <td><strong>R$ ${totalCost.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong></td>
-      <td>${purchase.requested_by_name || 'N/A'}</td>
+      <td>${escapeHtml(purchase.requested_by_name || 'N/A')}</td>
       <td>
         <span class="badge ${statusClasses[purchase.status]}">
           ${statusLabels[purchase.status]}
@@ -2282,7 +2294,7 @@ function renderPurchasesTable() {
       </td>
       <td>${new Date(purchase.created_at).toLocaleDateString('pt-BR')}</td>
       <td>
-        ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin')) ? `
+        ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin') || state.user.roles.includes('compras')) ? `
           <button class="btn-small" onclick="showAdvancePurchaseModal('${purchase.id}')">
             Avançar
           </button>
@@ -2504,6 +2516,35 @@ async function advancePurchaseWithDetails(event, purchaseId) {
     console.error('Erro ao avançar:', error);
     showNotification('Erro ao avançar status', 'error');
   }
+}
+
+// Função para mostrar foto ampliada
+function showPurchasePhoto(purchaseId) {
+  const purchase = state.purchases.find(p => p.id === purchaseId);
+  if (!purchase || !purchase.photo_url) return;
+  
+  const modalHtml = `
+    <div id="modal-photo-viewer" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-photo-viewer')" style="z-index: 10001;">
+      <div class="photo-viewer-modal">
+        <div class="photo-viewer-header">
+          <h3>📷 ${escapeHtml(purchase.item_name)}</h3>
+          <span style="cursor: pointer; font-size: 28px; color: #fff;" onclick="closeModal('modal-photo-viewer')">×</span>
+        </div>
+        <div class="photo-viewer-content">
+          <img src="${purchase.photo_url}" alt="Foto da peça" class="photo-viewer-img">
+        </div>
+        <div class="photo-viewer-footer">
+          <span>${purchase.quantity} ${purchase.unit}</span>
+          ${purchase.notes ? `<span style="color: var(--text-secondary);">• ${escapeHtml(purchase.notes)}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const oldModal = document.getElementById('modal-photo-viewer');
+  if (oldModal) oldModal.remove();
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
 async function deletePurchase(purchaseId) {

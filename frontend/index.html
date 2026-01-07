@@ -2,8 +2,18 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Icarus System</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Sistema de Gestão de Manutenção - Granja Vitta">
+  <meta name="theme-color" content="#d4af37">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Icarus">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230a0a0a' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='%23d4af37'>⚙️</text></svg>">
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
@@ -4687,6 +4697,105 @@
 
     /* ========== FIM FÓRUM RELATÓRIOS ========== */
 
+    /* ========== COMPRAS - FOTOS ========== */
+    .purchase-item-cell {
+      min-width: 200px;
+    }
+    .purchase-item-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .purchase-photo-container {
+      flex-shrink: 0;
+    }
+    .purchase-photo-thumb {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid var(--border-color);
+      transition: all 0.2s;
+    }
+    .purchase-photo-thumb:hover {
+      border-color: var(--accent-gold);
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    .purchase-item-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .purchase-item-qty {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .purchase-item-notes {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    
+    /* Photo Viewer Modal */
+    .photo-viewer-modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: hidden;
+    }
+    .photo-viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .photo-viewer-header h3 {
+      margin: 0;
+      font-size: 16px;
+      color: var(--accent-gold);
+    }
+    .photo-viewer-content {
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+    }
+    .photo-viewer-img {
+      max-width: 100%;
+      max-height: 70vh;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+    .photo-viewer-footer {
+      padding: 12px 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      font-size: 13px;
+      display: flex;
+      gap: 12px;
+    }
+    
+    @media (max-width: 768px) {
+      .purchase-photo-thumb {
+        width: 40px;
+        height: 40px;
+      }
+      .purchase-item-info {
+        gap: 8px;
+      }
+      .photo-viewer-modal {
+        width: 95vw;
+      }
+    }
+    /* ========== FIM COMPRAS FOTOS ========== */
+
     /* Modal Overlay */
     .modal-overlay {
       position: fixed;
@@ -5900,8 +6009,7 @@
               <table id="compras-table">
                 <thead>
                   <tr>
-                    <th>Item</th>
-                    <th>Quantidade</th>
+                    <th>Item / Foto</th>
                     <th>Preço Unit.</th>
                     <th>Total</th>
                     <th>Solicitante</th>
@@ -8056,6 +8164,15 @@
         auth.classList.remove('hidden');
       }
     }, 2000);
+    
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('PWA: Service Worker registrado'))
+          .catch(err => console.log('PWA: Erro ao registrar SW:', err));
+      });
+    }
   </script>
 </body>
 </html>
