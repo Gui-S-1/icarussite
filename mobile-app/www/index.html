@@ -6512,35 +6512,37 @@
               <div class="tank-chart" id="recria-mini-chart"></div>
             </div>
 
-            <!-- Card Pico de Consumo -->
+            <!-- Card Total das Caixas -->
             <div class="water-tank-card difference">
               <div class="tank-header">
                 <div class="tank-icon pico-icon">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="rgba(251, 191, 36, 0.2)"/>
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
                   </svg>
                 </div>
                 <div class="tank-info">
-                  <h3 class="tank-title-big">MAIOR CONSUMO</h3>
-                  <span class="tank-status-badge secondary">Pico no Período</span>
+                  <h3 class="tank-title-big">TOTAL NO PERÍODO</h3>
+                  <span class="tank-status-badge secondary" id="total-periodo-label">Esta Semana</span>
                 </div>
               </div>
               <div class="tank-stats four-cols">
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="pico-aviarios-valor">--</span>
+                  <span class="tank-stat-value" id="total-aviarios-valor">--</span>
                   <span class="tank-stat-label">Aviários (m³)</span>
                 </div>
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="pico-aviarios-data">--</span>
-                  <span class="tank-stat-label">Data</span>
-                </div>
-                <div class="tank-stat">
-                  <span class="tank-stat-value" id="pico-recria-valor">--</span>
+                  <span class="tank-stat-value" id="total-recria-valor">--</span>
                   <span class="tank-stat-label">Recria (m³)</span>
                 </div>
                 <div class="tank-stat">
-                  <span class="tank-stat-value" id="pico-recria-data">--</span>
-                  <span class="tank-stat-label">Data</span>
+                  <span class="tank-stat-value" id="total-geral-valor">--</span>
+                  <span class="tank-stat-label">Total Geral (m³)</span>
+                </div>
+                <div class="tank-stat">
+                  <span class="tank-stat-value" id="total-media-diaria">--</span>
+                  <span class="tank-stat-label">Média/Dia (m³)</span>
                 </div>
               </div>
             </div>

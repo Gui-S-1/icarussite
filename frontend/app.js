@@ -4072,19 +4072,31 @@ function renderWaterStats() {
     }
   }
   
-  // Atualizar card de Maior Consumo (Pico)
-  const elPicoAviariosValor = document.getElementById('pico-aviarios-valor');
-  const elPicoAviariosData = document.getElementById('pico-aviarios-data');
-  const elPicoRecriaValor = document.getElementById('pico-recria-valor');
-  const elPicoRecriaData = document.getElementById('pico-recria-data');
+  // Atualizar card de Total das Caixas no Período
+  const period = state.waterPeriod || 'week';
+  const totalGeral = aviariosTotal + recriaTotal;
+  const totalDias = Math.max(aviariosDays, recriaDays, 1);
+  const mediaDiaria = totalGeral / totalDias;
   
-  if (elPicoAviariosValor) elPicoAviariosValor.textContent = picoAviarios.valor > 0 ? picoAviarios.valor.toFixed(0) : '--';
-  if (elPicoAviariosData) elPicoAviariosData.textContent = picoAviarios.data;
-  if (elPicoRecriaValor) elPicoRecriaValor.textContent = picoRecria.valor > 0 ? picoRecria.valor.toFixed(0) : '--';
-  if (elPicoRecriaData) elPicoRecriaData.textContent = picoRecria.data;
+  // Label do período
+  const elPeriodoLabel = document.getElementById('total-periodo-label');
+  if (elPeriodoLabel) {
+    if (period === 'day') elPeriodoLabel.textContent = 'Hoje';
+    else if (period === 'week') elPeriodoLabel.textContent = 'Esta Semana';
+    else if (period === 'month') elPeriodoLabel.textContent = 'Este Mês';
+  }
+  
+  const elTotalAviarios = document.getElementById('total-aviarios-valor');
+  const elTotalRecria = document.getElementById('total-recria-valor');
+  const elTotalGeral = document.getElementById('total-geral-valor');
+  const elMediaDiaria = document.getElementById('total-media-diaria');
+  
+  if (elTotalAviarios) elTotalAviarios.textContent = aviariosTotal > 0 ? aviariosTotal.toFixed(0) : '--';
+  if (elTotalRecria) elTotalRecria.textContent = recriaTotal > 0 ? recriaTotal.toFixed(0) : '--';
+  if (elTotalGeral) elTotalGeral.textContent = totalGeral > 0 ? totalGeral.toFixed(0) : '--';
+  if (elMediaDiaria) elMediaDiaria.textContent = mediaDiaria > 0 ? mediaDiaria.toFixed(1) : '--';
   
   // Mini charts - gerar a partir das leituras filtradas pelo período
-  const period = state.waterPeriod || 'today';
   renderMiniChartFromReadings('aviarios', aviarios7h, period);
   renderMiniChartFromReadings('recria', recria7h, period);
 }
