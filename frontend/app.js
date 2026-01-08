@@ -56,6 +56,37 @@ const CACHE_KEYS = {
   dieselRecords: 'icarus_cache_diesel'
 };
 
+// Renovar token em background para atualizar roles sem deslogar
+async function refreshTokenInBackground() {
+  try {
+    const response = await fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.ok) {
+        // Atualizar token e usuário com dados novos
+        state.token = data.token;
+        state.user = data.user;
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Atualizar permissões com as novas roles
+        setupPermissions();
+        setupMobileNavPermissions();
+        console.log('Token renovado em background, roles atualizadas');
+      }
+    }
+  } catch (error) {
+    console.log('Não foi possível renovar token em background:', error);
+  }
+}
+
 // Salvar dados no localStorage (comprimido)
 function saveToCache(key, data) {
   try {
@@ -172,6 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
       state.user = JSON.parse(savedUser);
       document.getElementById('loading-screen').classList.add('hidden');
       showApp();
+      
+      // Tentar renovar token em background para atualizar roles
+      refreshTokenInBackground();
       return;
     } catch (e) {
       console.warn('Falha ao restaurar sessão, limpando cache', e);
@@ -450,24 +484,6 @@ async function showApp() {
   
   // Inicializar busca rápida (Ctrl+K)
   initQuickSearch();
-  
-  // Adicionar indicador de atualização automática
-  const statusBar = document.createElement('div');
-  statusBar.id = 'auto-refresh-indicator';
-  statusBar.innerHTML = '◎ Sync ativo';
-  statusBar.style.cssText = 'position: fixed; bottom: 10px; right: 10px; padding: 6px 12px; background: rgba(212, 175, 55, 0.1); border: 1px solid var(--accent-gold); border-radius: 6px; font-size: 11px; color: var(--accent-gold); z-index: 1000;';
-  document.body.appendChild(statusBar);
-  
-  // Animar indicador quando atualizar
-  let lastUpdate = Date.now();
-  setInterval(() => {
-    const indicator = document.getElementById('auto-refresh-indicator');
-    if (indicator && Date.now() - lastUpdate < 1000) {
-      indicator.style.animation = 'pulse 0.5s';
-      setTimeout(() => indicator.style.animation = '', 500);
-    }
-    lastUpdate = Date.now();
-  }, 5000);
 }
 
 function setupPermissions() {
@@ -2483,6 +2499,7 @@ function renderPurchasesTable() {
       </td>
       <td>${new Date(purchase.created_at).toLocaleDateString('pt-BR')}</td>
       <td>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
         ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin') || state.user.roles.includes('compras')) ? `
           <button class="btn-small" onclick="showAdvancePurchaseModal('${purchase.id}')">
             Avançar
@@ -2491,6 +2508,7 @@ function renderPurchasesTable() {
         ${purchase.requested_by === state.user.id || state.user.roles.includes('admin') ? `
           <button class="btn-small btn-danger" onclick="deletePurchase('${purchase.id}')">Excluir</button>
         ` : ''}
+        </div>
       </td>
     </tr>
   `}).join('');
@@ -3804,6 +3822,32 @@ state.waterReadings = [];
 state.waterPeriod = 'week';
 state.waterStats = null;
 
+// Buscar temperatura atual da internet (Granja Vitta - Aparecida de Goiânia)
+async function fetchCurrentTemperature() {
+  try {
+    // Coordenadas da Granja Vitta - Aparecida de Goiânia, GO
+    const lat = -16.8225;
+    const lon = -49.2433;
+    
+    // API Open-Meteo (gratuita, sem chave necessária)
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+    const data = await response.json();
+    
+    if (data.current_weather && data.current_weather.temperature !== undefined) {
+      const temp = data.current_weather.temperature;
+      const tempInput = document.getElementById('water-temperature');
+      if (tempInput && !tempInput.value) {
+        tempInput.value = temp.toFixed(1);
+        tempInput.placeholder = `${temp.toFixed(1)}°C (atual)`;
+      }
+      return temp;
+    }
+  } catch (error) {
+    console.log('Não foi possível obter temperatura automática:', error);
+  }
+  return null;
+}
+
 // Carregar controle de água
 async function loadWaterControl() {
   try {
@@ -3826,6 +3870,9 @@ async function loadWaterControl() {
       
       const dateInput = document.getElementById('water-reading-date');
       if (dateInput && !dateInput.value) dateInput.value = today;
+      
+      // Buscar temperatura automática da internet
+      fetchCurrentTemperature();
       
       // Atualizar horário atual
       updateCurrentTime();
