@@ -1,0 +1,20 @@
+{
+  "name": "Icarus System",
+  "short_name": "Icarus",
+  "description": "Sistema de Gestão de Manutenção - Granja Vitta",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#d4af37",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "pt-BR"
+}

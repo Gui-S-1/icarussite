@@ -1,5 +1,5 @@
 {
-  "appId": "com.granjavitta.icarus",
+  "appId": "com.icarus.app",
   "appName": "Icarus",
   "webDir": "../frontend",
   "bundledWebRuntime": false,

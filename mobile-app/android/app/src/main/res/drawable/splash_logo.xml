@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Estrela de Davi - Triângulo 1 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="4"
+        android:pathData="M100,20 L160,130 L40,130 Z"/>
+    
+    <!-- Estrela de Davi - Triângulo 2 (invertido) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#D4AF37"
+        android:strokeWidth="4"
+        android:pathData="M100,140 L160,30 L40,30 Z"/>
+    
+</vector>

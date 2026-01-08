@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1008067952432",
+    "project_id": "notfi-5682a",
+    "storage_bucket": "notfi-5682a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1008067952432:android:591335669dfe24c8fa52f5",
+        "android_client_info": {
+          "package_name": "com.icarus.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaMqTlEWmGhfGsmbenFQMPFaL7ZS5AfPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
