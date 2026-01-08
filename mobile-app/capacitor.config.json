@@ -1,7 +1,7 @@
 {
-  "appId": "com.icarus.app",
+  "appId": "com.granjavitta.icarus",
   "appName": "Icarus",
-  "webDir": "../frontend",
+  "webDir": "www",
   "bundledWebRuntime": false,
   "plugins": {
     "PushNotifications": {
@@ -13,7 +13,7 @@
     }
   },
   "server": {
-    "url": "https://icarus-sys.vercel.app",
-    "cleartext": true
+    "androidScheme": "https",
+    "allowNavigation": ["*"]
   }
 }
