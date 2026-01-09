@@ -1,5 +1,5 @@
 // Service Worker para Icarus PWA
-const CACHE_NAME = 'icarus-v1';
+const CACHE_NAME = 'icarus-v20260109';
 const urlsToCache = [
   '/',
   '/index.html',
