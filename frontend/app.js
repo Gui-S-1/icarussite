@@ -4169,6 +4169,7 @@ async function updateChecklistFromForm(event, checklistId) {
 state.waterReadings = [];
 state.waterPeriod = 'day';
 state.waterStats = null;
+state.waterChartType = 'consumo'; // 'consumo' ou 'temperatura'
 
 // Buscar temperatura atual da internet (Granja Vitta - Aparecida de Goiânia)
 async function fetchCurrentTemperature() {
@@ -4635,6 +4636,148 @@ function renderWaterChart() {
       '<span class="chart-bar-label">' + dateLabel + '</span>' +
     '</div>';
   }).join('');
+}
+
+// Alternar tipo de gráfico de água (consumo/temperatura)
+function setWaterChartType(type) {
+  state.waterChartType = type;
+  
+  // Atualizar botões ativos
+  document.querySelectorAll('.water-chart-toggle-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const activeBtn = document.querySelector(`.water-chart-toggle-btn[data-type="${type}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  // Atualizar legenda
+  const legend = document.querySelector('.water-chart-card .chart-legend');
+  if (legend) {
+    if (type === 'temperatura') {
+      legend.innerHTML = '<span class="legend-item temperatura"><span class="legend-dot" style="background: #f59e0b;"></span> Temperatura °C</span>';
+    } else {
+      legend.innerHTML = '<span class="legend-item aviarios"><span class="legend-dot"></span> Aviários</span><span class="legend-item recria"><span class="legend-dot"></span> Recria</span>';
+    }
+  }
+  
+  // Re-renderizar gráfico
+  if (type === 'temperatura') {
+    renderTemperatureChart();
+  } else {
+    renderWaterChart();
+  }
+}
+
+// Renderizar gráfico de temperatura
+function renderTemperatureChart() {
+  var container = document.getElementById('water-consumption-chart');
+  if (!container) return;
+  
+  var readings = state.waterReadings || [];
+  
+  // Filtrar leituras que têm temperatura
+  var tempReadings = readings.filter(function(r) { 
+    return r.temperature !== null && r.temperature !== undefined; 
+  });
+  
+  if (tempReadings.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Nenhuma leitura de temperatura registrada</p>';
+    return;
+  }
+  
+  // Função para formatar data
+  function getDateKey(dateStr) {
+    return dateStr.split('T')[0];
+  }
+  
+  // Agrupar por data (média das temperaturas do dia)
+  var tempByDate = {};
+  tempReadings.forEach(function(r) {
+    var dateKey = getDateKey(r.reading_date);
+    if (!tempByDate[dateKey]) {
+      tempByDate[dateKey] = { sum: 0, count: 0, min: r.temperature, max: r.temperature };
+    }
+    tempByDate[dateKey].sum += r.temperature;
+    tempByDate[dateKey].count++;
+    tempByDate[dateKey].min = Math.min(tempByDate[dateKey].min, r.temperature);
+    tempByDate[dateKey].max = Math.max(tempByDate[dateKey].max, r.temperature);
+  });
+  
+  // Calcular médias
+  var dates = Object.keys(tempByDate).sort().slice(-14);
+  var temps = dates.map(function(d) {
+    return {
+      date: d,
+      avg: tempByDate[d].sum / tempByDate[d].count,
+      min: tempByDate[d].min,
+      max: tempByDate[d].max
+    };
+  });
+  
+  if (temps.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Dados insuficientes para o gráfico</p>';
+    return;
+  }
+  
+  var minTemp = Math.min(...temps.map(function(t) { return t.min; }));
+  var maxTemp = Math.max(...temps.map(function(t) { return t.max; }));
+  var tempRange = maxTemp - minTemp || 10;
+  
+  // Renderizar gráfico de linha com área
+  container.innerHTML = '<div class="temp-chart-container">' +
+    '<div class="temp-chart-y-axis">' +
+      '<span>' + maxTemp.toFixed(1) + '°</span>' +
+      '<span>' + ((maxTemp + minTemp) / 2).toFixed(1) + '°</span>' +
+      '<span>' + minTemp.toFixed(1) + '°</span>' +
+    '</div>' +
+    '<div class="temp-chart-area">' +
+      '<svg viewBox="0 0 ' + (temps.length * 50) + ' 180" preserveAspectRatio="none" class="temp-chart-svg">' +
+        '<defs>' +
+          '<linearGradient id="tempGradient" x1="0%" y1="0%" x2="0%" y2="100%">' +
+            '<stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.4"/>' +
+            '<stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.05"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path class="temp-area" d="' + generateTempAreaPath(temps, minTemp, tempRange) + '" fill="url(#tempGradient)"/>' +
+        '<path class="temp-line" d="' + generateTempLinePath(temps, minTemp, tempRange) + '" fill="none" stroke="#f59e0b" stroke-width="2"/>' +
+        temps.map(function(t, i) {
+          var x = i * 50 + 25;
+          var y = 180 - ((t.avg - minTemp) / tempRange) * 170 - 5;
+          return '<circle cx="' + x + '" cy="' + y + '" r="4" fill="#f59e0b" class="temp-point">' +
+            '<title>' + t.avg.toFixed(1) + '°C</title>' +
+          '</circle>';
+        }).join('') +
+      '</svg>' +
+      '<div class="temp-chart-labels">' +
+        temps.map(function(t) {
+          var parts = t.date.split('-');
+          return '<span>' + parts[2] + '/' + parts[1] + '</span>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// Gerar path da linha de temperatura
+function generateTempLinePath(temps, minTemp, tempRange) {
+  return temps.map(function(t, i) {
+    var x = i * 50 + 25;
+    var y = 180 - ((t.avg - minTemp) / tempRange) * 170 - 5;
+    return (i === 0 ? 'M' : 'L') + x + ' ' + y;
+  }).join(' ');
+}
+
+// Gerar path da área de temperatura
+function generateTempAreaPath(temps, minTemp, tempRange) {
+  var linePath = temps.map(function(t, i) {
+    var x = i * 50 + 25;
+    var y = 180 - ((t.avg - minTemp) / tempRange) * 170 - 5;
+    return (i === 0 ? 'M' : 'L') + x + ' ' + y;
+  }).join(' ');
+  
+  var lastX = (temps.length - 1) * 50 + 25;
+  var firstX = 25;
+  
+  return linePath + ' L' + lastX + ' 180 L' + firstX + ' 180 Z';
 }
 
 // Renderizar histórico

@@ -3253,6 +3253,36 @@
       background: #10b981;
     }
 
+    /* Toggle do Gráfico de Água */
+    .water-chart-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .water-chart-toggle-btn {
+      padding: 6px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .water-chart-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .water-chart-toggle-btn.active {
+      background: var(--accent-gold);
+      color: var(--bg-primary);
+    }
+
     .water-main-chart {
       height: 250px;
       background: var(--bg-secondary);
@@ -3263,6 +3293,58 @@
       gap: 8px;
       overflow-x: auto;
       max-width: 100%;
+    }
+
+    /* Gráfico de Temperatura */
+    .temp-chart-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      gap: 8px;
+    }
+
+    .temp-chart-y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 11px;
+      color: var(--text-secondary);
+      min-width: 35px;
+    }
+
+    .temp-chart-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-x: auto;
+    }
+
+    .temp-chart-svg {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .temp-line {
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .temp-point {
+      cursor: pointer;
+      transition: r 0.2s;
+    }
+
+    .temp-point:hover {
+      r: 6;
+    }
+
+    .temp-chart-labels {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
     }
 
     .chart-bar-group {
@@ -6616,7 +6698,11 @@
           <!-- Gráfico Principal -->
           <div class="card water-chart-card">
             <div class="card-header">
-              <h3 class="card-title">Gráfico de Consumo</h3>
+              <h3 class="card-title">Gráfico</h3>
+              <div class="water-chart-toggle">
+                <button class="water-chart-toggle-btn active" data-type="consumo" onclick="setWaterChartType('consumo')">💧 Consumo</button>
+                <button class="water-chart-toggle-btn" data-type="temperatura" onclick="setWaterChartType('temperatura')">🌡️ Temperatura</button>
+              </div>
               <div class="chart-legend">
                 <span class="legend-item aviarios"><span class="legend-dot"></span> Aviários</span>
                 <span class="legend-item recria"><span class="legend-dot"></span> Recria</span>
