@@ -740,7 +740,7 @@ function setupPermissions() {
   const canEditPrev = isAdmin || roles.includes('preventivas');
   
   // Checklists: checklist (ver), checklist_manage (editar)
-  const canSeeChecklists = isAdmin || roles.includes('checklist') || roles.includes('checklist_manage');
+  const canSeeChecklists = isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all');
   const canEditChecklists = isAdmin || roles.includes('checklist_manage') || roles.includes('os_manage_all');
   
   // Controle de Água: agua (ver), agua_manage (editar) - SÓ quem tem role específica
@@ -825,7 +825,7 @@ function setupMobileNavPermissions() {
   const canSeeWater = isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all');
   const canSeeDiesel = isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('os_manage_all');
   const canSeeGerador = isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('os_manage_all');
-  const canSeeChecklists = isAdmin || roles.includes('checklist') || roles.includes('checklist_manage');
+  const canSeeChecklists = isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all');
   const canSeeAditiva = isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all');
   const canSeeRelatorios = isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all');
   const canSeeCompras = isAdmin || roles.includes('compras') || roles.includes('compras_view') || roles.includes('compras_request');
@@ -1385,8 +1385,8 @@ function renderOrdersTable() {
   let filteredOrders = state.orders;
   
   if (state.osStatusFilter === 'urgent') {
-    // Filtro especial para urgentes - filtra por prioridade
-    filteredOrders = state.orders.filter(o => o.priority === 'urgent' && o.status !== 'completed');
+    // Filtro especial para urgentes - filtra por prioridade HIGH
+    filteredOrders = state.orders.filter(o => o.priority === 'high' && o.status !== 'completed');
   } else if (state.osStatusFilter === 'completed') {
     // Mostrar concluídas do mês
     const now = new Date();
