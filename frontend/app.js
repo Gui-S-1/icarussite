@@ -4568,6 +4568,12 @@ function renderMiniChartFromReadings(tank, readings7h, period) {
 
 // Renderizar gráfico principal
 function renderWaterChart() {
+  // Se estiver no modo temperatura, renderizar o gráfico de temperatura
+  if (state.waterChartType === 'temperatura') {
+    renderTemperatureChart();
+    return;
+  }
+  
   var container = document.getElementById('water-consumption-chart');
   if (!container) return;
   

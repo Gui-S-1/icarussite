@@ -2000,6 +2000,105 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
 }
 
 /* ========================================
+   MEDIUM MOBILE SCREENS (380-420px) - S23, iPhone 14 Pro, etc
+   ======================================== */
+@media (min-width: 380px) and (max-width: 420px) {
+  .modal {
+    max-height: 90vh;
+    margin: 5px;
+  }
+  
+  .modal-body {
+    padding: 14px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .form-group {
+    width: 100% !important;
+    margin-bottom: 12px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px;
+    padding: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .modal-footer .btn {
+    width: 100%;
+    padding: 14px;
+  }
+  
+  .os-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .os-stat-card {
+    padding: 12px;
+  }
+  
+  .os-stat-value {
+    font-size: 20px;
+  }
+  
+  .os-stat-label {
+    font-size: 10px;
+  }
+  
+  .checkbox-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .user-checkbox {
+    padding: 10px;
+  }
+  
+  .user-checkbox-name {
+    font-size: 12px;
+  }
+  
+  /* Tabela OS responsiva */
+  .os-table {
+    font-size: 12px;
+  }
+  
+  .os-table th,
+  .os-table td {
+    padding: 10px 6px;
+  }
+  
+  /* Filtros e botões */
+  .os-header-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .btn-os-filter,
+  .btn-os-create {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  
+  .btn-os-create span {
+    display: none;
+  }
+}
+
+/* ========================================
    EXTRA SMALL SCREENS (max-width: 380px)
    ======================================== */
 @media (max-width: 380px) {

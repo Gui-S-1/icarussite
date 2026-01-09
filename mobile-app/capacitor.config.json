@@ -13,6 +13,8 @@
     }
   },
   "server": {
+    "url": "https://icarus-sys.vercel.app",
+    "cleartext": false,
     "androidScheme": "https",
     "allowNavigation": ["*"]
   }
