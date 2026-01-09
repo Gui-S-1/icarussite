@@ -759,6 +759,10 @@ function setupPermissions() {
   const canSeeAditiva = isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all');
   const canEditAditiva = isAdmin || roles.includes('aditiva') || roles.includes('os_manage_all');
 
+  // Lavanderia: só para tenant de lavanderia
+  const canSeeLavanderia = isAdmin || roles.includes('lavanderia');
+  const canEditLavanderia = isAdmin || roles.includes('lavanderia');
+
   // Relatórios: relatorios (ver), relatorios_write (escrever - só manutenção)
   const canSeeRelatorios = isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all');
   const canWriteRelatorios = isAdmin || roles.includes('relatorios_write') || roles.includes('os_manage_all');
@@ -774,6 +778,7 @@ function setupPermissions() {
   const navDiesel = document.querySelector('[data-view="controle-diesel"]');
   const navGerador = document.querySelector('[data-view="controle-gerador"]');
   const navAditiva = document.querySelector('[data-view="aditiva"]');
+  const navLavanderia = document.querySelector('[data-view="lavanderia"]');
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
@@ -788,6 +793,7 @@ function setupPermissions() {
   if (navDiesel) navDiesel.classList.toggle('hidden', !canSeeDiesel);
   if (navGerador) navGerador.classList.toggle('hidden', !canSeeGerador);
   if (navAditiva) navAditiva.classList.toggle('hidden', !canSeeAditiva);
+  if (navLavanderia) navLavanderia.classList.toggle('hidden', !canSeeLavanderia);
   if (navRel) navRel.classList.toggle('hidden', !canSeeRelatorios);
   if (navCfg) navCfg.classList.remove('hidden');
   
