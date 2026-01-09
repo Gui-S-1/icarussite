@@ -31,6 +31,11 @@ const state = {
   additiveTasks: [],
   additiveStats: null,
   additiveFilter: 'active', // 'active' ou 'archived'
+  // Lavanderia Control
+  laundryClients: [],
+  laundryEntries: [],
+  laundryStats: null,
+  laundryPeriod: 'month',
   // Relatórios
   reports: [],
   reportCategory: 'all',
@@ -523,6 +528,9 @@ async function loadViewData(view) {
         break;
       case 'aditiva':
         await loadAditiva();
+        break;
+      case 'lavanderia':
+        await loadLavanderia();
         break;
       case 'relatorios':
         await loadRelatorios();
@@ -7810,6 +7818,332 @@ function openAdditiveTask(taskId) {
     'Criado por: ' + (task.created_by_name || '-') + '\n' +
     (task.executed_by_name ? 'Executado por: ' + task.executed_by_name : '');
   alert(msg);
+}
+
+// ========== LAVANDERIA ==========
+
+async function loadLavanderia() {
+  try {
+    // Definir data de hoje no input se estiver vazio
+    var now = new Date();
+    var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    var dateInput = document.getElementById('laundry-date');
+    if (dateInput && !dateInput.value) dateInput.value = today;
+    
+    // Carregar dados
+    await Promise.all([
+      loadLaundryClients(),
+      loadLaundryEntries(),
+      loadLaundryStats()
+    ]);
+    
+    // Renderizar
+    renderLaundryClientSelect();
+    renderLaundryStats();
+    renderLaundryChart();
+    renderLaundryHistory();
+    updateLaundryTotal();
+    
+    console.log('[Lavanderia] Carregado:', state.laundryEntries?.length || 0, 'registros');
+  } catch (error) {
+    console.error('Erro ao carregar lavanderia:', error);
+  }
+}
+
+async function loadLaundryClients() {
+  try {
+    var response = await fetch(API_URL + '/laundry/clients', {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    var data = await response.json();
+    if (data.ok) {
+      state.laundryClients = data.clients || [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar clientes lavanderia:', error);
+  }
+}
+
+async function loadLaundryEntries() {
+  try {
+    var dates = getLaundryPeriodDates();
+    var url = API_URL + '/laundry/entries?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
+    var response = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    var data = await response.json();
+    if (data.ok) {
+      state.laundryEntries = data.entries || [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar entradas lavanderia:', error);
+  }
+}
+
+async function loadLaundryStats() {
+  try {
+    var response = await fetch(API_URL + '/laundry/stats', {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    var data = await response.json();
+    if (data.ok) {
+      state.laundryStats = data.stats || {};
+    }
+  } catch (error) {
+    console.error('Erro ao carregar stats lavanderia:', error);
+  }
+}
+
+function getLaundryPeriodDates() {
+  var now = new Date();
+  var startDate, endDate;
+  var period = state.laundryPeriod || 'month';
+  
+  endDate = now.toISOString().split('T')[0];
+  
+  if (period === 'today') {
+    startDate = endDate;
+  } else if (period === 'week') {
+    var weekAgo = new Date(now);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    startDate = weekAgo.toISOString().split('T')[0];
+  } else {
+    var monthAgo = new Date(now.getFullYear(), now.getMonth(), 1);
+    startDate = monthAgo.toISOString().split('T')[0];
+  }
+  
+  return { startDate: startDate, endDate: endDate };
+}
+
+function renderLaundryClientSelect() {
+  var select = document.getElementById('laundry-client-select');
+  if (!select || !state.laundryClients) return;
+  
+  var html = '<option value="">Selecione o cliente...</option>';
+  state.laundryClients.forEach(function(client) {
+    html += '<option value="' + client.id + '" data-price="' + client.price_per_piece + '" data-color="' + (client.color || '#ec4899') + '">' + 
+            client.name + '</option>';
+  });
+  select.innerHTML = html;
+}
+
+function onLaundryClientChange() {
+  var select = document.getElementById('laundry-client-select');
+  var priceTag = document.getElementById('laundry-price-tag');
+  if (!select || !priceTag) return;
+  
+  var selectedOption = select.options[select.selectedIndex];
+  if (selectedOption && selectedOption.dataset.price) {
+    var price = parseFloat(selectedOption.dataset.price);
+    priceTag.textContent = 'R$ ' + price.toFixed(2) + '/peça';
+    priceTag.style.display = 'block';
+  } else {
+    priceTag.style.display = 'none';
+  }
+  updateLaundryTotal();
+}
+
+function adjustLaundryQty(delta) {
+  var input = document.getElementById('laundry-quantity');
+  if (!input) return;
+  var current = parseInt(input.value) || 0;
+  var newVal = Math.max(0, current + delta);
+  input.value = newVal;
+  updateLaundryTotal();
+}
+
+function updateLaundryTotal() {
+  var select = document.getElementById('laundry-client-select');
+  var qtyInput = document.getElementById('laundry-quantity');
+  var totalEl = document.getElementById('laundry-total-value');
+  if (!select || !qtyInput || !totalEl) return;
+  
+  var selectedOption = select.options[select.selectedIndex];
+  var price = selectedOption && selectedOption.dataset.price ? parseFloat(selectedOption.dataset.price) : 0;
+  var qty = parseInt(qtyInput.value) || 0;
+  var total = price * qty;
+  
+  totalEl.textContent = 'R$ ' + total.toFixed(2);
+}
+
+async function saveLaundryEntry() {
+  try {
+    var clientId = document.getElementById('laundry-client-select')?.value;
+    var quantity = parseInt(document.getElementById('laundry-quantity')?.value) || 0;
+    var date = document.getElementById('laundry-date')?.value;
+    var notes = document.getElementById('laundry-notes')?.value || '';
+    
+    if (!clientId) {
+      showToast('Selecione um cliente', 'error');
+      return;
+    }
+    if (quantity <= 0) {
+      showToast('Quantidade deve ser maior que zero', 'error');
+      return;
+    }
+    
+    var response = await fetch(API_URL + '/laundry/entries', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({
+        client_id: parseInt(clientId),
+        quantity: quantity,
+        entry_date: date,
+        notes: notes
+      })
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      showToast('Entrada salva com sucesso!', 'success');
+      document.getElementById('laundry-quantity').value = '0';
+      document.getElementById('laundry-notes').value = '';
+      updateLaundryTotal();
+      await loadLavanderia();
+    } else {
+      showToast(data.error || 'Erro ao salvar', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar entrada lavanderia:', error);
+    showToast('Erro ao salvar entrada', 'error');
+  }
+}
+
+async function deleteLaundryEntry(entryId) {
+  if (!confirm('Excluir esta entrada?')) return;
+  
+  try {
+    var response = await fetch(API_URL + '/laundry/entries/' + entryId, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    var data = await response.json();
+    if (data.ok) {
+      showToast('Entrada excluída', 'success');
+      await loadLavanderia();
+    } else {
+      showToast(data.error || 'Erro ao excluir', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao excluir entrada:', error);
+    showToast('Erro ao excluir', 'error');
+  }
+}
+
+async function setLaundryPeriod(period) {
+  state.laundryPeriod = period;
+  
+  ['today', 'week', 'month'].forEach(function(p) {
+    var btn = document.getElementById('laundry-filter-' + p);
+    if (btn) btn.classList.toggle('active', p === period);
+  });
+  
+  await Promise.all([loadLaundryEntries(), loadLaundryStats()]);
+  renderLaundryStats();
+  renderLaundryChart();
+  renderLaundryHistory();
+}
+
+function renderLaundryStats() {
+  var stats = state.laundryStats || {};
+  
+  var todayPieces = document.getElementById('laundry-today-pieces');
+  var todayValue = document.getElementById('laundry-today-value');
+  var weekPieces = document.getElementById('laundry-week-pieces');
+  var weekValue = document.getElementById('laundry-week-value');
+  var monthPieces = document.getElementById('laundry-month-pieces');
+  var monthValue = document.getElementById('laundry-month-value');
+  var totalPieces = document.getElementById('laundry-total-pieces');
+  var totalValue = document.getElementById('laundry-total-stat-value');
+  
+  if (todayPieces) todayPieces.textContent = (stats.today_pieces || 0) + ' peças';
+  if (todayValue) todayValue.textContent = 'R$ ' + (stats.today_value || 0).toFixed(2);
+  if (weekPieces) weekPieces.textContent = (stats.week_pieces || 0) + ' peças';
+  if (weekValue) weekValue.textContent = 'R$ ' + (stats.week_value || 0).toFixed(2);
+  if (monthPieces) monthPieces.textContent = (stats.month_pieces || 0) + ' peças';
+  if (monthValue) monthValue.textContent = 'R$ ' + (stats.month_value || 0).toFixed(2);
+  if (totalPieces) totalPieces.textContent = (stats.total_pieces || 0) + ' peças';
+  if (totalValue) totalValue.textContent = 'R$ ' + (stats.total_value || 0).toFixed(2);
+}
+
+function renderLaundryChart() {
+  var container = document.getElementById('laundry-chart-container');
+  if (!container) return;
+  
+  // Agrupar por cliente
+  var clientTotals = {};
+  var maxTotal = 0;
+  
+  (state.laundryEntries || []).forEach(function(entry) {
+    var clientName = entry.client_name || 'Sem cliente';
+    var color = entry.client_color || '#ec4899';
+    if (!clientTotals[clientName]) {
+      clientTotals[clientName] = { pieces: 0, value: 0, color: color };
+    }
+    clientTotals[clientName].pieces += entry.quantity;
+    clientTotals[clientName].value += parseFloat(entry.total_value) || 0;
+    if (clientTotals[clientName].pieces > maxTotal) maxTotal = clientTotals[clientName].pieces;
+  });
+  
+  if (Object.keys(clientTotals).length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">Nenhum dado para exibir</div>';
+    return;
+  }
+  
+  var html = '';
+  Object.keys(clientTotals).forEach(function(name) {
+    var data = clientTotals[name];
+    var pct = maxTotal > 0 ? (data.pieces / maxTotal * 100) : 0;
+    html += '<div class="laundry-client-bar">' +
+      '<span class="laundry-client-name">' + name + '</span>' +
+      '<div class="laundry-client-bar-bg">' +
+        '<div class="laundry-client-bar-fill" style="width:' + pct + '%;background:linear-gradient(90deg,' + data.color + ',' + data.color + '88);">' +
+          data.pieces + ' peças' +
+        '</div>' +
+      '</div>' +
+      '<span class="laundry-client-value">R$ ' + data.value.toFixed(2) + '</span>' +
+    '</div>';
+  });
+  
+  container.innerHTML = html;
+}
+
+function renderLaundryHistory() {
+  var tbody = document.getElementById('laundry-history-body');
+  if (!tbody) return;
+  
+  var entries = state.laundryEntries || [];
+  
+  if (entries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Nenhuma entrada encontrada</td></tr>';
+    return;
+  }
+  
+  var html = '';
+  entries.forEach(function(entry) {
+    var date = new Date(entry.entry_date);
+    var dateStr = String(date.getDate()).padStart(2, '0') + '/' + 
+                  String(date.getMonth() + 1).padStart(2, '0') + '/' + 
+                  date.getFullYear();
+    var color = entry.client_color || '#ec4899';
+    
+    html += '<tr>' +
+      '<td>' + dateStr + '</td>' +
+      '<td><span class="client-tag" style="background:' + color + '22;border:1px solid ' + color + '44;">' +
+        '<span class="client-dot" style="background:' + color + ';"></span>' + 
+        (entry.client_name || '-') + 
+      '</span></td>' +
+      '<td style="font-weight:600;color:#fff;">' + entry.quantity + '</td>' +
+      '<td>R$ ' + (parseFloat(entry.price_per_piece) || 0).toFixed(2) + '</td>' +
+      '<td style="font-weight:600;color:#ec4899;">R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</td>' +
+      '<td><button class="delete-btn" onclick="deleteLaundryEntry(' + entry.id + ')">Excluir</button></td>' +
+    '</tr>';
+  });
+  
+  tbody.innerHTML = html;
 }
 
 // ========== RELATÓRIOS ==========
