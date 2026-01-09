@@ -10,7 +10,7 @@ const state = {
   purchases: [],
   checklists: [],
   waterReadings: [],
-  waterPeriod: 'week',
+  waterPeriod: 'day',
   waterStats: null,
   currentView: 'dashboard',
   dashboardFilter: 'daily', // daily, weekly, monthly
@@ -42,6 +42,218 @@ const state = {
 const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
   ? window.ICARUS_API_URL
   : 'http://localhost:4000';
+
+// ========================================
+// PUSH NOTIFICATIONS - Capacitor
+// ========================================
+const APP_VERSION = '1.0.5';
+
+async function initPushNotifications() {
+  try {
+    // Verificar se estamos no Capacitor (app nativo)
+    if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) {
+      console.log('Push Notifications: Não está em ambiente nativo');
+      return;
+    }
+
+    const { PushNotifications } = Capacitor.Plugins;
+    if (!PushNotifications) {
+      console.log('Push Notifications: Plugin não disponível');
+      return;
+    }
+
+    // Verificar permissões
+    let permStatus = await PushNotifications.checkPermissions();
+    console.log('Push Permissions:', permStatus.receive);
+    
+    if (permStatus.receive === 'prompt') {
+      // Pedir permissão ao usuário
+      permStatus = await PushNotifications.requestPermissions();
+      console.log('Push Permissions após request:', permStatus.receive);
+    }
+
+    if (permStatus.receive !== 'granted') {
+      console.log('Push Notifications: Permissão negada');
+      showNotification('Ative as notificações nas configurações do app', 'warning');
+      return;
+    }
+
+    // Registrar para receber notificações
+    await PushNotifications.register();
+    console.log('Push Notifications: Registrando...');
+
+    // Listener quando o token é recebido
+    await PushNotifications.addListener('registration', async (token) => {
+      console.log('Push Token recebido:', token.value);
+      // Enviar token para o servidor
+      await registerPushToken(token.value);
+    });
+
+    // Listener de erro no registro
+    await PushNotifications.addListener('registrationError', (error) => {
+      console.error('Erro no registro push:', error);
+      showNotification('Erro ao registrar notificações: ' + (error.error || 'desconhecido'), 'error');
+    });
+
+    // Listener quando notificação é recebida (app aberto)
+    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      console.log('Notificação recebida:', notification);
+      // Mostrar notificação in-app
+      showNotification(notification.title + ': ' + notification.body, 'info');
+      
+      // Atualizar dados
+      if (notification.data?.type === 'new_order' || notification.data?.type === 'order_completed') {
+        loadOrders();
+      }
+    });
+
+    // Listener quando usuário toca na notificação
+    await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+      console.log('Ação na notificação:', action);
+      const data = action.notification.data;
+      
+      // Navegar para a view correta
+      if (data?.type === 'new_order' || data?.type === 'order_completed') {
+        navigateTo('os');
+      } else if (data?.type === 'water_alert') {
+        navigateTo('water');
+      } else if (data?.type === 'preventive_overdue' || data?.type === 'preventive_today') {
+        navigateTo('preventive');
+      }
+    });
+
+    console.log('Push Notifications inicializado com sucesso');
+  } catch (error) {
+    console.error('Erro ao inicializar Push Notifications:', error);
+  }
+}
+
+// Registrar token no servidor
+async function registerPushToken(token) {
+  if (!state.token || !token) {
+    console.log('registerPushToken: token do app ou FCM ausente');
+    return;
+  }
+  
+  try {
+    console.log('Enviando token FCM para servidor...');
+    const response = await fetch(`${API_URL}/api/push-tokens`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        token: token,
+        device_type: 'android'
+      })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      console.log('Token push registrado com sucesso no servidor');
+      localStorage.setItem('push_token', token);
+      showNotification('Notificações ativadas!', 'success');
+    } else {
+      console.error('Erro ao registrar token:', data.error);
+    }
+  } catch (error) {
+    console.error('Erro ao registrar token push:', error);
+  }
+}
+
+// ========================================
+// APP UPDATE SYSTEM - Atualização In-App
+// ========================================
+
+async function checkAppVersion() {
+  try {
+    const response = await fetch(`${API_URL}/api/app-version`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    if (!response.ok) return;
+    
+    const data = await response.json();
+    if (data.ok && data.version && data.version !== APP_VERSION) {
+      // Nova versão disponível
+      const isRequired = data.required || false;
+      showUpdateDialog(data.version, data.changelog || 'Melhorias e correções.', data.downloadUrl, isRequired);
+    }
+  } catch (error) {
+    console.log('Não foi possível verificar atualizações:', error);
+  }
+}
+
+function showUpdateDialog(version, changelog, downloadUrl, required) {
+  // Remover dialog existente se houver
+  const existing = document.getElementById('update-dialog');
+  if (existing) existing.remove();
+  
+  const dialog = document.createElement('div');
+  dialog.id = 'update-dialog';
+  dialog.className = 'modal-overlay';
+  dialog.style.display = 'flex';
+  dialog.innerHTML = `
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>🚀 Nova Atualização Disponível!</h3>
+        ${!required ? '<button class="modal-close" onclick="closeUpdateDialog()">×</button>' : ''}
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
+          <h4 style="color: var(--gold); margin: 0;">Versão ${version}</h4>
+          <p style="color: var(--text-secondary); margin: 5px 0;">Atual: ${APP_VERSION}</p>
+        </div>
+        <div style="background: var(--card-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <h5 style="margin: 0 0 10px; color: var(--gold);">O que há de novo:</h5>
+          <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">${changelog}</p>
+        </div>
+        ${required ? '<p style="color: var(--danger); text-align: center; font-size: 12px;">⚠️ Esta atualização é obrigatória para continuar usando o app.</p>' : ''}
+      </div>
+      <div class="modal-footer">
+        ${!required ? '<button class="btn btn-secondary" onclick="closeUpdateDialog()">Depois</button>' : ''}
+        <button class="btn btn-primary" onclick="downloadUpdate(\\'${downloadUrl}\\')">
+          <span>📥</span> Baixar Atualização
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(dialog);
+}
+
+function closeUpdateDialog() {
+  const dialog = document.getElementById('update-dialog');
+  if (dialog) dialog.remove();
+}
+
+async function downloadUpdate(url) {
+  if (!url) {
+    showNotification('URL de download não disponível', 'error');
+    return;
+  }
+  
+  try {
+    // Verificar se estamos no Capacitor
+    if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
+      const { Browser } = Capacitor.Plugins;
+      if (Browser) {
+        await Browser.open({ url: url });
+      } else {
+        window.open(url, '_system');
+      }
+    } else {
+      window.open(url, '_blank');
+    }
+    
+    showNotification('Download iniciado! Após baixar, instale o APK.', 'success');
+    closeUpdateDialog();
+  } catch (error) {
+    console.error('Erro ao baixar atualização:', error);
+    showNotification('Erro ao iniciar download', 'error');
+  }
+}
 
 // ========================================
 // CACHE OFFLINE - Salva dados localmente
@@ -461,6 +673,9 @@ async function showApp() {
   // Setup permissions e navegação (IMPORTANTE: refazer para garantir que funciona)
   setupPermissions();
   setupNavigation();
+  
+  // Inicializar Push Notifications (importante: depois do login)
+  setTimeout(() => initPushNotifications(), 1000);
 
   // Load initial data
   await loadUsers(); // Carregar usuários primeiro
@@ -481,6 +696,9 @@ async function showApp() {
       loadViewData(state.currentView).catch(err => console.error('Erro no polling:', err));
     }
   }, 5000);
+  
+  // Verificar atualizações do app
+  setTimeout(() => checkAppVersion(), 2000);
   
   // Inicializar busca rápida (Ctrl+K)
   initQuickSearch();
@@ -1088,23 +1306,101 @@ function updateOSStats() {
   if (concluidasEl) concluidasEl.textContent = concluidasMes;
 }
 
+// Estado de filtro de OS por status
+state.osStatusFilter = null;
+
+// Filtrar OS por status (clicando nos cards)
+function filterOSByStatus(status) {
+  // Se clicar no mesmo filtro que já está ativo, desativa
+  if (state.osStatusFilter === status) {
+    state.osStatusFilter = null;
+  } else {
+    state.osStatusFilter = status;
+  }
+  
+  // Atualizar indicador visual
+  const indicator = document.getElementById('os-filter-indicator');
+  const filterText = document.getElementById('os-filter-text');
+  
+  if (indicator) {
+    if (state.osStatusFilter) {
+      indicator.style.display = 'flex';
+      const filterLabels = {
+        'pending': '🕐 Pendentes',
+        'in_progress': '⚡ Em Andamento',
+        'completed': '✅ Concluídas',
+        'urgent': '🚨 Urgentes'
+      };
+      filterText.textContent = `Filtro: ${filterLabels[state.osStatusFilter] || state.osStatusFilter}`;
+    } else {
+      indicator.style.display = 'none';
+    }
+  }
+  
+  // Atualizar visual dos cards (destacar o selecionado)
+  document.querySelectorAll('.os-stat-card').forEach(card => {
+    card.style.transform = '';
+    card.style.boxShadow = '';
+  });
+  
+  if (state.osStatusFilter) {
+    const classMap = {
+      'pending': 'pending',
+      'in_progress': 'progress',
+      'completed': 'completed',
+      'urgent': 'urgent'
+    };
+    const selectedCard = document.querySelector(`.os-stat-card.${classMap[state.osStatusFilter]}`);
+    if (selectedCard) {
+      selectedCard.style.transform = 'scale(1.05)';
+      selectedCard.style.boxShadow = '0 4px 20px rgba(212, 175, 55, 0.3)';
+    }
+  }
+  
+  // Re-renderizar tabela com filtro
+  renderOrdersTable();
+}
+
 function renderOrdersTable() {
   const tbody = document.querySelector('#os-table tbody');
   
   // Update stats
   updateOSStats();
   
-  // Filtrar apenas OS ativas (não concluídas)
-  const activeOrders = state.orders.filter(o => o.status !== 'completed');
+  // Aplicar filtro de status
+  let filteredOrders = state.orders;
   
-  if (activeOrders.length === 0) {
+  if (state.osStatusFilter === 'urgent') {
+    // Filtro especial para urgentes - filtra por prioridade
+    filteredOrders = state.orders.filter(o => o.priority === 'urgent' && o.status !== 'completed');
+  } else if (state.osStatusFilter === 'completed') {
+    // Mostrar concluídas do mês
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    filteredOrders = state.orders.filter(o => {
+      if (o.status !== 'completed') return false;
+      const finishedAt = o.finished_at ? new Date(o.finished_at) : null;
+      return finishedAt && finishedAt >= startOfMonth;
+    });
+  } else if (state.osStatusFilter) {
+    // Filtro por status normal
+    filteredOrders = state.orders.filter(o => o.status === state.osStatusFilter);
+  } else {
+    // Sem filtro - mostrar apenas ativas (comportamento padrão)
+    filteredOrders = state.orders.filter(o => o.status !== 'completed');
+  }
+  
+  if (filteredOrders.length === 0) {
+    const emptyMessage = state.osStatusFilter 
+      ? `Nenhuma OS ${state.osStatusFilter === 'urgent' ? 'urgente' : state.osStatusFilter === 'completed' ? 'concluída no mês' : ''} encontrada`
+      : 'Nenhuma OS ativa no momento';
     tbody.innerHTML = `
       <tr>
         <td colspan="5" style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; margin-bottom: 12px;">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
           </svg>
-          <div style="font-size: 14px;">Nenhuma OS ativa no momento</div>
+          <div style="font-size: 14px;">${emptyMessage}</div>
           <div style="font-size: 12px; margin-top: 4px;">Clique em "Nova OS" para criar</div>
         </td>
       </tr>
@@ -1112,15 +1408,16 @@ function renderOrdersTable() {
     return;
   }
 
-  tbody.innerHTML = activeOrders.map(order => {
+  tbody.innerHTML = filteredOrders.map(order => {
     const assigned = order.assigned_users && order.assigned_users.length > 0
       ? escapeHtml(order.assigned_users[0].name || order.assigned_users[0].username)
       : '-';
+    const solicitante = order.requested_by_name ? escapeHtml(order.requested_by_name) : '-';
     return `
       <tr onclick="showOSDetail('${sanitizeId(order.id)}')" style="cursor: pointer;">
         <td>
           <div><strong>${escapeHtml(order.title)}</strong></div>
-          <div style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(order.sector) || '-'}</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(order.sector) || '-'} • Solicitante: ${solicitante}</div>
         </td>
         <td><span class="badge ${sanitizeId(order.priority)}">${getPriorityText(order.priority)}</span></td>
         <td>${assigned}</td>
@@ -1140,6 +1437,12 @@ function showOSDetail(orderId) {
   document.getElementById('detail-os-sector').textContent = order.sector;
   document.getElementById('detail-os-created').textContent = formatDate(order.created_at);
   document.getElementById('detail-os-description').textContent = order.description || 'Sem observações';
+  
+  // Solicitante
+  const solicitanteEl = document.getElementById('detail-os-solicitante');
+  if (solicitanteEl) {
+    solicitanteEl.textContent = order.requested_by_name || '-';
+  }
   
   const statusBadge = document.getElementById('detail-os-status');
   statusBadge.textContent = getStatusText(order.status);
@@ -1221,12 +1524,33 @@ function showOSDetail(orderId) {
   
   // Checkboxes para editar atribuições (se for o criador ou admin)
   const canEdit = state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all') || order.requested_by === state.user.id;
+  const canManageAll = state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all');
   const checkboxContainer = document.getElementById('detail-assign-checkboxes');
   
-  if (canEdit && order.status !== 'completed') {
+  // Mostrar seção de datas retroativas (só para manutenção/admin e quando não concluída)
+  const retroactiveDates = document.getElementById('detail-retroactive-dates');
+  if (retroactiveDates) {
+    if (canManageAll && order.status !== 'completed') {
+      retroactiveDates.style.display = 'block';
+      // Limpar campos
+      const startedInput = document.getElementById('detail-started-at-custom');
+      const finishedInput = document.getElementById('detail-finished-at-custom');
+      if (startedInput) startedInput.value = '';
+      if (finishedInput) finishedInput.value = '';
+    } else {
+      retroactiveDates.style.display = 'none';
+    }
+  }
+  
+  // Checkboxes para editar atribuições
+  // Manutenção/admin pode editar técnicos MESMO em OS concluída
+  const canEditAssignments = (canManageAll) || (canEdit && order.status !== 'completed');
+  
+  if (canEditAssignments) {
     const assignedIds = order.assigned_users ? order.assigned_users.map(u => u.id) : [];
+    const labelText = order.status === 'completed' ? 'Editar técnicos (OS concluída):' : 'Alterar atribuições:';
     checkboxContainer.innerHTML = `
-      <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Alterar atribuições:</label>
+      <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">${labelText}</label>
       ${['declie', 'eduardo', 'vanderlei', 'alissom'].map(username => {
         const user = state.users.find(u => u.username.toLowerCase() === username);
         const isChecked = user && assignedIds.includes(user.id);
@@ -1241,7 +1565,8 @@ function showOSDetail(orderId) {
   const actionsContainer = document.getElementById('detail-os-actions');
   let actions = '<button type="button" class="btn-small btn-cancel" onclick="closeModal(\'modal-os-detail\')">Fechar</button>';
   
-  if (canEdit && order.status !== 'completed') {
+  // Botão salvar - manutenção pode salvar mesmo em OS concluída
+  if (canEditAssignments) {
     actions += `<button type="button" class="btn-small btn-primary" onclick="updateOSAssignments('${order.id}')">Salvar Alterações</button>`;
   }
   
@@ -1399,13 +1724,22 @@ function toggleOSView(view) {
 
 async function startOrder(orderId) {
   try {
+    // Verificar se tem data retroativa customizada
+    const startedAtCustomInput = document.getElementById('detail-started-at-custom');
+    const startedAtCustom = startedAtCustomInput?.value || null;
+    
+    const body = { status: 'in_progress' };
+    if (startedAtCustom) {
+      body.started_at_custom = startedAtCustom;
+    }
+    
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${state.token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ status: 'in_progress' })
+      body: JSON.stringify(body)
     });
 
     const data = await response.json();
@@ -1463,13 +1797,27 @@ async function completeOrder(orderId) {
   }
   
   try {
+    // Verificar se tem datas retroativas customizadas
+    const startedAtCustomInput = document.getElementById('detail-started-at-custom');
+    const finishedAtCustomInput = document.getElementById('detail-finished-at-custom');
+    const startedAtCustom = startedAtCustomInput?.value || null;
+    const finishedAtCustom = finishedAtCustomInput?.value || null;
+    
+    const body = { status: 'completed' };
+    if (startedAtCustom) {
+      body.started_at_custom = startedAtCustom;
+    }
+    if (finishedAtCustom) {
+      body.finished_at_custom = finishedAtCustom;
+    }
+    
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${state.token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ status: 'completed' })
+      body: JSON.stringify(body)
     });
 
     const data = await response.json();
@@ -3819,7 +4167,7 @@ async function updateChecklistFromForm(event, checklistId) {
 
 // Estado do controle de água
 state.waterReadings = [];
-state.waterPeriod = 'week';
+state.waterPeriod = 'day';
 state.waterStats = null;
 
 // Buscar temperatura atual da internet (Granja Vitta - Aparecida de Goiânia)
@@ -4079,9 +4427,27 @@ function renderWaterStats() {
     if (elLtHora24h) elLtHora24h.textContent = ltHora24h;
   });
   
+  // Filtrar leituras pelo período selecionado
+  const period = state.waterPeriod || 'day';
+  let periodStartDate = new Date(today);
+  
+  if (period === 'day') {
+    periodStartDate.setHours(0, 0, 0, 0);
+  } else if (period === 'week') {
+    // Início da semana (segunda-feira)
+    const dayOfWeek = periodStartDate.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    periodStartDate.setDate(periodStartDate.getDate() + diff);
+    periodStartDate.setHours(0, 0, 0, 0);
+  } else if (period === 'month') {
+    periodStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  }
+  
+  const periodStartKey = periodStartDate.getFullYear() + '-' + String(periodStartDate.getMonth() + 1).padStart(2, '0') + '-' + String(periodStartDate.getDate()).padStart(2, '0');
+  
   // Comparativo - usar leituras do período selecionado
-  const aviariosReadings = sortedReadings.filter(r => r.tank_name === 'aviarios');
-  const recriaReadings = sortedReadings.filter(r => r.tank_name === 'recria');
+  const aviariosReadings = sortedReadings.filter(r => r.tank_name === 'aviarios' && getDateKey(r.reading_date) >= periodStartKey);
+  const recriaReadings = sortedReadings.filter(r => r.tank_name === 'recria' && getDateKey(r.reading_date) >= periodStartKey);
   
   // Calcular totais e picos baseado nas leituras 7h
   let aviariosTotal = 0, recriaTotal = 0;
@@ -4120,7 +4486,6 @@ function renderWaterStats() {
   }
   
   // Atualizar card de Total das Caixas no Período
-  const period = state.waterPeriod || 'week';
   const totalGeral = aviariosTotal + recriaTotal;
   const totalDias = Math.max(aviariosDays, recriaDays, 1);
   const mediaDiaria = totalGeral / totalDias;

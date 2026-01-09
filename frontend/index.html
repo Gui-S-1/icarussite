@@ -5792,7 +5792,7 @@
 
           <!-- Stats Cards -->
           <div class="os-stats-grid">
-            <div class="os-stat-card urgent">
+            <div class="os-stat-card urgent" onclick="filterOSByStatus('urgent')" style="cursor: pointer;" title="Clique para filtrar">
               <div class="os-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -5805,7 +5805,7 @@
                 <span class="os-stat-label">Urgentes</span>
               </div>
             </div>
-            <div class="os-stat-card progress">
+            <div class="os-stat-card progress" onclick="filterOSByStatus('in_progress')" style="cursor: pointer;" title="Clique para filtrar">
               <div class="os-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
@@ -5816,7 +5816,7 @@
                 <span class="os-stat-label">Em Andamento</span>
               </div>
             </div>
-            <div class="os-stat-card pending">
+            <div class="os-stat-card pending" onclick="filterOSByStatus('pending')" style="cursor: pointer;" title="Clique para filtrar">
               <div class="os-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
@@ -5828,7 +5828,7 @@
                 <span class="os-stat-label">Pendentes</span>
               </div>
             </div>
-            <div class="os-stat-card completed">
+            <div class="os-stat-card completed" onclick="filterOSByStatus('completed')" style="cursor: pointer;" title="Clique para filtrar">
               <div class="os-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -5840,6 +5840,12 @@
                 <span class="os-stat-label">Concluídas (Mês)</span>
               </div>
             </div>
+          </div>
+
+          <!-- Indicador de Filtro Ativo -->
+          <div id="os-filter-indicator" class="os-filter-indicator" style="display: none; margin-bottom: 16px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; display: none; align-items: center; justify-content: space-between;">
+            <span id="os-filter-text" style="color: var(--accent-gold); font-weight: 500;">Filtro: Todas</span>
+            <button onclick="filterOSByStatus(null)" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; font-size: 12px;">✕ Limpar filtro</button>
           </div>
 
           <!-- Card Principal - Ativas -->
@@ -7626,6 +7632,10 @@
           <div class="os-info-value" id="detail-os-sector">-</div>
         </div>
         <div class="os-info-item">
+          <div class="os-info-label">👤 Solicitante</div>
+          <div class="os-info-value" id="detail-os-solicitante" style="color: var(--accent-gold);">-</div>
+        </div>
+        <div class="os-info-item">
           <div class="os-info-label">Criada em</div>
           <div class="os-info-value" id="detail-os-created">-</div>
         </div>
@@ -7652,6 +7662,30 @@
         <label>Atribuída para</label>
         <div class="os-assigned-users" id="detail-os-assigned"></div>
         <div class="checkbox-group" id="detail-assign-checkboxes" style="margin-top: 12px;"></div>
+      </div>
+
+      <!-- Seção de Datas Retroativas (só para manutenção) -->
+      <div class="form-group" id="detail-retroactive-dates" style="display: none; background: rgba(212, 175, 55, 0.08); padding: 14px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.2); margin-top: 12px;">
+        <label style="color: var(--accent-gold); font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Preenchimento Retroativo
+        </label>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+          Deixe em branco para usar a data/hora atual ao iniciar ou concluir.
+        </p>
+        <div class="form-row" style="gap: 12px;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label style="font-size: 12px;">📍 Data/Hora de Início</label>
+            <input type="datetime-local" id="detail-started-at-custom" style="font-size: 13px;">
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label style="font-size: 12px;">✓ Data/Hora de Conclusão</label>
+            <input type="datetime-local" id="detail-finished-at-custom" style="font-size: 13px;">
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -7926,7 +7960,7 @@
           </div>
           <span>Gerador</span>
         </div>
-        <div class="mobile-more-item" onclick="navigateMobileMore('checklist')">
+        <div class="mobile-more-item" onclick="navigateMobileMore('checklists')">
           <div class="mobile-more-icon checklist">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
           </div>
