@@ -5,6 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Icarus System</title>
   
+  <!-- Script crítico - detecta tenant ANTES de renderizar para evitar flash -->
+  <script>
+    (function() {
+      var tenantType = localStorage.getItem('icarus_tenant_type');
+      if (tenantType === 'lavanderia') {
+        document.documentElement.classList.add('lavanderia-mode');
+      }
+    })();
+  </script>
+  <style>
+    /* Esconder views até JS carregar - evita flash */
+    html.lavanderia-mode .sidebar,
+    html.lavanderia-mode #dashboard-view,
+    html.lavanderia-mode [data-view="dashboard"],
+    html.lavanderia-mode [data-view="os"],
+    html.lavanderia-mode [data-view="configuracoes"] {
+      display: none !important;
+    }
+    html.lavanderia-mode #lavanderia-view {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      height: auto !important;
+    }
+  </style>
+  
   <!-- PWA Meta Tags -->
   <meta name="description" content="Sistema de Gestão de Manutenção - Granja Vitta">
   <meta name="theme-color" content="#d4af37">
