@@ -8788,9 +8788,16 @@ async function loadLav2AllStats() {
     });
     
     var data = await response.json();
-    if (data.ok) {
+    if (data.ok && data.stats) {
+      var stats = data.stats;
+      
+      // Faturamento total
       var lucroEl = document.getElementById('lav2-total-lucro');
-      if (lucroEl) lucroEl.textContent = 'R$ ' + (data.totalValue || 0).toFixed(2);
+      if (lucroEl) lucroEl.textContent = 'R$ ' + (stats.month_value || stats.total_value || 0).toFixed(2);
+      
+      // Total de peças geral (todos os clientes)
+      var pecasGeralEl = document.getElementById('lav2-total-pecas-geral');
+      if (pecasGeralEl) pecasGeralEl.textContent = (stats.month_pieces || stats.total_pieces || 0);
     }
   } catch (error) {
     console.error('[Lavanderia V2] Erro ao carregar stats gerais:', error);
