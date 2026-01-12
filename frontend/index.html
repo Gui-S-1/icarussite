@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Icarus System</title>
   
   <!-- Script crítico - detecta tenant ANTES de renderizar para evitar flash -->
@@ -29,6 +29,22 @@
       opacity: 1 !important;
       height: auto !important;
     }
+    <style>
+      /* Mobile fix: prevent horizontal stretching and text auto-zoom */
+      html, body {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
+      }
+      *, *:before, *:after { box-sizing: inherit; }
+      img, video, iframe { max-width: 100%; height: auto; }
+      /* Ensure main content doesn't force horizontal scroll */
+      .content, .main-layout, .lav2-container { max-width: 100%; width: 100%; }
+      /* Prevent inputs and fixed-width cards from overflowing */
+      input, button, .lav2-client-card, .lav2-stat-card { min-width: 0; }
+    </style>
   </style>
   
   <!-- PWA Meta Tags -->
