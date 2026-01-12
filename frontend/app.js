@@ -1016,6 +1016,7 @@ function updateDashboardStats() {
   
   const pending = filteredOrders.filter(o => o.status === 'pending').length;
   const inProgress = filteredOrders.filter(o => o.status === 'in_progress').length;
+  const paused = filteredOrders.filter(o => o.status === 'paused').length;
   
   const completedInPeriod = filteredOrders.filter(o => 
     o.status === 'completed' && o.finished_at
@@ -1027,9 +1028,11 @@ function updateDashboardStats() {
   const statProgress = document.getElementById('stat-progress');
   const statCompleted = document.getElementById('stat-completed');
   const statTotal = document.getElementById('stat-total');
+  const statPaused = document.getElementById('stat-paused');
 
   if (statPending) statPending.textContent = pending;
-  if (statProgress) statProgress.textContent = inProgress;
+  if (statProgress) statProgress.textContent = inProgress + paused;
+  if (statPaused) statPaused.textContent = paused;
   if (statCompleted) statCompleted.textContent = completedInPeriod;
   if (statTotal) statTotal.textContent = createdInPeriod;
 
@@ -1342,6 +1345,7 @@ function filterOSByStatus(status) {
       const filterLabels = {
         'pending': '🕐 Pendentes',
         'in_progress': '⚡ Em Andamento',
+        'paused': '⏸️ Pausadas',
         'completed': '✅ Concluídas',
         'urgent': '🚨 Urgentes'
       };
@@ -1589,7 +1593,14 @@ function showOSDetail(orderId) {
   }
   
   if (canEdit && order.status === 'in_progress') {
+    actions += `<button type="button" class="btn-small btn-warning" onclick="pauseOrder('${order.id}')">⏸ Pausar</button>`;
     actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+  }
+  
+  // Se estiver pausada, mostrar botão de retomar
+  if (canEdit && order.status === 'paused') {
+    actions += `<button type="button" class="btn-small btn-primary" onclick="resumeOrder('${order.id}')">▶ Retomar</button>`;
+    actions += `<button type="button" class="btn-small btn-success" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
   }
   
   // Botão excluir - criador pode excluir sua OS, manutenção pode excluir qualquer
@@ -1765,6 +1776,56 @@ async function startOrder(orderId) {
     }
   } catch (error) {
     showNotification('Erro ao iniciar OS: ' + error.message, 'error');
+  }
+}
+
+// Pausar OS (para almoço, fim do dia, etc)
+async function pauseOrder(orderId) {
+  try {
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: 'paused' })
+    });
+
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('⏸ OS pausada - tempo registrado!', 'info');
+      closeModal('modal-os-detail');
+      await loadOrders();
+    } else {
+      showNotification(data.error || 'Erro ao pausar OS', 'error');
+    }
+  } catch (error) {
+    showNotification('Erro ao pausar OS: ' + error.message, 'error');
+  }
+}
+
+// Retomar OS pausada
+async function resumeOrder(orderId) {
+  try {
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: 'in_progress' })
+    });
+
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('▶ OS retomada!', 'success');
+      closeModal('modal-os-detail');
+      await loadOrders();
+    } else {
+      showNotification(data.error || 'Erro ao retomar OS', 'error');
+    }
+  } catch (error) {
+    showNotification('Erro ao retomar OS: ' + error.message, 'error');
   }
 }
 
@@ -2272,7 +2333,7 @@ async function checkForUpdates() {
   }
 }
 
-function showNotification(message, type = 'info', duration = 5000) {
+function showNotification(message, type = 'info', duration = 5000, playSound = true) {
   const container = document.getElementById('notification-container');
   if (!container) return;
   
@@ -2285,18 +2346,97 @@ function showNotification(message, type = 'info', duration = 5000) {
     info: 'ℹ'
   };
   
+  const typeColors = {
+    success: '#10b981',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    info: '#3b82f6'
+  };
+  
+  // Tocar som de notificação
+  if (playSound && typeof Audio !== 'undefined') {
+    try {
+      // Som de notificação estilo Discord (frequência curta)
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.frequency.value = type === 'error' ? 400 : type === 'warning' ? 600 : 800;
+      oscillator.type = 'sine';
+      gainNode.gain.value = 0.1;
+      
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch (e) {
+      console.log('Erro ao tocar som:', e);
+    }
+  }
+  
   const notification = document.createElement('div');
-  notification.className = `notification ${type}`;
+  notification.className = `notification ${type} notification-slide-in`;
   notification.id = id;
+  notification.style.cssText = `
+    position: relative;
+    background: linear-gradient(135deg, rgba(30,30,30,0.98), rgba(20,20,20,0.98));
+    border: 1px solid ${typeColors[type]}40;
+    border-left: 4px solid ${typeColors[type]};
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 20px ${typeColors[type]}20;
+    animation: notificationSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(10px);
+    max-width: 380px;
+    cursor: pointer;
+  `;
   notification.innerHTML = `
-    <div class="notification-content">
-      <span class="notification-icon">${typeIcons[type] || typeIcons.info}</span>
-      <span class="notification-message">${message}</span>
-      <span class="notification-close" onclick="closeNotification('${id}')">×</span>
+    <div class="notification-content" style="display: flex; align-items: flex-start; gap: 12px;">
+      <span class="notification-icon" style="
+        width: 32px; 
+        height: 32px; 
+        border-radius: 50%; 
+        background: ${typeColors[type]}20; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 16px;
+        color: ${typeColors[type]};
+        flex-shrink: 0;
+      ">${typeIcons[type] || typeIcons.info}</span>
+      <div style="flex: 1; min-width: 0;">
+        <span class="notification-message" style="
+          display: block;
+          color: #fff;
+          font-size: 14px;
+          line-height: 1.5;
+          word-wrap: break-word;
+        ">${message}</span>
+        <span style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; display: block;">
+          ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+      <span class="notification-close" onclick="event.stopPropagation(); closeNotification('${id}')" style="
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: rgba(255,255,255,0.5);
+        font-size: 14px;
+      " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">×</span>
     </div>
   `;
   
-  container.appendChild(notification);
+  // Adicionar ao início (notificações mais recentes em cima)
+  container.insertBefore(notification, container.firstChild);
   
   // Auto remove after duration
   setTimeout(() => {
@@ -2317,6 +2457,7 @@ function getStatusText(status) {
   const map = {
     'pending': 'Pendente',
     'in_progress': 'Em Andamento',
+    'paused': 'Pausada',
     'completed': 'Concluída'
   };
   return map[status] || status;
