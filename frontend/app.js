@@ -741,8 +741,8 @@ function setupPermissions() {
   // Cada aba tem uma role específica para VER e outra para EDITAR
   // Role 'admin' tem acesso total a tudo
   
-  // Dashboard: dashboard (ver) - Lavanderia tem seu próprio dashboard
-  const canSeeDashboard = isLavanderia ? (isAdmin || roles.includes('lavanderia')) : (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
+  // Dashboard: dashboard (ver) - Lavanderia NÃO tem dashboard separado, só o módulo lavanderia
+  const canSeeDashboard = !isLavanderia && (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
   
   // Ordens de Serviço: os (ver/criar), os_manage_all (gerenciar todas)
   // OS sempre visível para granja, oculto para lavanderia
@@ -817,7 +817,14 @@ function setupPermissions() {
   if (navAditiva) navAditiva.classList.toggle('hidden', !canSeeAditiva);
   if (navLavanderia) navLavanderia.classList.toggle('hidden', !canSeeLavanderia);
   if (navRel) navRel.classList.toggle('hidden', !canSeeRelatorios);
-  if (navCfg) navCfg.classList.remove('hidden');
+  if (navCfg) navCfg.classList.toggle('hidden', isLavanderia); // Esconder config para lavanderia
+  
+  // Aplicar classe lavanderia-mode no body para esconder sidebar
+  if (isLavanderia) {
+    document.body.classList.add('lavanderia-mode');
+  } else {
+    document.body.classList.remove('lavanderia-mode');
+  }
   
   // Salvar tipo de tenant e permissões no state
   state.tenantType = tenantType;
@@ -847,7 +854,8 @@ function setupMobileNavPermissions() {
   const isLavanderia = tenantType === 'lavanderia';
   
   // Mesmas regras de permissão do setupPermissions - considerando tenant_type
-  const canSeeDashboard = isLavanderia ? (isAdmin || roles.includes('lavanderia')) : (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
+  // Para lavanderia: não tem dashboard separado, só o módulo lavanderia
+  const canSeeDashboard = !isLavanderia && (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
   const canSeeOS = !isLavanderia;
   const canSeeWater = !isLavanderia && (isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all'));
   const canSeeDiesel = !isLavanderia && (isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('os_manage_all'));
@@ -857,6 +865,7 @@ function setupMobileNavPermissions() {
   const canSeeRelatorios = !isLavanderia && (isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all'));
   const canSeeCompras = !isLavanderia && (isAdmin || roles.includes('compras') || roles.includes('compras_view') || roles.includes('compras_request'));
   const canSeeLavanderia = isLavanderia || isAdmin || roles.includes('lavanderia');
+  const canSeeMore = !isLavanderia; // Esconder "Mais" para lavanderia
   
   // Itens da barra de navegação mobile principal
   const mobileNavDashboard = document.querySelector('.mobile-nav-item[data-view="dashboard"]');
@@ -864,12 +873,20 @@ function setupMobileNavPermissions() {
   const mobileNavWater = document.querySelector('.mobile-nav-item[data-view="controle-agua"]');
   const mobileNavDiesel = document.querySelector('.mobile-nav-item[data-view="controle-diesel"]');
   const mobileNavLavanderia = document.querySelector('.mobile-nav-item[data-view="lavanderia"]');
+  const mobileNavMore = document.querySelector('.mobile-nav-item[data-view="mobile-more"]');
   
   if (mobileNavDashboard) mobileNavDashboard.style.display = canSeeDashboard ? '' : 'none';
   if (mobileNavOS) mobileNavOS.style.display = canSeeOS ? '' : 'none';
   if (mobileNavWater) mobileNavWater.style.display = canSeeWater ? '' : 'none';
   if (mobileNavDiesel) mobileNavDiesel.style.display = canSeeDiesel ? '' : 'none';
   if (mobileNavLavanderia) mobileNavLavanderia.style.display = canSeeLavanderia ? '' : 'none';
+  if (mobileNavMore) mobileNavMore.style.display = canSeeMore ? '' : 'none';
+  
+  // Se for lavanderia, marcar a nav de lavanderia como ativa
+  if (isLavanderia && mobileNavLavanderia) {
+    document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+    mobileNavLavanderia.classList.add('active');
+  }
   
   // Itens do menu "Mais" mobile
   const moreGerador = document.querySelector('.mobile-more-item[onclick*="controle-gerador"]');
@@ -877,12 +894,14 @@ function setupMobileNavPermissions() {
   const moreAditiva = document.querySelector('.mobile-more-item[onclick*="aditiva"]');
   const moreRelatorios = document.querySelector('.mobile-more-item[onclick*="relatorios"]');
   const moreCompras = document.querySelector('.mobile-more-item[onclick*="compras"]');
+  const moreConfig = document.querySelector('.mobile-more-item[onclick*="configuracoes"]');
   
   if (moreGerador) moreGerador.style.display = canSeeGerador ? '' : 'none';
   if (moreChecklist) moreChecklist.style.display = canSeeChecklists ? '' : 'none';
   if (moreAditiva) moreAditiva.style.display = canSeeAditiva ? '' : 'none';
   if (moreRelatorios) moreRelatorios.style.display = canSeeRelatorios ? '' : 'none';
   if (moreCompras) moreCompras.style.display = canSeeCompras ? '' : 'none';
+  if (moreConfig) moreConfig.style.display = !isLavanderia ? '' : 'none';
 }
 
 function showError(message) {
@@ -8556,7 +8575,8 @@ var lav2State = {
   currentClient: 'marajoara',
   entries: [],
   stats: {},
-  period: null
+  period: null,
+  initialized: false
 };
 
 async function loadLavanderia() {
@@ -8569,8 +8589,14 @@ async function loadLavanderia() {
     var dateInput = document.getElementById('lav2-entry-date');
     if (dateInput) dateInput.value = today;
     
-    // Selecionar primeiro cliente
-    selectLav2Client('marajoara');
+    // Só selecionar marajoara na primeira vez (se não tiver cliente selecionado)
+    if (!lav2State.initialized) {
+      selectLav2Client('marajoara');
+      lav2State.initialized = true;
+    } else {
+      // Apenas recarregar dados do cliente atual
+      selectLav2Client(lav2State.currentClient);
+    }
     
     // Carregar dados de todos os clientes para o lucro geral
     await loadLav2AllStats();
