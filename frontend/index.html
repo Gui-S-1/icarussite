@@ -2087,129 +2087,240 @@
     @media (max-width: 1000px) {
       .lav2-container { 
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 12px;
+        padding: 0 10px;
+        padding-bottom: 90px;
       }
       .lav2-sidebar {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 8px;
+        order: 1;
+      }
+      .lav2-main {
+        order: 2;
       }
       .lav2-client-card {
-        padding: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        min-height: auto;
       }
       .lav2-client-name {
-        font-size: 14px;
+        font-size: 12px;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .lav2-client-name .client-dot {
+        width: 8px;
+        height: 8px;
       }
       .lav2-client-info {
-        font-size: 11px;
+        font-size: 10px;
+        gap: 2px;
       }
-      /* Card de lucro geral no mobile - ocupar 2 colunas */
-      .lav2-sidebar .lav2-client-card:last-child {
-        grid-column: span 2;
+      .lav2-client-price {
+        font-size: 10px;
       }
     }
     @media (max-width: 500px) {
       .lav2-container {
-        padding: 0 8px;
-        padding-bottom: 100px;
+        padding: 0 6px;
+        padding-bottom: 85px;
+        gap: 10px;
       }
       .lav2-sidebar {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
       }
       .lav2-client-card {
-        padding: 12px;
+        padding: 8px 10px;
+        border-radius: 8px;
       }
       .lav2-client-name {
-        font-size: 13px;
-        margin-bottom: 4px;
+        font-size: 11px;
+        margin-bottom: 2px;
+      }
+      .lav2-client-info {
+        font-size: 9px;
       }
       .lav2-client-info span:last-child {
         display: none; /* Esconder ciclo no mobile pequeno */
       }
-      .lav2-header-content {
-        flex-direction: column;
-        gap: 12px;
-        align-items: flex-start;
+      /* Dashboard geral mobile */
+      .lav2-dashboard-geral {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+        margin-bottom: 10px !important;
       }
-      .lav2-stats-row {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px;
+      .lav2-dashboard-card {
+        padding: 10px 8px !important;
+        gap: 8px !important;
+        flex-direction: column !important;
+        text-align: center;
       }
-      .lav2-stat-card {
-        padding: 14px;
+      .lav2-geral-icon {
+        width: 28px !important;
+        height: 28px !important;
       }
-      .lav2-stat-value {
-        font-size: 22px !important;
+      .lav2-geral-icon svg {
+        width: 14px !important;
+        height: 14px !important;
       }
-      .lav2-form-fields {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px;
+      .lav2-geral-value {
+        font-size: 14px !important;
       }
-      .lav2-form-field input {
-        font-size: 18px;
-        padding: 12px;
+      .lav2-geral-label {
+        font-size: 8px !important;
       }
-      .lav2-entries-list {
-        max-height: 250px;
-      }
-      .lav2-entry-item {
-        padding: 10px 12px;
-        font-size: 12px;
-      }
-      /* Mobile small - mais compacto */
+      /* Header mobile */
       .lav2-header {
-        padding: 14px 16px;
-        border-radius: 14px;
+        padding: 12px !important;
+        border-radius: 12px !important;
+      }
+      .lav2-header-left {
+        gap: 10px !important;
+      }
+      .lav2-header-icon {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      .lav2-header-icon svg {
+        width: 18px !important;
+        height: 18px !important;
+      }
+      .lav2-header-title h2 {
+        font-size: 14px !important;
+      }
+      .lav2-header-title p {
+        font-size: 10px !important;
       }
       .lav2-header-content {
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
         align-items: stretch !important;
       }
       .lav2-header-actions {
-        flex-wrap: wrap;
-        justify-content: center;
+        display: flex;
+        gap: 6px;
+        justify-content: space-between;
       }
       .lav2-period-badge {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        flex: 1;
+        text-align: center;
       }
       .lav2-btn-export {
-        padding: 10px 16px;
-        font-size: 13px;
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        flex: 1;
       }
-      .lav2-header-icon {
-        width: 40px;
-        height: 40px;
+      /* Stats row mobile */
+      .lav2-stats-row {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
       }
-      .lav2-header-icon svg {
-        width: 20px;
-        height: 20px;
+      .lav2-stat-card {
+        padding: 10px 6px !important;
+        border-radius: 10px !important;
       }
-      .lav2-header-title h2 {
-        font-size: 18px;
+      .lav2-stat-icon {
+        width: 24px !important;
+        height: 24px !important;
+        margin-bottom: 6px !important;
+        border-radius: 6px !important;
       }
-      .lav2-header-title p {
-        font-size: 11px;
+      .lav2-stat-icon svg {
+        width: 12px !important;
+        height: 12px !important;
       }
-      .lav2-dashboard-geral {
-        gap: 8px;
-        margin-bottom: 14px;
+      .lav2-stat-value {
+        font-size: 14px !important;
       }
-      .lav2-dashboard-card {
-        padding: 12px 14px;
-        gap: 10px;
+      .lav2-stat-label {
+        font-size: 8px !important;
       }
-      .lav2-geral-icon {
-        width: 36px;
-        height: 36px;
+      /* Entry card mobile */
+      .lav2-entry-card {
+        border-radius: 12px !important;
       }
-      .lav2-geral-value {
-        font-size: 18px;
+      .lav2-entry-header {
+        padding: 10px 12px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
       }
-      .lav2-geral-label {
-        font-size: 10px;
+      .lav2-entry-header h3 {
+        font-size: 12px !important;
+        gap: 6px !important;
+      }
+      .lav2-entry-header h3 svg {
+        width: 14px !important;
+        height: 14px !important;
+      }
+      .lav2-date-input {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+      }
+      .lav2-entry-body {
+        padding: 10px 12px !important;
+      }
+      .lav2-form-fields {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+      .lav2-form-field {
+        gap: 4px !important;
+      }
+      .lav2-form-field label {
+        font-size: 9px !important;
+      }
+      .lav2-form-field input {
+        font-size: 14px !important;
+        padding: 8px !important;
+        border-radius: 8px !important;
+      }
+      /* Total box mobile */
+      .lav2-total-box {
+        padding: 10px 12px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+        border-radius: 10px !important;
+        margin-bottom: 12px !important;
+      }
+      .lav2-total-info {
+        flex: 1;
+      }
+      .lav2-total-pieces {
+        font-size: 11px !important;
+      }
+      .lav2-total-value {
+        font-size: 18px !important;
+      }
+      .lav2-save-btn {
+        padding: 10px 16px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+      }
+      /* Entries list mobile */
+      .lav2-entries-card {
+        border-radius: 12px !important;
+      }
+      .lav2-entries-header {
+        padding: 10px 12px !important;
+      }
+      .lav2-entries-header h4 {
+        font-size: 12px !important;
+      }
+      .lav2-entries-list {
+        max-height: 200px !important;
+        padding: 8px !important;
+      }
+      .lav2-entry-item {
+        padding: 8px 10px !important;
+        font-size: 11px !important;
+        border-radius: 8px !important;
       }
     }
 
@@ -2258,10 +2369,14 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .lav2-client-name .client-dot {
       width: 10px; height: 10px;
       border-radius: 50%;
+      flex-shrink: 0;
       background: var(--client-color, #ec4899);
       box-shadow: 0 0 10px var(--client-color, #ec4899);
     }
@@ -8548,7 +8663,7 @@
                 </div>
                 <div class="lav2-client-info">
                   <span class="lav2-client-price">R$ 3,50/peça</span>
-                  <span>Ciclo: 16 dias (4-19 ou 20-3)</span>
+                  <span>Ciclo: 16 dias (5-20)</span>
                 </div>
               </div>
               <div class="lav2-client-card" style="--client-color: #a855f7;" onclick="selectLav2Client('loyola')" id="lav2-client-loyola">

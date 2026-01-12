@@ -1865,7 +1865,8 @@ async function startOrder(orderId) {
     
     const body = { status: 'in_progress' };
     if (startedAtCustom) {
-      body.started_at_custom = startedAtCustom;
+      // Converter datetime-local para ISO com timezone
+      body.started_at_custom = new Date(startedAtCustom).toISOString();
     }
     
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
@@ -1990,12 +1991,21 @@ async function completeOrder(orderId) {
     const finishedAtCustom = finishedAtCustomInput?.value || null;
     const breakMinutes = breakMinutesInput?.value ? parseInt(breakMinutesInput.value) : 0;
     
+    // Converter datetime-local para ISO com timezone de Brasília (-03:00)
+    // datetime-local retorna "2026-01-12T08:01" sem timezone
+    // Adicionamos :00-03:00 para indicar que é horário de Brasília
+    const toISOLocal = (dtValue) => {
+      if (!dtValue) return null;
+      // Adicionar segundos e timezone de Brasília
+      return dtValue + ':00-03:00';
+    };
+    
     const body = { status: 'completed' };
     if (startedAtCustom) {
-      body.started_at_custom = startedAtCustom;
+      body.started_at_custom = toISOLocal(startedAtCustom);
     }
     if (finishedAtCustom) {
-      body.finished_at_custom = finishedAtCustom;
+      body.finished_at_custom = toISOLocal(finishedAtCustom);
     }
     if (breakMinutes > 0) {
       body.break_minutes = breakMinutes;
@@ -2100,11 +2110,24 @@ async function closeOrderWithRetroactiveDates() {
       });
     }
     
+    // Converter datetime-local para ISO com timezone local
+    // datetime-local retorna "2026-01-12T08:01" sem timezone
+    // new Date() pode interpretar isso como UTC ou local dependendo do browser
+    // Vamos garantir que seja interpretado como horário local de Brasília (UTC-3)
+    const toISOWithTimezone = (dateTimeLocalValue) => {
+      if (!dateTimeLocalValue) return null;
+      // dateTimeLocalValue vem como "2026-01-12T08:01"
+      // Adicionar timezone de Brasília (-03:00) para garantir interpretação correta
+      // Isso faz o backend entender que 08:01 é horário de Brasília, não UTC
+      const withTimezone = dateTimeLocalValue + ':00-03:00';
+      return withTimezone;
+    };
+    
     // Fechar a OS com as datas retroativas
     const body = { 
       status: 'completed',
-      started_at_custom: startedAtCustom,
-      finished_at_custom: finishedAtCustom,
+      started_at_custom: toISOWithTimezone(startedAtCustom),
+      finished_at_custom: toISOWithTimezone(finishedAtCustom),
       break_minutes: breakMinutes
     };
     
