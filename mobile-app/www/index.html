@@ -878,6 +878,14 @@
     body.lavanderia-mode .content {
       margin-left: 0;
     }
+    
+    /* Mobile: remover padding extra do content para lavanderia */
+    @media (max-width: 768px) {
+      body.lavanderia-mode .content {
+        padding: 8px;
+        padding-bottom: 80px;
+      }
+    }
 
     .nav-item {
       display: flex;
@@ -2087,9 +2095,8 @@
     @media (max-width: 1000px) {
       .lav2-container { 
         grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 0 10px;
-        padding-bottom: 90px;
+        gap: 10px;
+        padding: 0; /* Removido - o .content já tem padding */
       }
       .lav2-sidebar {
         display: grid !important;
