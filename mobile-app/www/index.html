@@ -2042,332 +2042,442 @@
     }
     .preventivas-card-header h3 svg { color: #06b6d4; }
 
-    /* ========== LAVANDERIA PREMIUM - TEMA NEON MAGENTA ========== */
-    .lavanderia-premium-header {
+    /* ========== LAVANDERIA V2 - GLASSMORPHISM PINK NEON DARK ========== */
+    .lav2-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      min-height: calc(100vh - 150px);
+    }
+    @media (max-width: 1000px) {
+      .lav2-container { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar Clientes */
+    .lav2-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .lav2-client-card {
+      position: relative;
+      padding: 20px;
+      background: linear-gradient(145deg, rgba(20, 20, 25, 0.85), rgba(15, 15, 18, 0.95));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(236, 72, 153, 0.15);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    .lav2-client-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--client-color, #ec4899), transparent);
+      opacity: 0.6;
+    }
+    .lav2-client-card:hover {
+      border-color: rgba(236, 72, 153, 0.4);
+      transform: translateX(4px);
+      box-shadow: 0 0 30px rgba(236, 72, 153, 0.15);
+    }
+    .lav2-client-card.active {
+      border-color: #ec4899;
+      background: linear-gradient(145deg, rgba(236, 72, 153, 0.12), rgba(20, 20, 25, 0.95));
+      box-shadow: 0 0 40px rgba(236, 72, 153, 0.2), inset 0 0 30px rgba(236, 72, 153, 0.05);
+    }
+    .lav2-client-card.active::before { opacity: 1; }
+    .lav2-client-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lav2-client-name .client-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--client-color, #ec4899);
+      box-shadow: 0 0 10px var(--client-color, #ec4899);
+    }
+    .lav2-client-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .lav2-client-price {
+      color: #ec4899;
+      font-weight: 600;
+    }
+
+    /* Main Content Area */
+    .lav2-main {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Header Dashboard */
+    .lav2-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 24px 28px;
-      background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(168, 85, 247, 0.1) 50%, rgba(20, 20, 20, 0.95) 100%);
-      border: 1px solid rgba(236, 72, 153, 0.3);
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(168, 85, 247, 0.04) 50%, rgba(15, 15, 18, 0.95) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(236, 72, 153, 0.2);
       border-radius: 20px;
-      margin-bottom: 24px;
       position: relative;
       overflow: hidden;
-      backdrop-filter: blur(16px);
     }
-    .lavanderia-premium-header::before {
+    .lav2-header::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle at 30% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+      top: -100%; right: -20%;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
       pointer-events: none;
     }
-    .lavanderia-header-left { display: flex; align-items: center; gap: 16px; z-index: 1; }
-    .lavanderia-icon-badge {
-      width: 56px; height: 56px;
-      background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+    .lav2-header-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      z-index: 1;
+    }
+    .lav2-icon-badge {
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, #ec4899, #a855f7);
       border-radius: 16px;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 30px rgba(236, 72, 153, 0.4), 0 0 60px rgba(168, 85, 247, 0.2);
-      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 40px rgba(236, 72, 153, 0.4);
     }
-    .lavanderia-title { font-size: 24px; font-weight: 700; color: #fff; margin: 0; text-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
-    .lavanderia-subtitle { font-size: 13px; color: rgba(255, 255, 255, 0.6); margin: 4px 0 0; }
-    .lavanderia-header-actions { z-index: 1; }
-    .btn-lavanderia-config {
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 18px;
-      background: rgba(236, 72, 153, 0.15);
-      border: 1px solid rgba(236, 72, 153, 0.4);
-      border-radius: 10px;
-      color: #ec4899;
-      font-size: 13px; font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .btn-lavanderia-config:hover {
-      background: rgba(236, 72, 153, 0.25);
-      box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
-    }
-
-    /* Stats Grid Neon */
-    .lavanderia-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    @media (max-width: 1100px) { .lavanderia-stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 600px) { .lavanderia-stats-grid { grid-template-columns: 1fr; } }
-
-    .lavanderia-stat-card {
-      position: relative;
-      padding: 20px;
-      background: linear-gradient(145deg, rgba(30, 30, 35, 0.9) 0%, rgba(20, 20, 25, 0.95) 100%);
-      border: 1px solid rgba(236, 72, 153, 0.2);
-      border-radius: 16px;
-      overflow: hidden;
-      transition: all 0.3s;
-    }
-    .lavanderia-stat-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(236, 72, 153, 0.5);
-      box-shadow: 0 8px 32px rgba(236, 72, 153, 0.2);
-    }
-    .lavanderia-stat-glow {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #ec4899, #a855f7, #ec4899);
-      background-size: 200% 100%;
-      animation: neonGlow 3s linear infinite;
-    }
-    @keyframes neonGlow {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    .lavanderia-stat-card.hoje .lavanderia-stat-glow { background: linear-gradient(90deg, #ec4899, #f472b6, #ec4899); }
-    .lavanderia-stat-card.semana .lavanderia-stat-glow { background: linear-gradient(90deg, #a855f7, #c084fc, #a855f7); }
-    .lavanderia-stat-card.mes .lavanderia-stat-glow { background: linear-gradient(90deg, #8b5cf6, #a78bfa, #8b5cf6); }
-    .lavanderia-stat-card.total .lavanderia-stat-glow { background: linear-gradient(90deg, #ec4899, #a855f7, #ec4899); }
-
-    .lavanderia-stat-icon {
-      width: 44px; height: 44px;
-      background: rgba(236, 72, 153, 0.12);
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      color: #ec4899;
-      margin-bottom: 12px;
-    }
-    .lavanderia-stat-card.semana .lavanderia-stat-icon { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
-    .lavanderia-stat-card.mes .lavanderia-stat-icon { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-    .lavanderia-stat-card.total .lavanderia-stat-icon { background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15)); color: #ec4899; }
-
-    .lavanderia-stat-content { display: flex; flex-direction: column; }
-    .lavanderia-stat-value { font-size: 26px; font-weight: 700; color: #fff; text-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
-    .lavanderia-stat-label { font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 2px; }
-    .lavanderia-stat-pieces { font-size: 11px; color: #ec4899; margin-top: 4px; }
-
-    /* Input Card Neon */
-    .lavanderia-input-card {
-      background: linear-gradient(145deg, rgba(30, 30, 35, 0.9) 0%, rgba(20, 20, 25, 0.95) 100%);
-      border: 1px solid rgba(236, 72, 153, 0.25);
-      border-radius: 20px;
-      overflow: hidden;
-      margin-bottom: 24px;
-    }
-    .lavanderia-input-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 18px 24px;
-      background: linear-gradient(90deg, rgba(236, 72, 153, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
-      border-bottom: 1px solid rgba(236, 72, 153, 0.15);
-    }
-    .lavanderia-input-header h3 {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 16px; font-weight: 600; color: #fff; margin: 0;
-    }
-    .lavanderia-input-header h3 svg { color: #ec4899; }
-    .lavanderia-date-input {
-      padding: 8px 14px;
-      background: rgba(236, 72, 153, 0.1);
-      border: 1px solid rgba(236, 72, 153, 0.3);
-      border-radius: 8px;
+    .lav2-icon-badge svg { color: white; }
+    .lav2-header-title {
+      font-size: 28px;
+      font-weight: 700;
       color: #fff;
-      font-size: 13px;
-    }
-    .lavanderia-input-body { padding: 24px; }
-    .lavanderia-client-selector {
-      display: flex; align-items: center; gap: 16px;
-      margin-bottom: 20px;
-    }
-    .lavanderia-client-selector label { font-size: 13px; color: rgba(255, 255, 255, 0.6); min-width: 60px; }
-    .lavanderia-select {
-      flex: 1;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(236, 72, 153, 0.25);
-      border-radius: 10px;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    .lavanderia-select:focus { border-color: #ec4899; outline: none; box-shadow: 0 0 15px rgba(236, 72, 153, 0.2); }
-    .lavanderia-price-tag {
-      padding: 8px 14px;
-      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.15));
-      border: 1px solid rgba(236, 72, 153, 0.4);
-      border-radius: 20px;
-      color: #ec4899;
-      font-size: 13px; font-weight: 600;
-      white-space: nowrap;
-    }
-    .lavanderia-quantity-grid {
-      display: grid; grid-template-columns: 1fr 2fr; gap: 16px;
-      margin-bottom: 20px;
-    }
-    @media (max-width: 700px) { .lavanderia-quantity-grid { grid-template-columns: 1fr; } }
-    .lavanderia-input-group label { display: block; font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px; }
-    .lavanderia-quantity-control {
-      display: flex; align-items: center; gap: 6px;
-    }
-    .lavanderia-quantity-control button {
-      width: 40px; height: 40px;
-      background: rgba(236, 72, 153, 0.15);
-      border: 1px solid rgba(236, 72, 153, 0.3);
-      border-radius: 10px;
-      color: #ec4899;
-      font-size: 14px; font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .lavanderia-quantity-control button:hover {
-      background: rgba(236, 72, 153, 0.3);
-      box-shadow: 0 0 15px rgba(236, 72, 153, 0.3);
-    }
-    .lavanderia-quantity-control input {
-      width: 80px; height: 40px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(236, 72, 153, 0.3);
-      border-radius: 10px;
-      color: #fff;
-      font-size: 18px; font-weight: 600;
-      text-align: center;
-    }
-    .lavanderia-total-preview {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 20px;
-      background: linear-gradient(90deg, rgba(236, 72, 153, 0.1) 0%, rgba(168, 85, 247, 0.08) 100%);
-      border: 1px solid rgba(236, 72, 153, 0.2);
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-    .lavanderia-total-label { font-size: 14px; color: rgba(255, 255, 255, 0.6); }
-    .lavanderia-total-value {
-      font-size: 28px; font-weight: 700;
-      background: linear-gradient(90deg, #ec4899, #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      margin: 0;
       text-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
     }
-    .lavanderia-save-btn {
-      width: 100%;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      padding: 16px;
-      background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+    .lav2-header-sub {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      margin: 4px 0 0;
+    }
+    .lav2-header-actions {
+      display: flex;
+      gap: 12px;
+      z-index: 1;
+    }
+    .lav2-btn-export {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #ec4899, #a855f7);
       border: none;
       border-radius: 12px;
       color: #fff;
-      font-size: 15px; font-weight: 600;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
       box-shadow: 0 4px 20px rgba(236, 72, 153, 0.3);
     }
-    .lavanderia-save-btn:hover {
+    .lav2-btn-export:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 30px rgba(236, 72, 153, 0.5);
     }
 
-    /* Chart Card */
-    .lavanderia-chart-card, .lavanderia-history-card {
-      background: linear-gradient(145deg, rgba(30, 30, 35, 0.9) 0%, rgba(20, 20, 25, 0.95) 100%);
+    /* Dashboard Stats Row */
+    .lav2-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1200px) { .lav2-stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .lav2-stats-row { grid-template-columns: 1fr; } }
+
+    .lav2-stat-card {
+      position: relative;
+      padding: 20px;
+      background: linear-gradient(145deg, rgba(20, 20, 25, 0.9), rgba(15, 15, 18, 0.95));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(236, 72, 153, 0.15);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .lav2-stat-card:hover {
+      border-color: rgba(236, 72, 153, 0.4);
+      box-shadow: 0 8px 30px rgba(236, 72, 153, 0.15);
+      transform: translateY(-3px);
+    }
+    .lav2-stat-glow {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ec4899, #f472b6, #ec4899);
+      background-size: 200% 100%;
+      animation: lav2Glow 3s linear infinite;
+    }
+    @keyframes lav2Glow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .lav2-stat-card.purple .lav2-stat-glow { background: linear-gradient(90deg, #a855f7, #c084fc, #a855f7); }
+    .lav2-stat-card.blue .lav2-stat-glow { background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6); }
+    .lav2-stat-card.gold .lav2-stat-glow { background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b); }
+    .lav2-stat-icon {
+      width: 44px; height: 44px;
+      background: rgba(236, 72, 153, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ec4899;
+      margin-bottom: 12px;
+    }
+    .lav2-stat-card.purple .lav2-stat-icon { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+    .lav2-stat-card.blue .lav2-stat-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .lav2-stat-card.gold .lav2-stat-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .lav2-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+    }
+    .lav2-stat-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 4px;
+    }
+
+    /* Entry Form Glass Card */
+    .lav2-entry-card {
+      background: linear-gradient(145deg, rgba(20, 20, 25, 0.85), rgba(15, 15, 18, 0.95));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(236, 72, 153, 0.2);
       border-radius: 20px;
       overflow: hidden;
-      margin-bottom: 24px;
     }
-    .lavanderia-chart-header, .lavanderia-history-header {
-      display: flex; justify-content: space-between; align-items: center;
+    .lav2-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: linear-gradient(90deg, rgba(236, 72, 153, 0.1) 0%, transparent 100%);
+      border-bottom: 1px solid rgba(236, 72, 153, 0.1);
+    }
+    .lav2-entry-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+    }
+    .lav2-entry-header h3 svg { color: #ec4899; }
+    .lav2-entry-header .lav2-date-input {
+      padding: 10px 16px;
+      background: rgba(236, 72, 153, 0.1);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+    }
+    .lav2-entry-body { padding: 24px; }
+
+    /* Dynamic Form based on client */
+    .lav2-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .lav2-form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .lav2-form-field label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lav2-form-field input {
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(236, 72, 153, 0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .lav2-form-field input:focus {
+      outline: none;
+      border-color: #ec4899;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+    }
+    .lav2-form-field input::placeholder { color: rgba(255,255,255,0.3); }
+
+    /* Total Preview Box */
+    .lav2-total-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: linear-gradient(90deg, rgba(236, 72, 153, 0.1), rgba(168, 85, 247, 0.05));
+      border: 1px solid rgba(236, 72, 153, 0.2);
+      border-radius: 14px;
+      margin-bottom: 20px;
+    }
+    .lav2-total-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .lav2-total-pieces {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .lav2-total-pieces span { color: #ec4899; font-weight: 600; }
+    .lav2-total-value {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ec4899, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .lav2-save-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 6px 25px rgba(236, 72, 153, 0.3);
+    }
+    .lav2-save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 35px rgba(236, 72, 153, 0.45);
+    }
+
+    /* History Section */
+    .lav2-history-card {
+      background: linear-gradient(145deg, rgba(20, 20, 25, 0.85), rgba(15, 15, 18, 0.95));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(236, 72, 153, 0.15);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .lav2-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       padding: 18px 24px;
       background: linear-gradient(90deg, rgba(236, 72, 153, 0.08) 0%, transparent 100%);
-      border-bottom: 1px solid rgba(236, 72, 153, 0.12);
+      border-bottom: 1px solid rgba(236, 72, 153, 0.1);
     }
-    .lavanderia-chart-header h3, .lavanderia-history-header h3 {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 15px; font-weight: 600; color: #fff; margin: 0;
+    .lav2-history-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
     }
-    .lavanderia-chart-header h3 svg, .lavanderia-history-header h3 svg { color: #ec4899; }
-    .lavanderia-chart-filter { display: flex; gap: 6px; }
-    .lavanderia-period-btn {
-      padding: 6px 14px;
-      background: transparent;
-      border: 1px solid rgba(236, 72, 153, 0.3);
+    .lav2-history-header h3 svg { color: #ec4899; }
+    .lav2-history-body { padding: 0; overflow-x: auto; }
+    .lav2-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .lav2-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      background: rgba(236, 72, 153, 0.04);
+      border-bottom: 1px solid rgba(236, 72, 153, 0.1);
+    }
+    .lav2-table td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .lav2-table tr:hover td { background: rgba(236, 72, 153, 0.04); }
+    .lav2-table .value-cell { color: #ec4899; font-weight: 600; }
+    .lav2-table .delete-btn {
+      padding: 6px 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
       border-radius: 8px;
-      color: rgba(255, 255, 255, 0.6);
+      color: #ef4444;
       font-size: 12px;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .lavanderia-period-btn:hover { border-color: rgba(236, 72, 153, 0.6); color: #ec4899; }
-    .lavanderia-period-btn.active {
-      background: rgba(236, 72, 153, 0.15);
-      border-color: #ec4899;
+    .lav2-table .delete-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    /* Empty State */
+    .lav2-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+    }
+    .lav2-empty svg { color: rgba(236, 72, 153, 0.3); margin-bottom: 20px; }
+    .lav2-empty h4 { color: rgba(255,255,255,0.6); font-size: 16px; margin: 0 0 8px; }
+    .lav2-empty p { color: rgba(255,255,255,0.4); font-size: 13px; margin: 0; }
+
+    /* Period Badge */
+    .lav2-period-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(236, 72, 153, 0.1);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 20px;
+      font-size: 12px;
       color: #ec4899;
     }
-    .lavanderia-chart-body { padding: 24px; min-height: 200px; }
-
-    /* Client Bar Chart */
-    .laundry-client-bar {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 12px;
-    }
-    .laundry-client-name { min-width: 100px; font-size: 13px; color: rgba(255, 255, 255, 0.8); }
-    .laundry-client-bar-bg {
-      flex: 1; height: 28px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 6px;
-      overflow: hidden;
-      position: relative;
-    }
-    .laundry-client-bar-fill {
-      height: 100%;
-      border-radius: 6px;
-      display: flex; align-items: center; padding-left: 12px;
-      font-size: 12px; font-weight: 600; color: #fff;
-      transition: width 0.5s ease;
-    }
-    .laundry-client-value { min-width: 80px; text-align: right; font-size: 13px; font-weight: 600; color: #ec4899; }
-
-    /* History Table */
-    .lavanderia-history-body { padding: 0; overflow-x: auto; }
-    .lavanderia-table { width: 100%; border-collapse: collapse; }
-    .lavanderia-table th {
-      padding: 14px 16px;
-      text-align: left;
-      font-size: 11px; font-weight: 600;
-      color: rgba(255, 255, 255, 0.4);
-      text-transform: uppercase;
-      background: rgba(236, 72, 153, 0.05);
-      border-bottom: 1px solid rgba(236, 72, 153, 0.1);
-    }
-    .lavanderia-table td {
-      padding: 14px 16px;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.8);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .lavanderia-table tr:hover td { background: rgba(236, 72, 153, 0.05); }
-    .lavanderia-table .client-tag {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px; font-weight: 500;
-    }
-    .lavanderia-table .client-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .lavanderia-table .delete-btn {
-      padding: 6px 10px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 6px;
-      color: #ef4444;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .lavanderia-table .delete-btn:hover { background: rgba(239, 68, 68, 0.2); }
+    .lav2-period-badge svg { width: 14px; height: 14px; }
 
     /* ========== FÓRUM PREMIUM - TEMA ROSA/MAGENTA ========== */
     .forum-premium-header {
@@ -8123,196 +8233,236 @@
         </div>
         <!-- ========== FIM RELATÓRIOS ========== -->
 
-        <!-- ========== LAVANDERIA - Módulo Controle de Roupas ========== -->
+        <!-- ========== LAVANDERIA V2 - Sistema Multi-Cliente ========== -->
         <div id="lavanderia-view" class="view">
-          <!-- Header Premium Neon Magenta -->
-          <div class="lavanderia-premium-header">
-            <div class="lavanderia-header-left">
-              <div class="lavanderia-icon-badge">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="2" y="4" width="20" height="16" rx="2"/>
-                  <circle cx="12" cy="12" r="4"/>
-                  <path d="M12 8v8M8 12h8"/>
-                </svg>
-              </div>
-              <div>
-                <h2 class="lavanderia-title">Lavanderia</h2>
-                <p class="lavanderia-subtitle">Controle de Roupas & Faturamento</p>
-              </div>
-            </div>
-            <div class="lavanderia-header-actions">
-              <button class="btn-lavanderia-config" onclick="showLaundryConfig()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-                </svg>
-                Configurar
-              </button>
-            </div>
-          </div>
-
-          <!-- Stats Cards Neon -->
-          <div class="lavanderia-stats-grid">
-            <div class="lavanderia-stat-card hoje">
-              <div class="lavanderia-stat-glow"></div>
-              <div class="lavanderia-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              </div>
-              <div class="lavanderia-stat-content">
-                <span class="lavanderia-stat-value" id="laundry-today-value">R$ 0</span>
-                <span class="lavanderia-stat-label">Hoje</span>
-                <span class="lavanderia-stat-pieces" id="laundry-today-pieces">0 peças</span>
-              </div>
-            </div>
-            <div class="lavanderia-stat-card semana">
-              <div class="lavanderia-stat-glow"></div>
-              <div class="lavanderia-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-                </svg>
-              </div>
-              <div class="lavanderia-stat-content">
-                <span class="lavanderia-stat-value" id="laundry-week-value">R$ 0</span>
-                <span class="lavanderia-stat-label">Esta Semana</span>
-                <span class="lavanderia-stat-pieces" id="laundry-week-pieces">0 peças</span>
-              </div>
-            </div>
-            <div class="lavanderia-stat-card mes">
-              <div class="lavanderia-stat-glow"></div>
-              <div class="lavanderia-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                </svg>
-              </div>
-              <div class="lavanderia-stat-content">
-                <span class="lavanderia-stat-value" id="laundry-month-value">R$ 0</span>
-                <span class="lavanderia-stat-label">Este Mês</span>
-                <span class="lavanderia-stat-pieces" id="laundry-month-pieces">0 peças</span>
-              </div>
-            </div>
-            <div class="lavanderia-stat-card total">
-              <div class="lavanderia-stat-glow"></div>
-              <div class="lavanderia-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-              </div>
-              <div class="lavanderia-stat-content">
-                <span class="lavanderia-stat-value" id="laundry-total-value">R$ 0</span>
-                <span class="lavanderia-stat-label">Total Geral</span>
-                <span class="lavanderia-stat-pieces" id="laundry-total-pieces">0 peças</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Input de Lançamento Rápido -->
-          <div class="lavanderia-input-card">
-            <div class="lavanderia-input-header">
-              <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Novo Lançamento
-              </h3>
-              <input type="date" id="laundry-entry-date" class="lavanderia-date-input">
-            </div>
-            <div class="lavanderia-input-body">
-              <div class="lavanderia-client-selector">
-                <label>Cliente</label>
-                <select id="laundry-client-select" class="lavanderia-select" onchange="updateLaundryPrice()">
-                  <option value="">Selecionar cliente...</option>
-                </select>
-                <span class="lavanderia-price-tag" id="laundry-price-display">R$ 0,00/peça</span>
-              </div>
-              <div class="lavanderia-quantity-grid">
-                <div class="lavanderia-input-group">
-                  <label>Categoria</label>
-                  <select id="laundry-category-select" class="lavanderia-select">
-                    <option value="">Todas (geral)</option>
-                  </select>
+          <div class="lav2-container">
+            <!-- Sidebar com Clientes -->
+            <div class="lav2-sidebar">
+              <div class="lav2-client-card active" style="--client-color: #f472b6;" onclick="selectLav2Client('marajoara')" id="lav2-client-marajoara">
+                <div class="lav2-client-name">
+                  <span class="client-dot"></span>
+                  Marajoara
                 </div>
-                <div class="lavanderia-input-group">
-                  <label>Quantidade</label>
-                  <div class="lavanderia-quantity-control">
-                    <button onclick="adjustLaundryQty(-10)">-10</button>
-                    <button onclick="adjustLaundryQty(-1)">-1</button>
-                    <input type="number" id="laundry-quantity" value="0" min="0">
-                    <button onclick="adjustLaundryQty(1)">+1</button>
-                    <button onclick="adjustLaundryQty(10)">+10</button>
+                <div class="lav2-client-info">
+                  <span class="lav2-client-price">R$ 3,50/peça</span>
+                  <span>Ciclo: 16 dias (4-19 ou 20-3)</span>
+                </div>
+              </div>
+              <div class="lav2-client-card" style="--client-color: #a855f7;" onclick="selectLav2Client('loyola')" id="lav2-client-loyola">
+                <div class="lav2-client-name">
+                  <span class="client-dot"></span>
+                  Loyola
+                </div>
+                <div class="lav2-client-info">
+                  <span class="lav2-client-price">R$ 3,00/peça + R$ 2,00/marcação</span>
+                  <span>Ciclo: Mensal</span>
+                </div>
+              </div>
+              <div class="lav2-client-card" style="--client-color: #3b82f6;" onclick="selectLav2Client('suplemento')" id="lav2-client-suplemento">
+                <div class="lav2-client-name">
+                  <span class="client-dot"></span>
+                  Suplemento
+                </div>
+                <div class="lav2-client-info">
+                  <span class="lav2-client-price">R$ 3,00/peça</span>
+                  <span>Ciclo: Mensal</span>
+                </div>
+              </div>
+              <div class="lav2-client-card" style="--client-color: #f59e0b;" onclick="selectLav2Client('vitta')" id="lav2-client-vitta">
+                <div class="lav2-client-name">
+                  <span class="client-dot"></span>
+                  Vitta
+                </div>
+                <div class="lav2-client-info">
+                  <span class="lav2-client-price">R$ 4,50/peça + R$ 2,00/marcação</span>
+                  <span>Ciclo: Mensal</span>
+                </div>
+              </div>
+
+              <!-- Dashboard Lucro Geral -->
+              <div class="lav2-client-card" style="--client-color: #10b981; margin-top: auto; cursor: default;">
+                <div class="lav2-client-name">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                  Lucro Geral
+                </div>
+                <div style="margin-top: 12px;">
+                  <div style="font-size: 28px; font-weight: 700; color: #10b981; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);" id="lav2-total-lucro">R$ 0,00</div>
+                  <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">Este período</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lav2-main">
+              <!-- Header -->
+              <div class="lav2-header">
+                <div class="lav2-header-left">
+                  <div class="lav2-icon-badge">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="4" width="20" height="16" rx="2"/>
+                      <circle cx="12" cy="12" r="4"/>
+                      <path d="M12 8v8M8 12h8"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 class="lav2-header-title">Lavanderia</h2>
+                    <p class="lav2-header-sub">Controle de Roupas & Faturamento</p>
                   </div>
                 </div>
+                <div class="lav2-header-actions">
+                  <div class="lav2-period-badge" id="lav2-period-display">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span id="lav2-period-text">Período atual</span>
+                  </div>
+                  <button class="lav2-btn-export" onclick="exportLav2PDF()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                      <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    Exportar PDF
+                  </button>
+                </div>
               </div>
-              <div class="lavanderia-total-preview">
-                <span class="lavanderia-total-label">Total a Receber:</span>
-                <span class="lavanderia-total-value" id="laundry-total-preview">R$ 0,00</span>
-              </div>
-              <button class="lavanderia-save-btn" onclick="saveLaundryEntry()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-                </svg>
-                Salvar Lançamento
-              </button>
-            </div>
-          </div>
 
-          <!-- Gráfico por Cliente -->
-          <div class="lavanderia-chart-card">
-            <div class="lavanderia-chart-header">
-              <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
-                Faturamento por Cliente
-              </h3>
-              <div class="lavanderia-chart-filter">
-                <button class="lavanderia-period-btn active" onclick="setLaundryPeriod('month')">Mês</button>
-                <button class="lavanderia-period-btn" onclick="setLaundryPeriod('week')">Semana</button>
-                <button class="lavanderia-period-btn" onclick="setLaundryPeriod('day')">Hoje</button>
+              <!-- Stats Row -->
+              <div class="lav2-stats-row">
+                <div class="lav2-stat-card">
+                  <div class="lav2-stat-glow"></div>
+                  <div class="lav2-stat-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </div>
+                  <div class="lav2-stat-value" id="lav2-stat-pecas">0</div>
+                  <div class="lav2-stat-label">Total Peças</div>
+                </div>
+                <div class="lav2-stat-card purple">
+                  <div class="lav2-stat-glow"></div>
+                  <div class="lav2-stat-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 20V10M18 20V4M6 20v-4"/>
+                    </svg>
+                  </div>
+                  <div class="lav2-stat-value" id="lav2-stat-marcacoes">0</div>
+                  <div class="lav2-stat-label">Marcações</div>
+                </div>
+                <div class="lav2-stat-card blue">
+                  <div class="lav2-stat-glow"></div>
+                  <div class="lav2-stat-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </div>
+                  <div class="lav2-stat-value" id="lav2-stat-dias">0</div>
+                  <div class="lav2-stat-label">Dias Restantes</div>
+                </div>
+                <div class="lav2-stat-card gold">
+                  <div class="lav2-stat-glow"></div>
+                  <div class="lav2-stat-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                  </div>
+                  <div class="lav2-stat-value" id="lav2-stat-valor">R$ 0</div>
+                  <div class="lav2-stat-label">Valor Cliente</div>
+                </div>
               </div>
-            </div>
-            <div class="lavanderia-chart-body" id="laundry-client-chart">
-              <!-- Gráfico renderizado por JS -->
-            </div>
-          </div>
 
-          <!-- Histórico de Lançamentos -->
-          <div class="lavanderia-history-card">
-            <div class="lavanderia-history-header">
-              <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
-                Histórico de Lançamentos
-              </h3>
-              <select id="laundry-history-filter" class="lavanderia-select" onchange="filterLaundryHistory()">
-                <option value="today">Hoje</option>
-                <option value="week">Esta Semana</option>
-                <option value="month" selected>Este Mês</option>
-                <option value="all">Todos</option>
-              </select>
-            </div>
-            <div class="lavanderia-history-body">
-              <table class="lavanderia-table">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Cliente</th>
-                    <th>Categoria</th>
-                    <th>Qtd</th>
-                    <th>Valor</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="laundry-history-tbody">
-                  <!-- Histórico renderizado por JS -->
-                </tbody>
-              </table>
+              <!-- Entry Form - Dynamic based on client -->
+              <div class="lav2-entry-card">
+                <div class="lav2-entry-header">
+                  <h3>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    <span id="lav2-entry-title">Lançamento - Marajoara</span>
+                  </h3>
+                  <input type="date" class="lav2-date-input" id="lav2-entry-date">
+                </div>
+                <div class="lav2-entry-body">
+                  <!-- Form fields will be dynamically rendered based on client -->
+                  <div id="lav2-form-fields" class="lav2-form-grid">
+                    <!-- Marajoara: camisa_masc, calca_masc, camisa_fem, calca_fem -->
+                    <div class="lav2-form-field">
+                      <label>Camisa Masc.</label>
+                      <input type="number" id="lav2-field-camisa_masc" value="0" min="0" oninput="updateLav2Total()">
+                    </div>
+                    <div class="lav2-form-field">
+                      <label>Calça Masc.</label>
+                      <input type="number" id="lav2-field-calca_masc" value="0" min="0" oninput="updateLav2Total()">
+                    </div>
+                    <div class="lav2-form-field">
+                      <label>Camisa Fem.</label>
+                      <input type="number" id="lav2-field-camisa_fem" value="0" min="0" oninput="updateLav2Total()">
+                    </div>
+                    <div class="lav2-form-field">
+                      <label>Calça Fem.</label>
+                      <input type="number" id="lav2-field-calca_fem" value="0" min="0" oninput="updateLav2Total()">
+                    </div>
+                  </div>
+
+                  <!-- Total Preview -->
+                  <div class="lav2-total-box">
+                    <div class="lav2-total-info">
+                      <div class="lav2-total-pieces">Total: <span id="lav2-preview-pieces">0</span> peças</div>
+                      <div id="lav2-preview-marcacoes" style="display: none; font-size: 13px; color: rgba(255,255,255,0.5);">+ <span>0</span> marcações</div>
+                    </div>
+                    <div class="lav2-total-value" id="lav2-preview-valor">R$ 0,00</div>
+                  </div>
+
+                  <button class="lav2-save-btn" onclick="saveLav2Entry()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                      <polyline points="17 21 17 13 7 13 7 21"/>
+                      <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Salvar Lançamento
+                  </button>
+                </div>
+              </div>
+
+              <!-- History -->
+              <div class="lav2-history-card">
+                <div class="lav2-history-header">
+                  <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    Histórico do Período
+                  </h3>
+                </div>
+                <div class="lav2-history-body">
+                  <table class="lav2-table">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Detalhes</th>
+                        <th>Total Peças</th>
+                        <th>Valor</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="lav2-history-tbody">
+                      <!-- Rendered by JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <!-- ========== FIM LAVANDERIA ========== -->
+        <!-- ========== FIM LAVANDERIA V2 ========== -->
 
         <div id="configuracoes-view" class="view">
           <!-- Header da Página -->

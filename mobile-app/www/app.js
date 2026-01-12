@@ -833,7 +833,7 @@ function setupPermissions() {
   state.canEditAditiva = canEditAditiva;
   state.canWriteRelatorios = canWriteRelatorios;
   
-  console.log('Permissões configuradas. Roles:', roles, 'Tenant:', tenantType, 'É lavanderia:', isLavanderia);
+  console.log('Permissões configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
   
   // Atualizar navegação mobile baseado nas permissões
   setupMobileNavPermissions();
@@ -8493,305 +8493,302 @@ function openAdditiveTask(taskId) {
   alert(msg);
 }
 
-// ========== LAVANDERIA ==========
+// ========== LAVANDERIA V2 - Multi-Cliente ==========
+
+// Configuração dos 4 clientes
+var LAV2_CLIENTS = {
+  marajoara: {
+    id: 'marajoara',
+    name: 'Marajoara',
+    color: '#f472b6',
+    pricePerPiece: 3.50,
+    markingPrice: 0,
+    billingCycle: 'biweekly', // 16 dias
+    cycleStartDay: 4,
+    fields: [
+      { key: 'camisa_masc', label: 'Camisa Masc.' },
+      { key: 'calca_masc', label: 'Calça Masc.' },
+      { key: 'camisa_fem', label: 'Camisa Fem.' },
+      { key: 'calca_fem', label: 'Calça Fem.' }
+    ]
+  },
+  loyola: {
+    id: 'loyola',
+    name: 'Loyola',
+    color: '#a855f7',
+    pricePerPiece: 3.00,
+    markingPrice: 2.00,
+    billingCycle: 'monthly',
+    fields: [
+      { key: 'pecas', label: 'Peças' },
+      { key: 'marcacoes', label: 'Marcações', isMarking: true }
+    ]
+  },
+  suplemento: {
+    id: 'suplemento',
+    name: 'Suplemento',
+    color: '#3b82f6',
+    pricePerPiece: 3.00,
+    markingPrice: 0,
+    billingCycle: 'monthly',
+    fields: [
+      { key: 'camisa', label: 'Camisa' },
+      { key: 'calca', label: 'Calça' }
+    ]
+  },
+  vitta: {
+    id: 'vitta',
+    name: 'Vitta',
+    color: '#f59e0b',
+    pricePerPiece: 4.50,
+    markingPrice: 2.00,
+    billingCycle: 'monthly',
+    fields: [
+      { key: 'camisa', label: 'Camisa' },
+      { key: 'calca', label: 'Calça' },
+      { key: 'marcacoes', label: 'Marcações', isMarking: true }
+    ]
+  }
+};
+
+// Estado do Lavanderia V2
+var lav2State = {
+  currentClient: 'marajoara',
+  entries: [],
+  stats: {},
+  period: null
+};
 
 async function loadLavanderia() {
   try {
-    // Definir data de hoje no input se estiver vazio
+    console.log('[Lavanderia V2] Carregando...');
+    
+    // Definir data de hoje
     var now = new Date();
     var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-    var dateInput = document.getElementById('laundry-date');
-    if (dateInput && !dateInput.value) dateInput.value = today;
+    var dateInput = document.getElementById('lav2-entry-date');
+    if (dateInput) dateInput.value = today;
     
-    // Carregar dados
-    await Promise.all([
-      loadLaundryClients(),
-      loadLaundryEntries(),
-      loadLaundryStats()
-    ]);
+    // Selecionar primeiro cliente
+    selectLav2Client('marajoara');
     
-    // Renderizar
-    renderLaundryClientSelect();
-    renderLaundryStats();
-    renderLaundryChart();
-    renderLaundryHistory();
-    updateLaundryTotal();
+    // Carregar dados de todos os clientes para o lucro geral
+    await loadLav2AllStats();
     
-    console.log('[Lavanderia] Carregado:', state.laundryEntries?.length || 0, 'registros');
+    console.log('[Lavanderia V2] Carregado!');
   } catch (error) {
-    console.error('Erro ao carregar lavanderia:', error);
+    console.error('[Lavanderia V2] Erro:', error);
   }
 }
 
-async function loadLaundryClients() {
-  try {
-    var response = await fetch(API_URL + '/laundry/clients', {
-      headers: { 'Authorization': 'Bearer ' + state.token }
-    });
-    var data = await response.json();
-    if (data.ok) {
-      state.laundryClients = data.clients || [];
-    }
-  } catch (error) {
-    console.error('Erro ao carregar clientes lavanderia:', error);
-  }
-}
-
-async function loadLaundryEntries() {
-  try {
-    var dates = getLaundryPeriodDates();
-    var url = API_URL + '/laundry/entries?startDate=' + dates.startDate + '&endDate=' + dates.endDate;
-    var response = await fetch(url, {
-      headers: { 'Authorization': 'Bearer ' + state.token }
-    });
-    var data = await response.json();
-    if (data.ok) {
-      state.laundryEntries = data.entries || [];
-    }
-  } catch (error) {
-    console.error('Erro ao carregar entradas lavanderia:', error);
-  }
-}
-
-async function loadLaundryStats() {
-  try {
-    var response = await fetch(API_URL + '/laundry/stats', {
-      headers: { 'Authorization': 'Bearer ' + state.token }
-    });
-    var data = await response.json();
-    if (data.ok) {
-      state.laundryStats = data.stats || {};
-    }
-  } catch (error) {
-    console.error('Erro ao carregar stats lavanderia:', error);
-  }
-}
-
-function getLaundryPeriodDates() {
-  var now = new Date();
-  var startDate, endDate;
-  var period = state.laundryPeriod || 'month';
+function selectLav2Client(clientId) {
+  lav2State.currentClient = clientId;
+  var client = LAV2_CLIENTS[clientId];
+  if (!client) return;
   
-  endDate = now.toISOString().split('T')[0];
-  
-  if (period === 'today') {
-    startDate = endDate;
-  } else if (period === 'week') {
-    var weekAgo = new Date(now);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    startDate = weekAgo.toISOString().split('T')[0];
-  } else {
-    var monthAgo = new Date(now.getFullYear(), now.getMonth(), 1);
-    startDate = monthAgo.toISOString().split('T')[0];
-  }
-  
-  return { startDate: startDate, endDate: endDate };
-}
-
-function renderLaundryClientSelect() {
-  var select = document.getElementById('laundry-client-select');
-  if (!select || !state.laundryClients) return;
-  
-  var html = '<option value="">Selecione o cliente...</option>';
-  state.laundryClients.forEach(function(client) {
-    html += '<option value="' + client.id + '" data-price="' + client.price_per_piece + '" data-color="' + (client.color || '#ec4899') + '">' + 
-            client.name + '</option>';
+  // Atualizar sidebar visual
+  document.querySelectorAll('.lav2-client-card').forEach(function(card) {
+    card.classList.remove('active');
   });
-  select.innerHTML = html;
+  var activeCard = document.getElementById('lav2-client-' + clientId);
+  if (activeCard) activeCard.classList.add('active');
+  
+  // Atualizar título do form
+  var titleEl = document.getElementById('lav2-entry-title');
+  if (titleEl) titleEl.textContent = 'Lançamento - ' + client.name;
+  
+  // Renderizar campos dinâmicos
+  renderLav2FormFields(client);
+  
+  // Calcular e mostrar período
+  updateLav2PeriodDisplay(client);
+  
+  // Carregar entries do cliente
+  loadLav2ClientEntries(clientId);
 }
 
-function onLaundryClientChange() {
-  var select = document.getElementById('laundry-client-select');
-  var priceTag = document.getElementById('laundry-price-tag');
-  if (!select || !priceTag) return;
-  
-  var selectedOption = select.options[select.selectedIndex];
-  if (selectedOption && selectedOption.dataset.price) {
-    var price = parseFloat(selectedOption.dataset.price);
-    priceTag.textContent = 'R$ ' + price.toFixed(2) + '/peça';
-    priceTag.style.display = 'block';
-  } else {
-    priceTag.style.display = 'none';
-  }
-  updateLaundryTotal();
-}
-
-function adjustLaundryQty(delta) {
-  var input = document.getElementById('laundry-quantity');
-  if (!input) return;
-  var current = parseInt(input.value) || 0;
-  var newVal = Math.max(0, current + delta);
-  input.value = newVal;
-  updateLaundryTotal();
-}
-
-function updateLaundryTotal() {
-  var select = document.getElementById('laundry-client-select');
-  var qtyInput = document.getElementById('laundry-quantity');
-  var totalEl = document.getElementById('laundry-total-value');
-  if (!select || !qtyInput || !totalEl) return;
-  
-  var selectedOption = select.options[select.selectedIndex];
-  var price = selectedOption && selectedOption.dataset.price ? parseFloat(selectedOption.dataset.price) : 0;
-  var qty = parseInt(qtyInput.value) || 0;
-  var total = price * qty;
-  
-  totalEl.textContent = 'R$ ' + total.toFixed(2);
-}
-
-async function saveLaundryEntry() {
-  try {
-    var clientId = document.getElementById('laundry-client-select')?.value;
-    var quantity = parseInt(document.getElementById('laundry-quantity')?.value) || 0;
-    var date = document.getElementById('laundry-date')?.value;
-    var notes = document.getElementById('laundry-notes')?.value || '';
-    
-    if (!clientId) {
-      showToast('Selecione um cliente', 'error');
-      return;
-    }
-    if (quantity <= 0) {
-      showToast('Quantidade deve ser maior que zero', 'error');
-      return;
-    }
-    
-    var response = await fetch(API_URL + '/laundry/entries', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.token
-      },
-      body: JSON.stringify({
-        client_id: parseInt(clientId),
-        quantity: quantity,
-        entry_date: date,
-        notes: notes
-      })
-    });
-    
-    var data = await response.json();
-    if (data.ok) {
-      showToast('Entrada salva com sucesso!', 'success');
-      document.getElementById('laundry-quantity').value = '0';
-      document.getElementById('laundry-notes').value = '';
-      updateLaundryTotal();
-      await loadLavanderia();
-    } else {
-      showToast(data.error || 'Erro ao salvar', 'error');
-    }
-  } catch (error) {
-    console.error('Erro ao salvar entrada lavanderia:', error);
-    showToast('Erro ao salvar entrada', 'error');
-  }
-}
-
-async function deleteLaundryEntry(entryId) {
-  if (!confirm('Excluir esta entrada?')) return;
-  
-  try {
-    var response = await fetch(API_URL + '/laundry/entries/' + entryId, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + state.token }
-    });
-    var data = await response.json();
-    if (data.ok) {
-      showToast('Entrada excluída', 'success');
-      await loadLavanderia();
-    } else {
-      showToast(data.error || 'Erro ao excluir', 'error');
-    }
-  } catch (error) {
-    console.error('Erro ao excluir entrada:', error);
-    showToast('Erro ao excluir', 'error');
-  }
-}
-
-async function setLaundryPeriod(period) {
-  state.laundryPeriod = period;
-  
-  ['today', 'week', 'month'].forEach(function(p) {
-    var btn = document.getElementById('laundry-filter-' + p);
-    if (btn) btn.classList.toggle('active', p === period);
-  });
-  
-  await Promise.all([loadLaundryEntries(), loadLaundryStats()]);
-  renderLaundryStats();
-  renderLaundryChart();
-  renderLaundryHistory();
-}
-
-function renderLaundryStats() {
-  var stats = state.laundryStats || {};
-  
-  var todayPieces = document.getElementById('laundry-today-pieces');
-  var todayValue = document.getElementById('laundry-today-value');
-  var weekPieces = document.getElementById('laundry-week-pieces');
-  var weekValue = document.getElementById('laundry-week-value');
-  var monthPieces = document.getElementById('laundry-month-pieces');
-  var monthValue = document.getElementById('laundry-month-value');
-  var totalPieces = document.getElementById('laundry-total-pieces');
-  var totalValue = document.getElementById('laundry-total-stat-value');
-  
-  if (todayPieces) todayPieces.textContent = (stats.today_pieces || 0) + ' peças';
-  if (todayValue) todayValue.textContent = 'R$ ' + (stats.today_value || 0).toFixed(2);
-  if (weekPieces) weekPieces.textContent = (stats.week_pieces || 0) + ' peças';
-  if (weekValue) weekValue.textContent = 'R$ ' + (stats.week_value || 0).toFixed(2);
-  if (monthPieces) monthPieces.textContent = (stats.month_pieces || 0) + ' peças';
-  if (monthValue) monthValue.textContent = 'R$ ' + (stats.month_value || 0).toFixed(2);
-  if (totalPieces) totalPieces.textContent = (stats.total_pieces || 0) + ' peças';
-  if (totalValue) totalValue.textContent = 'R$ ' + (stats.total_value || 0).toFixed(2);
-}
-
-function renderLaundryChart() {
-  var container = document.getElementById('laundry-chart-container');
+function renderLav2FormFields(client) {
+  var container = document.getElementById('lav2-form-fields');
   if (!container) return;
   
-  // Agrupar por cliente
-  var clientTotals = {};
-  var maxTotal = 0;
-  
-  (state.laundryEntries || []).forEach(function(entry) {
-    var clientName = entry.client_name || 'Sem cliente';
-    var color = entry.client_color || '#ec4899';
-    if (!clientTotals[clientName]) {
-      clientTotals[clientName] = { pieces: 0, value: 0, color: color };
-    }
-    clientTotals[clientName].pieces += entry.quantity;
-    clientTotals[clientName].value += parseFloat(entry.total_value) || 0;
-    if (clientTotals[clientName].pieces > maxTotal) maxTotal = clientTotals[clientName].pieces;
-  });
-  
-  if (Object.keys(clientTotals).length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">Nenhum dado para exibir</div>';
-    return;
-  }
-  
   var html = '';
-  Object.keys(clientTotals).forEach(function(name) {
-    var data = clientTotals[name];
-    var pct = maxTotal > 0 ? (data.pieces / maxTotal * 100) : 0;
-    html += '<div class="laundry-client-bar">' +
-      '<span class="laundry-client-name">' + name + '</span>' +
-      '<div class="laundry-client-bar-bg">' +
-        '<div class="laundry-client-bar-fill" style="width:' + pct + '%;background:linear-gradient(90deg,' + data.color + ',' + data.color + '88);">' +
-          data.pieces + ' peças' +
-        '</div>' +
-      '</div>' +
-      '<span class="laundry-client-value">R$ ' + data.value.toFixed(2) + '</span>' +
+  client.fields.forEach(function(field) {
+    var markingNote = field.isMarking ? '<small style="color:#a855f7;font-size:10px;">R$ ' + client.markingPrice.toFixed(2) + ' cada</small>' : '';
+    html += '<div class="lav2-form-field">' +
+      '<label>' + field.label + markingNote + '</label>' +
+      '<input type="number" id="lav2-field-' + field.key + '" value="0" min="0" oninput="updateLav2Total()">' +
     '</div>';
   });
-  
   container.innerHTML = html;
+  
+  // Mostrar/esconder preview de marcações
+  var marcacoesPreview = document.getElementById('lav2-preview-marcacoes');
+  if (marcacoesPreview) {
+    marcacoesPreview.style.display = client.markingPrice > 0 ? 'block' : 'none';
+  }
+  
+  updateLav2Total();
 }
 
-function renderLaundryHistory() {
-  var tbody = document.getElementById('laundry-history-body');
+function updateLav2PeriodDisplay(client) {
+  var periodText = document.getElementById('lav2-period-text');
+  var now = new Date();
+  var startDate, endDate;
+  
+  if (client.billingCycle === 'biweekly') {
+    // Marajoara: ciclo de 16 dias (4-19 ou 20-3)
+    var day = now.getDate();
+    if (day >= 4 && day <= 19) {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 4);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 19);
+    } else if (day >= 20) {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 20);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 3);
+    } else {
+      // Dias 1-3
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 20);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 3);
+    }
+  } else {
+    // Mensal
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  }
+  
+  lav2State.period = { start: startDate, end: endDate };
+  
+  var formatDate = function(d) {
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+  };
+  
+  if (periodText) {
+    periodText.textContent = formatDate(startDate) + ' - ' + formatDate(endDate);
+  }
+  
+  // Calcular dias restantes
+  var daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+  var diasEl = document.getElementById('lav2-stat-dias');
+  if (diasEl) diasEl.textContent = Math.max(0, daysRemaining);
+}
+
+function updateLav2Total() {
+  var client = LAV2_CLIENTS[lav2State.currentClient];
+  if (!client) return;
+  
+  var totalPieces = 0;
+  var totalMarkings = 0;
+  
+  client.fields.forEach(function(field) {
+    var input = document.getElementById('lav2-field-' + field.key);
+    var value = parseInt(input?.value) || 0;
+    if (field.isMarking) {
+      totalMarkings += value;
+    } else {
+      totalPieces += value;
+    }
+  });
+  
+  var totalValue = (totalPieces * client.pricePerPiece) + (totalMarkings * client.markingPrice);
+  
+  // Atualizar preview
+  var piecesEl = document.getElementById('lav2-preview-pieces');
+  var marcacoesEl = document.getElementById('lav2-preview-marcacoes');
+  var valorEl = document.getElementById('lav2-preview-valor');
+  
+  if (piecesEl) piecesEl.textContent = totalPieces;
+  if (marcacoesEl && marcacoesEl.querySelector('span')) {
+    marcacoesEl.querySelector('span').textContent = totalMarkings;
+  }
+  if (valorEl) valorEl.textContent = 'R$ ' + totalValue.toFixed(2);
+}
+
+async function loadLav2ClientEntries(clientId) {
+  try {
+    var client = LAV2_CLIENTS[clientId];
+    if (!client || !lav2State.period) return;
+    
+    var startDate = lav2State.period.start.toISOString().split('T')[0];
+    var endDate = lav2State.period.end.toISOString().split('T')[0];
+    
+    var response = await fetch(API_URL + '/laundry/v2/entries/' + clientId + '?startDate=' + startDate + '&endDate=' + endDate, {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      lav2State.entries = data.entries || [];
+      renderLav2History();
+      updateLav2ClientStats();
+    }
+  } catch (error) {
+    console.error('[Lavanderia V2] Erro ao carregar entries:', error);
+  }
+}
+
+function updateLav2ClientStats() {
+  var client = LAV2_CLIENTS[lav2State.currentClient];
+  if (!client) return;
+  
+  var totalPieces = 0;
+  var totalMarkings = 0;
+  var totalValue = 0;
+  
+  lav2State.entries.forEach(function(entry) {
+    client.fields.forEach(function(field) {
+      var value = parseInt(entry[field.key]) || 0;
+      if (field.isMarking) {
+        totalMarkings += value;
+      } else {
+        totalPieces += value;
+      }
+    });
+    totalValue += parseFloat(entry.total_value) || 0;
+  });
+  
+  // Atualizar stats cards
+  var pecasEl = document.getElementById('lav2-stat-pecas');
+  var marcacoesEl = document.getElementById('lav2-stat-marcacoes');
+  var valorEl = document.getElementById('lav2-stat-valor');
+  
+  if (pecasEl) pecasEl.textContent = totalPieces;
+  if (marcacoesEl) marcacoesEl.textContent = totalMarkings;
+  if (valorEl) valorEl.textContent = 'R$ ' + totalValue.toFixed(2);
+}
+
+async function loadLav2AllStats() {
+  try {
+    var response = await fetch(API_URL + '/laundry/v2/stats', {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      var lucroEl = document.getElementById('lav2-total-lucro');
+      if (lucroEl) lucroEl.textContent = 'R$ ' + (data.totalValue || 0).toFixed(2);
+    }
+  } catch (error) {
+    console.error('[Lavanderia V2] Erro ao carregar stats gerais:', error);
+  }
+}
+
+function renderLav2History() {
+  var tbody = document.getElementById('lav2-history-tbody');
   if (!tbody) return;
   
-  var entries = state.laundryEntries || [];
+  var client = LAV2_CLIENTS[lav2State.currentClient];
+  var entries = lav2State.entries || [];
   
   if (entries.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:rgba(255,255,255,0.4);">Nenhuma entrada encontrada</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5">' +
+      '<div class="lav2-empty">' +
+        '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+          '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+          '<polyline points="14 2 14 8 20 8"/>' +
+        '</svg>' +
+        '<h4>Nenhum lançamento</h4>' +
+        '<p>Adicione o primeiro lançamento do período</p>' +
+      '</div>' +
+    '</td></tr>';
     return;
   }
   
@@ -8801,22 +8798,222 @@ function renderLaundryHistory() {
     var dateStr = String(date.getDate()).padStart(2, '0') + '/' + 
                   String(date.getMonth() + 1).padStart(2, '0') + '/' + 
                   date.getFullYear();
-    var color = entry.client_color || '#ec4899';
+    
+    // Construir detalhes baseado nos campos
+    var details = [];
+    var totalPieces = 0;
+    client.fields.forEach(function(field) {
+      var value = parseInt(entry[field.key]) || 0;
+      if (value > 0) {
+        details.push(field.label + ': ' + value);
+        if (!field.isMarking) totalPieces += value;
+      }
+    });
     
     html += '<tr>' +
       '<td>' + dateStr + '</td>' +
-      '<td><span class="client-tag" style="background:' + color + '22;border:1px solid ' + color + '44;">' +
-        '<span class="client-dot" style="background:' + color + ';"></span>' + 
-        (entry.client_name || '-') + 
-      '</span></td>' +
-      '<td style="font-weight:600;color:#fff;">' + entry.quantity + '</td>' +
-      '<td>R$ ' + (parseFloat(entry.price_per_piece) || 0).toFixed(2) + '</td>' +
-      '<td style="font-weight:600;color:#ec4899;">R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</td>' +
-      '<td><button class="delete-btn" onclick="deleteLaundryEntry(' + entry.id + ')">Excluir</button></td>' +
+      '<td style="font-size: 12px; color: rgba(255,255,255,0.6);">' + details.join(' | ') + '</td>' +
+      '<td>' + totalPieces + '</td>' +
+      '<td class="value-cell">R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</td>' +
+      '<td><button class="delete-btn" onclick="deleteLav2Entry(\'' + entry.id + '\')">Excluir</button></td>' +
     '</tr>';
   });
   
   tbody.innerHTML = html;
+}
+
+async function saveLav2Entry() {
+  try {
+    var client = LAV2_CLIENTS[lav2State.currentClient];
+    if (!client) return;
+    
+    var entryDate = document.getElementById('lav2-entry-date')?.value;
+    if (!entryDate) {
+      showToast('Selecione uma data', 'error');
+      return;
+    }
+    
+    // Coletar valores dos campos
+    var entryData = {
+      client_id: client.id,
+      entry_date: entryDate
+    };
+    
+    var hasValue = false;
+    client.fields.forEach(function(field) {
+      var input = document.getElementById('lav2-field-' + field.key);
+      var value = parseInt(input?.value) || 0;
+      entryData[field.key] = value;
+      if (value > 0) hasValue = true;
+    });
+    
+    if (!hasValue) {
+      showToast('Preencha ao menos um campo', 'error');
+      return;
+    }
+    
+    // Calcular valor total
+    var totalPieces = 0;
+    var totalMarkings = 0;
+    client.fields.forEach(function(field) {
+      if (field.isMarking) {
+        totalMarkings += entryData[field.key] || 0;
+      } else {
+        totalPieces += entryData[field.key] || 0;
+      }
+    });
+    entryData.total_value = (totalPieces * client.pricePerPiece) + (totalMarkings * client.markingPrice);
+    
+    var response = await fetch(API_URL + '/laundry/v2/entries', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify(entryData)
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      showToast('Lançamento salvo!', 'success');
+      
+      // Limpar campos
+      client.fields.forEach(function(field) {
+        var input = document.getElementById('lav2-field-' + field.key);
+        if (input) input.value = '0';
+      });
+      updateLav2Total();
+      
+      // Recarregar
+      await loadLav2ClientEntries(client.id);
+      await loadLav2AllStats();
+    } else {
+      showToast(data.error || 'Erro ao salvar', 'error');
+    }
+  } catch (error) {
+    console.error('[Lavanderia V2] Erro ao salvar:', error);
+    showToast('Erro ao salvar lançamento', 'error');
+  }
+}
+
+async function deleteLav2Entry(entryId) {
+  if (!confirm('Excluir este lançamento?')) return;
+  
+  try {
+    var response = await fetch(API_URL + '/laundry/v2/entries/' + entryId, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    
+    var data = await response.json();
+    if (data.ok) {
+      showToast('Lançamento excluído', 'success');
+      await loadLav2ClientEntries(lav2State.currentClient);
+      await loadLav2AllStats();
+    } else {
+      showToast(data.error || 'Erro ao excluir', 'error');
+    }
+  } catch (error) {
+    console.error('[Lavanderia V2] Erro ao excluir:', error);
+    showToast('Erro ao excluir', 'error');
+  }
+}
+
+async function exportLav2PDF() {
+  try {
+    var client = LAV2_CLIENTS[lav2State.currentClient];
+    if (!client) return;
+    
+    showToast('Gerando PDF...', 'info');
+    
+    // Criar conteúdo do PDF
+    var periodStart = lav2State.period.start;
+    var periodEnd = lav2State.period.end;
+    var formatDate = function(d) {
+      return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+    };
+    
+    // Calcular totais
+    var totalPieces = 0;
+    var totalMarkings = 0;
+    var totalValue = 0;
+    
+    lav2State.entries.forEach(function(entry) {
+      client.fields.forEach(function(field) {
+        var value = parseInt(entry[field.key]) || 0;
+        if (field.isMarking) {
+          totalMarkings += value;
+        } else {
+          totalPieces += value;
+        }
+      });
+      totalValue += parseFloat(entry.total_value) || 0;
+    });
+    
+    var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+      '<title>Relatório ' + client.name + '</title>' +
+      '<style>' +
+        'body { font-family: Arial, sans-serif; padding: 40px; color: #333; }' +
+        '.header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid ' + client.color + '; padding-bottom: 20px; }' +
+        '.header h1 { color: ' + client.color + '; margin: 0 0 10px; }' +
+        '.period { font-size: 14px; color: #666; }' +
+        '.summary { display: flex; justify-content: space-around; margin: 30px 0; padding: 20px; background: #f5f5f5; border-radius: 10px; }' +
+        '.summary-item { text-align: center; }' +
+        '.summary-item .value { font-size: 28px; font-weight: bold; color: ' + client.color + '; }' +
+        '.summary-item .label { font-size: 12px; color: #666; }' +
+        'table { width: 100%; border-collapse: collapse; margin-top: 20px; }' +
+        'th { background: ' + client.color + '; color: white; padding: 12px; text-align: left; }' +
+        'td { padding: 10px 12px; border-bottom: 1px solid #eee; }' +
+        'tr:hover td { background: #f9f9f9; }' +
+        '.total-row { font-weight: bold; background: #f0f0f0; }' +
+        '.footer { margin-top: 40px; text-align: center; font-size: 12px; color: #999; }' +
+      '</style></head><body>' +
+      '<div class="header">' +
+        '<h1>Relatório de Lavanderia - ' + client.name + '</h1>' +
+        '<div class="period">Período: ' + formatDate(periodStart) + ' a ' + formatDate(periodEnd) + '</div>' +
+      '</div>' +
+      '<div class="summary">' +
+        '<div class="summary-item"><div class="value">' + totalPieces + '</div><div class="label">Total de Peças</div></div>' +
+        (client.markingPrice > 0 ? '<div class="summary-item"><div class="value">' + totalMarkings + '</div><div class="label">Marcações</div></div>' : '') +
+        '<div class="summary-item"><div class="value">R$ ' + totalValue.toFixed(2) + '</div><div class="label">Valor Total</div></div>' +
+      '</div>' +
+      '<table><thead><tr><th>Data</th>';
+    
+    client.fields.forEach(function(field) {
+      printContent += '<th>' + field.label + '</th>';
+    });
+    printContent += '<th>Valor</th></tr></thead><tbody>';
+    
+    lav2State.entries.forEach(function(entry) {
+      var date = new Date(entry.entry_date);
+      var dateStr = formatDate(date);
+      printContent += '<tr><td>' + dateStr + '</td>';
+      client.fields.forEach(function(field) {
+        printContent += '<td>' + (entry[field.key] || 0) + '</td>';
+      });
+      printContent += '<td>R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</td></tr>';
+    });
+    
+    printContent += '</tbody></table>' +
+      '<div class="footer">' +
+        '<p>Gerado por ICARUS - Sistema de Gestão</p>' +
+        '<p>' + new Date().toLocaleString('pt-BR') + '</p>' +
+      '</div>' +
+      '</body></html>';
+    
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(function() {
+      printWindow.print();
+    }, 500);
+    
+    showToast('PDF gerado!', 'success');
+  } catch (error) {
+    console.error('[Lavanderia V2] Erro ao gerar PDF:', error);
+    showToast('Erro ao gerar PDF', 'error');
+  }
 }
 
 // ========== RELATÓRIOS ==========
