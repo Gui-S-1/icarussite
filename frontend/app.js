@@ -1092,40 +1092,49 @@ function updateDashboardSummary(filteredOrders, completed, total) {
 }
 
 function renderRecentActivity() {
-  const recent = state.orders.slice(0, 6);
+  const recent = state.orders.slice(0, 8);
   const container = document.getElementById('recent-activity');
   if (!container) return;
 
   if (recent.length === 0) {
-    container.innerHTML = '<div style="color: var(--text-secondary); font-size: 12px; padding: 20px; text-align: center;">Nenhuma atividade</div>';
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; color: rgba(196, 181, 253, 0.6);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.4; margin-bottom: 12px;">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <p style="font-size: 14px; margin: 0;">Nenhuma atividade recente</p>
+      </div>
+    `;
     return;
   }
 
-  const statusIcons = {
-    pending: '○',
-    in_progress: '◔',
-    completed: '●'
-  };
-
-  const statusColors = {
-    pending: 'var(--warning)',
-    in_progress: 'var(--info)',
-    completed: 'var(--success)'
-  };
-
   container.innerHTML = recent.map(order => {
-    const icon = statusIcons[order.status] || '○';
-    const color = statusColors[order.status] || 'var(--accent-gold)';
     const time = formatTimeAgo(order.created_at);
-    const titleRaw = order.title.length > 30 ? order.title.substring(0, 30) + '...' : order.title;
+    const titleRaw = order.title.length > 28 ? order.title.substring(0, 28) + '...' : order.title;
     const title = escapeHtml(titleRaw);
+    const user = order.assigned_users?.[0]?.name || order.requested_by_name || '-';
+    
+    let iconClass = 'created';
+    let iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+    
+    if (order.status === 'completed') {
+      iconClass = 'completed';
+      iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+    } else if (order.status === 'in_progress' || order.status === 'paused') {
+      iconClass = 'started';
+      iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>';
+    }
     
     return `
-      <div class="activity-item" onclick="showOSDetail('${sanitizeId(order.id)}')" style="cursor: pointer;">
-        <div class="activity-icon" style="background: ${color}20; color: ${color};">${icon}</div>
-        <div class="activity-content">
-          <div class="activity-title">${title}</div>
-          <div class="activity-time">${time}</div>
+      <div class="activity-item-neo" onclick="showOSDetail('${sanitizeId(order.id)}')" style="cursor: pointer;">
+        <div class="activity-icon-neo ${iconClass}">${iconSvg}</div>
+        <div class="activity-content-neo">
+          <div class="activity-title-neo">${title}</div>
+          <div class="activity-meta-neo">
+            <span>${user}</span>
+            <span>•</span>
+            <span>${time}</span>
+          </div>
         </div>
       </div>
     `;
@@ -1168,28 +1177,45 @@ function renderProductivityChart() {
   if (!container) return;
   
   if (rankings.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;">Nenhuma tarefa concluída ainda</p>';
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; color: rgba(196, 181, 253, 0.6);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.4; margin-bottom: 12px;">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        <p style="font-size: 14px; margin: 0;">Nenhuma tarefa concluída ainda</p>
+      </div>
+    `;
     return;
   }
   
   const maxCount = rankings[0]?.total_tasks || 1;
   
-  const chartHtml = rankings.map(user => {
+  const chartHtml = rankings.slice(0, 5).map(user => {
     const percentage = (user.total_tasks / maxCount) * 100;
-    const avgTime = user.avg_minutes_per_task > 0 ? `~${user.avg_minutes_per_task}min` : '';
+    const avgTime = user.avg_minutes_per_task > 0 ? `${user.avg_minutes_per_task}min` : '';
+    const initials = user.user_name ? user.user_name.split(' ').map(n => n[0]).join('').substring(0, 2) : '??';
     
     return `
-      <div class="productivity-bar">
-        <div class="productivity-name">${escapeHtml(user.user_name)}</div>
-        <div class="productivity-bar-container">
-          <div class="productivity-bar-fill" style="width: ${percentage}%">
-            <span class="productivity-count">${user.total_tasks}</span>
+      <div class="productivity-bar-neo">
+        <div class="productivity-avatar">${initials}</div>
+        <div class="productivity-info">
+          <div class="productivity-name-neo">${escapeHtml(user.user_name)}</div>
+          <div class="productivity-bar-track">
+            <div class="productivity-bar-fill-neo" style="width: ${percentage}%"></div>
           </div>
         </div>
-        <div class="productivity-details" style="display: flex; gap: 8px; font-size: 11px; color: var(--text-secondary);">
-          <span title="OS Concluídas">🔧 ${user.os_completed}</span>
-          <span title="Aditivas">⚡ ${user.aditiva_completed}</span>
-          ${avgTime ? `<span title="Tempo médio por tarefa">⏱ ${avgTime}</span>` : ''}
+        <div class="productivity-stats">
+          <span title="Total">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            ${user.total_tasks}
+          </span>
+          <span title="OS">${user.os_completed} OS</span>
+          ${avgTime ? `<span title="Tempo médio">${avgTime}</span>` : ''}
         </div>
       </div>
     `;

@@ -438,7 +438,238 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     font-size: 13px;
   }
 
-  /* Dashboard Stats Grid Mobile */
+  /* ========================================
+     DASHBOARD NEO - MOBILE RESPONSIVE
+     ======================================== */
+  .dashboard-neo-container {
+    min-height: auto;
+  }
+  
+  .dashboard-neo-bg {
+    position: absolute;
+  }
+  
+  .dashboard-neo-bg .orb {
+    display: none;
+  }
+  
+  .dashboard-neo-content {
+    padding: 16px;
+  }
+  
+  /* Header Glass Mobile */
+  .dashboard-glass-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+  }
+  
+  .dashboard-header-left {
+    gap: 14px;
+    width: 100%;
+  }
+  
+  .dashboard-icon-neo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+  
+  .dashboard-icon-neo svg {
+    width: 26px;
+    height: 26px;
+  }
+  
+  .dashboard-title-neo {
+    font-size: 24px;
+  }
+  
+  .dashboard-subtitle-neo {
+    font-size: 12px;
+  }
+  
+  .dashboard-header-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .dashboard-filter-neo {
+    padding: 10px 14px;
+    font-size: 12px;
+    text-align: center;
+  }
+  
+  .btn-export-neo {
+    grid-column: span 3;
+    justify-content: center;
+    padding: 12px;
+    margin-top: 4px;
+  }
+  
+  /* Stats Cards Neo Mobile */
+  .dashboard-stats-neo {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card-neo {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+  
+  .stat-card-neo-header {
+    margin-bottom: 12px;
+  }
+  
+  .stat-icon-neo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  
+  .stat-icon-neo svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .stat-value-neo {
+    font-size: 32px;
+  }
+  
+  .stat-label-neo {
+    font-size: 12px;
+  }
+  
+  .stat-trend-neo {
+    font-size: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+  
+  /* Panels Neo Mobile */
+  .dashboard-panels-neo {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .panel-neo {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .panel-neo-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  
+  .panel-neo-title {
+    font-size: 14px;
+    gap: 10px;
+  }
+  
+  .panel-neo-badge {
+    font-size: 10px;
+    padding: 3px 10px;
+  }
+  
+  /* Productivity Neo Mobile */
+  .productivity-neo {
+    gap: 12px;
+  }
+  
+  .productivity-bar-neo {
+    gap: 10px;
+  }
+  
+  .productivity-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  
+  .productivity-name-neo {
+    font-size: 13px;
+  }
+  
+  .productivity-bar-track {
+    height: 6px;
+  }
+  
+  .productivity-stats {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+  }
+  
+  /* Activity Neo Mobile */
+  .activity-neo {
+    gap: 10px;
+    max-height: 280px;
+  }
+  
+  .activity-item-neo {
+    padding: 12px;
+    border-radius: 12px;
+    gap: 10px;
+  }
+  
+  .activity-icon-neo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  
+  .activity-icon-neo svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .activity-title-neo {
+    font-size: 12px;
+  }
+  
+  .activity-meta-neo {
+    font-size: 10px;
+  }
+  
+  /* Summary Neo Mobile */
+  .summary-neo {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .summary-neo-header {
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  
+  .summary-neo-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .summary-item-neo {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+  
+  .summary-value-neo {
+    font-size: 22px;
+  }
+  
+  .summary-label-neo {
+    font-size: 11px;
+  }
+
+  /* Dashboard Stats Grid Mobile (Legacy) */
   .dashboard-stats-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -2095,6 +2326,95 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   
   .btn-os-create span {
     display: none;
+  }
+  
+  /* Dashboard Neo - S23 Optimizations */
+  .dashboard-glass-header {
+    padding: 16px;
+    gap: 14px;
+    border-radius: 14px;
+  }
+  
+  .dashboard-icon-neo {
+    width: 46px;
+    height: 46px;
+  }
+  
+  .dashboard-title-neo {
+    font-size: 20px;
+  }
+  
+  .dashboard-subtitle-neo {
+    font-size: 11px;
+  }
+  
+  .dashboard-header-actions {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .dashboard-filter-neo {
+    padding: 8px 10px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+  
+  .btn-export-neo {
+    padding: 10px;
+    font-size: 12px;
+  }
+  
+  .dashboard-stats-neo {
+    gap: 10px;
+  }
+  
+  .stat-card-neo {
+    padding: 14px 12px;
+    border-radius: 12px;
+  }
+  
+  .stat-icon-neo {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .stat-value-neo {
+    font-size: 26px;
+  }
+  
+  .stat-label-neo {
+    font-size: 11px;
+  }
+  
+  .stat-trend-neo {
+    font-size: 9px;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  
+  .panel-neo {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .summary-neo {
+    padding: 16px;
+  }
+  
+  .summary-neo-grid {
+    gap: 10px;
+  }
+  
+  .summary-item-neo {
+    padding: 12px 10px;
+  }
+  
+  .summary-value-neo {
+    font-size: 18px;
+  }
+  
+  .summary-label-neo {
+    font-size: 10px;
   }
 }
 
