@@ -9010,6 +9010,38 @@
               </div>
             </div>
 
+            <!-- Card: Atualização do App -->
+            <div class="card" style="border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, var(--bg-card) 100%); border: 1px solid rgba(139, 92, 246, 0.2);">
+              <div class="card-header" style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%); border-bottom: 1px solid rgba(139, 92, 246, 0.15);">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+                <h3 class="card-title" style="margin: 0; font-size: 16px; color: #a78bfa;">Atualização do App</h3>
+              </div>
+              <div style="padding: 20px;">
+                <p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 14px;">
+                  O app carrega automaticamente do servidor. Se algo não estiver funcionando, force uma atualização.
+                </p>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 10px; background: rgba(139, 92, 246, 0.1); border-radius: 8px;">
+                  <span style="font-size: 20px;">📱</span>
+                  <div>
+                    <div style="font-size: 13px; color: #a78bfa;">Versão Atual</div>
+                    <div style="font-size: 16px; font-weight: 600; color: white;" id="config-app-version">1.0.6</div>
+                  </div>
+                </div>
+                <button class="btn-small" onclick="forceAppUpdate()" style="width: 100%; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: white; padding: 12px; font-weight: 600;">
+                  🔄 Forçar Atualização
+                </button>
+                <small style="display: block; text-align: center; margin-top: 8px; color: var(--text-muted); font-size: 11px;">
+                  Limpa o cache e recarrega todos os dados
+                </small>
+              </div>
+            </div>
+
             <!-- Card: Suporte -->
             <div class="card" style="border-radius: 14px; overflow: hidden;">
               <div class="card-header" style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.15);">

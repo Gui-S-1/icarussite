@@ -51,7 +51,7 @@ const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
 // ========================================
 // PUSH NOTIFICATIONS - Capacitor
 // ========================================
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.0.6';
 
 async function initPushNotifications() {
   try {
@@ -257,6 +257,52 @@ async function downloadUpdate(url) {
   } catch (error) {
     console.error('Erro ao baixar atualização:', error);
     showNotification('Erro ao iniciar download', 'error');
+  }
+}
+
+// ========================================
+// FORCE APP UPDATE - Limpa cache e recarrega
+// ========================================
+
+async function forceAppUpdate() {
+  showNotification('🔄 Limpando cache e atualizando...', 'info');
+  
+  try {
+    // 1. Limpar caches do localStorage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('icarus_cache_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // 2. Limpar Service Worker cache (se existir)
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+    }
+    
+    // 3. Unregister Service Workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        registrations.map(reg => reg.unregister())
+      );
+    }
+    
+    // 4. Mostrar mensagem de sucesso
+    showNotification('✅ Cache limpo! Recarregando...', 'success');
+    
+    // 5. Recarregar a página com cache busting
+    setTimeout(() => {
+      window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Erro ao forçar atualização:', error);
+    showNotification('Erro ao atualizar. Tentando recarregar...', 'warning');
+    setTimeout(() => window.location.reload(true), 1000);
   }
 }
 
