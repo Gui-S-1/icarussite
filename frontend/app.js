@@ -1875,8 +1875,10 @@ async function completeOrder(orderId) {
     // Verificar se tem datas retroativas customizadas
     const startedAtCustomInput = document.getElementById('detail-started-at-custom');
     const finishedAtCustomInput = document.getElementById('detail-finished-at-custom');
+    const breakMinutesInput = document.getElementById('detail-break-minutes');
     const startedAtCustom = startedAtCustomInput?.value || null;
     const finishedAtCustom = finishedAtCustomInput?.value || null;
+    const breakMinutes = breakMinutesInput?.value ? parseInt(breakMinutesInput.value) : 0;
     
     const body = { status: 'completed' };
     if (startedAtCustom) {
@@ -1884,6 +1886,9 @@ async function completeOrder(orderId) {
     }
     if (finishedAtCustom) {
       body.finished_at_custom = finishedAtCustom;
+    }
+    if (breakMinutes > 0) {
+      body.break_minutes = breakMinutes;
     }
     
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
