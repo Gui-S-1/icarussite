@@ -2087,75 +2087,267 @@
     @media (max-width: 1000px) {
       .lav2-container { 
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 12px;
+        padding: 0 10px;
+        padding-bottom: 90px;
       }
       .lav2-sidebar {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 8px;
+        order: 1;
+      }
+      .lav2-main {
+        order: 2;
       }
       .lav2-client-card {
-        padding: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        min-height: auto;
       }
       .lav2-client-name {
-        font-size: 14px;
+        font-size: 12px;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .lav2-client-name .client-dot {
+        width: 8px;
+        height: 8px;
       }
       .lav2-client-info {
-        font-size: 11px;
+        font-size: 10px;
+        gap: 2px;
       }
-      /* Card de lucro geral no mobile - ocupar 2 colunas */
-      .lav2-sidebar .lav2-client-card:last-child {
-        grid-column: span 2;
+      .lav2-client-price {
+        font-size: 10px;
       }
     }
     @media (max-width: 500px) {
       .lav2-container {
         padding: 0 8px;
-        padding-bottom: 100px;
-      }
-      .lav2-sidebar {
-        grid-template-columns: 1fr 1fr;
+        padding-bottom: 85px;
         gap: 8px;
       }
+      /* Clientes em 4 colunas compactas */
+      .lav2-sidebar {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 4px;
+      }
       .lav2-client-card {
-        padding: 12px;
+        padding: 6px 4px;
+        border-radius: 6px;
+        text-align: center;
       }
       .lav2-client-name {
-        font-size: 13px;
-        margin-bottom: 4px;
+        font-size: 9px;
+        margin-bottom: 1px;
+        justify-content: center;
       }
-      .lav2-client-info span:last-child {
-        display: none; /* Esconder ciclo no mobile pequeno */
+      .lav2-client-name .client-dot {
+        width: 6px;
+        height: 6px;
+      }
+      .lav2-client-info {
+        display: none; /* Esconder info no mobile pequeno */
+      }
+      /* Dashboard geral mobile - 2 cards */
+      .lav2-dashboard-geral {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+        margin-bottom: 8px !important;
+      }
+      .lav2-dashboard-card {
+        padding: 8px 6px !important;
+        gap: 6px !important;
+        flex-direction: row !important;
+        text-align: left;
+      }
+      .lav2-geral-icon,
+      .lav2-dash-icon {
+        width: 24px !important;
+        height: 24px !important;
+      }
+      .lav2-geral-icon svg,
+      .lav2-dash-icon svg {
+        width: 12px !important;
+        height: 12px !important;
+      }
+      .lav2-geral-value,
+      .lav2-dash-value {
+        font-size: 13px !important;
+      }
+      .lav2-geral-label,
+      .lav2-dash-label {
+        font-size: 8px !important;
+      }
+      /* Header mobile compacto */
+      .lav2-header {
+        padding: 10px !important;
+        border-radius: 10px !important;
+      }
+      .lav2-header-left {
+        gap: 8px !important;
+      }
+      .lav2-icon-badge {
+        width: 32px !important;
+        height: 32px !important;
+      }
+      .lav2-icon-badge svg {
+        width: 16px !important;
+        height: 16px !important;
+      }
+      .lav2-header-title {
+        font-size: 14px !important;
+      }
+      .lav2-header-sub {
+        font-size: 10px !important;
       }
       .lav2-header-content {
         flex-direction: column;
-        gap: 12px;
-        align-items: flex-start;
+        gap: 8px;
+        align-items: stretch !important;
       }
+      .lav2-header-actions {
+        display: flex;
+        gap: 4px;
+        justify-content: space-between;
+      }
+      .lav2-period-badge {
+        padding: 5px 8px !important;
+        font-size: 10px !important;
+        flex: 1;
+        text-align: center;
+      }
+      .lav2-btn-export {
+        padding: 6px 10px !important;
+        font-size: 10px !important;
+        flex: 1;
+      }
+      /* Stats row mobile - 3 colunas */
       .lav2-stats-row {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
       }
       .lav2-stat-card {
-        padding: 14px;
+        padding: 8px 4px !important;
+        border-radius: 8px !important;
+      }
+      .lav2-stat-icon {
+        width: 20px !important;
+        height: 20px !important;
+        margin-bottom: 4px !important;
+        border-radius: 5px !important;
+      }
+      .lav2-stat-icon svg {
+        width: 10px !important;
+        height: 10px !important;
       }
       .lav2-stat-value {
-        font-size: 22px !important;
+        font-size: 14px !important;
       }
-      .lav2-form-fields {
+      .lav2-stat-label {
+        font-size: 7px !important;
+        white-space: nowrap;
+      }
+      /* Entry card mobile */
+      .lav2-entry-card {
+        border-radius: 10px !important;
+      }
+      .lav2-entry-header {
+        padding: 8px 10px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+      }
+      .lav2-entry-header h3 {
+        font-size: 11px !important;
+        gap: 5px !important;
+      }
+      .lav2-entry-header h3 svg {
+        width: 12px !important;
+        height: 12px !important;
+      }
+      .lav2-date-input {
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+      }
+      .lav2-entry-body {
+        padding: 8px 10px !important;
+      }
+      /* Form grid - 2x2 para 4 campos */
+      .lav2-form-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px;
+        gap: 6px !important;
+        margin-bottom: 10px !important;
+      }
+      .lav2-form-field {
+        gap: 3px !important;
+      }
+      .lav2-form-field label {
+        font-size: 8px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .lav2-form-field input {
-        font-size: 18px;
-        padding: 12px;
+        font-size: 18px !important;
+        padding: 10px 8px !important;
+        border-radius: 6px !important;
+        text-align: center;
+        -webkit-appearance: none;
+        -moz-appearance: textfield;
+      }
+      /* Total box mobile */
+      .lav2-total-box {
+        padding: 8px 10px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 8px !important;
+        border-radius: 8px !important;
+        margin-bottom: 10px !important;
+      }
+      .lav2-total-info {
+        flex: 1;
+      }
+      .lav2-total-pieces {
+        font-size: 11px !important;
+      }
+      .lav2-total-value {
+        font-size: 16px !important;
+      }
+      .lav2-save-btn {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+        gap: 4px !important;
+      }
+      .lav2-save-btn svg {
+        width: 14px !important;
+        height: 14px !important;
+      }
+      /* Entries list mobile */
+      .lav2-entries-card,
+      .lav2-history-card {
+        border-radius: 10px !important;
+      }
+      .lav2-entries-header,
+      .lav2-history-header {
+        padding: 8px 10px !important;
+      }
+      .lav2-entries-header h4,
+      .lav2-history-header h3 {
+        font-size: 11px !important;
       }
       .lav2-entries-list {
-        max-height: 250px;
+        max-height: 180px !important;
+        padding: 6px !important;
       }
       .lav2-entry-item {
-        padding: 10px 12px;
-        font-size: 12px;
+        padding: 6px 8px !important;
+        font-size: 10px !important;
+        border-radius: 6px !important;
       }
     }
 
@@ -2204,10 +2396,14 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .lav2-client-name .client-dot {
       width: 10px; height: 10px;
       border-radius: 50%;
+      flex-shrink: 0;
       background: var(--client-color, #ec4899);
       box-shadow: 0 0 10px var(--client-color, #ec4899);
     }
@@ -2362,7 +2558,18 @@
       gap: 16px;
     }
     @media (max-width: 1200px) { .lav2-stats-row { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 600px) { .lav2-stats-row { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { 
+      .lav2-stats-row { 
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+    }
+    @media (max-width: 400px) { 
+      .lav2-stats-row { 
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+    }
 
     .lav2-stat-card {
       position: relative;
@@ -2374,6 +2581,12 @@
       border-radius: 16px;
       overflow: hidden;
       transition: all 0.3s;
+    }
+    @media (max-width: 600px) {
+      .lav2-stat-card {
+        padding: 12px;
+        border-radius: 12px;
+      }
     }
     .lav2-stat-card:hover {
       border-color: rgba(236, 72, 153, 0.4);
@@ -2405,6 +2618,16 @@
       color: #ec4899;
       margin-bottom: 12px;
     }
+    @media (max-width: 600px) {
+      .lav2-stat-icon {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+      .lav2-stat-icon svg {
+        width: 16px; height: 16px;
+      }
+    }
     .lav2-stat-card.purple .lav2-stat-icon { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
     .lav2-stat-card.blue .lav2-stat-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
     .lav2-stat-card.gold .lav2-stat-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
@@ -2414,10 +2637,20 @@
       color: #fff;
       text-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
     }
+    @media (max-width: 600px) {
+      .lav2-stat-value {
+        font-size: 18px !important;
+      }
+    }
     .lav2-stat-label {
       font-size: 12px;
       color: rgba(255, 255, 255, 0.5);
       margin-top: 4px;
+    }
+    @media (max-width: 600px) {
+      .lav2-stat-label {
+        font-size: 10px;
+      }
     }
 
     /* Entry Form Glass Card */
@@ -2429,6 +2662,11 @@
       border-radius: 20px;
       overflow: hidden;
     }
+    @media (max-width: 600px) {
+      .lav2-entry-card {
+        border-radius: 14px;
+      }
+    }
     .lav2-entry-header {
       display: flex;
       justify-content: space-between;
@@ -2436,6 +2674,14 @@
       padding: 20px 24px;
       background: linear-gradient(90deg, rgba(236, 72, 153, 0.1) 0%, transparent 100%);
       border-bottom: 1px solid rgba(236, 72, 153, 0.1);
+    }
+    @media (max-width: 600px) {
+      .lav2-entry-header {
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px 16px;
+        align-items: stretch;
+      }
     }
     .lav2-entry-header h3 {
       display: flex;
@@ -2446,6 +2692,12 @@
       color: #fff;
       margin: 0;
     }
+    @media (max-width: 600px) {
+      .lav2-entry-header h3 {
+        font-size: 14px;
+        gap: 8px;
+      }
+    }
     .lav2-entry-header h3 svg { color: #ec4899; }
     .lav2-entry-header .lav2-date-input {
       padding: 10px 16px;
@@ -2455,7 +2707,16 @@
       color: #fff;
       font-size: 14px;
     }
+    @media (max-width: 600px) {
+      .lav2-entry-header .lav2-date-input {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+    }
     .lav2-entry-body { padding: 24px; }
+    @media (max-width: 600px) {
+      .lav2-entry-body { padding: 14px; }
+    }
 
     /* Dynamic Form based on client */
     .lav2-form-grid {
@@ -2486,6 +2747,16 @@
       text-align: center;
       transition: all 0.3s;
     }
+    @media (max-width: 600px) {
+      .lav2-form-field input {
+        padding: 10px 12px;
+        font-size: 16px;
+        border-radius: 8px;
+      }
+      .lav2-form-field label {
+        font-size: 10px;
+      }
+    }
     .lav2-form-field input:focus {
       outline: none;
       border-color: #ec4899;
@@ -2504,6 +2775,14 @@
       border-radius: 14px;
       margin-bottom: 20px;
     }
+    @media (max-width: 600px) {
+      .lav2-total-box {
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 16px;
+        text-align: center;
+      }
+    }
     .lav2-total-info {
       display: flex;
       flex-direction: column;
@@ -2513,6 +2792,11 @@
       font-size: 14px;
       color: rgba(255, 255, 255, 0.6);
     }
+    @media (max-width: 600px) {
+      .lav2-total-pieces {
+        font-size: 12px;
+      }
+    }
     .lav2-total-pieces span { color: #ec4899; font-weight: 600; }
     .lav2-total-value {
       font-size: 32px;
@@ -2521,6 +2805,11 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+    }
+    @media (max-width: 600px) {
+      .lav2-total-value {
+        font-size: 24px;
+      }
     }
     .lav2-save-btn {
       display: flex;
@@ -8401,7 +8690,7 @@
                 </div>
                 <div class="lav2-client-info">
                   <span class="lav2-client-price">R$ 3,50/peça</span>
-                  <span>Ciclo: 16 dias (4-19 ou 20-3)</span>
+                  <span>Ciclo: 16 dias (5-20)</span>
                 </div>
               </div>
               <div class="lav2-client-card" style="--client-color: #a855f7;" onclick="selectLav2Client('loyola')" id="lav2-client-loyola">
@@ -8718,6 +9007,38 @@
                     <span style="color: var(--primary); font-size: 13px;">◇ Novidade chegando em breve</span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Card: Atualização do App -->
+            <div class="card" style="border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, var(--bg-card) 100%); border: 1px solid rgba(139, 92, 246, 0.2);">
+              <div class="card-header" style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%); border-bottom: 1px solid rgba(139, 92, 246, 0.15);">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+                <h3 class="card-title" style="margin: 0; font-size: 16px; color: #a78bfa;">Atualização do App</h3>
+              </div>
+              <div style="padding: 20px;">
+                <p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 14px;">
+                  O app carrega automaticamente do servidor. Se algo não estiver funcionando, force uma atualização.
+                </p>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 10px; background: rgba(139, 92, 246, 0.1); border-radius: 8px;">
+                  <span style="font-size: 20px;">📱</span>
+                  <div>
+                    <div style="font-size: 13px; color: #a78bfa;">Versão Atual</div>
+                    <div style="font-size: 16px; font-weight: 600; color: white;" id="config-app-version">1.0.6</div>
+                  </div>
+                </div>
+                <button class="btn-small" onclick="forceAppUpdate()" style="width: 100%; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border: none; color: white; padding: 12px; font-weight: 600;">
+                  🔄 Forçar Atualização
+                </button>
+                <small style="display: block; text-align: center; margin-top: 8px; color: var(--text-muted); font-size: 11px;">
+                  Limpa o cache e recarrega todos os dados
+                </small>
               </div>
             </div>
 
@@ -9065,6 +9386,14 @@
             <input type="number" id="detail-break-minutes" min="0" placeholder="Ex: 60 para 1h de almoço" style="font-size: 13px;">
             <small style="color: var(--text-secondary); font-size: 11px;">Será descontado do tempo total trabalhado</small>
           </div>
+        </div>
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(212, 175, 55, 0.2);">
+          <button type="button" class="btn-small btn-success" onclick="closeOrderWithRetroactiveDates()" style="width: 100%; padding: 10px; font-weight: 600;">
+            ✓ Fechar OS com Datas Retroativas
+          </button>
+          <small style="color: var(--text-secondary); font-size: 11px; display: block; text-align: center; margin-top: 6px;">
+            Preencha as datas acima e clique para concluir
+          </small>
         </div>
       </div>
 

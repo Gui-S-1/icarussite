@@ -51,7 +51,7 @@ const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
 // ========================================
 // PUSH NOTIFICATIONS - Capacitor
 // ========================================
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.0.6';
 
 async function initPushNotifications() {
   try {
@@ -257,6 +257,52 @@ async function downloadUpdate(url) {
   } catch (error) {
     console.error('Erro ao baixar atualização:', error);
     showNotification('Erro ao iniciar download', 'error');
+  }
+}
+
+// ========================================
+// FORCE APP UPDATE - Limpa cache e recarrega
+// ========================================
+
+async function forceAppUpdate() {
+  showNotification('🔄 Limpando cache e atualizando...', 'info');
+  
+  try {
+    // 1. Limpar caches do localStorage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('icarus_cache_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // 2. Limpar Service Worker cache (se existir)
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+    }
+    
+    // 3. Unregister Service Workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        registrations.map(reg => reg.unregister())
+      );
+    }
+    
+    // 4. Mostrar mensagem de sucesso
+    showNotification('✅ Cache limpo! Recarregando...', 'success');
+    
+    // 5. Recarregar a página com cache busting
+    setTimeout(() => {
+      window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Erro ao forçar atualização:', error);
+    showNotification('Erro ao atualizar. Tentando recarregar...', 'warning');
+    setTimeout(() => window.location.reload(true), 1000);
   }
 }
 
@@ -1572,8 +1618,26 @@ function showOSDetail(orderId) {
     finishedRow.style.display = 'none';
   }
 
-  // Calcular tempo total
-  if (startedAt && finishedAt) {
+  // Calcular tempo total - usar worked_minutes se disponível
+  if (order.worked_minutes && order.worked_minutes > 0) {
+    // Usar worked_minutes do backend (já descontado o tempo de descanso)
+    const totalMinutes = order.worked_minutes;
+    const diffHours = Math.floor(totalMinutes / 60);
+    const diffMinutes = totalMinutes % 60;
+    
+    let tempoTotal;
+    if (diffHours >= 24) {
+      const days = Math.floor(diffHours / 24);
+      const hours = diffHours % 24;
+      tempoTotal = `${days}d ${hours}h ${diffMinutes}min`;
+    } else {
+      tempoTotal = `${diffHours}h ${diffMinutes}min`;
+    }
+    tempoEl.textContent = tempoTotal;
+    tempoEl.style.color = '';
+    tempoRow.style.display = '';
+  } else if (startedAt && finishedAt) {
+    // Fallback: calcular diferença bruta
     const diffMs = finishedAt - startedAt;
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -1587,6 +1651,7 @@ function showOSDetail(orderId) {
       tempoTotal = `${diffHours}h ${diffMinutes}min`;
     }
     tempoEl.textContent = tempoTotal;
+    tempoEl.style.color = '';
     tempoRow.style.display = '';
   } else if (startedAt && !finishedAt) {
     // Em andamento - mostrar tempo decorrido
@@ -1768,9 +1833,23 @@ async function loadHistoryInOS() {
     const startedAt = o.started_at ? new Date(o.started_at) : null;
     const finishedAt = o.finished_at ? new Date(o.finished_at) : null;
     
-    // Calcular tempo total
+    // Calcular tempo total - usar worked_minutes se disponível (já com descanso descontado)
     let tempoTotal = '-';
-    if (startedAt && finishedAt) {
+    if (o.worked_minutes && o.worked_minutes > 0) {
+      // Usar worked_minutes do backend (já descontado o tempo de descanso)
+      const totalMinutes = o.worked_minutes;
+      const diffHours = Math.floor(totalMinutes / 60);
+      const diffMinutes = totalMinutes % 60;
+      
+      if (diffHours >= 24) {
+        const days = Math.floor(diffHours / 24);
+        const hours = diffHours % 24;
+        tempoTotal = `${days}d ${hours}h`;
+      } else {
+        tempoTotal = `${diffHours}h ${diffMinutes}min`;
+      }
+    } else if (startedAt && finishedAt) {
+      // Fallback: calcular diferença bruta (sem descanso descontado)
       const diffMs = finishedAt - startedAt;
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -1832,7 +1911,8 @@ async function startOrder(orderId) {
     
     const body = { status: 'in_progress' };
     if (startedAtCustom) {
-      body.started_at_custom = startedAtCustom;
+      // Converter datetime-local para ISO com timezone
+      body.started_at_custom = new Date(startedAtCustom).toISOString();
     }
     
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
@@ -1957,12 +2037,21 @@ async function completeOrder(orderId) {
     const finishedAtCustom = finishedAtCustomInput?.value || null;
     const breakMinutes = breakMinutesInput?.value ? parseInt(breakMinutesInput.value) : 0;
     
+    // Converter datetime-local para ISO com timezone de Brasília (-03:00)
+    // datetime-local retorna "2026-01-12T08:01" sem timezone
+    // Adicionamos :00-03:00 para indicar que é horário de Brasília
+    const toISOLocal = (dtValue) => {
+      if (!dtValue) return null;
+      // Adicionar segundos e timezone de Brasília
+      return dtValue + ':00-03:00';
+    };
+    
     const body = { status: 'completed' };
     if (startedAtCustom) {
-      body.started_at_custom = startedAtCustom;
+      body.started_at_custom = toISOLocal(startedAtCustom);
     }
     if (finishedAtCustom) {
-      body.finished_at_custom = finishedAtCustom;
+      body.finished_at_custom = toISOLocal(finishedAtCustom);
     }
     if (breakMinutes > 0) {
       body.break_minutes = breakMinutes;
@@ -1987,6 +2076,127 @@ async function completeOrder(orderId) {
     }
   } catch (error) {
     showNotification('Erro ao concluir OS: ' + error.message, 'error');
+  }
+}
+
+// Função específica para fechar OS com datas retroativas
+async function closeOrderWithRetroactiveDates() {
+  // Pegar o ID da OS do modal aberto
+  const osIdEl = document.querySelector('#modal-os-detail [data-order-id]');
+  const osTitle = document.getElementById('detail-os-title');
+  
+  // Buscar a OS pelo título ou iterar orders
+  const order = state.orders.find(o => {
+    const titleEl = document.getElementById('detail-os-title');
+    return titleEl && o.title === titleEl.textContent;
+  });
+  
+  if (!order) {
+    showNotification('Erro: OS não encontrada. Feche e abra novamente.', 'error');
+    return;
+  }
+  
+  const orderId = order.id;
+  
+  // Pegar datas retroativas
+  const startedAtCustomInput = document.getElementById('detail-started-at-custom');
+  const finishedAtCustomInput = document.getElementById('detail-finished-at-custom');
+  const breakMinutesInput = document.getElementById('detail-break-minutes');
+  
+  const startedAtCustom = startedAtCustomInput?.value || null;
+  const finishedAtCustom = finishedAtCustomInput?.value || null;
+  const breakMinutes = breakMinutesInput?.value ? parseInt(breakMinutesInput.value) : 0;
+  
+  // Validar que pelo menos uma data foi preenchida
+  if (!startedAtCustom && !finishedAtCustom) {
+    showNotification('Preencha pelo menos a Data/Hora de Início ou Conclusão!', 'error');
+    return;
+  }
+  
+  // Validar que a data de fim é posterior ao início
+  if (startedAtCustom && finishedAtCustom) {
+    const start = new Date(startedAtCustom);
+    const end = new Date(finishedAtCustom);
+    if (end <= start) {
+      showNotification('A data de conclusão deve ser posterior à data de início!', 'error');
+      return;
+    }
+  }
+  
+  // Verificar se tem técnico atribuído
+  let hasAssigned = order.assigned_users && order.assigned_users.length > 0;
+  const assignedUsernames = [];
+  
+  ['declie', 'eduardo', 'vanderlei', 'alissom'].forEach(username => {
+    const cb = document.getElementById('detail-assign-' + username);
+    if (cb && cb.checked) {
+      assignedUsernames.push(username);
+    }
+  });
+  
+  if (!hasAssigned && assignedUsernames.length === 0) {
+    showNotification('Atribua quem executou a OS antes de concluir!', 'error');
+    return;
+  }
+  
+  try {
+    // Salvar atribuições primeiro
+    if (assignedUsernames.length > 0) {
+      const assignedUserIds = state.users
+        .filter(u => assignedUsernames.includes(u.username.toLowerCase()))
+        .map(u => u.id);
+      
+      await fetch(`${API_URL}/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${state.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ assigned_user_ids: assignedUserIds })
+      });
+    }
+    
+    // Converter datetime-local para ISO com timezone local
+    // datetime-local retorna "2026-01-12T08:01" sem timezone
+    // new Date() pode interpretar isso como UTC ou local dependendo do browser
+    // Vamos garantir que seja interpretado como horário local de Brasília (UTC-3)
+    const toISOWithTimezone = (dateTimeLocalValue) => {
+      if (!dateTimeLocalValue) return null;
+      // dateTimeLocalValue vem como "2026-01-12T08:01"
+      // Adicionar timezone de Brasília (-03:00) para garantir interpretação correta
+      // Isso faz o backend entender que 08:01 é horário de Brasília, não UTC
+      const withTimezone = dateTimeLocalValue + ':00-03:00';
+      return withTimezone;
+    };
+    
+    // Fechar a OS com as datas retroativas
+    const body = { 
+      status: 'completed',
+      started_at_custom: toISOWithTimezone(startedAtCustom),
+      finished_at_custom: toISOWithTimezone(finishedAtCustom),
+      break_minutes: breakMinutes
+    };
+    
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      const tempoInfo = breakMinutes > 0 ? ` (${breakMinutes}min de descanso descontados)` : '';
+      showNotification(`OS fechada com datas retroativas!${tempoInfo}`, 'success');
+      await loadOrders();
+      closeModal('modal-os-detail');
+    } else {
+      showNotification(data.error || 'Erro ao fechar OS', 'error');
+    }
+  } catch (error) {
+    showNotification('Erro ao fechar OS: ' + error.message, 'error');
   }
 }
 
@@ -2262,8 +2472,12 @@ async function loadReports() {
         if (userStats[username]) {
           userStats[username].count++;
           
-          // Calcular tempo
-          if (order.started_at && order.finished_at) {
+          // Calcular tempo - usar worked_minutes se disponível
+          if (order.worked_minutes && order.worked_minutes > 0) {
+            // worked_minutes já está em minutos, converter para ms
+            userStats[username].totalTime += order.worked_minutes * 60 * 1000;
+          } else if (order.started_at && order.finished_at) {
+            // Fallback: calcular diferença bruta
             const duration = new Date(order.finished_at) - new Date(order.started_at);
             userStats[username].totalTime += duration;
           }
@@ -8658,22 +8872,25 @@ function renderLav2FormFields(client) {
 
 function updateLav2PeriodDisplay(client) {
   var periodText = document.getElementById('lav2-period-text');
+  var diasEl = document.getElementById('lav2-stat-dias');
   var now = new Date();
   var startDate, endDate;
   
   if (client.billingCycle === 'biweekly') {
-    // Marajoara: ciclo de 16 dias (4-19 ou 20-3)
+    // Marajoara: ciclo de 16 dias (5-20 ou 21-4)
     var day = now.getDate();
-    if (day >= 4 && day <= 19) {
-      startDate = new Date(now.getFullYear(), now.getMonth(), 4);
-      endDate = new Date(now.getFullYear(), now.getMonth(), 19);
-    } else if (day >= 20) {
-      startDate = new Date(now.getFullYear(), now.getMonth(), 20);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 3);
+    if (day >= 5 && day <= 20) {
+      // Período 5 até 20 do mês atual
+      startDate = new Date(now.getFullYear(), now.getMonth(), 5);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 20);
+    } else if (day >= 21) {
+      // Período 21 até 4 do próximo mês
+      startDate = new Date(now.getFullYear(), now.getMonth(), 21);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 4);
     } else {
-      // Dias 1-3
-      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 20);
-      endDate = new Date(now.getFullYear(), now.getMonth(), 3);
+      // Dias 1-4: ainda no período 21-4 (período anterior)
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 21);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 4);
     }
   } else {
     // Mensal
