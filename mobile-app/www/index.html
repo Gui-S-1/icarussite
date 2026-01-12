@@ -982,11 +982,12 @@
       padding: 0;
       overflow: hidden;
       min-height: calc(100vh - 60px);
+      background: linear-gradient(135deg, #0f0a1e 0%, #1a0f2e 50%, #0d0618 100%);
     }
     
     /* Fundo com luzes animadas */
     .dashboard-neo-bg {
-      position: fixed;
+      position: absolute;
       top: 0;
       left: 0;
       right: 0;
@@ -1037,15 +1038,16 @@
       justify-content: space-between;
       align-items: center;
       padding: 28px 32px;
-      background: rgba(15, 10, 30, 0.6);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(139, 92, 246, 0.2);
+      background: rgba(25, 18, 50, 0.8);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(139, 92, 246, 0.3);
       border-radius: 24px;
       margin-bottom: 28px;
       position: relative;
       overflow: hidden;
       animation: slideIn 0.5s ease-out;
+      box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .dashboard-glass-header::before {
       content: '';
@@ -1176,13 +1178,14 @@
       margin-bottom: 28px;
     }
     .stat-card-neo {
-      background: rgba(15, 10, 30, 0.5);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(139, 92, 246, 0.15);
+      background: rgba(20, 15, 40, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(139, 92, 246, 0.25);
       border-radius: 20px;
       padding: 24px;
       position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
       overflow: hidden;
       cursor: pointer;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
