@@ -565,11 +565,13 @@ async function validateKey() {
 
     if (data.ok) {
       state.keyId = data.key_id;
+      state.tenantType = data.tenant_type || 'granja';
       localStorage.setItem('icarus_key', key);
-      // Salvar nome da empresa se retornado
+      // Salvar nome da empresa e tipo de tenant
       if (data.company_name) {
         localStorage.setItem('icarus_company', data.company_name);
       }
+      localStorage.setItem('icarus_tenant_type', data.tenant_type || 'granja');
       document.getElementById('key-validation-form').classList.add('hidden');
       document.getElementById('login-form').classList.remove('hidden');
       errorDiv.classList.add('hidden');
@@ -606,10 +608,19 @@ async function login() {
     if (data.ok) {
       state.token = data.token;
       state.user = data.user;
+      state.tenantType = data.user.tenant_type || localStorage.getItem('icarus_tenant_type') || 'granja';
       localStorage.setItem('icarus_username', username);
     
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Salvar tenant_type e nome da empresa
+      if (data.user.tenant_type) {
+        localStorage.setItem('icarus_tenant_type', data.user.tenant_type);
+      }
+      if (data.user.tenant_name) {
+        localStorage.setItem('icarus_company', data.user.tenant_name);
+      }
       
       // Salvar senha se checkbox marcado
       const rememberCheck = document.getElementById('remember-login');
@@ -688,11 +699,16 @@ async function showApp() {
   // Load initial data
   await loadUsers(); // Carregar usuários primeiro
   
-  // Usuários simples vão direto para OS ao invés do dashboard
+  // Determinar view inicial baseado no tipo de tenant e permissões
   const roles = state.user.roles || [];
+  const tenantType = state.tenantType || state.user?.tenant_type || localStorage.getItem('icarus_tenant_type') || 'granja';
+  const isLavanderia = tenantType === 'lavanderia';
   const canSeeDashboard = roles.includes('admin') || roles.includes('os_manage_all') || roles.includes('os_view_all');
   
-  if (canSeeDashboard) {
+  if (isLavanderia) {
+    // Lavanderias vão direto para o módulo de lavanderia
+    navigateTo('lavanderia');
+  } else if (canSeeDashboard) {
     navigateTo('dashboard');
   } else {
     navigateTo('os');
@@ -715,57 +731,63 @@ async function showApp() {
 function setupPermissions() {
   const roles = state.user.roles || [];
   const isAdmin = roles.includes('admin');
+  const tenantType = state.tenantType || state.user?.tenant_type || localStorage.getItem('icarus_tenant_type') || 'granja';
+  
+  // ========== ISOLAMENTO POR TIPO DE EMPRESA ==========
+  // Se for lavanderia, só mostra módulos de lavanderia
+  const isLavanderia = tenantType === 'lavanderia';
   
   // ========== SISTEMA DE PERMISSÕES POR ABA ==========
   // Cada aba tem uma role específica para VER e outra para EDITAR
   // Role 'admin' tem acesso total a tudo
   
-  // Dashboard: dashboard (ver)
-  const canSeeDashboard = isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all');
+  // Dashboard: dashboard (ver) - Lavanderia tem seu próprio dashboard
+  const canSeeDashboard = isLavanderia ? (isAdmin || roles.includes('lavanderia')) : (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
   
   // Ordens de Serviço: os (ver/criar), os_manage_all (gerenciar todas)
-  // OS sempre visível para todos os usuários
+  // OS sempre visível para granja, oculto para lavanderia
+  const canSeeOS = !isLavanderia;
   
-  // Almoxarifado: almoxarifado_view (ver), almoxarifado (editar)
-  const canSeeAlmox = isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view');
-  const canEditAlmox = isAdmin || roles.includes('almoxarifado');
+  // Almoxarifado: almoxarifado_view (ver), almoxarifado (editar) - só granja
+  const canSeeAlmox = !isLavanderia && (isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view'));
+  const canEditAlmox = !isLavanderia && (isAdmin || roles.includes('almoxarifado'));
   
-  // Compras: compras_view (ver), compras (editar), compras_request (pode enviar pedidos)
-  const canSeeCompras = isAdmin || roles.includes('compras') || roles.includes('compras_view') || roles.includes('compras_request');
-  const canEditCompras = isAdmin || roles.includes('compras');
-  const canRequestCompras = isAdmin || roles.includes('compras') || roles.includes('compras_request');
+  // Compras: compras_view (ver), compras (editar), compras_request (pode enviar pedidos) - só granja
+  const canSeeCompras = !isLavanderia && (isAdmin || roles.includes('compras') || roles.includes('compras_view') || roles.includes('compras_request'));
+  const canEditCompras = !isLavanderia && (isAdmin || roles.includes('compras'));
+  const canRequestCompras = !isLavanderia && (isAdmin || roles.includes('compras') || roles.includes('compras_request'));
   
-  // Preventivas: preventivas_view (ver), preventivas (editar)
-  const canSeePrev = isAdmin || roles.includes('preventivas') || roles.includes('preventivas_view');
-  const canEditPrev = isAdmin || roles.includes('preventivas');
+  // Preventivas: preventivas_view (ver), preventivas (editar) - só granja
+  const canSeePrev = !isLavanderia && (isAdmin || roles.includes('preventivas') || roles.includes('preventivas_view'));
+  const canEditPrev = !isLavanderia && (isAdmin || roles.includes('preventivas'));
   
-  // Checklists: checklist (ver), checklist_manage (editar)
-  const canSeeChecklists = isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all');
-  const canEditChecklists = isAdmin || roles.includes('checklist_manage') || roles.includes('os_manage_all');
+  // Checklists: checklist (ver), checklist_manage (editar) - só granja
+  const canSeeChecklists = !isLavanderia && (isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all'));
+  const canEditChecklists = !isLavanderia && (isAdmin || roles.includes('checklist_manage') || roles.includes('os_manage_all'));
   
-  // Controle de Água: agua (ver), agua_manage (editar) - SÓ quem tem role específica
-  const canSeeWater = isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all');
-  const canEditWater = isAdmin || roles.includes('agua_manage') || roles.includes('os_manage_all');
+  // Controle de Água: agua (ver), agua_manage (editar) - só granja
+  const canSeeWater = !isLavanderia && (isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all'));
+  const canEditWater = !isLavanderia && (isAdmin || roles.includes('agua_manage') || roles.includes('os_manage_all'));
   
-  // Controle de Diesel: diesel (ver), diesel_manage (editar) - SÓ quem tem role específica
-  const canSeeDiesel = isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('os_manage_all');
-  const canEditDiesel = isAdmin || roles.includes('diesel_manage') || roles.includes('os_manage_all');
+  // Controle de Diesel: diesel (ver), diesel_manage (editar) - só granja
+  const canSeeDiesel = !isLavanderia && (isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('os_manage_all'));
+  const canEditDiesel = !isLavanderia && (isAdmin || roles.includes('diesel_manage') || roles.includes('os_manage_all'));
   
-  // Gerador: gerador (ver), gerador_manage (editar) - SÓ quem tem role específica
-  const canSeeGerador = isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('os_manage_all');
-  const canEditGerador = isAdmin || roles.includes('gerador_manage') || roles.includes('os_manage_all');
+  // Gerador: gerador (ver), gerador_manage (editar) - só granja
+  const canSeeGerador = !isLavanderia && (isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('os_manage_all'));
+  const canEditGerador = !isLavanderia && (isAdmin || roles.includes('gerador_manage') || roles.includes('os_manage_all'));
 
-  // Aditiva: aditiva_view (ver), aditiva (editar - só manutenção)
-  const canSeeAditiva = isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all');
-  const canEditAditiva = isAdmin || roles.includes('aditiva') || roles.includes('os_manage_all');
+  // Aditiva: aditiva_view (ver), aditiva (editar - só manutenção) - só granja
+  const canSeeAditiva = !isLavanderia && (isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all'));
+  const canEditAditiva = !isLavanderia && (isAdmin || roles.includes('aditiva') || roles.includes('os_manage_all'));
 
-  // Lavanderia: só para tenant de lavanderia
-  const canSeeLavanderia = isAdmin || roles.includes('lavanderia');
-  const canEditLavanderia = isAdmin || roles.includes('lavanderia');
+  // Lavanderia: só para tenant de lavanderia OU quem tem role lavanderia
+  const canSeeLavanderia = isLavanderia || isAdmin || roles.includes('lavanderia');
+  const canEditLavanderia = isLavanderia || isAdmin || roles.includes('lavanderia');
 
-  // Relatórios: relatorios (ver), relatorios_write (escrever - só manutenção)
-  const canSeeRelatorios = isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all');
-  const canWriteRelatorios = isAdmin || roles.includes('relatorios_write') || roles.includes('os_manage_all');
+  // Relatórios: relatorios (ver), relatorios_write (escrever - só manutenção) - só granja por enquanto
+  const canSeeRelatorios = !isLavanderia && (isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all'));
+  const canWriteRelatorios = !isLavanderia && (isAdmin || roles.includes('relatorios_write') || roles.includes('os_manage_all'));
 
   // Elementos de navegação
   const navDashboard = document.querySelector('[data-view="dashboard"]');
@@ -782,9 +804,9 @@ function setupPermissions() {
   const navRel = document.querySelector('[data-view="relatorios"]');
   const navCfg = document.querySelector('[data-view="configuracoes"]');
 
-  // Aplicar visibilidade das abas
+  // Aplicar visibilidade das abas (considerando tenant_type)
   if (navDashboard) navDashboard.classList.toggle('hidden', !canSeeDashboard);
-  if (navOS) navOS.classList.remove('hidden'); // OS sempre visível para todos
+  if (navOS) navOS.classList.toggle('hidden', !canSeeOS); // OS oculto para lavanderia
   if (navAlmox) navAlmox.classList.toggle('hidden', !canSeeAlmox);
   if (navCompras) navCompras.classList.toggle('hidden', !canSeeCompras);
   if (navPrev) navPrev.classList.toggle('hidden', !canSeePrev);
@@ -797,7 +819,9 @@ function setupPermissions() {
   if (navRel) navRel.classList.toggle('hidden', !canSeeRelatorios);
   if (navCfg) navCfg.classList.remove('hidden');
   
-  // Salvar permissões de edição no state para uso nas funções save
+  // Salvar tipo de tenant e permissões no state
+  state.tenantType = tenantType;
+  state.isLavanderiaMode = isLavanderia;
   state.canEditDiesel = canEditDiesel;
   state.canEditGerador = canEditGerador;
   state.canEditWater = canEditWater;
@@ -809,7 +833,7 @@ function setupPermissions() {
   state.canEditAditiva = canEditAditiva;
   state.canWriteRelatorios = canWriteRelatorios;
   
-  console.log('Permissões configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
+  console.log('Permissões configuradas. Roles:', roles, 'Tenant:', tenantType, 'É lavanderia:', isLavanderia);
   
   // Atualizar navegação mobile baseado nas permissões
   setupMobileNavPermissions();
@@ -819,25 +843,33 @@ function setupPermissions() {
 function setupMobileNavPermissions() {
   const roles = state.user?.roles || [];
   const isAdmin = roles.includes('admin');
+  const tenantType = state.tenantType || localStorage.getItem('icarus_tenant_type') || 'granja';
+  const isLavanderia = tenantType === 'lavanderia';
   
-  // Mesmas regras de permissão do setupPermissions - SÓ quem tem role específica
-  const canSeeDashboard = isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all');
-  const canSeeWater = isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all');
-  const canSeeDiesel = isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('os_manage_all');
-  const canSeeGerador = isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('os_manage_all');
-  const canSeeChecklists = isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all');
-  const canSeeAditiva = isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all');
-  const canSeeRelatorios = isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all');
-  const canSeeCompras = isAdmin || roles.includes('compras') || roles.includes('compras_view') || roles.includes('compras_request');
+  // Mesmas regras de permissão do setupPermissions - considerando tenant_type
+  const canSeeDashboard = isLavanderia ? (isAdmin || roles.includes('lavanderia')) : (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
+  const canSeeOS = !isLavanderia;
+  const canSeeWater = !isLavanderia && (isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all'));
+  const canSeeDiesel = !isLavanderia && (isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('os_manage_all'));
+  const canSeeGerador = !isLavanderia && (isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('os_manage_all'));
+  const canSeeChecklists = !isLavanderia && (isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all'));
+  const canSeeAditiva = !isLavanderia && (isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all'));
+  const canSeeRelatorios = !isLavanderia && (isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all'));
+  const canSeeCompras = !isLavanderia && (isAdmin || roles.includes('compras') || roles.includes('compras_view') || roles.includes('compras_request'));
+  const canSeeLavanderia = isLavanderia || isAdmin || roles.includes('lavanderia');
   
   // Itens da barra de navegação mobile principal
   const mobileNavDashboard = document.querySelector('.mobile-nav-item[data-view="dashboard"]');
+  const mobileNavOS = document.querySelector('.mobile-nav-item[data-view="os"]');
   const mobileNavWater = document.querySelector('.mobile-nav-item[data-view="controle-agua"]');
   const mobileNavDiesel = document.querySelector('.mobile-nav-item[data-view="controle-diesel"]');
+  const mobileNavLavanderia = document.querySelector('.mobile-nav-item[data-view="lavanderia"]');
   
   if (mobileNavDashboard) mobileNavDashboard.style.display = canSeeDashboard ? '' : 'none';
+  if (mobileNavOS) mobileNavOS.style.display = canSeeOS ? '' : 'none';
   if (mobileNavWater) mobileNavWater.style.display = canSeeWater ? '' : 'none';
   if (mobileNavDiesel) mobileNavDiesel.style.display = canSeeDiesel ? '' : 'none';
+  if (mobileNavLavanderia) mobileNavLavanderia.style.display = canSeeLavanderia ? '' : 'none';
   
   // Itens do menu "Mais" mobile
   const moreGerador = document.querySelector('.mobile-more-item[onclick*="controle-gerador"]');
@@ -7363,6 +7395,22 @@ function exportDashboardReport() {
     bySetor[setor]++;
   });
 
+  // SVG Icons inline
+  const svgIcons = {
+    chart: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>',
+    trending: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+    pie: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>',
+    users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    printer: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>',
+    target: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+    clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    check: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    alert: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    activity: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+    zap: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    award: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>'
+  };
+
   const htmlContent = `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -7371,108 +7419,526 @@ function exportDashboardReport() {
   <title>Relatório Dashboard - Granja Vitta</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body { 
-      font-family: 'Segoe UI', system-ui, sans-serif; 
-      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+      font-family: 'Inter', system-ui, sans-serif; 
+      background: #050510;
       color: #fff;
       min-height: 100vh;
       padding: 40px;
+      position: relative;
+      overflow-x: hidden;
     }
-    .container { max-width: 1200px; margin: 0 auto; }
+    
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+        linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    /* Glowing orbs */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 20%;
+      left: 10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(50px, -30px) scale(1.1); }
+      66% { transform: translate(-30px, 20px) scale(0.9); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 0 60px rgba(139, 92, 246, 0.2); }
+    }
+    
+    .container { 
+      max-width: 1400px; 
+      margin: 0 auto; 
+      position: relative; 
+      z-index: 1;
+      animation: slideUp 0.8s ease-out;
+    }
+    
     .header {
       text-align: center;
-      padding: 40px;
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.02) 100%);
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      border-radius: 20px;
+      padding: 50px 40px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(212, 175, 55, 0.05) 50%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 24px;
       margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
     }
-    .header h1 { font-size: 36px; color: #d4af37; margin-bottom: 10px; letter-spacing: 2px; }
-    .header p { color: #888; }
-    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px; }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(212, 175, 55, 0.03), transparent);
+      animation: shimmer 3s linear infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) rotate(45deg); }
+    }
+    
+    .header-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      color: #d4af37;
+      animation: glow 3s ease-in-out infinite;
+    }
+    
+    .header h1 { 
+      font-size: 42px; 
+      font-weight: 800;
+      background: linear-gradient(135deg, #d4af37 0%, #f0d060 50%, #d4af37 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px; 
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    
+    .header .subtitle { 
+      color: #a5b4fc; 
+      font-size: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    
+    .header .subtitle .dot {
+      width: 6px;
+      height: 6px;
+      background: #8b5cf6;
+      border-radius: 50%;
+    }
+    
+    .header .period-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 10px 20px;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 30px;
+      font-size: 13px;
+      color: #c4b5fd;
+    }
+    
+    .stats-grid { 
+      display: grid; 
+      grid-template-columns: repeat(5, 1fr); 
+      gap: 16px; 
+      margin-bottom: 30px; 
+    }
+    
     .stat-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 25px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
     }
-    .stat-card.gold { border-color: rgba(212, 175, 55, 0.5); }
-    .stat-card h3 { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .stat-card .value { font-size: 42px; font-weight: 700; }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-color, #8b5cf6), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .stat-card:hover::before { opacity: 1; }
+    
+    .stat-card.gold { 
+      border-color: rgba(212, 175, 55, 0.3);
+      --accent-color: #d4af37;
+    }
+    .stat-card.gold::before { opacity: 1; background: linear-gradient(90deg, #d4af37, #f0d060, transparent); }
+    
+    .stat-card .stat-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      color: var(--icon-color, #8b5cf6);
+    }
+    
+    .stat-card h3 { 
+      font-size: 11px; 
+      color: #64748b; 
+      text-transform: uppercase; 
+      letter-spacing: 1.5px; 
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    
+    .stat-card .value { 
+      font-size: 48px; 
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    
     .stat-card .value.gold { color: #d4af37; }
     .stat-card .value.green { color: #10b981; }
     .stat-card .value.blue { color: #3b82f6; }
     .stat-card .value.orange { color: #f59e0b; }
-    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+    .stat-card .value.purple { color: #8b5cf6; }
+    
+    .stat-card .trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    
+    .stat-card .trend.up { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .stat-card .trend.down { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    
+    .charts-row { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 20px; 
+      margin-bottom: 30px; 
+    }
+    
     .chart-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 25px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px;
+      backdrop-filter: blur(10px);
     }
-    .chart-card h3 { margin-bottom: 20px; color: #fff; font-size: 16px; }
+    
+    .chart-card .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .chart-card .card-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1));
+      border-radius: 12px;
+      color: #a78bfa;
+    }
+    
+    .chart-card h3 { 
+      color: #fff; 
+      font-size: 17px;
+      font-weight: 600;
+    }
+    
     .table-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
       overflow: hidden;
+      backdrop-filter: blur(10px);
     }
-    .table-card h3 { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    
+    .table-card .card-header { 
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 28px; 
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    .table-card .card-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(6, 182, 212, 0.1));
+      border-radius: 12px;
+      color: #22d3ee;
+    }
+    
+    .table-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+    }
+    
     table { width: 100%; border-collapse: collapse; }
-    th { background: rgba(212, 175, 55, 0.15); color: #d4af37; padding: 12px 15px; text-align: left; font-size: 11px; text-transform: uppercase; }
-    td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
-    .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #d4af37, #f0d060); border-radius: 4px; }
-    .footer { text-align: center; padding: 30px; color: #666; font-size: 12px; }
-    @media print { body { background: #fff; color: #333; } .stat-card { border-color: #ddd; } }
+    
+    th { 
+      background: rgba(139, 92, 246, 0.08); 
+      color: #a78bfa; 
+      padding: 16px 20px; 
+      text-align: left; 
+      font-size: 11px; 
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    
+    td { 
+      padding: 18px 20px; 
+      border-bottom: 1px solid rgba(255,255,255,0.04); 
+      font-size: 14px;
+    }
+    
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: rgba(139, 92, 246, 0.03); }
+    
+    .progress-bar { 
+      height: 10px; 
+      background: rgba(255,255,255,0.08); 
+      border-radius: 10px; 
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progress-fill { 
+      height: 100%; 
+      background: linear-gradient(90deg, #8b5cf6, #d4af37); 
+      border-radius: 10px;
+      position: relative;
+      transition: width 0.5s ease;
+    }
+    
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s linear infinite;
+    }
+    
+    .footer { 
+      text-align: center; 
+      padding: 40px;
+      margin-top: 20px;
+    }
+    
+    .print-btn { 
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      color: #fff; 
+      border: none; 
+      padding: 16px 36px; 
+      font-size: 15px; 
+      font-weight: 600; 
+      border-radius: 14px; 
+      cursor: pointer; 
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+    }
+    
+    .print-btn:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+    }
+    
+    .footer-text {
+      color: #64748b;
+      font-size: 13px;
+    }
+    
+    .footer-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+    
+    @media print { 
+      .print-btn { display: none !important; }
+      body { 
+        background: #fff !important; 
+        color: #1e293b !important;
+        padding: 20px !important;
+      }
+      body::before, body::after { display: none; }
+      .stat-card, .chart-card, .table-card { 
+        border-color: #e2e8f0 !important;
+        background: #fff !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+      }
+      .stat-card .value { color: #1e293b !important; }
+      .stat-card.gold .value, .value.gold { color: #b8942e !important; }
+      .header { 
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important; 
+        border-color: #d4af37 !important;
+      }
+      .header h1 { 
+        -webkit-text-fill-color: #b8942e !important;
+        color: #b8942e !important;
+      }
+      th { background: #f1f5f9 !important; color: #6366f1 !important; }
+      td { border-color: #e2e8f0 !important; }
+      @page { size: A4 landscape; margin: 10mm; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>📊 RELATÓRIO DASHBOARD</h1>
-      <p><strong>Granja Vitta</strong> • Sistema Icarus • ${periodLabel}</p>
-      <p style="margin-top: 10px; color: #666;">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+      <div class="header-icon">
+        ${svgIcons.chart}
+      </div>
+      <h1>Relatório Dashboard</h1>
+      <p class="subtitle">
+        <strong>Granja Vitta</strong>
+        <span class="dot"></span>
+        Sistema Icarus
+      </p>
+      <div class="period-badge">
+        ${svgIcons.clock}
+        <span>${periodLabel}</span>
+        <span style="opacity: 0.5;">•</span>
+        <span>Gerado em ${new Date().toLocaleString('pt-BR')}</span>
+      </div>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card gold">
+        <div class="stat-icon" style="--icon-color: #d4af37;">
+          ${svgIcons.target}
+        </div>
         <h3>Total de OS</h3>
         <div class="value gold">${total}</div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon" style="--icon-color: #f59e0b;">
+          ${svgIcons.alert}
+        </div>
         <h3>Pendentes</h3>
         <div class="value orange">${pending}</div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon" style="--icon-color: #3b82f6;">
+          ${svgIcons.activity}
+        </div>
         <h3>Em Andamento</h3>
         <div class="value blue">${inProgress}</div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon" style="--icon-color: #10b981;">
+          ${svgIcons.check}
+        </div>
         <h3>Concluídas</h3>
         <div class="value green">${completed}</div>
       </div>
       <div class="stat-card gold">
+        <div class="stat-icon" style="--icon-color: #8b5cf6;">
+          ${svgIcons.zap}
+        </div>
         <h3>Aproveitamento</h3>
-        <div class="value gold">${aproveitamento}%</div>
+        <div class="value purple">${aproveitamento}%</div>
       </div>
     </div>
 
     <div class="charts-row">
       <div class="chart-card">
-        <h3>📈 Desempenho por Executor</h3>
+        <div class="card-header">
+          <div class="card-icon">
+            ${svgIcons.trending}
+          </div>
+          <h3>Desempenho por Executor</h3>
+        </div>
         <canvas id="executorChart"></canvas>
       </div>
       <div class="chart-card">
-        <h3>📊 Ordens por Setor</h3>
+        <div class="card-header">
+          <div class="card-icon">
+            ${svgIcons.pie}
+          </div>
+          <h3>Ordens por Setor</h3>
+        </div>
         <canvas id="setorChart"></canvas>
       </div>
     </div>
 
     <div class="table-card">
-      <h3>👥 Produtividade da Equipe</h3>
+      <div class="card-header">
+        <div class="card-icon">
+          ${svgIcons.users}
+        </div>
+        <h3>Produtividade da Equipe</h3>
+      </div>
       <table>
         <thead>
           <tr>
@@ -7491,7 +7957,7 @@ function exportDashboardReport() {
                 <td><strong>${name}</strong></td>
                 <td>${data.total}</td>
                 <td>${data.completed}</td>
-                <td>${perc}%</td>
+                <td><span style="color: ${perc >= 70 ? '#10b981' : perc >= 40 ? '#f59e0b' : '#ef4444'}; font-weight: 600;">${perc}%</span></td>
                 <td>
                   <div class="progress-bar">
                     <div class="progress-fill" style="width: ${perc}%"></div>
@@ -7505,42 +7971,23 @@ function exportDashboardReport() {
     </div>
 
     <div class="footer">
-      <button onclick="window.print()" class="print-btn">🖨️ Imprimir / Salvar PDF</button>
-      <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
-      <p>Desenvolvido por Guilherme Braga • © 2025</p>
+      <button onclick="window.print()" class="print-btn">
+        ${svgIcons.printer}
+        Imprimir / Salvar PDF
+      </button>
+      <p class="footer-text">Relatório gerado automaticamente pelo Sistema Icarus</p>
+      <p class="footer-brand">
+        ${svgIcons.award}
+        Desenvolvido por Guilherme Braga • © 2025
+      </p>
     </div>
   </div>
-
-  <style>
-    .print-btn { 
-      background: linear-gradient(135deg, #d4af37, #b8942e); 
-      color: #000; 
-      border: none; 
-      padding: 15px 40px; 
-      font-size: 16px; 
-      font-weight: 600; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      margin-bottom: 20px;
-      transition: transform 0.2s;
-    }
-    .print-btn:hover { transform: scale(1.05); }
-    @media print { 
-      .print-btn { display: none; }
-      body { background: #fff !important; color: #333 !important; }
-      .stat-card, .chart-card, .table-card { border-color: #ddd !important; }
-      .stat-card .value { color: #333 !important; }
-      .stat-card.gold .value, .value.gold { color: #b8942e !important; }
-      .header { background: #f5f5f5 !important; border-color: #b8942e !important; }
-      .header h1 { color: #b8942e !important; }
-    }
-  </style>
 
   <script>
     const executorData = ${JSON.stringify(byExecutor)};
     const setorData = ${JSON.stringify(bySetor)};
 
-    // Gráfico de Executores
+    // Gráfico de Executores - Estilo futurista
     new Chart(document.getElementById('executorChart'), {
       type: 'bar',
       data: {
@@ -7548,38 +7995,80 @@ function exportDashboardReport() {
         datasets: [{
           label: 'Concluídas',
           data: Object.values(executorData).map(d => d.completed),
-          backgroundColor: 'rgba(16, 185, 129, 0.7)',
-          borderRadius: 6
+          backgroundColor: 'rgba(16, 185, 129, 0.8)',
+          borderColor: '#10b981',
+          borderWidth: 0,
+          borderRadius: 8,
+          borderSkipped: false
         }, {
           label: 'Total',
           data: Object.values(executorData).map(d => d.total),
-          backgroundColor: 'rgba(212, 175, 55, 0.7)',
-          borderRadius: 6
+          backgroundColor: 'rgba(139, 92, 246, 0.6)',
+          borderColor: '#8b5cf6',
+          borderWidth: 0,
+          borderRadius: 8,
+          borderSkipped: false
         }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { labels: { color: '#888' } } },
+        plugins: { 
+          legend: { 
+            labels: { 
+              color: '#94a3b8',
+              padding: 20,
+              font: { family: 'Inter', size: 12 }
+            } 
+          } 
+        },
         scales: {
-          x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          x: { 
+            ticks: { color: '#64748b', font: { family: 'Inter' } }, 
+            grid: { color: 'rgba(255,255,255,0.03)' } 
+          },
+          y: { 
+            ticks: { color: '#64748b', font: { family: 'Inter' } }, 
+            grid: { color: 'rgba(255,255,255,0.03)' } 
+          }
         }
       }
     });
 
-    // Gráfico de Setores
+    // Gráfico de Setores - Estilo futurista
     new Chart(document.getElementById('setorChart'), {
       type: 'doughnut',
       data: {
         labels: Object.keys(setorData),
         datasets: [{
           data: Object.values(setorData),
-          backgroundColor: ['#d4af37', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4']
+          backgroundColor: [
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(6, 182, 212, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(212, 175, 55, 0.8)',
+            'rgba(239, 68, 68, 0.8)',
+            'rgba(236, 72, 153, 0.8)'
+          ],
+          borderWidth: 0,
+          hoverOffset: 8
         }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { position: 'bottom', labels: { color: '#888' } } }
+        cutout: '65%',
+        plugins: { 
+          legend: { 
+            position: 'bottom', 
+            labels: { 
+              color: '#94a3b8',
+              padding: 16,
+              font: { family: 'Inter', size: 12 },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            } 
+          } 
+        }
       }
     });
   </script>
