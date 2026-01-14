@@ -8797,11 +8797,13 @@ async function loadLavanderia() {
   try {
     console.log('[Lavanderia V2] Carregando...');
     
-    // Definir data de hoje
-    var now = new Date();
-    var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    // Definir data de hoje APENAS se o campo estiver vazio
     var dateInput = document.getElementById('lav2-entry-date');
-    if (dateInput) dateInput.value = today;
+    if (dateInput && !dateInput.value) {
+      var now = new Date();
+      var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      dateInput.value = today;
+    }
     
     // Só selecionar marajoara na primeira vez (se não tiver cliente selecionado)
     if (!lav2State.initialized) {
