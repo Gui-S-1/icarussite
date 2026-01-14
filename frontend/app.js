@@ -8868,7 +8868,7 @@ function renderLav2FormFields(client) {
     var markingNote = field.isMarking ? '<small style="color:#a855f7;font-size:9px;display:block;">+R$ ' + client.markingPrice.toFixed(2) + '</small>' : '';
     html += '<div class="lav2-field">' +
       '<label>' + field.label + markingNote + '</label>' +
-      '<input type="number" id="lav2-field-' + field.key + '" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()">' +
+      '<input type="number" id="lav2-field-' + field.key + '" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()" onfocus="if(this.value===\'0\')this.value=\'\'" onblur="if(this.value===\'\')this.value=\'0\'">' +
     '</div>';
   });
   container.innerHTML = html;
@@ -8997,7 +8997,7 @@ function updateLav2ClientStats() {
         totalPieces += value;
       }
     });
-    totalValue += parseFloat(entry.total_value) || 0;
+    totalValue += parseFloat(entry.valor_total) || 0;
   });
   
   // Atualizar stats cards
@@ -9071,7 +9071,7 @@ function renderLav2History() {
         '<div style="font-size: 12px; color: rgba(255,255,255,0.5);">' + totalPieces + ' peças</div>' +
       '</div>' +
       '<div style="display: flex; align-items: center; gap: 12px;">' +
-        '<span style="font-size: 15px; font-weight: 600; color: #ec4899;">R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</span>' +
+        '<span style="font-size: 15px; font-weight: 600; color: #ec4899;">R$ ' + (parseFloat(entry.valor_total) || 0).toFixed(2) + '</span>' +
         '<button onclick="deleteLav2Entry(\'' + entry.id + '\')" style="padding: 8px; background: rgba(239,68,68,0.1); border: none; border-radius: 8px; color: #ef4444; cursor: pointer;">' +
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
         '</button>' +
@@ -9207,7 +9207,7 @@ async function exportLav2PDF() {
           totalPieces += value;
         }
       });
-      totalValue += parseFloat(entry.total_value) || 0;
+      totalValue += parseFloat(entry.valor_total) || 0;
     });
     
     var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
@@ -9251,7 +9251,7 @@ async function exportLav2PDF() {
       client.fields.forEach(function(field) {
         printContent += '<td>' + (entry[field.key] || 0) + '</td>';
       });
-      printContent += '<td>R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</td></tr>';
+      printContent += '<td>R$ ' + (parseFloat(entry.valor_total) || 0).toFixed(2) + '</td></tr>';
     });
     
     printContent += '</tbody></table>' +
