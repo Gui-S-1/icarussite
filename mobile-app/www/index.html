@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Icarus System</title>
   
   <!-- Script crítico - detecta tenant ANTES de renderizar para evitar flash -->
@@ -28,6 +28,240 @@
       visibility: visible !important;
       opacity: 1 !important;
       height: auto !important;
+    }
+    
+    /* ========================================
+       LAVANDERIA MOBILE - CRITICAL FIXES
+       Prevent horizontal scroll / stretch
+       ======================================== */
+    
+    /* Global mobile overflow prevention */
+    html, body {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+    
+    *, *:before, *:after { 
+      box-sizing: border-box; 
+    }
+    
+    /* Main containers must not exceed viewport */
+    .content, .main-layout, #lavanderia-view, .lav2-container, .lav2-main, .lav2-sidebar {
+      max-width: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
+    
+    /* All lavanderia elements - prevent overflow */
+    .lav2-container,
+    .lav2-container *,
+    #lavanderia-view,
+    #lavanderia-view * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
+    /* Lavanderia mode content - no extra margins */
+    html.lavanderia-mode .content {
+      margin-left: 0 !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      overflow-x: hidden !important;
+    }
+    
+    /* ========================================
+       LAVANDERIA MOBILE MEDIA QUERIES
+       ======================================== */
+    @media (max-width: 768px) {
+      /* Lavanderia container - single column */
+      html.lavanderia-mode .lav2-container {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }
+      
+      /* Sidebar becomes horizontal grid of clients */
+      html.lavanderia-mode .lav2-sidebar {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        order: 1 !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      
+      /* Main content */
+      html.lavanderia-mode .lav2-main {
+        order: 2 !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 12px !important;
+      }
+      
+      /* Client cards - compact */
+      html.lavanderia-mode .lav2-client-card {
+        padding: 10px !important;
+        border-radius: 10px !important;
+        min-width: 0 !important;
+        width: 100% !important;
+      }
+      
+      /* Header - stack on mobile */
+      html.lavanderia-mode .lav2-header {
+        flex-direction: column !important;
+        gap: 12px !important;
+        padding: 12px !important;
+        border-radius: 12px !important;
+        width: 100% !important;
+      }
+      
+      html.lavanderia-mode .lav2-header-content,
+      html.lavanderia-mode .lav2-header-actions {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+      }
+      
+      html.lavanderia-mode .lav2-period-badge,
+      html.lavanderia-mode .lav2-btn-export {
+        flex: 1 !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+      }
+      
+      /* Dashboard geral - 2 columns on mobile */
+      html.lavanderia-mode .lav2-dashboard-geral {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        width: 100% !important;
+      }
+      
+      html.lavanderia-mode .lav2-dashboard-card {
+        padding: 10px !important;
+        gap: 8px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      
+      /* Stats row - 2 columns */
+      html.lavanderia-mode .lav2-stats-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        width: 100% !important;
+      }
+      
+      html.lavanderia-mode .lav2-stat-card {
+        padding: 12px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      
+      /* Entry card */
+      html.lavanderia-mode .lav2-entry-card {
+        width: 100% !important;
+        border-radius: 12px !important;
+      }
+      
+      html.lavanderia-mode .lav2-entry-header {
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 10px !important;
+      }
+      
+      html.lavanderia-mode .lav2-entry-body {
+        padding: 10px !important;
+        width: 100% !important;
+      }
+      
+      /* Form grid - 2 columns on mobile */
+      html.lavanderia-mode .lav2-form-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        width: 100% !important;
+      }
+      
+      html.lavanderia-mode .lav2-form-field {
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      
+      html.lavanderia-mode .lav2-form-field input {
+        width: 100% !important;
+        min-width: 0 !important;
+        font-size: 16px !important;
+        padding: 10px !important;
+      }
+      
+      /* Total box */
+      html.lavanderia-mode .lav2-total-box {
+        flex-direction: row !important;
+        gap: 10px !important;
+        padding: 10px !important;
+        width: 100% !important;
+      }
+      
+      /* Entries/History cards */
+      html.lavanderia-mode .lav2-entries-card,
+      html.lavanderia-mode .lav2-history-card {
+        width: 100% !important;
+        border-radius: 12px !important;
+      }
+      
+      html.lavanderia-mode .lav2-entries-list {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+      
+      /* Extra bottom padding for nav bar */
+      html.lavanderia-mode .lav2-main {
+        padding-bottom: 100px !important;
+      }
+    }
+    
+    /* Very small screens */
+    @media (max-width: 400px) {
+      html.lavanderia-mode .lav2-sidebar {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+      }
+      
+      html.lavanderia-mode .lav2-client-card {
+        padding: 8px !important;
+      }
+      
+      html.lavanderia-mode .lav2-client-name {
+        font-size: 11px !important;
+      }
+      
+      html.lavanderia-mode .lav2-client-info {
+        font-size: 9px !important;
+      }
+      
+      html.lavanderia-mode .lav2-stat-value {
+        font-size: 16px !important;
+      }
+      
+      html.lavanderia-mode .lav2-stat-label {
+        font-size: 9px !important;
+      }
     }
   </style>
   
@@ -2131,23 +2365,33 @@
     }
     @media (max-width: 500px) {
       .lav2-container {
-        padding: 0 8px;
-        padding-bottom: 85px;
+        padding: 0 4px;
+        padding-bottom: 100px;
         gap: 8px;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
       }
-      /* Clientes em 4 colunas compactas */
+      /* Clientes em 2 colunas - mais legível no mobile */
       .lav2-sidebar {
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 4px;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+        width: 100% !important;
+        max-width: 100% !important;
       }
       .lav2-client-card {
-        padding: 6px 4px;
-        border-radius: 6px;
+        padding: 8px 6px;
+        border-radius: 8px;
         text-align: center;
+        width: 100% !important;
+        min-width: 0 !important;
       }
       .lav2-client-name {
-        font-size: 9px;
-        margin-bottom: 1px;
+        font-size: 10px;
+        margin-bottom: 2px;
         justify-content: center;
       }
       .lav2-client-name .client-dot {
@@ -2162,12 +2406,15 @@
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 6px !important;
         margin-bottom: 8px !important;
+        width: 100% !important;
       }
       .lav2-dashboard-card {
         padding: 8px 6px !important;
         gap: 6px !important;
         flex-direction: row !important;
         text-align: left;
+        width: 100% !important;
+        min-width: 0 !important;
       }
       .lav2-geral-icon,
       .lav2-dash-icon {
@@ -2230,30 +2477,34 @@
         font-size: 10px !important;
         flex: 1;
       }
-      /* Stats row mobile - 3 colunas */
+      /* Stats row mobile - 2 colunas */
       .lav2-stats-row {
-        grid-template-columns: repeat(3, 1fr) !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
         gap: 6px !important;
+        width: 100% !important;
       }
       .lav2-stat-card {
-        padding: 8px 4px !important;
+        padding: 10px 8px !important;
         border-radius: 8px !important;
+        width: 100% !important;
+        min-width: 0 !important;
       }
       .lav2-stat-icon {
-        width: 20px !important;
-        height: 20px !important;
-        margin-bottom: 4px !important;
-        border-radius: 5px !important;
+        width: 24px !important;
+        height: 24px !important;
+        margin-bottom: 6px !important;
+        border-radius: 6px !important;
       }
       .lav2-stat-icon svg {
-        width: 10px !important;
-        height: 10px !important;
+        width: 12px !important;
+        height: 12px !important;
       }
       .lav2-stat-value {
-        font-size: 14px !important;
+        font-size: 16px !important;
       }
       .lav2-stat-label {
-        font-size: 7px !important;
+        font-size: 9px !important;
         white-space: nowrap;
       }
       /* Entry card mobile */
@@ -2289,9 +2540,11 @@
       }
       .lav2-form-field {
         gap: 3px !important;
+        width: 100% !important;
+        min-width: 0 !important;
       }
       .lav2-form-field label {
-        font-size: 8px !important;
+        font-size: 9px !important;
         text-transform: uppercase;
         letter-spacing: 0.2px;
         white-space: nowrap;
@@ -2305,56 +2558,73 @@
         text-align: center;
         -webkit-appearance: none;
         -moz-appearance: textfield;
+        width: 100% !important;
+        min-width: 0 !important;
       }
       /* Total box mobile */
       .lav2-total-box {
-        padding: 8px 10px !important;
+        padding: 10px !important;
         flex-direction: row !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 10px !important;
         border-radius: 8px !important;
         margin-bottom: 10px !important;
+        width: 100% !important;
       }
       .lav2-total-info {
         flex: 1;
+        min-width: 0;
       }
       .lav2-total-pieces {
-        font-size: 11px !important;
+        font-size: 12px !important;
       }
       .lav2-total-value {
-        font-size: 16px !important;
+        font-size: 18px !important;
       }
       .lav2-save-btn {
-        padding: 8px 12px !important;
-        font-size: 11px !important;
-        border-radius: 6px !important;
-        gap: 4px !important;
+        padding: 10px 14px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+        gap: 6px !important;
       }
       .lav2-save-btn svg {
-        width: 14px !important;
-        height: 14px !important;
+        width: 16px !important;
+        height: 16px !important;
       }
       /* Entries list mobile */
       .lav2-entries-card,
       .lav2-history-card {
         border-radius: 10px !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
       }
       .lav2-entries-header,
       .lav2-history-header {
-        padding: 8px 10px !important;
+        padding: 10px !important;
       }
       .lav2-entries-header h4,
       .lav2-history-header h3 {
-        font-size: 11px !important;
+        font-size: 12px !important;
       }
       .lav2-entries-list {
-        max-height: 180px !important;
-        padding: 6px !important;
+        max-height: 200px !important;
+        padding: 8px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
       }
       .lav2-entry-item {
-        padding: 6px 8px !important;
-        font-size: 10px !important;
-        border-radius: 6px !important;
+        padding: 8px 10px !important;
+        font-size: 11px !important;
+        border-radius: 8px !important;
+        width: 100% !important;
+      }
+      
+      /* Ensure all lav2 elements don't overflow */
+      .lav2-main,
+      .lav2-main > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
       }
     }
 
