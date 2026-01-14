@@ -8826,16 +8826,23 @@ function selectLav2Client(clientId) {
   var client = LAV2_CLIENTS[clientId];
   if (!client) return;
   
-  // Atualizar sidebar visual
+  // Atualizar sidebar visual (antigo)
   document.querySelectorAll('.lav2-client-card').forEach(function(card) {
     card.classList.remove('active');
   });
   var activeCard = document.getElementById('lav2-client-' + clientId);
   if (activeCard) activeCard.classList.add('active');
   
+  // Atualizar tabs visual (novo design)
+  document.querySelectorAll('.lav2-tab').forEach(function(tab) {
+    tab.classList.remove('active');
+  });
+  var activeTab = document.getElementById('lav2-tab-' + clientId);
+  if (activeTab) activeTab.classList.add('active');
+  
   // Atualizar título do form
   var titleEl = document.getElementById('lav2-entry-title');
-  if (titleEl) titleEl.textContent = 'Lançamento - ' + client.name;
+  if (titleEl) titleEl.textContent = 'Novo Lançamento';
   
   // Renderizar campos dinâmicos
   renderLav2FormFields(client);
@@ -8853,10 +8860,10 @@ function renderLav2FormFields(client) {
   
   var html = '';
   client.fields.forEach(function(field) {
-    var markingNote = field.isMarking ? '<small style="color:#a855f7;font-size:10px;">R$ ' + client.markingPrice.toFixed(2) + ' cada</small>' : '';
-    html += '<div class="lav2-form-field">' +
+    var markingNote = field.isMarking ? '<small style="color:#a855f7;font-size:9px;display:block;">+R$ ' + client.markingPrice.toFixed(2) + '</small>' : '';
+    html += '<div class="lav2-field">' +
       '<label>' + field.label + markingNote + '</label>' +
-      '<input type="number" id="lav2-field-' + field.key + '" value="0" min="0" oninput="updateLav2Total()">' +
+      '<input type="number" id="lav2-field-' + field.key + '" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()">' +
     '</div>';
   });
   container.innerHTML = html;
@@ -9029,16 +9036,14 @@ function renderLav2History() {
   var entries = lav2State.entries || [];
   
   if (entries.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5">' +
-      '<div class="lav2-empty">' +
-        '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+    tbody.innerHTML = '<div style="padding: 40px 20px; text-align: center; color: rgba(255,255,255,0.4);">' +
+        '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px; opacity: 0.5;">' +
           '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
           '<polyline points="14 2 14 8 20 8"/>' +
         '</svg>' +
-        '<h4>Nenhum lançamento</h4>' +
-        '<p>Adicione o primeiro lançamento do período</p>' +
-      '</div>' +
-    '</td></tr>';
+        '<div style="font-size: 14px; margin-bottom: 4px;">Nenhum lançamento</div>' +
+        '<div style="font-size: 12px;">Adicione o primeiro lançamento do período</div>' +
+      '</div>';
     return;
   }
   
@@ -9046,27 +9051,27 @@ function renderLav2History() {
   entries.forEach(function(entry) {
     var date = new Date(entry.entry_date);
     var dateStr = String(date.getDate()).padStart(2, '0') + '/' + 
-                  String(date.getMonth() + 1).padStart(2, '0') + '/' + 
-                  date.getFullYear();
+                  String(date.getMonth() + 1).padStart(2, '0');
     
     // Construir detalhes baseado nos campos
-    var details = [];
     var totalPieces = 0;
     client.fields.forEach(function(field) {
       var value = parseInt(entry[field.key]) || 0;
-      if (value > 0) {
-        details.push(field.label + ': ' + value);
-        if (!field.isMarking) totalPieces += value;
-      }
+      if (!field.isMarking) totalPieces += value;
     });
     
-    html += '<tr>' +
-      '<td>' + dateStr + '</td>' +
-      '<td style="font-size: 12px; color: rgba(255,255,255,0.6);">' + details.join(' | ') + '</td>' +
-      '<td>' + totalPieces + '</td>' +
-      '<td class="value-cell">R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</td>' +
-      '<td><button class="delete-btn" onclick="deleteLav2Entry(\'' + entry.id + '\')">Excluir</button></td>' +
-    '</tr>';
+    html += '<div class="lav2-history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.04);">' +
+      '<div>' +
+        '<div style="font-size: 14px; font-weight: 600; color: #fff;">' + dateStr + '</div>' +
+        '<div style="font-size: 12px; color: rgba(255,255,255,0.5);">' + totalPieces + ' peças</div>' +
+      '</div>' +
+      '<div style="display: flex; align-items: center; gap: 12px;">' +
+        '<span style="font-size: 15px; font-weight: 600; color: #ec4899;">R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</span>' +
+        '<button onclick="deleteLav2Entry(\'' + entry.id + '\')" style="padding: 8px; background: rgba(239,68,68,0.1); border: none; border-radius: 8px; color: #ef4444; cursor: pointer;">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
   });
   
   tbody.innerHTML = html;

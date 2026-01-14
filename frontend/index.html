@@ -2319,7 +2319,440 @@
     }
     .preventivas-card-header h3 svg { color: #06b6d4; }
 
-    /* ========== LAVANDERIA V2 - GLASSMORPHISM PINK NEON DARK ========== */
+    /* ========== LAVANDERIA V2 - REDESIGN CLEAN ========== */
+    
+    /* Container Principal */
+    .lav2-container-new {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 100px;
+    }
+    
+    /* Header Superior - Simples */
+    .lav2-top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+    
+    .lav2-top-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+    
+    .lav2-top-title svg {
+      color: #ec4899;
+    }
+    
+    .lav2-export-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: rgba(236, 72, 153, 0.15);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 10px;
+      color: #ec4899;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .lav2-export-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* Tabs de Cliente - GRANDES e fáceis de tocar */
+    .lav2-client-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: rgba(20, 20, 25, 0.8);
+      padding: 6px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    
+    .lav2-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 8px;
+      background: transparent;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 70px;
+    }
+    
+    .lav2-tab-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--tab-color);
+      box-shadow: 0 0 12px var(--tab-color);
+    }
+    
+    .lav2-tab-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: center;
+    }
+    
+    .lav2-tab.active {
+      background: rgba(236, 72, 153, 0.1);
+      border-color: var(--tab-color);
+    }
+    
+    .lav2-tab.active .lav2-tab-name {
+      color: #fff;
+    }
+    
+    .lav2-tab:active {
+      transform: scale(0.95);
+    }
+    
+    /* Card Info do Cliente */
+    .lav2-client-info-card {
+      background: linear-gradient(145deg, rgba(25, 25, 30, 0.9), rgba(15, 15, 18, 0.95));
+      border: 1px solid rgba(236, 72, 153, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .lav2-client-main {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    
+    .lav2-client-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .lav2-client-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+    }
+    
+    .lav2-client-stat-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .lav2-client-divider {
+      width: 1px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .lav2-period-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(236, 72, 153, 0.08);
+      border-radius: 10px;
+      color: #ec4899;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    /* Card de Formulário */
+    .lav2-form-card {
+      background: linear-gradient(145deg, rgba(25, 25, 30, 0.9), rgba(15, 15, 18, 0.95));
+      border: 1px solid rgba(236, 72, 153, 0.15);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .lav2-form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(236, 72, 153, 0.06);
+      border-bottom: 1px solid rgba(236, 72, 153, 0.1);
+    }
+    
+    .lav2-form-header span {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+    }
+    
+    .lav2-date-picker {
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .lav2-date-picker::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
+    
+    .lav2-fields-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 20px;
+    }
+    
+    .lav2-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .lav2-field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .lav2-field input {
+      width: 100%;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      transition: all 0.2s;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+    }
+    
+    .lav2-field input:focus {
+      outline: none;
+      border-color: #ec4899;
+      background: rgba(236, 72, 153, 0.05);
+    }
+    
+    .lav2-field input::-webkit-inner-spin-button,
+    .lav2-field input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    /* Total Preview */
+    .lav2-total-preview {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(168, 85, 247, 0.08));
+      border-top: 1px solid rgba(236, 72, 153, 0.15);
+    }
+    
+    .lav2-total-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .lav2-total-count {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .lav2-total-price {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ec4899;
+    }
+    
+    .lav2-save-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #ec4899, #a855f7);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.3);
+    }
+    
+    .lav2-save-button:active {
+      transform: scale(0.95);
+    }
+    
+    /* Histórico */
+    .lav2-history-section {
+      background: rgba(20, 20, 25, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .lav2-history-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .lav2-history-title svg {
+      color: #ec4899;
+    }
+    
+    .lav2-history-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .lav2-history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.2s;
+    }
+    
+    .lav2-history-item:last-child {
+      border-bottom: none;
+    }
+    
+    .lav2-history-item:active {
+      background: rgba(236, 72, 153, 0.05);
+    }
+    
+    .lav2-history-date {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+    
+    .lav2-history-detail {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 2px;
+    }
+    
+    .lav2-history-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ec4899;
+    }
+    
+    .lav2-history-delete {
+      padding: 8px;
+      background: rgba(239, 68, 68, 0.1);
+      border: none;
+      border-radius: 8px;
+      color: #ef4444;
+      cursor: pointer;
+    }
+    
+    /* Resumo Desktop - escondido no mobile */
+    .lav2-summary-desktop {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      padding: 20px;
+      background: rgba(20, 20, 25, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+    }
+    
+    .lav2-summary-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .lav2-summary-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #10b981;
+    }
+    
+    .lav2-summary-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+    }
+    
+    /* Desktop - mostrar resumo */
+    @media (min-width: 768px) {
+      .lav2-container-new {
+        max-width: 800px;
+      }
+      
+      .lav2-summary-desktop {
+        display: grid;
+      }
+      
+      .lav2-fields-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    
+    /* Mobile específico */
+    @media (max-width: 480px) {
+      .lav2-client-tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .lav2-tab {
+        min-height: 60px;
+        padding: 12px 6px;
+      }
+      
+      .lav2-client-stat-value {
+        font-size: 20px;
+      }
+      
+      .lav2-field input {
+        font-size: 20px;
+        padding: 14px;
+      }
+    }
+    
+    /* ========== ESTILOS ANTIGOS (mantidos para compatibilidade) ========== */
     .lav2-container {
       display: grid;
       grid-template-columns: 280px 1fr;
@@ -8955,259 +9388,145 @@
         </div>
         <!-- ========== FIM RELATÓRIOS ========== -->
 
-        <!-- ========== LAVANDERIA V2 - Sistema Multi-Cliente ========== -->
+        <!-- ========== LAVANDERIA V2 - Sistema Multi-Cliente REDESIGN ========== -->
         <div id="lavanderia-view" class="view">
-          <div class="lav2-container">
-            <!-- Sidebar com Clientes -->
-            <div class="lav2-sidebar">
-              <div class="lav2-client-card active" style="--client-color: #f472b6;" onclick="selectLav2Client('marajoara')" id="lav2-client-marajoara">
-                <div class="lav2-client-name">
-                  <span class="client-dot"></span>
-                  Marajoara
+          <div class="lav2-container-new">
+            
+            <!-- HEADER SIMPLES -->
+            <div class="lav2-top-header">
+              <div class="lav2-top-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <circle cx="12" cy="12" r="4"/>
+                </svg>
+                <span>Lavanderia</span>
+              </div>
+              <button class="lav2-export-btn" onclick="exportLav2PDF()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                PDF
+              </button>
+            </div>
+
+            <!-- SELETOR DE CLIENTE - TABS GRANDES -->
+            <div class="lav2-client-tabs">
+              <button class="lav2-tab active" onclick="selectLav2Client('marajoara')" id="lav2-tab-marajoara" style="--tab-color: #f472b6;">
+                <span class="lav2-tab-dot"></span>
+                <span class="lav2-tab-name">Marajoara</span>
+              </button>
+              <button class="lav2-tab" onclick="selectLav2Client('loyola')" id="lav2-tab-loyola" style="--tab-color: #a855f7;">
+                <span class="lav2-tab-dot"></span>
+                <span class="lav2-tab-name">Loyola</span>
+              </button>
+              <button class="lav2-tab" onclick="selectLav2Client('suplemento')" id="lav2-tab-suplemento" style="--tab-color: #3b82f6;">
+                <span class="lav2-tab-dot"></span>
+                <span class="lav2-tab-name">Suplemento</span>
+              </button>
+              <button class="lav2-tab" onclick="selectLav2Client('vitta')" id="lav2-tab-vitta" style="--tab-color: #f59e0b;">
+                <span class="lav2-tab-dot"></span>
+                <span class="lav2-tab-name">Vitta</span>
+              </button>
+            </div>
+
+            <!-- CARD DO CLIENTE - INFO + PERÍODO -->
+            <div class="lav2-client-info-card">
+              <div class="lav2-client-main">
+                <div class="lav2-client-stat">
+                  <span class="lav2-client-stat-value" id="lav2-stat-valor">R$ 0</span>
+                  <span class="lav2-client-stat-label">Faturamento</span>
                 </div>
-                <div class="lav2-client-info">
-                  <span class="lav2-client-price">R$ 3,50/peça</span>
-                  <span>Ciclo: 16 dias (5-20)</span>
+                <div class="lav2-client-divider"></div>
+                <div class="lav2-client-stat">
+                  <span class="lav2-client-stat-value" id="lav2-stat-pecas">0</span>
+                  <span class="lav2-client-stat-label">Peças</span>
+                </div>
+                <div class="lav2-client-divider"></div>
+                <div class="lav2-client-stat">
+                  <span class="lav2-client-stat-value" id="lav2-stat-dias">6</span>
+                  <span class="lav2-client-stat-label">Dias Rest.</span>
                 </div>
               </div>
-              <div class="lav2-client-card" style="--client-color: #a855f7;" onclick="selectLav2Client('loyola')" id="lav2-client-loyola">
-                <div class="lav2-client-name">
-                  <span class="client-dot"></span>
-                  Loyola
-                </div>
-                <div class="lav2-client-info">
-                  <span class="lav2-client-price">R$ 3,00/peça + R$ 2,00/marcação</span>
-                  <span>Ciclo: Mensal</span>
-                </div>
-              </div>
-              <div class="lav2-client-card" style="--client-color: #3b82f6;" onclick="selectLav2Client('suplemento')" id="lav2-client-suplemento">
-                <div class="lav2-client-name">
-                  <span class="client-dot"></span>
-                  Suplemento
-                </div>
-                <div class="lav2-client-info">
-                  <span class="lav2-client-price">R$ 3,00/peça</span>
-                  <span>Ciclo: Mensal</span>
-                </div>
-              </div>
-              <div class="lav2-client-card" style="--client-color: #f59e0b;" onclick="selectLav2Client('vitta')" id="lav2-client-vitta">
-                <div class="lav2-client-name">
-                  <span class="client-dot"></span>
-                  Vitta
-                </div>
-                <div class="lav2-client-info">
-                  <span class="lav2-client-price">R$ 4,50/peça + R$ 2,00/marcação</span>
-                  <span>Ciclo: Mensal</span>
-                </div>
+              <div class="lav2-period-info" id="lav2-period-display">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span id="lav2-period-text">05/01 - 20/01</span>
               </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="lav2-main">
-              <!-- Mini Dashboard Geral - Todos os Clientes -->
-              <div class="lav2-dashboard-geral">
-                <div class="lav2-dashboard-card">
-                  <div class="lav2-dash-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  </div>
-                  <div class="lav2-dash-info">
-                    <span class="lav2-dash-value" id="lav2-total-lucro">R$ 0,00</span>
-                    <span class="lav2-dash-label">Faturamento Total</span>
-                  </div>
+            <!-- FORMULÁRIO DE LANÇAMENTO -->
+            <div class="lav2-form-card">
+              <div class="lav2-form-header">
+                <span id="lav2-entry-title">Novo Lançamento</span>
+                <input type="date" class="lav2-date-picker" id="lav2-entry-date">
+              </div>
+              
+              <div id="lav2-form-fields" class="lav2-fields-grid">
+                <div class="lav2-field">
+                  <label>Camisa Masc.</label>
+                  <input type="number" id="lav2-field-camisa_masc" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()">
                 </div>
-                <div class="lav2-dashboard-card">
-                  <div class="lav2-dash-icon" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                    </svg>
-                  </div>
-                  <div class="lav2-dash-info">
-                    <span class="lav2-dash-value" id="lav2-total-pecas-geral">0</span>
-                    <span class="lav2-dash-label">Peças Lavadas</span>
-                  </div>
+                <div class="lav2-field">
+                  <label>Calça Masc.</label>
+                  <input type="number" id="lav2-field-calca_masc" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()">
                 </div>
-                <div class="lav2-dashboard-card">
-                  <div class="lav2-dash-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                  </div>
-                  <div class="lav2-dash-info">
-                    <span class="lav2-dash-value">4</span>
-                    <span class="lav2-dash-label">Clientes Ativos</span>
-                  </div>
+                <div class="lav2-field">
+                  <label>Camisa Fem.</label>
+                  <input type="number" id="lav2-field-camisa_fem" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()">
+                </div>
+                <div class="lav2-field">
+                  <label>Calça Fem.</label>
+                  <input type="number" id="lav2-field-calca_fem" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()">
                 </div>
               </div>
 
-              <!-- Header -->
-              <div class="lav2-header">
-                <div class="lav2-header-left">
-                  <div class="lav2-icon-badge">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="2" y="4" width="20" height="16" rx="2"/>
-                      <circle cx="12" cy="12" r="4"/>
-                      <path d="M12 8v8M8 12h8"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 class="lav2-header-title">Lavanderia</h2>
-                    <p class="lav2-header-sub">Controle de Roupas & Faturamento</p>
-                  </div>
+              <div class="lav2-total-preview">
+                <div class="lav2-total-left">
+                  <span class="lav2-total-count"><span id="lav2-preview-pieces">0</span> peças</span>
+                  <span class="lav2-total-price" id="lav2-preview-valor">R$ 0,00</span>
                 </div>
-                <div class="lav2-header-actions">
-                  <div class="lav2-period-badge" id="lav2-period-display">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    <span id="lav2-period-text">Período atual</span>
-                  </div>
-                  <button class="lav2-btn-export" onclick="exportLav2PDF()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/>
-                      <line x1="16" y1="17" x2="8" y2="17"/>
-                      <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                    Exportar PDF
-                  </button>
-                </div>
+                <button class="lav2-save-button" onclick="saveLav2Entry()">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Salvar
+                </button>
               </div>
+              <div id="lav2-preview-marcacoes" style="display: none;"></div>
+            </div>
 
-              <!-- Stats Row -->
-              <div class="lav2-stats-row">
-                <div class="lav2-stat-card">
-                  <div class="lav2-stat-glow"></div>
-                  <div class="lav2-stat-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                      <line x1="7" y1="7" x2="7.01" y2="7"/>
-                    </svg>
-                  </div>
-                  <div class="lav2-stat-value" id="lav2-stat-pecas">0</div>
-                  <div class="lav2-stat-label">Total Peças</div>
-                </div>
-                <div class="lav2-stat-card purple">
-                  <div class="lav2-stat-glow"></div>
-                  <div class="lav2-stat-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 20V10M18 20V4M6 20v-4"/>
-                    </svg>
-                  </div>
-                  <div class="lav2-stat-value" id="lav2-stat-marcacoes">0</div>
-                  <div class="lav2-stat-label">Marcações</div>
-                </div>
-                <div class="lav2-stat-card blue">
-                  <div class="lav2-stat-glow"></div>
-                  <div class="lav2-stat-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                  </div>
-                  <div class="lav2-stat-value" id="lav2-stat-dias">0</div>
-                  <div class="lav2-stat-label">Dias Restantes</div>
-                </div>
-                <div class="lav2-stat-card gold">
-                  <div class="lav2-stat-glow"></div>
-                  <div class="lav2-stat-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  </div>
-                  <div class="lav2-stat-value" id="lav2-stat-valor">R$ 0</div>
-                  <div class="lav2-stat-label">Valor Cliente</div>
-                </div>
+            <!-- HISTÓRICO RECENTE -->
+            <div class="lav2-history-section">
+              <div class="lav2-history-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Histórico do Período</span>
               </div>
-
-              <!-- Entry Form - Dynamic based on client -->
-              <div class="lav2-entry-card">
-                <div class="lav2-entry-header">
-                  <h3>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    <span id="lav2-entry-title">Lançamento - Marajoara</span>
-                  </h3>
-                  <input type="date" class="lav2-date-input" id="lav2-entry-date">
-                </div>
-                <div class="lav2-entry-body">
-                  <!-- Form fields will be dynamically rendered based on client -->
-                  <div id="lav2-form-fields" class="lav2-form-grid">
-                    <!-- Marajoara: camisa_masc, calca_masc, camisa_fem, calca_fem -->
-                    <div class="lav2-form-field">
-                      <label>Camisa Masc.</label>
-                      <input type="number" id="lav2-field-camisa_masc" value="0" min="0" oninput="updateLav2Total()">
-                    </div>
-                    <div class="lav2-form-field">
-                      <label>Calça Masc.</label>
-                      <input type="number" id="lav2-field-calca_masc" value="0" min="0" oninput="updateLav2Total()">
-                    </div>
-                    <div class="lav2-form-field">
-                      <label>Camisa Fem.</label>
-                      <input type="number" id="lav2-field-camisa_fem" value="0" min="0" oninput="updateLav2Total()">
-                    </div>
-                    <div class="lav2-form-field">
-                      <label>Calça Fem.</label>
-                      <input type="number" id="lav2-field-calca_fem" value="0" min="0" oninput="updateLav2Total()">
-                    </div>
-                  </div>
-
-                  <!-- Total Preview -->
-                  <div class="lav2-total-box">
-                    <div class="lav2-total-info">
-                      <div class="lav2-total-pieces">Total: <span id="lav2-preview-pieces">0</span> peças</div>
-                      <div id="lav2-preview-marcacoes" style="display: none; font-size: 13px; color: rgba(255,255,255,0.5);">+ <span>0</span> marcações</div>
-                    </div>
-                    <div class="lav2-total-value" id="lav2-preview-valor">R$ 0,00</div>
-                  </div>
-
-                  <button class="lav2-save-btn" onclick="saveLav2Entry()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                      <polyline points="17 21 17 13 7 13 7 21"/>
-                      <polyline points="7 3 7 8 15 8"/>
-                    </svg>
-                    Salvar Lançamento
-                  </button>
-                </div>
-              </div>
-
-              <!-- History -->
-              <div class="lav2-history-card">
-                <div class="lav2-history-header">
-                  <h3>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/>
-                      <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                    Histórico do Período
-                  </h3>
-                </div>
-                <div class="lav2-history-body">
-                  <table class="lav2-table">
-                    <thead>
-                      <tr>
-                        <th>Data</th>
-                        <th>Detalhes</th>
-                        <th>Total Peças</th>
-                        <th>Valor</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody id="lav2-history-tbody">
-                      <!-- Rendered by JS -->
-                    </tbody>
-                  </table>
-                </div>
+              <div class="lav2-history-list" id="lav2-history-tbody">
+                <!-- Preenchido via JS -->
               </div>
             </div>
+
+            <!-- RESUMO GERAL (oculto no mobile, visível em desktop) -->
+            <div class="lav2-summary-desktop">
+              <div class="lav2-summary-item">
+                <span class="lav2-summary-value" id="lav2-total-lucro">R$ 0,00</span>
+                <span class="lav2-summary-label">Total Geral</span>
+              </div>
+              <div class="lav2-summary-item">
+                <span class="lav2-summary-value" id="lav2-total-pecas-geral">0</span>
+                <span class="lav2-summary-label">Peças Totais</span>
+              </div>
+              <div class="lav2-summary-item">
+                <span class="lav2-summary-value" id="lav2-stat-marcacoes">0</span>
+                <span class="lav2-summary-label">Marcações</span>
+              </div>
+            </div>
+
           </div>
         </div>
         <!-- ========== FIM LAVANDERIA V2 ========== -->
