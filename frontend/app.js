@@ -8731,7 +8731,7 @@ function openAdditiveTask(taskId) {
 // Configuração dos 4 clientes
 var LAV2_CLIENTS = {
   marajoara: {
-    id: 'marajoara',
+    id: 'client_marajoara',
     name: 'Marajoara',
     color: '#f472b6',
     pricePerPiece: 3.50,
@@ -8746,7 +8746,7 @@ var LAV2_CLIENTS = {
     ]
   },
   loyola: {
-    id: 'loyola',
+    id: 'client_loyola',
     name: 'Loyola',
     color: '#a855f7',
     pricePerPiece: 3.00,
@@ -8758,7 +8758,7 @@ var LAV2_CLIENTS = {
     ]
   },
   suplemento: {
-    id: 'suplemento',
+    id: 'client_suplemento',
     name: 'Suplemento',
     color: '#3b82f6',
     pricePerPiece: 3.00,
@@ -8770,7 +8770,7 @@ var LAV2_CLIENTS = {
     ]
   },
   vitta: {
-    id: 'vitta',
+    id: 'client_vitta',
     name: 'Vitta',
     color: '#f59e0b',
     pricePerPiece: 4.50,
@@ -8957,15 +8957,15 @@ function updateLav2Total() {
   if (valorEl) valorEl.textContent = 'R$ ' + totalValue.toFixed(2);
 }
 
-async function loadLav2ClientEntries(clientId) {
+async function loadLav2ClientEntries(clientKey) {
   try {
-    var client = LAV2_CLIENTS[clientId];
+    var client = LAV2_CLIENTS[clientKey];
     if (!client || !lav2State.period) return;
     
     var startDate = lav2State.period.start.toISOString().split('T')[0];
     var endDate = lav2State.period.end.toISOString().split('T')[0];
     
-    var response = await fetch(API_URL + '/laundry/v2/entries/' + clientId + '?startDate=' + startDate + '&endDate=' + endDate, {
+    var response = await fetch(API_URL + '/laundry/v2/entries/' + client.id + '?startDate=' + startDate + '&endDate=' + endDate, {
       headers: { 'Authorization': 'Bearer ' + state.token }
     });
     
