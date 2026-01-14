@@ -8824,6 +8824,7 @@ async function loadLavanderia() {
 }
 
 function selectLav2Client(clientId) {
+  var previousClient = lav2State.currentClient;
   lav2State.currentClient = clientId;
   var client = LAV2_CLIENTS[clientId];
   if (!client) return;
@@ -8846,8 +8847,10 @@ function selectLav2Client(clientId) {
   var titleEl = document.getElementById('lav2-entry-title');
   if (titleEl) titleEl.textContent = 'Novo Lançamento';
   
-  // Renderizar campos dinâmicos
-  renderLav2FormFields(client);
+  // Renderizar campos dinâmicos APENAS se o cliente mudou
+  if (previousClient !== clientId) {
+    renderLav2FormFields(client);
+  }
   
   // Calcular e mostrar período
   updateLav2PeriodDisplay(client);
