@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Icarus.LAV</string>
+    <string name="title_activity_main">Icarus.LAV</string>
+    <string name="package_name">com.icarus.lav</string>
+    <string name="custom_url_scheme">com.icarus.lav</string>
+</resources>

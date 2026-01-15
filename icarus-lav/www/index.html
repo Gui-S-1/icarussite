@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Icarus.LAV</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    :root {
+      --pink: #f472b6;
+      --pink-dark: #ec4899;
+      --purple: #a855f7;
+      --blue: #3b82f6;
+      --orange: #f59e0b;
+      --bg-dark: #0d0d0d;
+      --bg-card: #1a1a1a;
+      --bg-card-light: #252525;
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255,255,255,0.6);
+      --text-muted: rgba(255,255,255,0.4);
+      --safe-top: env(safe-area-inset-top, 20px);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-top: var(--safe-top);
+      padding-bottom: calc(var(--safe-bottom) + 20px);
+    }
+    
+    /* ===== HEADER ===== */
+    .app-header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .app-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .app-logo svg {
+      width: 32px;
+      height: 32px;
+      color: var(--pink);
+    }
+    
+    .app-logo span {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .offline-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(34, 197, 94, 0.15);
+      border-radius: 20px;
+      font-size: 11px;
+      color: #22c55e;
+    }
+    
+    .offline-badge.offline {
+      background: rgba(244, 114, 182, 0.15);
+      color: var(--pink);
+    }
+    
+    .offline-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: currentColor;
+      border-radius: 50%;
+    }
+    
+    /* ===== CONTAINER ===== */
+    .container {
+      padding: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    /* ===== TABS DE CLIENTES ===== */
+    .client-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    
+    .client-tabs::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .client-tab {
+      flex: 1;
+      min-width: 80px;
+      padding: 14px 8px;
+      background: var(--bg-card);
+      border: 2px solid transparent;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .client-tab.active {
+      border-color: var(--tab-color, var(--pink));
+      background: rgba(244, 114, 182, 0.1);
+    }
+    
+    .client-tab-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--tab-color, var(--pink));
+    }
+    
+    .client-tab-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    
+    .client-tab.active .client-tab-name {
+      color: var(--text-primary);
+    }
+    
+    /* ===== INFO CARD ===== */
+    .info-card {
+      background: linear-gradient(135deg, rgba(244,114,182,0.15), rgba(168,85,247,0.1));
+      border: 1px solid rgba(244,114,182,0.2);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .info-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .info-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .period-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(244,114,182,0.2);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--pink);
+    }
+    
+    .stats-row {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+    
+    .stat-item {
+      flex: 1;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    
+    /* ===== FORM CARD ===== */
+    .form-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .form-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .date-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--bg-card-light);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .date-picker input {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: inherit;
+      width: 110px;
+      outline: none;
+    }
+    
+    .form-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .field {
+      background: var(--bg-card-light);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: center;
+      outline: none;
+    }
+    
+    .field input:focus {
+      border-color: var(--pink);
+    }
+    
+    /* ===== PREVIEW & SAVE ===== */
+    .preview-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .preview-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .preview-pieces {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .preview-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pink);
+    }
+    
+    .save-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    
+    .save-btn:active {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
+    
+    /* ===== HISTORY ===== */
+    .history-section {
+      background: var(--bg-card);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .history-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .history-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    
+    .history-item:last-child {
+      border-bottom: none;
+    }
+    
+    .history-date {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .history-pieces {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .history-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--pink);
+    }
+    
+    .history-delete {
+      padding: 8px;
+      background: rgba(239,68,68,0.1);
+      border: none;
+      border-radius: 8px;
+      color: #ef4444;
+      cursor: pointer;
+    }
+    
+    .history-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    
+    /* ===== PDF BUTTON ===== */
+    .pdf-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border: none;
+      border-radius: 16px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    
+    .pdf-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--safe-bottom) + 30px);
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 14px 24px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      font-size: 14px;
+      color: var(--text-primary);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    
+    .toast.success {
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+    
+    .toast.error {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    
+    /* ===== SPLASH SCREEN ===== */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      transition: opacity 0.5s;
+    }
+    
+    .splash.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .splash-logo {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 20px;
+    }
+    
+    .splash-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    
+    .splash-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <!-- SPLASH SCREEN -->
+  <div class="splash" id="splash">
+    <svg class="splash-logo" viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="45" stroke="url(#grad)" stroke-width="3"/>
+      <path d="M50 20 L55 45 L80 50 L55 55 L50 80 L45 55 L20 50 L45 45 Z" fill="url(#grad)"/>
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f472b6"/>
+          <stop offset="100%" stop-color="#a855f7"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="splash-title">Icarus.LAV</div>
+    <div class="splash-subtitle">Lavanderia Offline</div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="app-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <circle cx="12" cy="12" r="4"/>
+      </svg>
+      <span>Icarus.LAV</span>
+    </div>
+    <div class="offline-badge" id="statusBadge">
+      <span>Offline</span>
+    </div>
+  </header>
+
+  <!-- TABS DE CLIENTES -->
+  <div class="client-tabs" id="clientTabs">
+    <button class="client-tab active" onclick="selectClient('marajoara')" id="tab-marajoara" style="--tab-color: #f472b6;">
+      <span class="client-tab-dot"></span>
+      <span class="client-tab-name">Marajoara</span>
+    </button>
+    <button class="client-tab" onclick="selectClient('loyola')" id="tab-loyola" style="--tab-color: #a855f7;">
+      <span class="client-tab-dot"></span>
+      <span class="client-tab-name">Loyola</span>
+    </button>
+    <button class="client-tab" onclick="selectClient('suplemento')" id="tab-suplemento" style="--tab-color: #3b82f6;">
+      <span class="client-tab-dot"></span>
+      <span class="client-tab-name">Suplemento</span>
+    </button>
+    <button class="client-tab" onclick="selectClient('vitta')" id="tab-vitta" style="--tab-color: #f59e0b;">
+      <span class="client-tab-dot"></span>
+      <span class="client-tab-name">Vitta</span>
+    </button>
+  </div>
+
+  <div class="container">
+    <!-- INFO CARD -->
+    <div class="info-card">
+      <div class="info-card-header">
+        <span class="info-card-title" id="clientName">Marajoara</span>
+        <div class="period-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span id="periodText">05/01 - 20/01</span>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-value" id="statPecas">0</div>
+          <div class="stat-label">Peças</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statValor">R$ 0</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statDias">0</div>
+          <div class="stat-label">Dias Rest.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="form-card">
+      <div class="form-header">
+        <span class="form-title">Novo Lançamento</span>
+        <div class="date-picker">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <input type="date" id="entryDate">
+        </div>
+      </div>
+      
+      <div class="form-fields" id="formFields">
+        <!-- Campos dinâmicos inseridos via JS -->
+      </div>
+      
+      <div class="preview-row">
+        <div class="preview-info">
+          <span class="preview-pieces"><span id="previewPieces">0</span> peças</span>
+          <span class="preview-value" id="previewValue">R$ 0.00</span>
+        </div>
+        <button class="save-btn" onclick="saveEntry()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Salvar
+        </button>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="history-section">
+      <div class="history-header">
+        <div class="history-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Histórico do Período</span>
+        </div>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px; opacity: 0.5;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <div>Nenhum lançamento</div>
+          <div style="font-size: 12px; margin-top: 4px;">Adicione o primeiro</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF BUTTON -->
+    <button class="pdf-btn" onclick="exportPDF()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      Gerar PDF do Período
+    </button>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

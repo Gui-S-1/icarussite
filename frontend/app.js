@@ -1703,8 +1703,8 @@ function showOSDetail(orderId) {
   }
   
   // Checkboxes para editar atribuições
-  // Manutenção/admin pode editar técnicos MESMO em OS concluída
-  const canEditAssignments = (canManageAll) || (canEdit && order.status !== 'completed');
+  // APENAS Manutenção/admin pode editar técnicos (usuário comum não pode mais)
+  const canEditAssignments = canManageAll;
   
   if (canEditAssignments) {
     const assignedIds = order.assigned_users ? order.assigned_users.map(u => u.id) : [];
@@ -1736,13 +1736,19 @@ function showOSDetail(orderId) {
   
   if (canEdit && order.status === 'in_progress') {
     actions += `<button type="button" class="btn-small btn-warning" onclick="pauseOrder('${order.id}')">⏸ Pausar</button>`;
-    actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    // Somente manutenção pode concluir
+    if (canManageAll) {
+      actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    }
   }
   
   // Se estiver pausada, mostrar botão de retomar
   if (canEdit && order.status === 'paused') {
     actions += `<button type="button" class="btn-small btn-primary" onclick="resumeOrder('${order.id}')">▶ Retomar</button>`;
-    actions += `<button type="button" class="btn-small btn-success" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    // Somente manutenção pode concluir
+    if (canManageAll) {
+      actions += `<button type="button" class="btn-small btn-success" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    }
   }
   
   // Botão excluir - criador pode excluir sua OS, manutenção pode excluir qualquer

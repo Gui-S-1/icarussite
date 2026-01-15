@@ -1703,8 +1703,8 @@ function showOSDetail(orderId) {
   }
   
   // Checkboxes para editar atribuições
-  // Manutenção/admin pode editar técnicos MESMO em OS concluída
-  const canEditAssignments = (canManageAll) || (canEdit && order.status !== 'completed');
+  // APENAS Manutenção/admin pode editar técnicos (usuário comum não pode mais)
+  const canEditAssignments = canManageAll;
   
   if (canEditAssignments) {
     const assignedIds = order.assigned_users ? order.assigned_users.map(u => u.id) : [];
@@ -1736,13 +1736,19 @@ function showOSDetail(orderId) {
   
   if (canEdit && order.status === 'in_progress') {
     actions += `<button type="button" class="btn-small btn-warning" onclick="pauseOrder('${order.id}')">⏸ Pausar</button>`;
-    actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    // Somente manutenção pode concluir
+    if (canManageAll) {
+      actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    }
   }
   
   // Se estiver pausada, mostrar botão de retomar
   if (canEdit && order.status === 'paused') {
     actions += `<button type="button" class="btn-small btn-primary" onclick="resumeOrder('${order.id}')">▶ Retomar</button>`;
-    actions += `<button type="button" class="btn-small btn-success" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    // Somente manutenção pode concluir
+    if (canManageAll) {
+      actions += `<button type="button" class="btn-small btn-success" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+    }
   }
   
   // Botão excluir - criador pode excluir sua OS, manutenção pode excluir qualquer
@@ -8731,7 +8737,7 @@ function openAdditiveTask(taskId) {
 // Configuração dos 4 clientes
 var LAV2_CLIENTS = {
   marajoara: {
-    id: 'marajoara',
+    id: 'client_marajoara',
     name: 'Marajoara',
     color: '#f472b6',
     pricePerPiece: 3.50,
@@ -8746,7 +8752,7 @@ var LAV2_CLIENTS = {
     ]
   },
   loyola: {
-    id: 'loyola',
+    id: 'client_loyola',
     name: 'Loyola',
     color: '#a855f7',
     pricePerPiece: 3.00,
@@ -8758,7 +8764,7 @@ var LAV2_CLIENTS = {
     ]
   },
   suplemento: {
-    id: 'suplemento',
+    id: 'client_suplemento',
     name: 'Suplemento',
     color: '#3b82f6',
     pricePerPiece: 3.00,
@@ -8770,7 +8776,7 @@ var LAV2_CLIENTS = {
     ]
   },
   vitta: {
-    id: 'vitta',
+    id: 'client_vitta',
     name: 'Vitta',
     color: '#f59e0b',
     pricePerPiece: 4.50,
@@ -8868,7 +8874,7 @@ function renderLav2FormFields(client) {
     var markingNote = field.isMarking ? '<small style="color:#a855f7;font-size:9px;display:block;">+R$ ' + client.markingPrice.toFixed(2) + '</small>' : '';
     html += '<div class="lav2-field">' +
       '<label>' + field.label + markingNote + '</label>' +
-      '<input type="number" id="lav2-field-' + field.key + '" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()">' +
+      '<input type="number" id="lav2-field-' + field.key + '" value="0" min="0" inputmode="numeric" oninput="updateLav2Total()" onfocus="if(this.value===\'0\')this.value=\'\'" onblur="if(this.value===\'\')this.value=\'0\'">' +
     '</div>';
   });
   container.innerHTML = html;
@@ -8957,15 +8963,15 @@ function updateLav2Total() {
   if (valorEl) valorEl.textContent = 'R$ ' + totalValue.toFixed(2);
 }
 
-async function loadLav2ClientEntries(clientId) {
+async function loadLav2ClientEntries(clientKey) {
   try {
-    var client = LAV2_CLIENTS[clientId];
+    var client = LAV2_CLIENTS[clientKey];
     if (!client || !lav2State.period) return;
     
     var startDate = lav2State.period.start.toISOString().split('T')[0];
     var endDate = lav2State.period.end.toISOString().split('T')[0];
     
-    var response = await fetch(API_URL + '/laundry/v2/entries/' + clientId + '?startDate=' + startDate + '&endDate=' + endDate, {
+    var response = await fetch(API_URL + '/laundry/v2/entries/' + client.id + '?startDate=' + startDate + '&endDate=' + endDate, {
       headers: { 'Authorization': 'Bearer ' + state.token }
     });
     
@@ -8997,7 +9003,7 @@ function updateLav2ClientStats() {
         totalPieces += value;
       }
     });
-    totalValue += parseFloat(entry.total_value) || 0;
+    totalValue += parseFloat(entry.valor_total) || 0;
   });
   
   // Atualizar stats cards
@@ -9071,7 +9077,7 @@ function renderLav2History() {
         '<div style="font-size: 12px; color: rgba(255,255,255,0.5);">' + totalPieces + ' peças</div>' +
       '</div>' +
       '<div style="display: flex; align-items: center; gap: 12px;">' +
-        '<span style="font-size: 15px; font-weight: 600; color: #ec4899;">R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</span>' +
+        '<span style="font-size: 15px; font-weight: 600; color: #ec4899;">R$ ' + (parseFloat(entry.valor_total) || 0).toFixed(2) + '</span>' +
         '<button onclick="deleteLav2Entry(\'' + entry.id + '\')" style="padding: 8px; background: rgba(239,68,68,0.1); border: none; border-radius: 8px; color: #ef4444; cursor: pointer;">' +
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
         '</button>' +
@@ -9207,7 +9213,7 @@ async function exportLav2PDF() {
           totalPieces += value;
         }
       });
-      totalValue += parseFloat(entry.total_value) || 0;
+      totalValue += parseFloat(entry.valor_total) || 0;
     });
     
     var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
@@ -9251,7 +9257,7 @@ async function exportLav2PDF() {
       client.fields.forEach(function(field) {
         printContent += '<td>' + (entry[field.key] || 0) + '</td>';
       });
-      printContent += '<td>R$ ' + (parseFloat(entry.total_value) || 0).toFixed(2) + '</td></tr>';
+      printContent += '<td>R$ ' + (parseFloat(entry.valor_total) || 0).toFixed(2) + '</td></tr>';
     });
     
     printContent += '</tbody></table>' +
