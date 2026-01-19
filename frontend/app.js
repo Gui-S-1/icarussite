@@ -51,7 +51,7 @@ const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
 // ========================================
 // PUSH NOTIFICATIONS - Capacitor
 // ========================================
-const APP_VERSION = '1.0.7';
+const APP_VERSION = '1.0.8';
 
 async function initPushNotifications() {
   try {
@@ -5771,8 +5771,37 @@ function exportWaterReportPDF(selectedMonth) {
   '</div>' +
   '</div></body></html>';
 
+  // Dados estruturados para PDF no servidor
+  const waterReportData = {
+    title: 'Relatório de Água - Granja Vitta',
+    type: 'water-report',
+    content: {
+      period: periodStr,
+      summary: {
+        totalConsumption: totalConsumo.toFixed(2),
+        avgDailyAviarios: aviariosCalc.avg.toFixed(2),
+        avgDailyRecria: recriaCalc.avg.toFixed(2),
+        totalAviarios: aviariosCalc.total.toFixed(2),
+        totalRecria: recriaCalc.total.toFixed(2),
+        totalReadings: sortedReadings.length
+      },
+      readings: sortedReadings.slice(-100).reverse().map(function(r) {
+        const info = formatDatePDF(r.reading_date);
+        return {
+          date: info.formatted,
+          dayOfWeek: info.dayOfWeek,
+          time: r.reading_time,
+          tank: r.tank_name === 'aviarios' ? 'Aviários' : 'Recria',
+          value: r.reading_value.toFixed(3) + ' m³',
+          recordedBy: r.recorded_by_name || '-',
+          notes: r.notes || '-'
+        };
+      })
+    }
+  };
+
   // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(htmlContent, 'Relatório de Água', 'Relatório de Água gerado!');
+  showReportInPage(htmlContent, 'Relatório de Água', 'Relatório de Água gerado!', waterReportData);
 }
 
 // Função utilitária para mostrar relatórios na página atual (100% compatível com APK/WebView)
@@ -5780,10 +5809,12 @@ function exportWaterReportPDF(selectedMonth) {
 var currentReportHtml = '';
 var currentReportTitle = '';
 
-function showReportInPage(htmlContent, reportTitle, successMessage) {
+function showReportInPage(htmlContent, reportTitle, successMessage, reportData) {
   // Salvar HTML para download posterior
   currentReportHtml = htmlContent;
   currentReportTitle = reportTitle;
+  // Salvar dados estruturados para geração de PDF no servidor
+  currentReportData = reportData || null;
   
   // Remover overlay anterior se existir
   const existingOverlay = document.getElementById('report-overlay');
@@ -5871,122 +5902,87 @@ function showReportInPage(htmlContent, reportTitle, successMessage) {
   if (successMessage) showNotification(successMessage, 'success');
 }
 
-// Função para baixar PDF - usa método simples que funciona em APK
+// Dados do relatório atual para enviar ao servidor (estruturados)
+let currentReportData = null;
+
+// Função para baixar PDF - MÉTODO DO SERVIDOR (funciona em APK!)
 async function downloadReportAsPDF() {
+  showNotification('Gerando PDF no servidor...', 'info');
+  
+  try {
+    // Se temos dados estruturados, usar o servidor
+    if (currentReportData) {
+      const response = await fetch(API_BASE + '/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentReportData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.ok && result.downloadUrl) {
+        // Abrir link de download direto - funciona em qualquer navegador/WebView
+        const downloadUrl = API_BASE + result.downloadUrl;
+        window.open(downloadUrl, '_blank');
+        showNotification('PDF gerado! Baixando...', 'success');
+        return;
+      }
+    }
+    
+    // Fallback: tentar gerar localmente se servidor falhar
+    await downloadReportAsPDFLocal();
+    
+  } catch (error) {
+    console.error('Erro servidor PDF:', error);
+    // Fallback local
+    await downloadReportAsPDFLocal();
+  }
+}
+
+// Método local de backup (pode não funcionar em todos APKs)
+async function downloadReportAsPDFLocal() {
   if (!currentReportHtml) {
     showNotification('Erro: conteúdo não encontrado', 'error');
     return;
   }
   
-  showNotification('Gerando PDF, aguarde...', 'info');
-  
   try {
-    // Carregar bibliotecas dinamicamente
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     
-    // Criar container temporário FORA do iframe para evitar problemas de cross-origin
     const tempDiv = document.createElement('div');
     tempDiv.id = 'temp-report-container';
     tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;';
     tempDiv.innerHTML = currentReportHtml.replace(/<!DOCTYPE[^>]*>/i, '').replace(/<html[^>]*>/i, '').replace(/<\/html>/i, '').replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<body[^>]*>/i, '<div>').replace(/<\/body>/i, '</div>');
     document.body.appendChild(tempDiv);
     
-    // Esperar renderização
     await new Promise(r => setTimeout(r, 500));
     
-    // Capturar canvas
     const canvas = await html2canvas(tempDiv, {
-      scale: 1.5,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      width: 800,
-      windowWidth: 800
+      scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff', width: 800, windowWidth: 800
     });
     
-    // Remover container temporário
     tempDiv.remove();
     
-    // Criar PDF
     const { jsPDF } = window.jspdf;
     const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
+    const ratio = pdfWidth / canvas.width;
+    const scaledHeight = canvas.height * ratio;
     
-    // Calcular proporção
-    const ratio = pdfWidth / imgWidth;
-    const scaledHeight = imgHeight * ratio;
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, scaledHeight);
     
-    // Se maior que uma página, dividir
-    if (scaledHeight <= pdfHeight) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, scaledHeight);
-    } else {
-      // Múltiplas páginas
-      let y = 0;
-      const pageHeightPx = pdfHeight / ratio;
-      
-      while (y < imgHeight) {
-        if (y > 0) pdf.addPage();
-        
-        // Criar canvas para esta página
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = imgWidth;
-        pageCanvas.height = Math.min(pageHeightPx, imgHeight - y);
-        const ctx = pageCanvas.getContext('2d');
-        ctx.drawImage(canvas, 0, -y);
-        
-        const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
-        const pageHeight = pageCanvas.height * ratio;
-        pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfWidth, pageHeight);
-        
-        y += pageHeightPx;
-      }
-    }
-    
-    // Nome do arquivo
-    const now = new Date();
-    const fileName = (currentReportTitle || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
-      now.toLocaleDateString('pt-BR').replace(/\//g, '-') + '.pdf';
-    
-    // Tentar salvar - diferentes métodos para diferentes ambientes
-    try {
-      // Método 1: pdf.save() padrão
-      pdf.save(fileName);
-      showNotification('PDF baixado com sucesso!', 'success');
-    } catch (saveErr) {
-      console.log('pdf.save falhou, tentando blob...', saveErr);
-      // Método 2: Criar blob e link
-      const pdfBlob = pdf.output('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showNotification('PDF baixado!', 'success');
-    }
+    const fileName = (currentReportTitle || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+    pdf.save(fileName);
+    showNotification('PDF baixado!', 'success');
     
   } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    // Fallback: abrir para impressão
-    showNotification('Erro no download. Use Imprimir > Salvar como PDF', 'warning');
+    console.error('Erro PDF local:', error);
+    showNotification('Use Imprimir > Salvar como PDF', 'warning');
     const iframe = document.getElementById('report-iframe');
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.print();
-    }
+    if (iframe?.contentWindow) iframe.contentWindow.print();
   }
 }
 
