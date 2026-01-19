@@ -5825,6 +5825,7 @@ function exportWaterReportPDF(selectedMonth) {
 // Armazena o HTML para uso posterior no download
 var currentReportHtml = '';
 var currentReportTitle = '';
+var currentReportData = null;
 
 function showReportInPage(htmlContent, reportTitle, successMessage, reportData) {
   // Salvar HTML para download posterior
@@ -5909,9 +5910,6 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   
   if (successMessage) showNotification(successMessage, 'success');
 }
-
-// Dados do relatório atual para enviar ao servidor (estruturados)
-let currentReportData = null;
 
 // Função para baixar PDF - Backend gera e retorna PDF direto
 async function downloadReportAsPDF() {
