@@ -6857,21 +6857,123 @@ function checkDieselAlerts() {
   var stats = state.dieselStats || {};
   var saldo = stats.saldo_atual || stats.saldoAtual || 0;
   
+  // Ícones SVG modernos
+  var svgOk = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  var svgAlert = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  var svgCritical = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  var svgEmpty = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+  var svgGauge = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/><circle cx="12" cy="12" r="4"/></svg>';
+  
   // Limites de alerta
   var LIMITE_CRITICO = 50;   // Crítico - vermelho
   var LIMITE_BAIXO = 100;    // Baixo - amarelo/laranja
   var LIMITE_ATENCAO = 200;  // Atenção - amarelo
   
+  // Estilo base do card
+  var baseStyle = 'display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:16px;';
+  var iconStyle = 'display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:12px;flex-shrink:0;';
+  var contentStyle = 'display:flex;flex-direction:column;gap:4px;';
+  var titleStyle = 'font-size:15px;font-weight:700;letter-spacing:0.5px;';
+  var subtitleStyle = 'font-size:13px;opacity:0.9;';
+  
   if (saldo <= 0) {
-    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #f93943, #dc2626); border: 1px solid #f93943;"><div class="alert-icon">🚨</div><div class="alert-content"><strong>DIESEL ACABOU!</strong><span>Estoque zerado! Abasteça imediatamente.</span></div></div>';
+    container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(249,57,67,0.15),rgba(220,38,38,0.1));border:1px solid rgba(249,57,67,0.4);">' +
+      '<div style="' + iconStyle + 'background:rgba(249,57,67,0.2);color:#f93943;">' + svgEmpty + '</div>' +
+      '<div style="' + contentStyle + '">' +
+      '<span style="' + titleStyle + 'color:#f93943;">DIESEL ESGOTADO</span>' +
+      '<span style="' + subtitleStyle + 'color:#fca5a5;">Tanque vazio! Abastecimento urgente necessário.</span>' +
+      '</div></div>';
+    // Verificar se precisa criar requisição de compra
+    checkDieselAutoRequest(saldo);
   } else if (saldo <= LIMITE_CRITICO) {
-    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #f93943, #dc2626); border: 1px solid #f93943;"><div class="alert-icon">⚠️</div><div class="alert-content"><strong>Estoque CRÍTICO!</strong><span>Apenas ' + saldo.toLocaleString('pt-BR') + ' L restantes. Abasteça urgente!</span></div></div>';
+    container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(249,57,67,0.15),rgba(220,38,38,0.1));border:1px solid rgba(249,57,67,0.4);">' +
+      '<div style="' + iconStyle + 'background:rgba(249,57,67,0.2);color:#f93943;">' + svgCritical + '</div>' +
+      '<div style="' + contentStyle + '">' +
+      '<span style="' + titleStyle + 'color:#f93943;">ESTOQUE CRÍTICO</span>' +
+      '<span style="' + subtitleStyle + 'color:#fca5a5;">Apenas <strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> restantes. Abasteça imediatamente!</span>' +
+      '</div></div>';
+    checkDieselAutoRequest(saldo);
   } else if (saldo <= LIMITE_BAIXO) {
-    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #f97316, #ea580c); border: 1px solid #f97316;"><div class="alert-icon">⚠️</div><div class="alert-content"><strong>Estoque BAIXO</strong><span>' + saldo.toLocaleString('pt-BR') + ' L restantes. Programe abastecimento.</span></div></div>';
+    container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(249,115,22,0.15),rgba(234,88,12,0.1));border:1px solid rgba(249,115,22,0.4);">' +
+      '<div style="' + iconStyle + 'background:rgba(249,115,22,0.2);color:#f97316;">' + svgAlert + '</div>' +
+      '<div style="' + contentStyle + '">' +
+      '<span style="' + titleStyle + 'color:#f97316;">ESTOQUE BAIXO</span>' +
+      '<span style="' + subtitleStyle + 'color:#fdba74;"><strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> restantes. Programe o abastecimento.</span>' +
+      '</div></div>';
+    checkDieselAutoRequest(saldo);
   } else if (saldo <= LIMITE_ATENCAO) {
-    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #eab308, #ca8a04); border: 1px solid #eab308;"><div class="alert-icon">📊</div><div class="alert-content"><strong>Estoque em atenção</strong><span>' + saldo.toLocaleString('pt-BR') + ' L restantes.</span></div></div>';
+    container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(234,179,8,0.15),rgba(202,138,4,0.1));border:1px solid rgba(234,179,8,0.4);">' +
+      '<div style="' + iconStyle + 'background:rgba(234,179,8,0.2);color:#eab308;">' + svgGauge + '</div>' +
+      '<div style="' + contentStyle + '">' +
+      '<span style="' + titleStyle + 'color:#eab308;">ATENÇÃO AO ESTOQUE</span>' +
+      '<span style="' + subtitleStyle + 'color:#fde047;"><strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> disponíveis. Monitore o consumo.</span>' +
+      '</div></div>';
   } else {
-    container.innerHTML = '<div class="water-alert" style="background: linear-gradient(135deg, #22c55e, #16a34a); border: 1px solid #22c55e;"><div class="alert-icon">✅</div><div class="alert-content"><strong>Estoque OK</strong><span>' + saldo.toLocaleString('pt-BR') + ' L disponíveis.</span></div></div>';
+    container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(22,163,74,0.08));border:1px solid rgba(34,197,94,0.35);">' +
+      '<div style="' + iconStyle + 'background:rgba(34,197,94,0.2);color:#22c55e;">' + svgOk + '</div>' +
+      '<div style="' + contentStyle + '">' +
+      '<span style="' + titleStyle + 'color:#22c55e;">ESTOQUE ADEQUADO</span>' +
+      '<span style="' + subtitleStyle + 'color:#86efac;"><strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> disponíveis no tanque.</span>' +
+      '</div></div>';
+  }
+}
+
+// Verificar e criar requisição automática de diesel quando estoque baixo
+async function checkDieselAutoRequest(saldo) {
+  // Só cria requisição se não tiver criado recentemente (usar localStorage para controle)
+  var lastRequest = localStorage.getItem('diesel_auto_request_date');
+  var today = new Date().toISOString().split('T')[0];
+  
+  // Se já criou requisição hoje, não criar outra
+  if (lastRequest === today) {
+    console.log('[Diesel] Requisição automática já criada hoje');
+    return;
+  }
+  
+  // Só usuários admin podem ver/criar requisições automáticas
+  if (!state.user || !state.user.roles || !state.user.roles.includes('admin')) {
+    return;
+  }
+  
+  try {
+    // Calcular quantidade sugerida baseada no consumo do mês
+    var stats = state.dieselStats || {};
+    var consumoMes = stats.total_saida || stats.totalSaida || 0;
+    var quantidadeSugerida = Math.max(consumoMes, 200); // Mínimo 200L ou o consumo do mês
+    
+    // Criar requisição de compra
+    var mensagem = 'REQUISIÇÃO AUTOMÁTICA DE DIESEL\\n\\n' +
+      'O sistema detectou que o estoque de diesel está baixo:\\n' +
+      '• Estoque atual: ' + saldo.toLocaleString('pt-BR') + ' litros\\n' +
+      '• Consumo do mês: ' + consumoMes.toLocaleString('pt-BR') + ' litros\\n' +
+      '• Quantidade sugerida: ' + quantidadeSugerida.toLocaleString('pt-BR') + ' litros\\n\\n' +
+      'Por favor, providencie o abastecimento o mais rápido possível.';
+    
+    var response = await fetch(API_URL + '/purchases', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({
+        item_name: 'DIESEL - Abastecimento Urgente',
+        quantity: quantidadeSugerida,
+        unit: 'L',
+        category: 'combustivel',
+        priority: 'high',
+        notes: mensagem,
+        requested_for: 'Joacir', // Responsável pelas compras
+        auto_generated: true
+      })
+    });
+    
+    if (response.ok) {
+      localStorage.setItem('diesel_auto_request_date', today);
+      showNotification('Requisição de diesel criada automaticamente para Joacir!', 'info');
+      console.log('[Diesel] Requisição automática criada com sucesso');
+    }
+  } catch (e) {
+    console.error('[Diesel] Erro ao criar requisição automática:', e);
   }
 }
 
@@ -8737,11 +8839,11 @@ function exportDashboardReport() {
     content: {
       headers: ['Métrica', 'Valor'],
       rows: [
-        ['Total de Ordens', totalOS],
+        ['Total de Ordens', total],
         ['Concluídas', completed],
         ['Em Andamento', inProgress],
         ['Pendentes', pending],
-        ['Taxa de Conclusão', completionRate + '%'],
+        ['Taxa de Conclusão', aproveitamento + '%'],
         ['Período', periodLabel]
       ]
     }
@@ -8775,28 +8877,7 @@ function exportAlmoxarifadoReport() {
   const totalValue = items.reduce((sum, i) => sum + (i.quantity * (i.unit_cost || 0)), 0);
   const categories = Object.keys(byCategory).length;
 
-  // Gerar CSV
-  const csvHeaders = ['SKU', 'Nome', 'Categoria', 'Marca', 'Quantidade', 'Unidade', 'Localização', 'Custo Unit.', 'Valor Total'];
-  const csvRows = items.map(i => [
-    i.sku || '',
-    i.name || '',
-    i.category || '',
-    i.brand || '',
-    i.quantity || 0,
-    i.unit || '',
-    i.location || '',
-    (i.unit_cost || 0).toFixed(2),
-    ((i.quantity || 0) * (i.unit_cost || 0)).toFixed(2)
-  ]);
-  
-  const csv = [csvHeaders.join(';'), ...csvRows.map(r => r.join(';'))].join('\n');
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'ALMOXARIFADO_GRANJA_VITTA_' + new Date().toISOString().split('T')[0] + '.csv';
-  link.click();
-
-  // Gerar relatório HTML interativo
+  // Gerar relatório HTML interativo (SEM CSV automático)
   const dateStr = new Date().toLocaleString('pt-BR');
   const totalValueStr = 'R$ ' + totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   const categoryDataJson = JSON.stringify(Object.fromEntries(Object.entries(byCategory).map(function(entry) { return [entry[0], entry[1].length]; })));
@@ -8920,7 +9001,7 @@ function exportAlmoxarifadoReport() {
   };
 
   // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(htmlContent, 'Relatório Almoxarifado', 'Relatório e planilha exportados!', almoxarifadoReportData);
+  showReportInPage(htmlContent, 'Relatório Almoxarifado', 'Relatório do Almoxarifado gerado!', almoxarifadoReportData);
 }
 
 // ========== TAREFAS ADITIVAS ==========
