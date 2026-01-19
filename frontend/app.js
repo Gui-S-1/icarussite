@@ -5911,35 +5911,54 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   if (successMessage) showNotification(successMessage, 'success');
 }
 
-// Função para baixar PDF - Tenta backend, senão usa print
+// Função para baixar PDF - Navega diretamente para endpoint que retorna PDF real
 async function downloadReportAsPDF() {
   // Mostrar loading
   showNotification('Gerando PDF...', 'info');
   
   // Pegar URL da API (config.js define window.ICARUS_API_URL)
-  var API_URL = window.ICARUS_API_URL || 'https://containing-listed-operational-novels.trycloudflare.com';
+  var API_URL = window.ICARUS_API_URL || 'https://booth-upon-ministers-specializing.trycloudflare.com';
   
-  // Se temos dados estruturados, tentar pelo servidor
-  if (currentReportData) {
+  // Detectar tipo de relatório pelo título atual
+  var pdfEndpoint = null;
+  var params = '';
+  
+  if (currentReportTitle && currentReportTitle.toLowerCase().includes('água')) {
+    // Relatório de água
+    var month = state.waterReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
+    pdfEndpoint = '/api/pdf/water-report';
+    params = '?month=' + month;
+  } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('diesel')) {
+    // Relatório de diesel
+    var month = state.dieselReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
+    pdfEndpoint = '/api/pdf/diesel-report';
+    params = '?month=' + month;
+  } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('gerador')) {
+    // Relatório de gerador
+    var month = state.generatorReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
+    pdfEndpoint = '/api/pdf/generator-report';
+    params = '?month=' + month;
+  } else if (currentReportTitle && (currentReportTitle.toLowerCase().includes('ordem') || currentReportTitle.toLowerCase().includes('os'))) {
+    // Relatório de OS
+    pdfEndpoint = '/api/pdf/orders-report';
+    params = '?period=monthly';
+  }
+  
+  // Se temos endpoint específico, navegar diretamente (trigga DownloadListener no Android)
+  if (pdfEndpoint) {
     try {
-      var response = await fetch(API_URL + '/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentReportData)
-      });
+      var fullUrl = API_URL + pdfEndpoint + params + '&token=' + encodeURIComponent(state.token);
+      console.log('[PDF] Navegando para:', fullUrl);
       
-      if (response.ok) {
-        var result = await response.json();
-        if (result.ok && result.downloadUrl) {
-          var pdfUrl = API_URL + result.downloadUrl;
-          showNotification('PDF gerado! Baixando...', 'success');
-          // Usar window.open para forçar download
-          window.open(pdfUrl, '_blank');
-          return;
-        }
-      }
+      // Usar window.location para triggar DownloadListener do WebView
+      // Em browser normal, vai abrir/baixar o PDF
+      // No APK Android, o DownloadListener vai interceptar e usar DownloadManager
+      window.location.href = fullUrl;
+      
+      showNotification('Baixando PDF...', 'success');
+      return;
     } catch (e) {
-      console.log('Backend PDF falhou:', e);
+      console.error('[PDF] Erro ao navegar:', e);
     }
   }
   
