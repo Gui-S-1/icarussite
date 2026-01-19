@@ -5911,54 +5911,60 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   if (successMessage) showNotification(successMessage, 'success');
 }
 
-// Função para baixar PDF - Backend gera e retorna PDF direto
+// Função para baixar PDF - Tenta backend, senão usa print
 async function downloadReportAsPDF() {
-  if (!currentReportData) {
-    showNotification('Erro: dados não encontrados', 'error');
-    return;
-  }
-  
+  // Mostrar loading
   showNotification('Gerando PDF...', 'info');
   
-  try {
-    var API_URL = window.ICARUS_API_URL || 'https://icarus-api.guilhermebraga.tech';
-    
-    // POST para o servidor gerar o PDF
-    var response = await fetch(API_URL + '/generate-pdf', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(currentReportData)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Erro no servidor: ' + response.status);
+  // Pegar URL da API (config.js define window.ICARUS_API_URL)
+  var API_URL = window.ICARUS_API_URL || 'https://containing-listed-operational-novels.trycloudflare.com';
+  
+  // Se temos dados estruturados, tentar pelo servidor
+  if (currentReportData) {
+    try {
+      var response = await fetch(API_URL + '/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentReportData)
+      });
+      
+      if (response.ok) {
+        var result = await response.json();
+        if (result.ok && result.downloadUrl) {
+          var pdfUrl = API_URL + result.downloadUrl;
+          showNotification('PDF gerado! Baixando...', 'success');
+          // Usar window.open para forçar download
+          window.open(pdfUrl, '_blank');
+          return;
+        }
+      }
+    } catch (e) {
+      console.log('Backend PDF falhou:', e);
     }
-    
-    var result = await response.json();
-    
-    if (result.ok && result.downloadUrl) {
-      // Abrir URL do PDF - Android vai baixar automaticamente
-      var pdfUrl = API_URL + result.downloadUrl;
-      showNotification('Baixando PDF...', 'success');
-      window.location.href = pdfUrl;
-    } else {
-      throw new Error(result.error || 'Erro ao gerar PDF');
-    }
-    
-  } catch (e) {
-    console.error('Erro PDF:', e);
-    showNotification('Erro: ' + e.message + '. Use Imprimir.', 'warning');
-    // Fallback: print
-    var iframe = document.getElementById('report-iframe');
-    if (iframe && iframe.contentWindow) {
+  }
+  
+  // Fallback: usar print nativo (funciona em qualquer WebView)
+  showNotification('Abrindo impressão... Selecione "Salvar como PDF"', 'info');
+  var iframe = document.getElementById('report-iframe');
+  if (iframe && iframe.contentWindow) {
+    try {
       iframe.contentWindow.print();
+    } catch (e) {
+      // Se print falhar, abrir HTML em nova janela
+      if (currentReportHtml) {
+        var win = window.open('', '_blank');
+        if (win) {
+          win.document.write(currentReportHtml);
+          win.document.close();
+          win.print();
+        }
+      }
     }
   }
 }
 
-// Função para compartilhar (usa print que permite salvar/enviar)
+// Função para compartilhar
 async function shareReportAsPDF() {
-  // No celular, o print permite salvar como PDF e compartilhar
   downloadReportAsPDF();
 }
 
@@ -8705,8 +8711,25 @@ function exportDashboardReport() {
 </body>
 </html>`;
 
+  // Dados estruturados para PDF no servidor
+  const dashboardReportData = {
+    title: 'Relatório Dashboard - Granja Vitta',
+    type: 'table',
+    content: {
+      headers: ['Métrica', 'Valor'],
+      rows: [
+        ['Total de Ordens', totalOS],
+        ['Concluídas', completed],
+        ['Em Andamento', inProgress],
+        ['Pendentes', pending],
+        ['Taxa de Conclusão', completionRate + '%'],
+        ['Período', periodLabel]
+      ]
+    }
+  };
+
   // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(htmlContent, 'Relatório Dashboard', 'Relatório do Dashboard gerado!');
+  showReportInPage(htmlContent, 'Relatório Dashboard', 'Relatório do Dashboard gerado!', dashboardReportData);
 }
 
 // ========== EXPORTAÇÃO ALMOXARIFADO ==========
@@ -8859,8 +8882,26 @@ function exportAlmoxarifadoReport() {
     'new Chart(document.getElementById("topItemsChart"), { type: "bar", data: { labels: topItems.map(function(i) { return i.name.substring(0, 18); }), datasets: [{ label: "Quantidade", data: topItems.map(function(i) { return i.qty; }), backgroundColor: "rgba(139, 92, 246, 0.7)", borderRadius: 6 }] }, options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.03)" } }, y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.03)" } } } } });' +
     '<\/script></body></html>';
 
+  // Dados estruturados para PDF no servidor
+  const almoxarifadoReportData = {
+    title: 'Relatório Almoxarifado - Granja Vitta',
+    type: 'table',
+    content: {
+      headers: ['SKU', 'Nome', 'Categoria', 'Quantidade', 'Unidade'],
+      rows: inventory.slice(0, 50).map(function(item) {
+        return [
+          item.sku || '-',
+          item.name || '-',
+          item.category || '-',
+          item.quantity || 0,
+          item.unit || '-'
+        ];
+      })
+    }
+  };
+
   // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(htmlContent, 'Relatório Almoxarifado', 'Relatório e planilha exportados!');
+  showReportInPage(htmlContent, 'Relatório Almoxarifado', 'Relatório e planilha exportados!', almoxarifadoReportData);
 }
 
 // ========== TAREFAS ADITIVAS ==========

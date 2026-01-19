@@ -4,7 +4,7 @@
 const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/api-config.json';
 
 // URL padrão (fallback)
-let API_URL_DEFAULT = 'https://containing-listed-operational-novels.trycloudflare.com';
+let API_URL_DEFAULT = 'https://booth-upon-ministers-specializing.trycloudflare.com';
 
 // Tentar carregar URL do backend do GitHub (não bloqueia o app)
 (async function loadDynamicConfig() {
