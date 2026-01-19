@@ -7790,15 +7790,16 @@ function exportDashboardReport() {
     }
     
     .header h1 { 
-      font-size: 42px; 
+      font-size: 32px; 
       font-weight: 800;
       background: linear-gradient(135deg, #d4af37 0%, #f0d060 50%, #d4af37 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 12px; 
-      letter-spacing: 3px;
+      letter-spacing: 2px;
       text-transform: uppercase;
+      word-wrap: break-word;
     }
     
     .header .subtitle { 
@@ -8189,6 +8190,43 @@ function exportDashboardReport() {
         margin: 8mm; 
       }
     }
+    
+    /* MOBILE RESPONSIVE */
+    @media (max-width: 768px) {
+      body { padding: 16px; }
+      .container { max-width: 100%; }
+      .header { padding: 24px 16px; border-radius: 16px; margin-bottom: 16px; }
+      .header-icon { width: 56px; height: 56px; }
+      .header h1 { font-size: 22px; letter-spacing: 1px; }
+      .header .subtitle { font-size: 13px; flex-wrap: wrap; }
+      .header .period-badge { font-size: 11px; padding: 8px 14px; flex-wrap: wrap; justify-content: center; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .stat-card { padding: 16px; border-radius: 14px; }
+      .stat-card .stat-icon { width: 36px; height: 36px; margin-bottom: 10px; }
+      .stat-card h3 { font-size: 9px; margin-bottom: 6px; }
+      .stat-card .value { font-size: 28px; }
+      .charts-row { grid-template-columns: 1fr; gap: 12px; }
+      .chart-card { padding: 16px; border-radius: 14px; }
+      .chart-card .card-header { margin-bottom: 16px; }
+      .chart-card h3 { font-size: 14px; }
+      .table-card { border-radius: 14px; }
+      .table-card .card-header { padding: 16px; }
+      .table-card h3 { font-size: 14px; }
+      th { padding: 10px 12px; font-size: 10px; }
+      td { padding: 12px; font-size: 12px; }
+      .footer { padding: 24px 16px; }
+      .print-btn { padding: 14px 24px; font-size: 14px; width: 100%; justify-content: center; }
+      .icarus-brand { flex-direction: column; text-align: center; padding: 16px; gap: 12px; }
+      .icarus-info { align-items: center; }
+      .footer-brand { flex-direction: column; gap: 4px; }
+    }
+    
+    @media (max-width: 480px) {
+      .header h1 { font-size: 18px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-card .value { font-size: 24px; }
+      .stat-card:nth-child(5) { grid-column: span 2; }
+    }
   </style>
 </head>
 <body>
@@ -8429,11 +8467,32 @@ function exportDashboardReport() {
 </body>
 </html>`;
 
-  const newWindow = window.open('', '_blank');
-  newWindow.document.write(htmlContent);
-  newWindow.document.close();
-  
-  showNotification('Relatório do Dashboard gerado!', 'success');
+  // Melhor compatibilidade com mobile
+  try {
+    const newWindow = window.open('about:blank', '_blank');
+    if (newWindow) {
+      newWindow.document.open();
+      newWindow.document.write(htmlContent);
+      newWindow.document.close();
+      showNotification('Relatório do Dashboard gerado!', 'success');
+    } else {
+      // Fallback: criar blob e abrir como URL
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showNotification('Relatório do Dashboard gerado!', 'success');
+    }
+  } catch (e) {
+    console.error('Erro ao gerar relatório:', e);
+    // Último fallback: abrir diretamente
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.location.href = url;
+  }
 }
 
 // ========== EXPORTAÇÃO ALMOXARIFADO ==========
@@ -8538,6 +8597,7 @@ function exportAlmoxarifadoReport() {
     '.icarus-title { font-size: 14px; font-weight: 700; color: #d4af37; letter-spacing: 2px; }' +
     '.icarus-subtitle { font-size: 10px; color: #8b8b9e; }' +
     '.icarus-contact { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #22d3ee; margin-top: 2px; }' +
+    '@media (max-width: 768px) { body { padding: 16px; } .header { padding: 24px 16px; } .header h1 { font-size: 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } .stat-card { padding: 16px; } .stat-card .value { font-size: 28px; } .charts-row { grid-template-columns: 1fr; } .table-card { overflow-x: auto; } th, td { padding: 8px 10px; font-size: 11px; } .icarus-brand { flex-direction: column; text-align: center; padding: 16px; } .icarus-info { align-items: center; } }' +
     '@media print { body { background: #fff !important; color: #1e293b !important; padding: 15px !important; -webkit-print-color-adjust: exact !important; } .stat-card, .chart-card, .table-card { background: #fff !important; border-color: #ddd !important; } .stat-card .value { color: #1e293b !important; } .value.gold { color: #b8942e !important; } th { background: #f1f5f9 !important; } @page { size: A4 landscape; margin: 8mm; } }' +
     '</style></head><body>' +
     '<div class="container">' +
@@ -8569,9 +8629,28 @@ function exportAlmoxarifadoReport() {
     'new Chart(document.getElementById("topItemsChart"), { type: "bar", data: { labels: topItems.map(function(i) { return i.name.substring(0, 20); }), datasets: [{ label: "Quantidade", data: topItems.map(function(i) { return i.qty; }), backgroundColor: "rgba(212, 175, 55, 0.7)", borderRadius: 6 }] }, options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#888" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { ticks: { color: "#888" }, grid: { color: "rgba(255,255,255,0.05)" } } } } });' +
     '<\/script></body></html>';
 
-  const newWindow = window.open('', '_blank');
-  newWindow.document.write(htmlContent);
-  newWindow.document.close();
+  // Melhor compatibilidade com mobile
+  try {
+    const newWindow = window.open('about:blank', '_blank');
+    if (newWindow) {
+      newWindow.document.open();
+      newWindow.document.write(htmlContent);
+      newWindow.document.close();
+    } else {
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  } catch (e) {
+    console.error('Erro ao gerar relatório:', e);
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.location.href = url;
+  }
   
   showNotification('Relatório e planilha exportados!', 'success');
 }
