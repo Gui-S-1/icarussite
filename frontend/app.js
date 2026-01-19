@@ -960,16 +960,16 @@ function showError(message) {
 function setDashboardFilter(filter) {
   state.dashboardFilter = filter;
   
-  // Update button states (with null checks)
-  const filterDaily = document.getElementById('filter-daily');
-  const filterWeekly = document.getElementById('filter-weekly');
-  const filterMonthly = document.getElementById('filter-monthly');
+  // Update button states - usar IDs corretos com sufixo -new
+  const filterDaily = document.getElementById('filter-daily-new');
+  const filterWeekly = document.getElementById('filter-weekly-new');
+  const filterMonthly = document.getElementById('filter-monthly-new');
   
   if (filterDaily) filterDaily.classList.remove('active');
   if (filterWeekly) filterWeekly.classList.remove('active');
   if (filterMonthly) filterMonthly.classList.remove('active');
   
-  const filterBtn = document.getElementById(`filter-${filter}`);
+  const filterBtn = document.getElementById(`filter-${filter}-new`);
   if (filterBtn) filterBtn.classList.add('active');
   
   // Se escolheu mês específico, força monthly
@@ -1003,9 +1003,12 @@ function setDashboardMonth(monthValue) {
   if (monthValue) {
     // Força filtro mensal quando seleciona mês específico
     state.dashboardFilter = 'monthly';
-    document.getElementById('filter-daily').classList.remove('active');
-    document.getElementById('filter-weekly').classList.remove('active');
-    document.getElementById('filter-monthly').classList.add('active');
+    const dEl = document.getElementById('filter-daily-new');
+    const wEl = document.getElementById('filter-weekly-new');
+    const mEl = document.getElementById('filter-monthly-new');
+    if (dEl) dEl.classList.remove('active');
+    if (wEl) wEl.classList.remove('active');
+    if (mEl) mEl.classList.add('active');
     
     // Atualiza label com nome do mês
     const [year, month] = monthValue.split('-');
@@ -2907,7 +2910,7 @@ function renderInventoryTable() {
       '<td onclick="event.stopPropagation()">' +
         '<button class="btn-small" onclick="adjustStock(' + item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">−</button>' +
         '<button class="btn-small" onclick="adjustStock(' + item.id + ', 1)" title="Adicionar 1" style="padding: 4px 8px;">+</button>' +
-        '<button class="btn-small btn-danger" onclick="deleteItem(' + item.id + ')" style="padding: 4px 8px;">🗑️</button>' +
+        '<button class="btn-small btn-danger" onclick="deleteItem(' + item.id + ')" style="padding: 4px 8px;" title="Excluir item">×</button>' +
       '</td>' +
     '</tr>';
   }).join('');
@@ -7593,43 +7596,56 @@ function exportDashboardReport() {
   const orders = state.orders || [];
   const filter = state.dashboardFilter || 'daily';
   
-  // Calcular estatísticas
-  const today = new Date();
-  let startDate = new Date(today);
+  // Usar o mesmo range do dashboard
+  const { startDate, endDate } = getDateRange();
   let periodLabel = 'Hoje';
   
-  if (filter === 'weekly') {
-    startDate.setDate(today.getDate() - 7);
-    periodLabel = 'Última Semana';
+  if (state.dashboardMonth) {
+    const [year, month] = state.dashboardMonth.split('-');
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    periodLabel = monthNames[parseInt(month) - 1] + ' ' + year;
+  } else if (filter === 'weekly') {
+    periodLabel = 'Esta Semana';
   } else if (filter === 'monthly') {
-    startDate.setMonth(today.getMonth() - 1);
-    periodLabel = 'Último Mês';
+    periodLabel = 'Este Mês';
   }
   
   const filteredOrders = orders.filter(o => {
     const created = new Date(o.created_at);
-    return created >= startDate;
+    return created >= startDate && created <= endDate;
   });
   
-  const pending = filteredOrders.filter(o => o.status === 'pendente').length;
-  const inProgress = filteredOrders.filter(o => o.status === 'em_andamento').length;
-  const completed = filteredOrders.filter(o => o.status === 'concluida').length;
+  // Status corretos do sistema
+  const pending = filteredOrders.filter(o => o.status === 'pending').length;
+  const inProgress = filteredOrders.filter(o => o.status === 'in_progress' || o.status === 'paused').length;
+  const completed = filteredOrders.filter(o => o.status === 'completed').length;
   const total = filteredOrders.length;
   const aproveitamento = total > 0 ? Math.round((completed / total) * 100) : 0;
   
-  // Agrupar por executor
+  // Agrupar por executor - usando assigned_users que é o formato correto
   const byExecutor = {};
   filteredOrders.forEach(o => {
-    const name = o.executor_name || 'Não atribuído';
-    if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0 };
-    byExecutor[name].total++;
-    if (o.status === 'concluida') byExecutor[name].completed++;
+    // Pegar nomes dos usuários atribuídos
+    if (o.assigned_users && Array.isArray(o.assigned_users) && o.assigned_users.length > 0) {
+      o.assigned_users.forEach(user => {
+        const name = user.name || user.username || 'Não atribuído';
+        if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
+        byExecutor[name].total++;
+        if (o.status === 'completed') byExecutor[name].completed++;
+        if (o.worked_minutes) byExecutor[name].minutes += o.worked_minutes;
+      });
+    } else {
+      const name = 'Não atribuído';
+      if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
+      byExecutor[name].total++;
+      if (o.status === 'completed') byExecutor[name].completed++;
+    }
   });
   
-  // Agrupar por setor
+  // Agrupar por setor - usando 'sector' que é o campo correto
   const bySetor = {};
   filteredOrders.forEach(o => {
-    const setor = o.setor || 'Não especificado';
+    const setor = o.sector || 'Não especificado';
     if (!bySetor[setor]) bySetor[setor] = 0;
     bySetor[setor]++;
   });
