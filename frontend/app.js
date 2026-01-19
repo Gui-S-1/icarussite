@@ -5623,20 +5623,39 @@ function exportWaterReportPDF(selectedMonth) {
   const lastDate = formatDatePDF(sortedReadings[sortedReadings.length - 1].reading_date);
   const periodStr = firstDate.formatted + ' a ' + lastDate.formatted;
   
-  // Calcular consumos
+  // NOVO CÁLCULO: Consumo baseado em leituras de 24h por dia
+  // Agrupa leituras por dia e por tanque, usa TODAS as leituras (não só 07:00)
   function calculateConsumption(tank) {
+    // Filtrar leituras do tanque específico
     const tankReadings = sortedReadings
-      .filter(r => r.tank_name === tank && r.reading_time === '07:00')
-      .sort((a, b) => formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj);
+      .filter(r => r.tank_name === tank)
+      .sort((a, b) => {
+        const dateA = formatDatePDF(a.reading_date).dateObj;
+        const dateB = formatDatePDF(b.reading_date).dateObj;
+        if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
+        // Mesmo dia, ordenar por hora
+        const [hA, mA] = (a.reading_time || '00:00').split(':').map(Number);
+        const [hB, mB] = (b.reading_time || '00:00').split(':').map(Number);
+        return (hA * 60 + mA) - (hB * 60 + mB);
+      });
     
     if (tankReadings.length < 2) return { total: 0, avg: 0, days: 0 };
     
-    let total = 0, count = 0;
+    // Calcular consumo entre leituras consecutivas
+    let total = 0;
+    const dailyConsumption = {};
+    
     for (let i = 1; i < tankReadings.length; i++) {
       const diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
-      if (diff >= 0) { total += diff; count++; }
+      if (diff > 0) {
+        total += diff;
+        const dayKey = formatDatePDF(tankReadings[i].reading_date).formatted;
+        dailyConsumption[dayKey] = (dailyConsumption[dayKey] || 0) + diff;
+      }
     }
-    return { total, avg: count > 0 ? total / count : 0, days: count };
+    
+    const days = Object.keys(dailyConsumption).length;
+    return { total, avg: days > 0 ? total / days : 0, days };
   }
   
   const aviariosCalc = calculateConsumption('aviarios');
@@ -5779,61 +5798,267 @@ function exportWaterReportPDF(selectedMonth) {
   '</div>' +
   '</div></body></html>';
 
-  // Criar nova janela/aba de forma compatível com mobile
-  showReportInNewTab(htmlContent, 'Relatório de Água gerado!');
+  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
+  showReportInPage(htmlContent, 'Relatório de Água', 'Relatório de Água gerado!');
 }
 
-// Função utilitária para abrir relatórios em nova aba (compatível mobile/desktop/webview)
-function showReportInNewTab(htmlContent, successMessage) {
-  try {
-    // Tentar abrir em nova aba
-    const newWindow = window.open('about:blank', '_blank');
-    if (newWindow && !newWindow.closed) {
-      newWindow.document.open();
-      newWindow.document.write(htmlContent);
-      newWindow.document.close();
-      if (successMessage) showNotification(successMessage, 'success');
-      return;
-    }
-  } catch (e) {
-    console.log('window.open falhou:', e);
-  }
+// Função utilitária para mostrar relatórios na página atual (100% compatível com APK/WebView)
+function showReportInPage(htmlContent, reportTitle, successMessage) {
+  // Remover overlay anterior se existir
+  const existingOverlay = document.getElementById('report-overlay');
+  if (existingOverlay) existingOverlay.remove();
   
-  // Fallback: criar elemento na própria página
-  try {
-    // Criar overlay com iframe
-    const overlay = document.createElement('div');
-    overlay.id = 'report-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;flex-direction:column';
-    
-    // Barra de ferramentas
-    const toolbar = document.createElement('div');
-    toolbar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#111;border-bottom:1px solid rgba(255,255,255,0.1)';
-    toolbar.innerHTML = '<button onclick="document.getElementById(\'report-overlay\').remove()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Voltar</button>' +
-      '<button onclick="document.getElementById(\'report-iframe\').contentWindow.print()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:linear-gradient(135deg,#06b6d4,#0891b2);border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir PDF</button>';
-    
-    // Iframe com conteúdo
-    const iframe = document.createElement('iframe');
-    iframe.id = 'report-iframe';
-    iframe.style.cssText = 'flex:1;border:none;background:#fff';
-    
-    overlay.appendChild(toolbar);
-    overlay.appendChild(iframe);
-    document.body.appendChild(overlay);
-    
-    // Escrever conteúdo no iframe
-    setTimeout(() => {
+  // Criar overlay fullscreen
+  const overlay = document.createElement('div');
+  overlay.id = 'report-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a12;z-index:99999;display:flex;flex-direction:column;overflow:hidden';
+  
+  // Barra de ferramentas fixa no topo
+  const toolbar = document.createElement('div');
+  toolbar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(135deg,#111118,#1a1a28);border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;gap:8px;flex-wrap:wrap';
+  
+  // Botão Voltar
+  const btnBack = document.createElement('button');
+  btnBack.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span>Voltar</span>';
+  btnBack.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s';
+  btnBack.onclick = function() { overlay.remove(); };
+  
+  // Container dos botões de ação
+  const actionsDiv = document.createElement('div');
+  actionsDiv.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  
+  // Botão Imprimir (funciona no site)
+  const btnPrint = document.createElement('button');
+  btnPrint.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg><span>Imprimir</span>';
+  btnPrint.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
+  btnPrint.onclick = function() {
+    const iframe = document.getElementById('report-iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.print();
+    }
+  };
+  
+  // Botão Download PDF
+  const btnDownload = document.createElement('button');
+  btnDownload.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Baixar PDF</span>';
+  btnDownload.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
+  btnDownload.onclick = function() {
+    downloadReportAsPDF(reportTitle);
+  };
+  
+  // Botão Compartilhar (para mobile)
+  const btnShare = document.createElement('button');
+  btnShare.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Enviar</span>';
+  btnShare.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
+  btnShare.onclick = function() {
+    shareReportAsPDF(reportTitle);
+  };
+  
+  actionsDiv.appendChild(btnPrint);
+  actionsDiv.appendChild(btnDownload);
+  actionsDiv.appendChild(btnShare);
+  
+  toolbar.appendChild(btnBack);
+  toolbar.appendChild(actionsDiv);
+  
+  // Container do conteúdo com scroll
+  const contentContainer = document.createElement('div');
+  contentContainer.style.cssText = 'flex:1;overflow:auto;-webkit-overflow-scrolling:touch';
+  
+  // Iframe para renderizar o HTML
+  const iframe = document.createElement('iframe');
+  iframe.id = 'report-iframe';
+  iframe.style.cssText = 'width:100%;height:100%;border:none;background:#fff';
+  
+  contentContainer.appendChild(iframe);
+  overlay.appendChild(toolbar);
+  overlay.appendChild(contentContainer);
+  document.body.appendChild(overlay);
+  
+  // Escrever conteúdo no iframe
+  setTimeout(function() {
+    try {
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
       doc.write(htmlContent);
       doc.close();
-    }, 100);
-    
-    if (successMessage) showNotification(successMessage, 'success');
-  } catch (e2) {
-    console.error('Fallback também falhou:', e2);
-    showNotification('Erro ao gerar relatório', 'error');
+    } catch (e) {
+      console.error('Erro ao escrever no iframe:', e);
+    }
+  }, 50);
+  
+  if (successMessage) showNotification(successMessage, 'success');
+}
+
+// Função para baixar PDF (usa html2canvas + jsPDF)
+async function downloadReportAsPDF(title) {
+  const iframe = document.getElementById('report-iframe');
+  if (!iframe || !iframe.contentDocument) {
+    showNotification('Erro: conteúdo não encontrado', 'error');
+    return;
   }
+  
+  showNotification('Gerando PDF, aguarde...', 'info');
+  
+  try {
+    // Carregar bibliotecas se não existirem
+    if (typeof html2canvas === 'undefined') {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    }
+    
+    const content = iframe.contentDocument.body;
+    
+    // Capturar canvas
+    const canvas = await html2canvas(content, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: content.scrollWidth,
+      windowHeight: content.scrollHeight
+    });
+    
+    // Criar PDF
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const finalWidth = imgWidth * ratio;
+    const finalHeight = imgHeight * ratio;
+    
+    // Se o conteúdo for maior que uma página, dividir
+    const totalPages = Math.ceil((imgHeight * ratio) / pdfHeight);
+    
+    if (totalPages === 1) {
+      pdf.addImage(imgData, 'PNG', 0, 0, finalWidth, finalHeight);
+    } else {
+      // Múltiplas páginas
+      let position = 0;
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight * (pdfWidth / imgWidth));
+        position -= pdfHeight;
+      }
+    }
+    
+    // Nome do arquivo
+    const now = new Date();
+    const fileName = (title || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
+      now.toLocaleDateString('pt-BR').replace(/\//g, '-') + '.pdf';
+    
+    // Salvar
+    pdf.save(fileName);
+    showNotification('PDF baixado com sucesso!', 'success');
+    
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    // Fallback: tentar imprimir
+    showNotification('Usando impressão como alternativa...', 'info');
+    const iframeWindow = iframe.contentWindow;
+    if (iframeWindow) {
+      iframeWindow.print();
+    }
+  }
+}
+
+// Função para compartilhar PDF (Web Share API)
+async function shareReportAsPDF(title) {
+  const iframe = document.getElementById('report-iframe');
+  if (!iframe || !iframe.contentDocument) {
+    showNotification('Erro: conteúdo não encontrado', 'error');
+    return;
+  }
+  
+  showNotification('Preparando para enviar...', 'info');
+  
+  try {
+    // Carregar bibliotecas
+    if (typeof html2canvas === 'undefined') {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    }
+    
+    const content = iframe.contentDocument.body;
+    
+    const canvas = await html2canvas(content, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+    
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight * (pdfWidth / imgWidth));
+    
+    const now = new Date();
+    const fileName = (title || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
+      now.toLocaleDateString('pt-BR').replace(/\//g, '-') + '.pdf';
+    
+    // Gerar blob
+    const pdfBlob = pdf.output('blob');
+    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    
+    // Verificar se Web Share API está disponível
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      await navigator.share({
+        title: title || 'Relatório',
+        text: 'Relatório gerado pelo Sistema Icarus',
+        files: [pdfFile]
+      });
+      showNotification('Pronto para enviar!', 'success');
+    } else {
+      // Fallback: download normal
+      showNotification('Compartilhamento não suportado, baixando...', 'info');
+      pdf.save(fileName);
+    }
+    
+  } catch (error) {
+    console.error('Erro ao compartilhar:', error);
+    if (error.name !== 'AbortError') {
+      showNotification('Erro ao compartilhar, tentando download...', 'warning');
+      downloadReportAsPDF(title);
+    }
+  }
+}
+
+// Função auxiliar para carregar scripts dinamicamente
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src="' + src + '"]');
+    if (existing) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
 }
 
 // Exportar relatório Excel (CSV) - Formato oficial Granja Vitta
@@ -8580,8 +8805,8 @@ function exportDashboardReport() {
 </body>
 </html>`;
 
-  // Usar função utilitária para abrir relatório
-  showReportInNewTab(htmlContent, 'Relatório do Dashboard gerado!');
+  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
+  showReportInPage(htmlContent, 'Relatório Dashboard', 'Relatório do Dashboard gerado!');
 }
 
 // ========== EXPORTAÇÃO ALMOXARIFADO ==========
@@ -8746,8 +8971,8 @@ function exportAlmoxarifadoReport() {
     'new Chart(document.getElementById("topItemsChart"), { type: "bar", data: { labels: topItems.map(function(i) { return i.name.substring(0, 18); }), datasets: [{ label: "Quantidade", data: topItems.map(function(i) { return i.qty; }), backgroundColor: "rgba(139, 92, 246, 0.7)", borderRadius: 6 }] }, options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.03)" } }, y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.03)" } } } } });' +
     '<\/script></body></html>';
 
-  // Usar função utilitária para abrir relatório
-  showReportInNewTab(htmlContent, 'Relatório e planilha exportados!');
+  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
+  showReportInPage(htmlContent, 'Relatório Almoxarifado', 'Relatório e planilha exportados!');
 }
 
 // ========== TAREFAS ADITIVAS ==========
