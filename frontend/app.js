@@ -8070,6 +8070,59 @@ function exportDashboardReport() {
       font-size: 13px;
     }
     
+    .icarus-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 24px auto;
+      padding: 20px 32px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 16px;
+      max-width: 400px;
+    }
+    
+    .icarus-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1));
+      border-radius: 14px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .icarus-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    
+    .icarus-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #d4af37;
+      letter-spacing: 2px;
+    }
+    
+    .icarus-subtitle {
+      font-size: 11px;
+      color: #8b8b9e;
+    }
+    
+    .icarus-contact {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #22d3ee;
+      margin-top: 4px;
+    }
+    
     .footer-brand {
       display: inline-flex;
       align-items: center;
@@ -8084,27 +8137,57 @@ function exportDashboardReport() {
       body { 
         background: #fff !important; 
         color: #1e293b !important;
-        padding: 20px !important;
+        padding: 15px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       body::before, body::after { display: none; }
+      .container { max-width: 100% !important; }
+      .stats-grid { 
+        grid-template-columns: repeat(5, 1fr) !important; 
+        gap: 10px !important;
+      }
+      .stat-card { padding: 16px !important; }
+      .stat-card .value { font-size: 28px !important; }
       .stat-card, .chart-card, .table-card { 
         border-color: #e2e8f0 !important;
         background: #fff !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        break-inside: avoid;
       }
+      .charts-row { gap: 15px !important; }
+      .chart-card { padding: 20px !important; }
       .stat-card .value { color: #1e293b !important; }
       .stat-card.gold .value, .value.gold { color: #b8942e !important; }
+      .value.green { color: #059669 !important; }
+      .value.blue { color: #2563eb !important; }
+      .value.orange { color: #d97706 !important; }
+      .value.purple { color: #7c3aed !important; }
       .header { 
         background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important; 
         border-color: #d4af37 !important;
+        padding: 30px !important;
+        margin-bottom: 20px !important;
       }
       .header h1 { 
         -webkit-text-fill-color: #b8942e !important;
         color: #b8942e !important;
+        font-size: 32px !important;
       }
       th { background: #f1f5f9 !important; color: #6366f1 !important; }
-      td { border-color: #e2e8f0 !important; }
-      @page { size: A4 landscape; margin: 10mm; }
+      td { border-color: #e2e8f0 !important; padding: 12px 16px !important; }
+      .table-card { margin-bottom: 20px !important; }
+      .footer { padding: 20px !important; }
+      .icarus-brand { 
+        background: #f8f8f8 !important; 
+        border-color: #d4af37 !important;
+      }
+      .icarus-title { color: #b8942e !important; }
+      .icarus-contact { color: #0891b2 !important; }
+      @page { 
+        size: A4 landscape; 
+        margin: 8mm; 
+      }
     }
   </style>
 </head>
@@ -8231,6 +8314,22 @@ function exportDashboardReport() {
         Imprimir / Salvar PDF
       </button>
       <p class="footer-text">Relatório gerado automaticamente pelo Sistema Icarus</p>
+      <div class="icarus-brand">
+        <div class="icarus-logo">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="icarus-info">
+          <span class="icarus-title">ICARUS SYSTEM</span>
+          <span class="icarus-subtitle">Sistema Inteligente de Gestão de Manutenção</span>
+          <span class="icarus-contact">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            +55 62 98493-0056
+          </span>
+        </div>
+      </div>
       <p class="footer-brand">
         ${svgIcons.award}
         Desenvolvido por Guilherme Braga • © 2025
@@ -8433,6 +8532,13 @@ function exportAlmoxarifadoReport() {
     'td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }' +
     '.low-stock { background: rgba(220, 53, 69, 0.15); }' +
     '.footer { text-align: center; padding: 30px; color: #666; font-size: 12px; }' +
+    '.icarus-brand { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px auto; padding: 16px 28px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(139, 92, 246, 0.08)); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 14px; max-width: 380px; }' +
+    '.icarus-logo { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1)); border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.3); }' +
+    '.icarus-info { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }' +
+    '.icarus-title { font-size: 14px; font-weight: 700; color: #d4af37; letter-spacing: 2px; }' +
+    '.icarus-subtitle { font-size: 10px; color: #8b8b9e; }' +
+    '.icarus-contact { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #22d3ee; margin-top: 2px; }' +
+    '@media print { body { background: #fff !important; color: #1e293b !important; padding: 15px !important; -webkit-print-color-adjust: exact !important; } .stat-card, .chart-card, .table-card { background: #fff !important; border-color: #ddd !important; } .stat-card .value { color: #1e293b !important; } .value.gold { color: #b8942e !important; } th { background: #f1f5f9 !important; } @page { size: A4 landscape; margin: 8mm; } }' +
     '</style></head><body>' +
     '<div class="container">' +
     '<div class="header"><h1>📦 RELATÓRIO ALMOXARIFADO</h1><p><strong>Granja Vitta</strong> • Sistema Icarus</p><p style="margin-top: 10px; color: #666;">Gerado em ' + dateStr + '</p></div>' +
@@ -8449,7 +8555,12 @@ function exportAlmoxarifadoReport() {
     '<div class="table-card"><h3>📋 Lista Completa de Itens</h3>' +
     '<table><thead><tr><th>SKU</th><th>Nome</th><th>Categoria</th><th>Marca</th><th>Qtd</th><th>Unidade</th><th>Localização</th><th>Status</th></tr></thead>' +
     '<tbody>' + tableRows + '</tbody></table></div>' +
-    '<div class="footer"><p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p></div>' +
+    '<div class="footer">' +
+    '<div class="icarus-brand">' +
+    '<div class="icarus-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
+    '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de Gestão de Manutenção</span><span class="icarus-contact">📞 +55 62 98493-0056</span></div>' +
+    '</div>' +
+    '<p>Desenvolvido por Guilherme Braga • © 2025</p></div>' +
     '</div>' +
     '<script>' +
     'var categoryData = ' + categoryDataJson + ';' +
