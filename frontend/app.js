@@ -5623,39 +5623,56 @@ function exportWaterReportPDF(selectedMonth) {
   const lastDate = formatDatePDF(sortedReadings[sortedReadings.length - 1].reading_date);
   const periodStr = firstDate.formatted + ' a ' + lastDate.formatted;
   
-  // NOVO CÁLCULO: Consumo baseado em leituras de 24h por dia
-  // Agrupa leituras por dia e por tanque, usa TODAS as leituras (não só 07:00)
+  // NOVO CÁLCULO: Consumo = (última leitura do dia - primeira leitura do dia) para cada dia
+  // Soma o consumo de todos os dias do mês
   function calculateConsumption(tank) {
     // Filtrar leituras do tanque específico
-    const tankReadings = sortedReadings
-      .filter(r => r.tank_name === tank)
-      .sort((a, b) => {
-        const dateA = formatDatePDF(a.reading_date).dateObj;
-        const dateB = formatDatePDF(b.reading_date).dateObj;
-        if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
-        // Mesmo dia, ordenar por hora
+    const tankReadings = sortedReadings.filter(r => r.tank_name === tank);
+    
+    if (tankReadings.length === 0) return { total: 0, avg: 0, days: 0, dailyData: {} };
+    
+    // Agrupar leituras por dia
+    const readingsByDay = {};
+    tankReadings.forEach(r => {
+      const dayKey = formatDatePDF(r.reading_date).formatted;
+      if (!readingsByDay[dayKey]) readingsByDay[dayKey] = [];
+      readingsByDay[dayKey].push(r);
+    });
+    
+    // Calcular consumo de cada dia (última - primeira)
+    let total = 0;
+    const dailyConsumption = {};
+    
+    Object.keys(readingsByDay).forEach(dayKey => {
+      const dayReadings = readingsByDay[dayKey].sort((a, b) => {
         const [hA, mA] = (a.reading_time || '00:00').split(':').map(Number);
         const [hB, mB] = (b.reading_time || '00:00').split(':').map(Number);
         return (hA * 60 + mA) - (hB * 60 + mB);
       });
-    
-    if (tankReadings.length < 2) return { total: 0, avg: 0, days: 0 };
-    
-    // Calcular consumo entre leituras consecutivas
-    let total = 0;
-    const dailyConsumption = {};
-    
-    for (let i = 1; i < tankReadings.length; i++) {
-      const diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
-      if (diff > 0) {
-        total += diff;
-        const dayKey = formatDatePDF(tankReadings[i].reading_date).formatted;
-        dailyConsumption[dayKey] = (dailyConsumption[dayKey] || 0) + diff;
+      
+      if (dayReadings.length >= 2) {
+        // Consumo do dia = última leitura - primeira leitura
+        const firstReading = dayReadings[0].reading_value;
+        const lastReading = dayReadings[dayReadings.length - 1].reading_value;
+        const dayConsumption = lastReading - firstReading;
+        
+        if (dayConsumption > 0) {
+          dailyConsumption[dayKey] = dayConsumption;
+          total += dayConsumption;
+        }
+      } else if (dayReadings.length === 1) {
+        // Só uma leitura no dia - não dá pra calcular consumo
+        dailyConsumption[dayKey] = 0;
       }
-    }
+    });
     
-    const days = Object.keys(dailyConsumption).length;
-    return { total, avg: days > 0 ? total / days : 0, days };
+    const daysWithConsumption = Object.keys(dailyConsumption).filter(k => dailyConsumption[k] > 0).length;
+    return { 
+      total, 
+      avg: daysWithConsumption > 0 ? total / daysWithConsumption : 0, 
+      days: daysWithConsumption,
+      dailyData: dailyConsumption
+    };
   }
   
   const aviariosCalc = calculateConsumption('aviarios');
