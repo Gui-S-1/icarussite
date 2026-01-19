@@ -5554,17 +5554,18 @@ async function saveWaterReading() {
     renderWaterHistory();
     checkWaterAlerts();
     
-    showNotification('Leitura salva com sucesso! 💧', 'success');
+    showNotification('Leitura salva com sucesso!', 'success');
     
   } catch (error) {
     showNotification('Erro ao salvar leitura: ' + error.message, 'error');
   }
 }
 
-// Exportar relatório PDF
-function exportWaterReportPDF() {
-  // Preparar dados
-  const stats = state.waterStats;
+// Estado para relatório de água
+state.waterReportMonth = null; // null = mês atual
+
+// Exportar relatório PDF - DESIGN PREMIUM
+function exportWaterReportPDF(selectedMonth) {
   const readings = state.waterReadings || [];
   
   if (readings.length === 0) {
@@ -5572,174 +5573,267 @@ function exportWaterReportPDF() {
     return;
   }
   
-  // Função para formatar data corretamente (evitar timezone issues)
-  function formatDatePDF(dateStr) {
-    var parts = dateStr.split('T')[0].split('-');
-    var year = parseInt(parts[0]);
-    var month = parseInt(parts[1]) - 1;
-    var day = parseInt(parts[2]);
-    var date = new Date(year, month, day, 12, 0, 0);
-    var dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
-    var formatted = date.toLocaleDateString('pt-BR');
-    return { formatted: formatted, dayOfWeek: dayOfWeek, dateObj: date };
+  // Determinar mês a filtrar
+  const now = new Date();
+  let filterYear, filterMonth, monthLabel;
+  
+  if (selectedMonth) {
+    const parts = selectedMonth.split('-');
+    filterYear = parseInt(parts[0]);
+    filterMonth = parseInt(parts[1]) - 1;
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    monthLabel = monthNames[filterMonth] + ' ' + filterYear;
+  } else {
+    filterYear = now.getFullYear();
+    filterMonth = now.getMonth();
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    monthLabel = monthNames[filterMonth] + ' ' + filterYear;
   }
   
-  // Calcular período real baseado nas leituras
-  var sortedReadings = [...readings].sort(function(a, b) {
-    return formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj;
+  // Função para formatar data
+  function formatDatePDF(dateStr) {
+    const parts = dateStr.split('T')[0].split('-');
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const day = parseInt(parts[2]);
+    const date = new Date(year, month, day, 12, 0, 0);
+    const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
+    const formatted = date.toLocaleDateString('pt-BR');
+    return { formatted, dayOfWeek, dateObj: date, year, month, day };
+  }
+  
+  // Filtrar leituras do mês selecionado (dia 1 até hoje ou fim do mês)
+  const filteredReadings = readings.filter(r => {
+    const info = formatDatePDF(r.reading_date);
+    return info.year === filterYear && info.month === filterMonth;
   });
   
-  var firstDateInfo = sortedReadings.length > 0 ? formatDatePDF(sortedReadings[0].reading_date) : { formatted: new Date().toLocaleDateString('pt-BR') };
-  var lastDateInfo = sortedReadings.length > 0 ? formatDatePDF(sortedReadings[sortedReadings.length - 1].reading_date) : { formatted: new Date().toLocaleDateString('pt-BR') };
+  if (filteredReadings.length === 0) {
+    showNotification('Nenhuma leitura para ' + monthLabel, 'warning');
+    return;
+  }
   
-  var periodStr = firstDateInfo.formatted === lastDateInfo.formatted ? firstDateInfo.formatted : firstDateInfo.formatted + ' a ' + lastDateInfo.formatted;
+  // Ordenar por data
+  const sortedReadings = [...filteredReadings].sort((a, b) => 
+    formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj
+  );
   
-  // Calcular consumos corretamente (leitura nova - leitura antiga por tanque)
-  var calculateConsumption = function(tank) {
-    var tankReadings = sortedReadings
-      .filter(function(r) { return r.tank_name === tank && r.reading_time === '07:00'; })
-      .sort(function(a, b) { return formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj; });
+  // Período
+  const firstDate = formatDatePDF(sortedReadings[0].reading_date);
+  const lastDate = formatDatePDF(sortedReadings[sortedReadings.length - 1].reading_date);
+  const periodStr = firstDate.formatted + ' a ' + lastDate.formatted;
+  
+  // Calcular consumos
+  function calculateConsumption(tank) {
+    const tankReadings = sortedReadings
+      .filter(r => r.tank_name === tank && r.reading_time === '07:00')
+      .sort((a, b) => formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj);
     
     if (tankReadings.length < 2) return { total: 0, avg: 0, days: 0 };
     
-    var total = 0;
-    var count = 0;
-    for (var i = 1; i < tankReadings.length; i++) {
-      var diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
-      if (diff >= 0) {
-        total += diff;
-        count++;
-      }
+    let total = 0, count = 0;
+    for (let i = 1; i < tankReadings.length; i++) {
+      const diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
+      if (diff >= 0) { total += diff; count++; }
     }
+    return { total, avg: count > 0 ? total / count : 0, days: count };
+  }
+  
+  const aviariosCalc = calculateConsumption('aviarios');
+  const recriaCalc = calculateConsumption('recria');
+  const totalConsumo = aviariosCalc.total + recriaCalc.total;
+  
+  // Gerar opções de meses disponíveis
+  const availableMonths = [];
+  const uniqueMonths = new Set();
+  readings.forEach(r => {
+    const info = formatDatePDF(r.reading_date);
+    const key = info.year + '-' + String(info.month + 1).padStart(2, '0');
+    uniqueMonths.add(key);
+  });
+  
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  [...uniqueMonths].sort().reverse().forEach(key => {
+    const [y, m] = key.split('-');
+    availableMonths.push({
+      value: key,
+      label: monthNames[parseInt(m) - 1] + ' ' + y,
+      selected: key === (filterYear + '-' + String(filterMonth + 1).padStart(2, '0'))
+    });
+  });
+  
+  const currentMonthValue = filterYear + '-' + String(filterMonth + 1).padStart(2, '0');
+  
+  // Gerar linhas da tabela
+  const tableRows = sortedReadings.slice(-100).reverse().map(r => {
+    const info = formatDatePDF(r.reading_date);
+    return '<tr>' +
+      '<td>' + info.formatted + '</td>' +
+      '<td style="color:#64748b;font-size:11px;">' + info.dayOfWeek + '</td>' +
+      '<td>' + r.reading_time + '</td>' +
+      '<td class="tank-' + r.tank_name + '">' + (r.tank_name === 'aviarios' ? 'Aviários' : 'Recria') + '</td>' +
+      '<td><strong>' + r.reading_value.toFixed(3) + '</strong></td>' +
+      '<td>' + (r.recorded_by_name || '-') + '</td>' +
+      '<td>' + (r.notes || '-') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  const htmlContent = '<!DOCTYPE html>' +
+  '<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+  '<title>Relatório de Água - Granja Vitta</title>' +
+  '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">' +
+  '<style>' +
+  '*{margin:0;padding:0;box-sizing:border-box}' +
+  'body{font-family:"Inter",system-ui,sans-serif;background:#050510;color:#fff;min-height:100vh;padding:20px}' +
+  'body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(6,182,212,0.03) 1px,transparent 1px),linear-gradient(rgba(6,182,212,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}' +
+  '.container{max-width:1200px;margin:0 auto;position:relative;z-index:1}' +
+  '.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}' +
+  '.btn-back{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s}' +
+  '.btn-back:hover{background:rgba(255,255,255,0.1);border-color:rgba(6,182,212,0.3)}' +
+  '.btn-back svg{width:18px;height:18px}' +
+  '.month-select{padding:12px 16px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:12px;color:#22d3ee;font-size:14px;cursor:pointer;outline:none;font-family:inherit}' +
+  '.month-select option{background:#1a1a2e;color:#fff}' +
+  '.actions{display:flex;gap:10px;flex-wrap:wrap}' +
+  '.btn-action{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}' +
+  '.btn-print{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff}' +
+  '.btn-print:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(6,182,212,0.3)}' +
+  '.btn-download{background:linear-gradient(135deg,#10b981,#059669);color:#fff}' +
+  '.btn-download:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(16,185,129,0.3)}' +
+  '.header{text-align:center;padding:40px 24px;background:linear-gradient(135deg,rgba(6,182,212,0.1) 0%,rgba(6,182,212,0.02) 100%);border:1px solid rgba(6,182,212,0.2);border-radius:20px;margin-bottom:24px}' +
+  '.header-icon{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(6,182,212,0.1));border:1px solid rgba(6,182,212,0.3);border-radius:16px;margin-bottom:16px;color:#22d3ee}' +
+  '.header h1{font-size:28px;font-weight:800;color:#22d3ee;margin-bottom:8px;letter-spacing:1px}' +
+  '.header .subtitle{color:#94a3b8;font-size:14px}' +
+  '.header .period{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:8px 16px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);border-radius:20px;font-size:12px;color:#67e8f9}' +
+  '.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}' +
+  '.stat-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;text-align:center}' +
+  '.stat-card.primary{border-color:rgba(6,182,212,0.3);background:linear-gradient(180deg,rgba(6,182,212,0.1) 0%,rgba(6,182,212,0.02) 100%)}' +
+  '.stat-card h3{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600}' +
+  '.stat-card .value{font-size:32px;font-weight:800;color:#fff}' +
+  '.stat-card .value.cyan{color:#22d3ee}' +
+  '.stat-card .value.green{color:#10b981}' +
+  '.stat-card .unit{font-size:11px;color:#64748b;margin-top:4px}' +
+  '.total-card{grid-column:span 4;background:linear-gradient(135deg,rgba(6,182,212,0.15) 0%,rgba(16,185,129,0.1) 100%);border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:24px;text-align:center}' +
+  '.total-card h3{font-size:11px;color:#22d3ee;margin-bottom:8px;letter-spacing:1px}' +
+  '.total-card .value{font-size:48px;font-weight:800;background:linear-gradient(135deg,#22d3ee,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}' +
+  '.table-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:24px}' +
+  '.table-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}' +
+  '.table-header svg{color:#22d3ee}' +
+  '.table-header h3{font-size:15px;font-weight:600}' +
+  '.table-scroll{overflow-x:auto}' +
+  'table{width:100%;border-collapse:collapse;min-width:600px}' +
+  'th{background:rgba(6,182,212,0.1);color:#22d3ee;padding:12px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600}' +
+  'td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}' +
+  'tr:hover{background:rgba(6,182,212,0.03)}' +
+  '.tank-aviarios{color:#22d3ee;font-weight:600}' +
+  '.tank-recria{color:#10b981;font-weight:600}' +
+  '.footer{text-align:center;padding:24px}' +
+  '.icarus-brand{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 auto 16px;padding:16px 24px;background:linear-gradient(135deg,rgba(212,175,55,0.08),rgba(6,182,212,0.08));border:1px solid rgba(212,175,55,0.2);border-radius:14px;max-width:360px}' +
+  '.icarus-logo{display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.1));border-radius:10px;border:1px solid rgba(212,175,55,0.3)}' +
+  '.icarus-info{display:flex;flex-direction:column;align-items:flex-start;gap:2px}' +
+  '.icarus-title{font-size:13px;font-weight:700;color:#d4af37;letter-spacing:2px}' +
+  '.icarus-subtitle{font-size:9px;color:#8b8b9e}' +
+  '.icarus-contact{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#22d3ee}' +
+  '.footer-text{color:#64748b;font-size:11px}' +
+  '@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.total-card{grid-column:span 2}.stat-card .value{font-size:24px}.total-card .value{font-size:32px}.header h1{font-size:20px}.top-bar{flex-direction:column;align-items:stretch}.actions{justify-content:center}}' +
+  '@media print{body{background:#fff!important;color:#1e293b!important;padding:15px!important}body::before{display:none}.top-bar{display:none!important}.stat-card,.table-card{background:#fff!important;border-color:#e2e8f0!important}.stat-card .value{color:#1e293b!important}.value.cyan,.value.green{color:#0891b2!important}.total-card{background:#f8fafc!important}.total-card .value{-webkit-text-fill-color:#0891b2!important}th{background:#f1f5f9!important;color:#0891b2!important}td{border-color:#e2e8f0!important}.icarus-brand{background:#f8f8f8!important}.icarus-title{color:#b8942e!important}@page{size:A4 portrait;margin:10mm}}' +
+  '</style></head><body>' +
+  '<div class="container">' +
+  '<div class="top-bar">' +
+  '<a href="javascript:window.close();history.back();" class="btn-back" onclick="try{window.close();}catch(e){history.back();}">' +
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
+  'Voltar' +
+  '</a>' +
+  '<select class="month-select" onchange="window.location.href=window.location.pathname+\'?month=\'+this.value;if(window.opener){window.opener.exportWaterReportPDF(this.value);window.close();}">' +
+  availableMonths.map(m => '<option value="' + m.value + '"' + (m.selected ? ' selected' : '') + '>' + m.label + '</option>').join('') +
+  '</select>' +
+  '<div class="actions">' +
+  '<button onclick="window.print()" class="btn-action btn-print">' +
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>' +
+  'Imprimir PDF' +
+  '</button>' +
+  '</div>' +
+  '</div>' +
+  '<div class="header">' +
+  '<div class="header-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div>' +
+  '<h1>CONTROLE DE ÁGUA</h1>' +
+  '<p class="subtitle"><strong>Granja Vitta</strong> — Sistema Icarus</p>' +
+  '<div class="period"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + periodStr + '</div>' +
+  '</div>' +
+  '<div class="stats-grid">' +
+  '<div class="stat-card primary"><h3>Aviários (Média)</h3><div class="value cyan">' + aviariosCalc.avg.toFixed(2) + '</div><div class="unit">m³/dia</div></div>' +
+  '<div class="stat-card primary"><h3>Recria (Média)</h3><div class="value green">' + recriaCalc.avg.toFixed(2) + '</div><div class="unit">m³/dia</div></div>' +
+  '<div class="stat-card"><h3>Total Aviários</h3><div class="value">' + aviariosCalc.total.toFixed(2) + '</div><div class="unit">m³ período</div></div>' +
+  '<div class="stat-card"><h3>Total Recria</h3><div class="value">' + recriaCalc.total.toFixed(2) + '</div><div class="unit">m³ período</div></div>' +
+  '<div class="total-card"><h3>CONSUMO TOTAL DO MÊS</h3><div class="value">' + totalConsumo.toFixed(2) + ' m³</div><div class="unit">' + sortedReadings.length + ' leituras registradas</div></div>' +
+  '</div>' +
+  '<div class="table-card">' +
+  '<div class="table-header"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><h3>Histórico de Leituras</h3></div>' +
+  '<div class="table-scroll"><table><thead><tr><th>Data</th><th>Dia</th><th>Horário</th><th>Caixa</th><th>Leitura</th><th>Registrado por</th><th>Obs</th></tr></thead><tbody>' + tableRows + '</tbody></table></div>' +
+  '</div>' +
+  '<div class="footer">' +
+  '<div class="icarus-brand">' +
+  '<div class="icarus-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
+  '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de Gestão</span><span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>+55 62 98493-0056</span></div>' +
+  '</div>' +
+  '<p class="footer-text">Desenvolvido por Guilherme Braga © 2025</p>' +
+  '</div>' +
+  '</div></body></html>';
+
+  // Criar nova janela/aba de forma compatível com mobile
+  showReportInNewTab(htmlContent, 'Relatório de Água gerado!');
+}
+
+// Função utilitária para abrir relatórios em nova aba (compatível mobile/desktop/webview)
+function showReportInNewTab(htmlContent, successMessage) {
+  try {
+    // Tentar abrir em nova aba
+    const newWindow = window.open('about:blank', '_blank');
+    if (newWindow && !newWindow.closed) {
+      newWindow.document.open();
+      newWindow.document.write(htmlContent);
+      newWindow.document.close();
+      if (successMessage) showNotification(successMessage, 'success');
+      return;
+    }
+  } catch (e) {
+    console.log('window.open falhou:', e);
+  }
+  
+  // Fallback: criar elemento na própria página
+  try {
+    // Criar overlay com iframe
+    const overlay = document.createElement('div');
+    overlay.id = 'report-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;flex-direction:column';
     
-    return { total: total, avg: count > 0 ? total / count : 0, days: count };
-  };
-  
-  var aviariosCalc = calculateConsumption('aviarios');
-  var recriaCalc = calculateConsumption('recria');
-  var totalConsumo = aviariosCalc.total + recriaCalc.total;
-  
-  // Usar dados calculados diretamente
-  var aviariosAvg = aviariosCalc.avg;
-  var recriaAvg = recriaCalc.avg;
-  var aviariosTotal = aviariosCalc.total;
-  var recriaTotal = recriaCalc.total;
-  
-  // Criar conteúdo HTML para impressão
-  const content = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Relatório de Controle de Água - Granja Vitta</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-        .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #1a1a2e; padding-bottom: 20px; }
-        .header h1 { color: #1a1a2e; margin: 0; font-size: 28px; }
-        .header .subtitle { color: #666; margin: 10px 0 0 0; font-size: 14px; }
-        .header .period { color: #888; font-size: 12px; margin-top: 5px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-        .stat-box { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; text-align: center; }
-        .stat-box h3 { margin: 0 0 10px 0; color: #333; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-box .value { font-size: 28px; font-weight: bold; color: #1a1a2e; }
-        .stat-box .label { font-size: 10px; color: #666; margin-top: 5px; }
-        .section-title { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 16px; margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #1a1a2e; color: white; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-        tr:nth-child(even) { background: #f8f9fa; }
-        .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
-        .tank-aviarios { color: #1a1a2e; font-weight: 600; }
-        .tank-recria { color: #2d5a27; font-weight: 600; }
-        @media print { body { padding: 20px; } @page { size: A4; margin: 15mm; } }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>RELATÓRIO DE CONTROLE DE ÁGUA</h1>
-        <p class="subtitle"><strong>Granja Vitta</strong> — Sistema Icarus</p>
-        <p class="period">Período: ${periodStr} | Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
-      </div>
-      
-      <h2 class="section-title">RESUMO DE CONSUMO</h2>
-      <div class="stats-grid">
-        <div class="stat-box">
-          <h3>Aviários (Média)</h3>
-          <div class="value">${aviariosAvg.toFixed(2)}</div>
-          <div class="label">m³/dia</div>
-        </div>
-        <div class="stat-box">
-          <h3>Recria (Média)</h3>
-          <div class="value">${recriaAvg.toFixed(2)}</div>
-          <div class="label">m³/dia</div>
-        </div>
-        <div class="stat-box">
-          <h3>Total Aviários</h3>
-          <div class="value">${aviariosTotal.toFixed(2)}</div>
-          <div class="label">m³ consumidos</div>
-        </div>
-        <div class="stat-box">
-          <h3>Total Recria</h3>
-          <div class="value">${recriaTotal.toFixed(2)}</div>
-          <div class="label">m³ consumidos</div>
-        </div>
-      </div>
-      
-      <div class="stats-grid" style="grid-template-columns: 1fr;">
-        <div class="stat-box" style="background: #1a1a2e; color: white;">
-          <h3 style="color: #d4af37;">CONSUMO TOTAL DO PERÍODO</h3>
-          <div class="value" style="color: #d4af37; font-size: 42px;">${(aviariosTotal + recriaTotal).toFixed(2)} m³</div>
-          <div class="label" style="color: #aaa;">${readings.length} leituras registradas</div>
-        </div>
-      </div>
-      
-      <h2 class="section-title">HISTÓRICO DE LEITURAS</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Dia</th>
-            <th>Horário</th>
-            <th>Caixa</th>
-            <th>Leitura (m³)</th>
-            <th>Registrado por</th>
-            <th>Observações</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sortedReadings.slice(-50).reverse().map(function(r) {
-            var dateInfo = formatDatePDF(r.reading_date);
-            return '<tr>' +
-              '<td>' + dateInfo.formatted + '</td>' +
-              '<td style="color: #888; font-size: 9px;">' + dateInfo.dayOfWeek + '</td>' +
-              '<td>' + r.reading_time + '</td>' +
-              '<td class="tank-' + r.tank_name + '">' + (r.tank_name === 'aviarios' ? 'Aviários' : 'Recria') + '</td>' +
-              '<td><strong>' + r.reading_value.toFixed(3) + '</strong></td>' +
-              '<td>' + (r.recorded_by_name || '-') + '</td>' +
-              '<td>' + (r.notes || '-') + '</td>' +
-            '</tr>';
-          }).join('')}
-        </tbody>
-      </table>
-      
-      <div class="footer">
-        <p>Relatório gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>
-        <p>Desenvolvido por Guilherme Braga | © 2025</p>
-      </div>
-    </body>
-    </html>
-  `;
-  
-  // Abrir janela de impressão
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(content);
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => {
-    printWindow.print();
-  }, 500);
-  
-  showNotification('Relatório PDF gerado!', 'success');
+    // Barra de ferramentas
+    const toolbar = document.createElement('div');
+    toolbar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#111;border-bottom:1px solid rgba(255,255,255,0.1)';
+    toolbar.innerHTML = '<button onclick="document.getElementById(\'report-overlay\').remove()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Voltar</button>' +
+      '<button onclick="document.getElementById(\'report-iframe\').contentWindow.print()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:linear-gradient(135deg,#06b6d4,#0891b2);border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir PDF</button>';
+    
+    // Iframe com conteúdo
+    const iframe = document.createElement('iframe');
+    iframe.id = 'report-iframe';
+    iframe.style.cssText = 'flex:1;border:none;background:#fff';
+    
+    overlay.appendChild(toolbar);
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+    
+    // Escrever conteúdo no iframe
+    setTimeout(() => {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(htmlContent);
+      doc.close();
+    }, 100);
+    
+    if (successMessage) showNotification(successMessage, 'success');
+  } catch (e2) {
+    console.error('Fallback também falhou:', e2);
+    showNotification('Erro ao gerar relatório', 'error');
+  }
 }
 
 // Exportar relatório Excel (CSV) - Formato oficial Granja Vitta
@@ -8227,10 +8321,29 @@ function exportDashboardReport() {
       .stat-card .value { font-size: 24px; }
       .stat-card:nth-child(5) { grid-column: span 2; }
     }
+    
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .btn-back { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+    .btn-back:hover { background: rgba(255,255,255,0.1); border-color: rgba(139,92,246,0.3); }
+    .btn-action { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-print { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; }
+    .btn-print:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(139,92,246,0.3); }
+    @media (max-width: 768px) { .top-bar { flex-direction: column; align-items: stretch; } .btn-back, .btn-action { justify-content: center; } }
+    @media print { .top-bar { display: none !important; } }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="top-bar">
+      <a href="javascript:void(0)" class="btn-back" onclick="try{window.close();}catch(e){history.back();}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Voltar
+      </a>
+      <button onclick="window.print()" class="btn-action btn-print">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir PDF
+      </button>
+    </div>
     <div class="header">
       <div class="header-icon">
         ${svgIcons.chart}
@@ -8467,32 +8580,8 @@ function exportDashboardReport() {
 </body>
 </html>`;
 
-  // Melhor compatibilidade com mobile
-  try {
-    const newWindow = window.open('about:blank', '_blank');
-    if (newWindow) {
-      newWindow.document.open();
-      newWindow.document.write(htmlContent);
-      newWindow.document.close();
-      showNotification('Relatório do Dashboard gerado!', 'success');
-    } else {
-      // Fallback: criar blob e abrir como URL
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.target = '_blank';
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showNotification('Relatório do Dashboard gerado!', 'success');
-    }
-  } catch (e) {
-    console.error('Erro ao gerar relatório:', e);
-    // Último fallback: abrir diretamente
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    window.location.href = url;
-  }
+  // Usar função utilitária para abrir relatório
+  showReportInNewTab(htmlContent, 'Relatório do Dashboard gerado!');
 }
 
 // ========== EXPORTAÇÃO ALMOXARIFADO ==========
@@ -8558,101 +8647,107 @@ function exportAlmoxarifadoReport() {
       '<td>' + i.quantity + '</td>' +
       '<td>' + (i.unit || '-') + '</td>' +
       '<td>' + (i.location || '-') + '</td>' +
-      '<td>' + (isLow ? '⚠️ Baixo' : '✅ OK') + '</td>' +
+      '<td style="color:' + (isLow ? '#ef4444' : '#10b981') + ';font-weight:600">' + (isLow ? 'Baixo' : 'OK') + '</td>' +
       '</tr>';
   });
 
   const htmlContent = '<!DOCTYPE html>' +
-    '<html lang="pt-BR"><head><meta charset="UTF-8">' +
+    '<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>Relatório Almoxarifado - Granja Vitta</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">' +
     '<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>' +
     '<style>' +
-    '* { margin: 0; padding: 0; box-sizing: border-box; }' +
-    'body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%); color: #fff; min-height: 100vh; padding: 40px; }' +
-    '.container { max-width: 1400px; margin: 0 auto; }' +
-    '.header { text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.02) 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 20px; margin-bottom: 30px; }' +
-    '.header h1 { font-size: 36px; color: #d4af37; margin-bottom: 10px; }' +
-    '.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }' +
-    '.stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; text-align: center; }' +
-    '.stat-card.gold { border-color: rgba(212, 175, 55, 0.5); }' +
-    '.stat-card.danger { border-color: rgba(220, 53, 69, 0.5); }' +
-    '.stat-card h3 { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 8px; }' +
-    '.stat-card .value { font-size: 42px; font-weight: 700; }' +
-    '.stat-card .value.gold { color: #d4af37; }' +
-    '.stat-card .value.red { color: #ef4444; }' +
-    '.stat-card .value.green { color: #10b981; }' +
-    '.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }' +
-    '.chart-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; }' +
-    '.chart-card h3 { margin-bottom: 20px; }' +
-    '.table-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden; }' +
-    '.table-card h3 { padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); }' +
-    'table { width: 100%; border-collapse: collapse; }' +
-    'th { background: rgba(212, 175, 55, 0.15); color: #d4af37; padding: 12px 15px; text-align: left; font-size: 11px; text-transform: uppercase; }' +
-    'td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }' +
-    '.low-stock { background: rgba(220, 53, 69, 0.15); }' +
-    '.footer { text-align: center; padding: 30px; color: #666; font-size: 12px; }' +
-    '.icarus-brand { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px auto; padding: 16px 28px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(139, 92, 246, 0.08)); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 14px; max-width: 380px; }' +
-    '.icarus-logo { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1)); border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.3); }' +
-    '.icarus-info { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }' +
-    '.icarus-title { font-size: 14px; font-weight: 700; color: #d4af37; letter-spacing: 2px; }' +
-    '.icarus-subtitle { font-size: 10px; color: #8b8b9e; }' +
-    '.icarus-contact { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #22d3ee; margin-top: 2px; }' +
-    '@media (max-width: 768px) { body { padding: 16px; } .header { padding: 24px 16px; } .header h1 { font-size: 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } .stat-card { padding: 16px; } .stat-card .value { font-size: 28px; } .charts-row { grid-template-columns: 1fr; } .table-card { overflow-x: auto; } th, td { padding: 8px 10px; font-size: 11px; } .icarus-brand { flex-direction: column; text-align: center; padding: 16px; } .icarus-info { align-items: center; } }' +
-    '@media print { body { background: #fff !important; color: #1e293b !important; padding: 15px !important; -webkit-print-color-adjust: exact !important; } .stat-card, .chart-card, .table-card { background: #fff !important; border-color: #ddd !important; } .stat-card .value { color: #1e293b !important; } .value.gold { color: #b8942e !important; } th { background: #f1f5f9 !important; } @page { size: A4 landscape; margin: 8mm; } }' +
+    '*{margin:0;padding:0;box-sizing:border-box}' +
+    'body{font-family:"Inter",system-ui,sans-serif;background:#050510;color:#fff;min-height:100vh;padding:20px}' +
+    'body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(139,92,246,0.03) 1px,transparent 1px),linear-gradient(rgba(139,92,246,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}' +
+    '.container{max-width:1400px;margin:0 auto;position:relative;z-index:1}' +
+    '.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}' +
+    '.btn-back{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s}' +
+    '.btn-back:hover{background:rgba(255,255,255,0.1)}' +
+    '.btn-action{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}' +
+    '.btn-print{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff}' +
+    '.btn-print:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(139,92,246,0.3)}' +
+    '.header{text-align:center;padding:32px 24px;background:linear-gradient(135deg,rgba(139,92,246,0.1) 0%,rgba(139,92,246,0.02) 100%);border:1px solid rgba(139,92,246,0.2);border-radius:20px;margin-bottom:24px}' +
+    '.header-icon{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(139,92,246,0.1));border:1px solid rgba(139,92,246,0.3);border-radius:14px;margin-bottom:12px;color:#a78bfa}' +
+    '.header h1{font-size:24px;font-weight:800;color:#a78bfa;margin-bottom:6px;letter-spacing:1px}' +
+    '.header p{color:#94a3b8;font-size:13px}' +
+    '.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}' +
+    '.stat-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;text-align:center}' +
+    '.stat-card.gold{border-color:rgba(212,175,55,0.3);background:linear-gradient(180deg,rgba(212,175,55,0.08) 0%,transparent 100%)}' +
+    '.stat-card.danger{border-color:rgba(239,68,68,0.3);background:linear-gradient(180deg,rgba(239,68,68,0.08) 0%,transparent 100%)}' +
+    '.stat-card h3{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600}' +
+    '.stat-card .value{font-size:32px;font-weight:800}' +
+    '.stat-card .value.gold{color:#d4af37}' +
+    '.stat-card .value.red{color:#ef4444}' +
+    '.stat-card .value.green{color:#10b981}' +
+    '.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}' +
+    '.chart-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px}' +
+    '.chart-card .chart-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}' +
+    '.chart-card .chart-header svg{color:#a78bfa}' +
+    '.chart-card h3{font-size:14px;font-weight:600}' +
+    '.table-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:24px}' +
+    '.table-header{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}' +
+    '.table-header svg{color:#a78bfa}' +
+    '.table-header h3{font-size:14px;font-weight:600}' +
+    '.table-scroll{overflow-x:auto}' +
+    'table{width:100%;border-collapse:collapse;min-width:700px}' +
+    'th{background:rgba(139,92,246,0.1);color:#a78bfa;padding:12px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600}' +
+    'td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}' +
+    'tr:hover{background:rgba(139,92,246,0.03)}' +
+    '.low-stock{background:rgba(239,68,68,0.08)}' +
+    '.footer{text-align:center;padding:24px}' +
+    '.icarus-brand{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 auto 16px;padding:16px 24px;background:linear-gradient(135deg,rgba(212,175,55,0.08),rgba(139,92,246,0.08));border:1px solid rgba(212,175,55,0.2);border-radius:14px;max-width:360px}' +
+    '.icarus-logo{display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.1));border-radius:10px;border:1px solid rgba(212,175,55,0.3)}' +
+    '.icarus-info{display:flex;flex-direction:column;align-items:flex-start;gap:2px}' +
+    '.icarus-title{font-size:13px;font-weight:700;color:#d4af37;letter-spacing:2px}' +
+    '.icarus-subtitle{font-size:9px;color:#8b8b9e}' +
+    '.icarus-contact{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#22d3ee}' +
+    '.footer-text{color:#64748b;font-size:11px}' +
+    '@media(max-width:768px){.top-bar{flex-direction:column;align-items:stretch}.stats-grid{grid-template-columns:repeat(2,1fr)}.stat-card .value{font-size:24px}.charts-row{grid-template-columns:1fr}.header h1{font-size:18px}.icarus-brand{flex-direction:column;text-align:center}.icarus-info{align-items:center}}' +
+    '@media print{body{background:#fff!important;color:#1e293b!important;padding:15px!important}body::before{display:none}.top-bar{display:none!important}.stat-card,.chart-card,.table-card{background:#fff!important;border-color:#e2e8f0!important}.stat-card .value{color:#1e293b!important}.value.gold{color:#b8942e!important}th{background:#f1f5f9!important;color:#6366f1!important}td{border-color:#e2e8f0!important}.icarus-brand{background:#f8f8f8!important}@page{size:A4 landscape;margin:8mm}}' +
     '</style></head><body>' +
     '<div class="container">' +
-    '<div class="header"><h1>📦 RELATÓRIO ALMOXARIFADO</h1><p><strong>Granja Vitta</strong> • Sistema Icarus</p><p style="margin-top: 10px; color: #666;">Gerado em ' + dateStr + '</p></div>' +
+    '<div class="top-bar">' +
+    '<a href="javascript:void(0)" class="btn-back" onclick="try{window.close();}catch(e){history.back();}">' +
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Voltar</a>' +
+    '<button onclick="window.print()" class="btn-action btn-print">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir PDF</button>' +
+    '</div>' +
+    '<div class="header">' +
+    '<div class="header-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>' +
+    '<h1>RELATÓRIO ALMOXARIFADO</h1>' +
+    '<p><strong>Granja Vitta</strong> — Sistema Icarus</p>' +
+    '<p style="margin-top:8px;font-size:12px;color:#64748b">Gerado em ' + dateStr + '</p>' +
+    '</div>' +
     '<div class="stats-grid">' +
     '<div class="stat-card gold"><h3>Total de Itens</h3><div class="value gold">' + totalItems + '</div></div>' +
     '<div class="stat-card danger"><h3>Estoque Baixo</h3><div class="value red">' + lowStock + '</div></div>' +
     '<div class="stat-card"><h3>Categorias</h3><div class="value green">' + categories + '</div></div>' +
-    '<div class="stat-card gold"><h3>Valor Total</h3><div class="value gold">' + totalValueStr + '</div></div>' +
+    '<div class="stat-card gold"><h3>Valor Total</h3><div class="value gold" style="font-size:24px">' + totalValueStr + '</div></div>' +
     '</div>' +
     '<div class="charts-row">' +
-    '<div class="chart-card"><h3>📊 Itens por Categoria</h3><canvas id="categoryChart"></canvas></div>' +
-    '<div class="chart-card"><h3>📈 Top 10 - Maior Quantidade</h3><canvas id="topItemsChart"></canvas></div>' +
+    '<div class="chart-card"><div class="chart-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg><h3>Itens por Categoria</h3></div><canvas id="categoryChart"></canvas></div>' +
+    '<div class="chart-card"><div class="chart-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><h3>Top 10 - Maior Quantidade</h3></div><canvas id="topItemsChart"></canvas></div>' +
     '</div>' +
-    '<div class="table-card"><h3>📋 Lista Completa de Itens</h3>' +
-    '<table><thead><tr><th>SKU</th><th>Nome</th><th>Categoria</th><th>Marca</th><th>Qtd</th><th>Unidade</th><th>Localização</th><th>Status</th></tr></thead>' +
-    '<tbody>' + tableRows + '</tbody></table></div>' +
+    '<div class="table-card"><div class="table-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><h3>Lista Completa de Itens</h3></div>' +
+    '<div class="table-scroll"><table><thead><tr><th>SKU</th><th>Nome</th><th>Categoria</th><th>Marca</th><th>Qtd</th><th>Unidade</th><th>Localização</th><th>Status</th></tr></thead>' +
+    '<tbody>' + tableRows + '</tbody></table></div></div>' +
     '<div class="footer">' +
     '<div class="icarus-brand">' +
-    '<div class="icarus-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
-    '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de Gestão de Manutenção</span><span class="icarus-contact">📞 +55 62 98493-0056</span></div>' +
+    '<div class="icarus-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
+    '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de Gestão</span><span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>+55 62 98493-0056</span></div>' +
     '</div>' +
-    '<p>Desenvolvido por Guilherme Braga • © 2025</p></div>' +
-    '</div>' +
+    '<p class="footer-text">Desenvolvido por Guilherme Braga © 2025</p>' +
+    '</div></div>' +
     '<script>' +
     'var categoryData = ' + categoryDataJson + ';' +
     'var topItems = ' + topItemsJson + ';' +
-    'new Chart(document.getElementById("categoryChart"), { type: "doughnut", data: { labels: Object.keys(categoryData), datasets: [{ data: Object.values(categoryData), backgroundColor: ["#d4af37", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899"] }] }, options: { plugins: { legend: { position: "bottom", labels: { color: "#888" } } } } });' +
-    'new Chart(document.getElementById("topItemsChart"), { type: "bar", data: { labels: topItems.map(function(i) { return i.name.substring(0, 20); }), datasets: [{ label: "Quantidade", data: topItems.map(function(i) { return i.qty; }), backgroundColor: "rgba(212, 175, 55, 0.7)", borderRadius: 6 }] }, options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#888" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { ticks: { color: "#888" }, grid: { color: "rgba(255,255,255,0.05)" } } } } });' +
+    'new Chart(document.getElementById("categoryChart"), { type: "doughnut", data: { labels: Object.keys(categoryData), datasets: [{ data: Object.values(categoryData), backgroundColor: ["#8b5cf6","#06b6d4","#10b981","#f59e0b","#d4af37","#ef4444","#ec4899","#3b82f6"], borderWidth: 0 }] }, options: { cutout: "60%", plugins: { legend: { position: "bottom", labels: { color: "#94a3b8", padding: 12, font: { size: 11 } } } } } });' +
+    'new Chart(document.getElementById("topItemsChart"), { type: "bar", data: { labels: topItems.map(function(i) { return i.name.substring(0, 18); }), datasets: [{ label: "Quantidade", data: topItems.map(function(i) { return i.qty; }), backgroundColor: "rgba(139, 92, 246, 0.7)", borderRadius: 6 }] }, options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.03)" } }, y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.03)" } } } } });' +
     '<\/script></body></html>';
 
-  // Melhor compatibilidade com mobile
-  try {
-    const newWindow = window.open('about:blank', '_blank');
-    if (newWindow) {
-      newWindow.document.open();
-      newWindow.document.write(htmlContent);
-      newWindow.document.close();
-    } else {
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.target = '_blank';
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-  } catch (e) {
-    console.error('Erro ao gerar relatório:', e);
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    window.location.href = url;
-  }
-  
-  showNotification('Relatório e planilha exportados!', 'success');
+  // Usar função utilitária para abrir relatório
+  showReportInNewTab(htmlContent, 'Relatório e planilha exportados!');
 }
 
 // ========== TAREFAS ADITIVAS ==========
