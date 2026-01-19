@@ -51,7 +51,7 @@ const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
 // ========================================
 // PUSH NOTIFICATIONS - Capacitor
 // ========================================
-const APP_VERSION = '1.0.6';
+const APP_VERSION = '1.0.7';
 
 async function initPushNotifications() {
   try {

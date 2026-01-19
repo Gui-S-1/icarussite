@@ -5706,18 +5706,6 @@ function exportWaterReportPDF(selectedMonth) {
   'body{font-family:"Inter",system-ui,sans-serif;background:#050510;color:#fff;min-height:100vh;padding:20px}' +
   'body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(6,182,212,0.03) 1px,transparent 1px),linear-gradient(rgba(6,182,212,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}' +
   '.container{max-width:1200px;margin:0 auto;position:relative;z-index:1}' +
-  '.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}' +
-  '.btn-back{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s}' +
-  '.btn-back:hover{background:rgba(255,255,255,0.1);border-color:rgba(6,182,212,0.3)}' +
-  '.btn-back svg{width:18px;height:18px}' +
-  '.month-select{padding:12px 16px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:12px;color:#22d3ee;font-size:14px;cursor:pointer;outline:none;font-family:inherit}' +
-  '.month-select option{background:#1a1a2e;color:#fff}' +
-  '.actions{display:flex;gap:10px;flex-wrap:wrap}' +
-  '.btn-action{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}' +
-  '.btn-print{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff}' +
-  '.btn-print:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(6,182,212,0.3)}' +
-  '.btn-download{background:linear-gradient(135deg,#10b981,#059669);color:#fff}' +
-  '.btn-download:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(16,185,129,0.3)}' +
   '.header{text-align:center;padding:40px 24px;background:linear-gradient(135deg,rgba(6,182,212,0.1) 0%,rgba(6,182,212,0.02) 100%);border:1px solid rgba(6,182,212,0.2);border-radius:20px;margin-bottom:24px}' +
   '.header-icon{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(6,182,212,0.1));border:1px solid rgba(6,182,212,0.3);border-radius:16px;margin-bottom:16px;color:#22d3ee}' +
   '.header h1{font-size:28px;font-weight:800;color:#22d3ee;margin-bottom:8px;letter-spacing:1px}' +
@@ -5753,25 +5741,10 @@ function exportWaterReportPDF(selectedMonth) {
   '.icarus-subtitle{font-size:9px;color:#8b8b9e}' +
   '.icarus-contact{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#22d3ee}' +
   '.footer-text{color:#64748b;font-size:11px}' +
-  '@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.total-card{grid-column:span 2}.stat-card .value{font-size:24px}.total-card .value{font-size:32px}.header h1{font-size:20px}.top-bar{flex-direction:column;align-items:stretch}.actions{justify-content:center}}' +
-  '@media print{body{background:#fff!important;color:#1e293b!important;padding:15px!important}body::before{display:none}.top-bar{display:none!important}.stat-card,.table-card{background:#fff!important;border-color:#e2e8f0!important}.stat-card .value{color:#1e293b!important}.value.cyan,.value.green{color:#0891b2!important}.total-card{background:#f8fafc!important}.total-card .value{-webkit-text-fill-color:#0891b2!important}th{background:#f1f5f9!important;color:#0891b2!important}td{border-color:#e2e8f0!important}.icarus-brand{background:#f8f8f8!important}.icarus-title{color:#b8942e!important}@page{size:A4 portrait;margin:10mm}}' +
+  '@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.total-card{grid-column:span 2}.stat-card .value{font-size:24px}.total-card .value{font-size:32px}.header h1{font-size:20px}}' +
+  '@media print{body{background:#fff!important;color:#1e293b!important;padding:15px!important}body::before{display:none}.stat-card,.table-card{background:#fff!important;border-color:#e2e8f0!important}.stat-card .value{color:#1e293b!important}.value.cyan,.value.green{color:#0891b2!important}.total-card{background:#f8fafc!important}.total-card .value{-webkit-text-fill-color:#0891b2!important}th{background:#f1f5f9!important;color:#0891b2!important}td{border-color:#e2e8f0!important}.icarus-brand{background:#f8f8f8!important}.icarus-title{color:#b8942e!important}@page{size:A4 portrait;margin:10mm}}' +
   '</style></head><body>' +
   '<div class="container">' +
-  '<div class="top-bar">' +
-  '<a href="javascript:window.close();history.back();" class="btn-back" onclick="try{window.close();}catch(e){history.back();}">' +
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
-  'Voltar' +
-  '</a>' +
-  '<select class="month-select" onchange="window.location.href=window.location.pathname+\'?month=\'+this.value;if(window.opener){window.opener.exportWaterReportPDF(this.value);window.close();}">' +
-  availableMonths.map(m => '<option value="' + m.value + '"' + (m.selected ? ' selected' : '') + '>' + m.label + '</option>').join('') +
-  '</select>' +
-  '<div class="actions">' +
-  '<button onclick="window.print()" class="btn-action btn-print">' +
-  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>' +
-  'Imprimir PDF' +
-  '</button>' +
-  '</div>' +
-  '</div>' +
   '<div class="header">' +
   '<div class="header-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div>' +
   '<h1>CONTROLE DE ÁGUA</h1>' +
@@ -5803,7 +5776,15 @@ function exportWaterReportPDF(selectedMonth) {
 }
 
 // Função utilitária para mostrar relatórios na página atual (100% compatível com APK/WebView)
+// Armazena o HTML para uso posterior no download
+var currentReportHtml = '';
+var currentReportTitle = '';
+
 function showReportInPage(htmlContent, reportTitle, successMessage) {
+  // Salvar HTML para download posterior
+  currentReportHtml = htmlContent;
+  currentReportTitle = reportTitle;
+  
   // Remover overlay anterior se existir
   const existingOverlay = document.getElementById('report-overlay');
   if (existingOverlay) existingOverlay.remove();
@@ -5827,7 +5808,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage) {
   const actionsDiv = document.createElement('div');
   actionsDiv.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
   
-  // Botão Imprimir (funciona no site)
+  // Botão Imprimir
   const btnPrint = document.createElement('button');
   btnPrint.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg><span>Imprimir</span>';
   btnPrint.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
@@ -5843,7 +5824,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage) {
   btnDownload.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Baixar PDF</span>';
   btnDownload.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
   btnDownload.onclick = function() {
-    downloadReportAsPDF(reportTitle);
+    downloadReportAsPDF();
   };
   
   // Botão Compartilhar (para mobile)
@@ -5851,7 +5832,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage) {
   btnShare.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Enviar</span>';
   btnShare.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
   btnShare.onclick = function() {
-    shareReportAsPDF(reportTitle);
+    shareReportAsPDF();
   };
   
   actionsDiv.appendChild(btnPrint);
@@ -5890,10 +5871,9 @@ function showReportInPage(htmlContent, reportTitle, successMessage) {
   if (successMessage) showNotification(successMessage, 'success');
 }
 
-// Função para baixar PDF (usa html2canvas + jsPDF)
-async function downloadReportAsPDF(title) {
-  const iframe = document.getElementById('report-iframe');
-  if (!iframe || !iframe.contentDocument) {
+// Função para baixar PDF - usa método simples que funciona em APK
+async function downloadReportAsPDF() {
+  if (!currentReportHtml) {
     showNotification('Erro: conteúdo não encontrado', 'error');
     return;
   }
@@ -5901,31 +5881,39 @@ async function downloadReportAsPDF(title) {
   showNotification('Gerando PDF, aguarde...', 'info');
   
   try {
-    // Carregar bibliotecas se não existirem
-    if (typeof html2canvas === 'undefined') {
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    }
-    if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    }
+    // Carregar bibliotecas dinamicamente
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     
-    const content = iframe.contentDocument.body;
+    // Criar container temporário FORA do iframe para evitar problemas de cross-origin
+    const tempDiv = document.createElement('div');
+    tempDiv.id = 'temp-report-container';
+    tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;';
+    tempDiv.innerHTML = currentReportHtml.replace(/<!DOCTYPE[^>]*>/i, '').replace(/<html[^>]*>/i, '').replace(/<\/html>/i, '').replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<body[^>]*>/i, '<div>').replace(/<\/body>/i, '</div>');
+    document.body.appendChild(tempDiv);
+    
+    // Esperar renderização
+    await new Promise(r => setTimeout(r, 500));
     
     // Capturar canvas
-    const canvas = await html2canvas(content, {
-      scale: 2,
+    const canvas = await html2canvas(tempDiv, {
+      scale: 1.5,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: content.scrollWidth,
-      windowHeight: content.scrollHeight
+      width: 800,
+      windowWidth: 800
     });
+    
+    // Remover container temporário
+    tempDiv.remove();
     
     // Criar PDF
     const { jsPDF } = window.jspdf;
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    
     const pdf = new jsPDF({
-      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+      orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
@@ -5934,113 +5922,148 @@ async function downloadReportAsPDF(title) {
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-    const finalWidth = imgWidth * ratio;
-    const finalHeight = imgHeight * ratio;
     
-    // Se o conteúdo for maior que uma página, dividir
-    const totalPages = Math.ceil((imgHeight * ratio) / pdfHeight);
+    // Calcular proporção
+    const ratio = pdfWidth / imgWidth;
+    const scaledHeight = imgHeight * ratio;
     
-    if (totalPages === 1) {
-      pdf.addImage(imgData, 'PNG', 0, 0, finalWidth, finalHeight);
+    // Se maior que uma página, dividir
+    if (scaledHeight <= pdfHeight) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, scaledHeight);
     } else {
       // Múltiplas páginas
-      let position = 0;
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight * (pdfWidth / imgWidth));
-        position -= pdfHeight;
+      let y = 0;
+      const pageHeightPx = pdfHeight / ratio;
+      
+      while (y < imgHeight) {
+        if (y > 0) pdf.addPage();
+        
+        // Criar canvas para esta página
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = imgWidth;
+        pageCanvas.height = Math.min(pageHeightPx, imgHeight - y);
+        const ctx = pageCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, -y);
+        
+        const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
+        const pageHeight = pageCanvas.height * ratio;
+        pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfWidth, pageHeight);
+        
+        y += pageHeightPx;
       }
     }
     
     // Nome do arquivo
     const now = new Date();
-    const fileName = (title || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
+    const fileName = (currentReportTitle || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
       now.toLocaleDateString('pt-BR').replace(/\//g, '-') + '.pdf';
     
-    // Salvar
-    pdf.save(fileName);
-    showNotification('PDF baixado com sucesso!', 'success');
+    // Tentar salvar - diferentes métodos para diferentes ambientes
+    try {
+      // Método 1: pdf.save() padrão
+      pdf.save(fileName);
+      showNotification('PDF baixado com sucesso!', 'success');
+    } catch (saveErr) {
+      console.log('pdf.save falhou, tentando blob...', saveErr);
+      // Método 2: Criar blob e link
+      const pdfBlob = pdf.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showNotification('PDF baixado!', 'success');
+    }
     
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
-    // Fallback: tentar imprimir
-    showNotification('Usando impressão como alternativa...', 'info');
-    const iframeWindow = iframe.contentWindow;
-    if (iframeWindow) {
-      iframeWindow.print();
+    // Fallback: abrir para impressão
+    showNotification('Erro no download. Use Imprimir > Salvar como PDF', 'warning');
+    const iframe = document.getElementById('report-iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.print();
     }
   }
 }
 
 // Função para compartilhar PDF (Web Share API)
-async function shareReportAsPDF(title) {
-  const iframe = document.getElementById('report-iframe');
-  if (!iframe || !iframe.contentDocument) {
+async function shareReportAsPDF() {
+  if (!currentReportHtml) {
     showNotification('Erro: conteúdo não encontrado', 'error');
+    return;
+  }
+  
+  // Verificar se Web Share API está disponível
+  if (!navigator.share) {
+    showNotification('Compartilhamento não disponível. Use Baixar PDF.', 'warning');
+    downloadReportAsPDF();
     return;
   }
   
   showNotification('Preparando para enviar...', 'info');
   
   try {
-    // Carregar bibliotecas
-    if (typeof html2canvas === 'undefined') {
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    }
-    if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    }
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     
-    const content = iframe.contentDocument.body;
+    // Criar container temporário
+    const tempDiv = document.createElement('div');
+    tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;';
+    tempDiv.innerHTML = currentReportHtml.replace(/<!DOCTYPE[^>]*>/i, '').replace(/<html[^>]*>/i, '').replace(/<\/html>/i, '').replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<body[^>]*>/i, '<div>').replace(/<\/body>/i, '</div>');
+    document.body.appendChild(tempDiv);
     
-    const canvas = await html2canvas(content, {
-      scale: 2,
+    await new Promise(r => setTimeout(r, 500));
+    
+    const canvas = await html2canvas(tempDiv, {
+      scale: 1.5,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      width: 800
     });
+    
+    tempDiv.remove();
     
     const { jsPDF } = window.jspdf;
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight * (pdfWidth / imgWidth));
+    const ratio = pdfWidth / canvas.width;
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, canvas.height * ratio);
     
     const now = new Date();
-    const fileName = (title || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
+    const fileName = (currentReportTitle || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
       now.toLocaleDateString('pt-BR').replace(/\//g, '-') + '.pdf';
     
-    // Gerar blob
     const pdfBlob = pdf.output('blob');
     const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
     
-    // Verificar se Web Share API está disponível
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+    // Tentar compartilhar
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
       await navigator.share({
-        title: title || 'Relatório',
+        title: currentReportTitle || 'Relatório',
         text: 'Relatório gerado pelo Sistema Icarus',
         files: [pdfFile]
       });
       showNotification('Pronto para enviar!', 'success');
     } else {
-      // Fallback: download normal
-      showNotification('Compartilhamento não suportado, baixando...', 'info');
-      pdf.save(fileName);
+      // Fallback: só compartilhar texto
+      await navigator.share({
+        title: currentReportTitle || 'Relatório',
+        text: 'Relatório gerado pelo Sistema Icarus - Granja Vitta'
+      });
+      showNotification('Use Baixar PDF para obter o arquivo', 'info');
     }
     
   } catch (error) {
-    console.error('Erro ao compartilhar:', error);
     if (error.name !== 'AbortError') {
-      showNotification('Erro ao compartilhar, tentando download...', 'warning');
-      downloadReportAsPDF(title);
+      console.error('Erro ao compartilhar:', error);
+      showNotification('Erro. Tente Baixar PDF.', 'warning');
     }
   }
 }
@@ -8547,28 +8570,11 @@ function exportDashboardReport() {
       .stat-card:nth-child(5) { grid-column: span 2; }
     }
     
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-    .btn-back { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; }
-    .btn-back:hover { background: rgba(255,255,255,0.1); border-color: rgba(139,92,246,0.3); }
-    .btn-action { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-print { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; }
-    .btn-print:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(139,92,246,0.3); }
-    @media (max-width: 768px) { .top-bar { flex-direction: column; align-items: stretch; } .btn-back, .btn-action { justify-content: center; } }
-    @media print { .top-bar { display: none !important; } }
+    @media print { body { background: #fff !important; color: #1e293b !important; } .stat-card { background: #fff !important; border-color: #e2e8f0 !important; } .stat-card .value { color: #1e293b !important; } }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="top-bar">
-      <a href="javascript:void(0)" class="btn-back" onclick="try{window.close();}catch(e){history.back();}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Voltar
-      </a>
-      <button onclick="window.print()" class="btn-action btn-print">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimir PDF
-      </button>
-    </div>
     <div class="header">
       <div class="header-icon">
         ${svgIcons.chart}
@@ -8886,12 +8892,6 @@ function exportAlmoxarifadoReport() {
     'body{font-family:"Inter",system-ui,sans-serif;background:#050510;color:#fff;min-height:100vh;padding:20px}' +
     'body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(139,92,246,0.03) 1px,transparent 1px),linear-gradient(rgba(139,92,246,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}' +
     '.container{max-width:1400px;margin:0 auto;position:relative;z-index:1}' +
-    '.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}' +
-    '.btn-back{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s}' +
-    '.btn-back:hover{background:rgba(255,255,255,0.1)}' +
-    '.btn-action{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}' +
-    '.btn-print{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff}' +
-    '.btn-print:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(139,92,246,0.3)}' +
     '.header{text-align:center;padding:32px 24px;background:linear-gradient(135deg,rgba(139,92,246,0.1) 0%,rgba(139,92,246,0.02) 100%);border:1px solid rgba(139,92,246,0.2);border-radius:20px;margin-bottom:24px}' +
     '.header-icon{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(139,92,246,0.1));border:1px solid rgba(139,92,246,0.3);border-radius:14px;margin-bottom:12px;color:#a78bfa}' +
     '.header h1{font-size:24px;font-weight:800;color:#a78bfa;margin-bottom:6px;letter-spacing:1px}' +
@@ -8928,16 +8928,10 @@ function exportAlmoxarifadoReport() {
     '.icarus-subtitle{font-size:9px;color:#8b8b9e}' +
     '.icarus-contact{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#22d3ee}' +
     '.footer-text{color:#64748b;font-size:11px}' +
-    '@media(max-width:768px){.top-bar{flex-direction:column;align-items:stretch}.stats-grid{grid-template-columns:repeat(2,1fr)}.stat-card .value{font-size:24px}.charts-row{grid-template-columns:1fr}.header h1{font-size:18px}.icarus-brand{flex-direction:column;text-align:center}.icarus-info{align-items:center}}' +
-    '@media print{body{background:#fff!important;color:#1e293b!important;padding:15px!important}body::before{display:none}.top-bar{display:none!important}.stat-card,.chart-card,.table-card{background:#fff!important;border-color:#e2e8f0!important}.stat-card .value{color:#1e293b!important}.value.gold{color:#b8942e!important}th{background:#f1f5f9!important;color:#6366f1!important}td{border-color:#e2e8f0!important}.icarus-brand{background:#f8f8f8!important}@page{size:A4 landscape;margin:8mm}}' +
+    '@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.stat-card .value{font-size:24px}.charts-row{grid-template-columns:1fr}.header h1{font-size:18px}.icarus-brand{flex-direction:column;text-align:center}.icarus-info{align-items:center}}' +
+    '@media print{body{background:#fff!important;color:#1e293b!important;padding:15px!important}body::before{display:none}.stat-card,.chart-card,.table-card{background:#fff!important;border-color:#e2e8f0!important}.stat-card .value{color:#1e293b!important}.value.gold{color:#b8942e!important}th{background:#f1f5f9!important;color:#6366f1!important}td{border-color:#e2e8f0!important}.icarus-brand{background:#f8f8f8!important}@page{size:A4 landscape;margin:8mm}}' +
     '</style></head><body>' +
     '<div class="container">' +
-    '<div class="top-bar">' +
-    '<a href="javascript:void(0)" class="btn-back" onclick="try{window.close();}catch(e){history.back();}">' +
-    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Voltar</a>' +
-    '<button onclick="window.print()" class="btn-action btn-print">' +
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir PDF</button>' +
-    '</div>' +
     '<div class="header">' +
     '<div class="header-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>' +
     '<h1>RELATÓRIO ALMOXARIFADO</h1>' +
