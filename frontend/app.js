@@ -795,7 +795,8 @@ function setupPermissions() {
   const canSeeOS = !isLavanderia;
   
   // Almoxarifado: almoxarifado_view (ver), almoxarifado (editar) - só granja
-  const canSeeAlmox = !isLavanderia && (isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view'));
+  // Manutenção (os_manage_all) pode VER o almoxarifado para consultar peças
+  const canSeeAlmox = !isLavanderia && (isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view') || roles.includes('os_manage_all') || roles.includes('tech'));
   const canEditAlmox = !isLavanderia && (isAdmin || roles.includes('almoxarifado'));
   
   // Compras: compras_view (ver), compras (editar), compras_request (pode enviar pedidos) - só granja
@@ -940,13 +941,18 @@ function setupMobileNavPermissions() {
   const moreAditiva = document.querySelector('.mobile-more-item[onclick*="aditiva"]');
   const moreRelatorios = document.querySelector('.mobile-more-item[onclick*="relatorios"]');
   const moreCompras = document.querySelector('.mobile-more-item[onclick*="compras"]');
+  const moreAlmoxarifado = document.querySelector('.mobile-more-item[onclick*="almoxarifado"]');
   const moreConfig = document.querySelector('.mobile-more-item[onclick*="configuracoes"]');
+  
+  // Permissão para almoxarifado mobile
+  const canSeeAlmoxMobile = !isLavanderia && (isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view') || roles.includes('os_manage_all') || roles.includes('tech'));
   
   if (moreGerador) moreGerador.style.display = canSeeGerador ? '' : 'none';
   if (moreChecklist) moreChecklist.style.display = canSeeChecklists ? '' : 'none';
   if (moreAditiva) moreAditiva.style.display = canSeeAditiva ? '' : 'none';
   if (moreRelatorios) moreRelatorios.style.display = canSeeRelatorios ? '' : 'none';
   if (moreCompras) moreCompras.style.display = canSeeCompras ? '' : 'none';
+  if (moreAlmoxarifado) moreAlmoxarifado.style.display = canSeeAlmoxMobile ? '' : 'none';
   if (moreConfig) moreConfig.style.display = !isLavanderia ? '' : 'none';
 }
 
