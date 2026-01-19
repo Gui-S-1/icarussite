@@ -5867,25 +5867,16 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
     }
   };
   
-  // Botão Download PDF
+  // Botão Salvar PDF (usa print com opção salvar)
   const btnDownload = document.createElement('button');
-  btnDownload.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Baixar PDF</span>';
+  btnDownload.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Salvar PDF</span>';
   btnDownload.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
   btnDownload.onclick = function() {
     downloadReportAsPDF();
   };
   
-  // Botão Compartilhar (para mobile)
-  const btnShare = document.createElement('button');
-  btnShare.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Enviar</span>';
-  btnShare.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
-  btnShare.onclick = function() {
-    shareReportAsPDF();
-  };
-  
   actionsDiv.appendChild(btnPrint);
   actionsDiv.appendChild(btnDownload);
-  actionsDiv.appendChild(btnShare);
   
   toolbar.appendChild(btnBack);
   toolbar.appendChild(actionsDiv);
@@ -5922,163 +5913,55 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
 // Dados do relatório atual para enviar ao servidor (estruturados)
 let currentReportData = null;
 
-// Função para baixar PDF - MÉTODO DO SERVIDOR (funciona em APK!)
+// Função para baixar PDF - Backend gera e retorna PDF direto
 async function downloadReportAsPDF() {
-  showNotification('Gerando PDF no servidor...', 'info');
+  if (!currentReportData) {
+    showNotification('Erro: dados não encontrados', 'error');
+    return;
+  }
+  
+  showNotification('Gerando PDF...', 'info');
   
   try {
-    // Se temos dados estruturados, usar o servidor
-    if (currentReportData) {
-      const response = await fetch(API_BASE + '/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentReportData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.ok && result.downloadUrl) {
-        // Abrir link de download direto - funciona em qualquer navegador/WebView
-        const downloadUrl = API_BASE + result.downloadUrl;
-        window.open(downloadUrl, '_blank');
-        showNotification('PDF gerado! Baixando...', 'success');
-        return;
-      }
+    var API_URL = window.ICARUS_API_URL || 'https://icarus-api.guilhermebraga.tech';
+    
+    // POST para o servidor gerar o PDF
+    var response = await fetch(API_URL + '/generate-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(currentReportData)
+    });
+    
+    if (!response.ok) {
+      throw new Error('Erro no servidor: ' + response.status);
     }
     
-    // Fallback: tentar gerar localmente se servidor falhar
-    await downloadReportAsPDFLocal();
+    var result = await response.json();
     
-  } catch (error) {
-    console.error('Erro servidor PDF:', error);
-    // Fallback local
-    await downloadReportAsPDFLocal();
-  }
-}
-
-// Método local de backup (pode não funcionar em todos APKs)
-async function downloadReportAsPDFLocal() {
-  if (!currentReportHtml) {
-    showNotification('Erro: conteúdo não encontrado', 'error');
-    return;
-  }
-  
-  try {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    
-    const tempDiv = document.createElement('div');
-    tempDiv.id = 'temp-report-container';
-    tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;';
-    tempDiv.innerHTML = currentReportHtml.replace(/<!DOCTYPE[^>]*>/i, '').replace(/<html[^>]*>/i, '').replace(/<\/html>/i, '').replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<body[^>]*>/i, '<div>').replace(/<\/body>/i, '</div>');
-    document.body.appendChild(tempDiv);
-    
-    await new Promise(r => setTimeout(r, 500));
-    
-    const canvas = await html2canvas(tempDiv, {
-      scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff', width: 800, windowWidth: 800
-    });
-    
-    tempDiv.remove();
-    
-    const { jsPDF } = window.jspdf;
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const ratio = pdfWidth / canvas.width;
-    const scaledHeight = canvas.height * ratio;
-    
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, scaledHeight);
-    
-    const fileName = (currentReportTitle || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
-    pdf.save(fileName);
-    showNotification('PDF baixado!', 'success');
-    
-  } catch (error) {
-    console.error('Erro PDF local:', error);
-    showNotification('Use Imprimir > Salvar como PDF', 'warning');
-    const iframe = document.getElementById('report-iframe');
-    if (iframe?.contentWindow) iframe.contentWindow.print();
-  }
-}
-
-// Função para compartilhar PDF (Web Share API)
-async function shareReportAsPDF() {
-  if (!currentReportHtml) {
-    showNotification('Erro: conteúdo não encontrado', 'error');
-    return;
-  }
-  
-  // Verificar se Web Share API está disponível
-  if (!navigator.share) {
-    showNotification('Compartilhamento não disponível. Use Baixar PDF.', 'warning');
-    downloadReportAsPDF();
-    return;
-  }
-  
-  showNotification('Preparando para enviar...', 'info');
-  
-  try {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    
-    // Criar container temporário
-    const tempDiv = document.createElement('div');
-    tempDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;';
-    tempDiv.innerHTML = currentReportHtml.replace(/<!DOCTYPE[^>]*>/i, '').replace(/<html[^>]*>/i, '').replace(/<\/html>/i, '').replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<body[^>]*>/i, '<div>').replace(/<\/body>/i, '</div>');
-    document.body.appendChild(tempDiv);
-    
-    await new Promise(r => setTimeout(r, 500));
-    
-    const canvas = await html2canvas(tempDiv, {
-      scale: 1.5,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      width: 800
-    });
-    
-    tempDiv.remove();
-    
-    const { jsPDF } = window.jspdf;
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const ratio = pdfWidth / canvas.width;
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, canvas.height * ratio);
-    
-    const now = new Date();
-    const fileName = (currentReportTitle || 'Relatorio').replace(/[^a-zA-Z0-9]/g, '_') + '_' + 
-      now.toLocaleDateString('pt-BR').replace(/\//g, '-') + '.pdf';
-    
-    const pdfBlob = pdf.output('blob');
-    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-    
-    // Tentar compartilhar
-    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-      await navigator.share({
-        title: currentReportTitle || 'Relatório',
-        text: 'Relatório gerado pelo Sistema Icarus',
-        files: [pdfFile]
-      });
-      showNotification('Pronto para enviar!', 'success');
+    if (result.ok && result.downloadUrl) {
+      // Abrir URL do PDF - Android vai baixar automaticamente
+      var pdfUrl = API_URL + result.downloadUrl;
+      showNotification('Baixando PDF...', 'success');
+      window.location.href = pdfUrl;
     } else {
-      // Fallback: só compartilhar texto
-      await navigator.share({
-        title: currentReportTitle || 'Relatório',
-        text: 'Relatório gerado pelo Sistema Icarus - Granja Vitta'
-      });
-      showNotification('Use Baixar PDF para obter o arquivo', 'info');
+      throw new Error(result.error || 'Erro ao gerar PDF');
     }
     
-  } catch (error) {
-    if (error.name !== 'AbortError') {
-      console.error('Erro ao compartilhar:', error);
-      showNotification('Erro. Tente Baixar PDF.', 'warning');
+  } catch (e) {
+    console.error('Erro PDF:', e);
+    showNotification('Erro: ' + e.message + '. Use Imprimir.', 'warning');
+    // Fallback: print
+    var iframe = document.getElementById('report-iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.print();
     }
   }
+}
+
+// Função para compartilhar (usa print que permite salvar/enviar)
+async function shareReportAsPDF() {
+  // No celular, o print permite salvar como PDF e compartilhar
+  downloadReportAsPDF();
 }
 
 // Função auxiliar para carregar scripts dinamicamente
