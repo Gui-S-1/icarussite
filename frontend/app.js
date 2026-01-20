@@ -5923,13 +5923,18 @@ async function downloadReportAsPDF() {
   showNotification('Gerando PDF...', 'info');
   
   // Pegar URL da API (config.js define window.ICARUS_API_URL)
-  var API_URL = window.ICARUS_API_URL || 'https://booth-upon-ministers-specializing.trycloudflare.com';
+  var API_URL = window.ICARUS_API_URL || 'https://kong-dust-analysts-developers.trycloudflare.com';
   
   // Detectar tipo de relatório pelo título atual
   var pdfEndpoint = null;
   var params = '';
   
-  if (currentReportTitle && currentReportTitle.toLowerCase().includes('água')) {
+  if (currentReportTitle && currentReportTitle.toLowerCase().includes('dashboard')) {
+    // Relatório de Dashboard
+    var period = state.dashboardFilter || 'monthly';
+    pdfEndpoint = '/api/pdf/dashboard-report';
+    params = '?period=' + period;
+  } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('água')) {
     // Relatório de água
     var month = state.waterReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
     pdfEndpoint = '/api/pdf/water-report';
@@ -5956,10 +5961,15 @@ async function downloadReportAsPDF() {
       var fullUrl = API_URL + pdfEndpoint + params + '&token=' + encodeURIComponent(state.token);
       console.log('[PDF] Navegando para:', fullUrl);
       
-      // Usar window.location para triggar DownloadListener do WebView
-      // Em browser normal, vai abrir/baixar o PDF
-      // No APK Android, o DownloadListener vai interceptar e usar DownloadManager
-      window.location.href = fullUrl;
+      // Criar link invisível e clicar - isso garante que o WebView intercepte como download
+      var link = document.createElement('a');
+      link.href = fullUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       showNotification('Baixando PDF...', 'success');
       return;
