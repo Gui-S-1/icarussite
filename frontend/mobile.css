@@ -3357,26 +3357,28 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     letter-spacing: 0.5px;
   }
   
-  /* Cards de estatísticas do almoxarifado */
+  /* Cards de estatísticas do almoxarifado - SOMENTE MOBILE */
   .almox-stats-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-    overflow-x: visible !important;
-    padding: 0 !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   
   .almox-stat-card {
-    min-width: unset !important;
-    padding: 16px 12px !important;
+    min-width: unset;
+    padding: 16px 12px;
   }
   
-  .almox-stat-card .stat-value {
-    font-size: 28px !important;
+  .almox-stat-icon {
+    width: 40px;
+    height: 40px;
   }
   
-  .almox-stat-card .stat-label {
-    font-size: 10px !important;
+  .almox-stat-value {
+    font-size: 24px;
+  }
+  
+  .almox-stat-label {
+    font-size: 10px;
   }
   
   /* Header do almoxarifado */
