@@ -6115,55 +6115,40 @@ async function downloadReportAsPDF() {
       var fullUrl = API_URL + pdfEndpoint + params + '&token=' + encodeURIComponent(state.token);
       console.log('[PDF] URL:', fullUrl);
       
-      // Detectar nome do arquivo
-      var filename = 'relatorio';
-      if (pdfEndpoint.includes('dashboard')) filename = 'relatorio_dashboard';
-      else if (pdfEndpoint.includes('water')) filename = 'relatorio_agua';
-      else if (pdfEndpoint.includes('diesel')) filename = 'relatorio_diesel';
-      else if (pdfEndpoint.includes('generator')) filename = 'relatorio_gerador';
-      else if (pdfEndpoint.includes('orders')) filename = 'relatorio_ordens';
-      
-      // Adicionar timestamp
-      filename = filename + '_' + Date.now();
-      
       // Detectar se estamos no APK Android (Capacitor)
-      var isAndroidApp = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-      console.log('[PDF] isAndroidApp:', isAndroidApp);
+      var isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      console.log('[PDF] isCapacitor:', isCapacitor);
       
-      // ANDROID APK: Usar Plugin Capacitor
-      if (isAndroidApp && window.Capacitor && window.Capacitor.Plugins) {
-        console.log('[PDF] Usando Plugin Capacitor PdfDownloader');
+      // CAPACITOR/ANDROID: Abrir no navegador do sistema
+      if (isCapacitor) {
+        console.log('[PDF] Capacitor detectado - abrindo no navegador do sistema');
         
-        // Acessar plugin PdfDownloader
-        var PdfDownloader = window.Capacitor.Plugins.PdfDownloader;
-        
-        if (PdfDownloader && typeof PdfDownloader.download === 'function') {
-          console.log('[PDF] Plugin PdfDownloader encontrado!');
-          showNotification('📥 Baixando PDF...', 'info');
-          
+        // Usar Capacitor Browser plugin (nativo) para abrir no Chrome/navegador padrão
+        if (window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
           try {
-            var result = await PdfDownloader.download({
-              url: fullUrl,
-              filename: filename
-            });
-            console.log('[PDF] Download result:', result);
-            showNotification('✅ PDF baixado com sucesso!', 'success');
-          } catch (err) {
-            console.error('[PDF] Erro no plugin:', err);
-            // Fallback: abrir no navegador externo
-            if (PdfDownloader && typeof PdfDownloader.openInBrowser === 'function') {
-              console.log('[PDF] Fallback: abrindo no navegador');
-              await PdfDownloader.openInBrowser({ url: fullUrl });
-              showNotification('📱 Abrindo no navegador...', 'info');
-            } else {
-              showNotification('❌ Erro ao baixar PDF', 'error');
-            }
+            await window.Capacitor.Plugins.Browser.open({ url: fullUrl });
+            showNotification('📱 Abrindo PDF no navegador...', 'success');
+            return;
+          } catch (browserErr) {
+            console.log('[PDF] Browser plugin falhou, tentando App...', browserErr);
           }
-          return;
-        } else {
-          console.log('[PDF] Plugin PdfDownloader NÃO encontrado');
-          console.log('[PDF] Plugins disponíveis:', Object.keys(window.Capacitor.Plugins || {}));
         }
+        
+        // Fallback: Usar Capacitor App plugin para abrir URL externa
+        if (window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+          try {
+            await window.Capacitor.Plugins.App.openUrl({ url: fullUrl });
+            showNotification('📱 Abrindo PDF...', 'success');
+            return;
+          } catch (appErr) {
+            console.log('[PDF] App plugin falhou...', appErr);
+          }
+        }
+        
+        // Último fallback: window.open com _system
+        window.open(fullUrl, '_system');
+        showNotification('📱 Abrindo PDF...', 'success');
+        return;
       }
       
       // BROWSER NORMAL: abrir em nova aba
