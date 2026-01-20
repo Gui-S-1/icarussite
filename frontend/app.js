@@ -3059,24 +3059,113 @@ function showItemDetail(itemId) {
   const item = state.inventory.find(i => i.id === itemId);
   if (!item) return;
   
-  const specs = item.specs || 'Nenhuma especificação cadastrada';
-  alert(`DETALHES DO ITEM\n\n` +
-    `SKU: ${item.sku}\n` +
-    `Nome: ${item.name}\n` +
-    `Categoria: ${item.category}\n` +
-    `Marca: ${item.brand || 'N/A'}\n` +
-    `Quantidade: ${item.quantity} ${item.unit}\n` +
-    `Estoque Mínimo: ${item.min_stock}\n` +
-    `Estoque Máximo: ${item.max_stock || 'N/A'}\n` +
-    `Localização: ${item.location || 'N/A'}\n\n` +
-    `ESPECIFICAÇÕES TÉCNICAS:\n${specs}`
-  );
+  const isLowStock = item.quantity <= (item.min_stock || 0);
+  const isZero = item.quantity <= 0;
+  
+  const statusConfig = isZero 
+    ? { color: '#ef4444', bg: 'rgba(239,68,68,0.15)', text: 'ZERADO', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' }
+    : isLowStock 
+    ? { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: 'BAIXO', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' }
+    : { color: '#10b981', bg: 'rgba(16,185,129,0.15)', text: 'OK', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>' };
+  
+  const categoryIcons = {
+    ferramentas: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+    eletrica: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    hidraulica: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+    rolamentos: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    epis: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    outros: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>'
+  };
+  
+  const catIcon = categoryIcons[item.category] || categoryIcons.outros;
+  
+  const modalHtml = `
+    <div id="modal-item-detail" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-item-detail')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+      <div class="modal" style="max-width: 500px; background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%); border: 1px solid rgba(6,182,212,0.2); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(6,182,212,0.1);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(6,182,212,0.3);">
+              ${catIcon}
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 18px; color: #fff;">${escapeHtml(item.name)}</h3>
+              <code style="background: rgba(6,182,212,0.15); color: var(--accent-cyan); padding: 2px 8px; border-radius: 4px; font-size: 11px;">SKU: ${escapeHtml(item.sku || 'N/A')}</code>
+            </div>
+          </div>
+          <button onclick="closeModal('modal-item-detail')" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+          <div style="flex: 1; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 16px; text-align: center;">
+            <div style="font-size: 32px; font-weight: 700; color: var(--accent-cyan);">${item.quantity}</div>
+            <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">${escapeHtml(item.unit || 'un')}</div>
+          </div>
+          <div style="flex: 1; background: ${statusConfig.bg}; border: 1px solid ${statusConfig.color}33; border-radius: 12px; padding: 16px; text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 6px; color: ${statusConfig.color}; margin-bottom: 4px;">
+              ${statusConfig.icon}
+              <span style="font-size: 14px; font-weight: 600;">${statusConfig.text}</span>
+            </div>
+            <div style="font-size: 11px; color: #64748b;">Min: ${item.min_stock || 0} ${item.max_stock ? '/ Max: ' + item.max_stock : ''}</div>
+          </div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              <div><div style="font-size: 11px; color: #64748b;">Categoria</div><div style="font-size: 13px; color: #fff;">${escapeHtml(item.category || 'N/A')}</div></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              <div><div style="font-size: 11px; color: #64748b;">Marca</div><div style="font-size: 13px; color: #fff;">${escapeHtml(item.brand || 'N/A')}</div></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; grid-column: span 2;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <div><div style="font-size: 11px; color: #64748b;">Localiza\u00e7\u00e3o</div><div style="font-size: 13px; color: #fff;">${escapeHtml(item.location || 'N\u00e3o definida')}</div></div>
+            </div>
+          </div>
+        </div>
+        
+        ${item.specs ? `
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+            ESPECIFICA\u00c7\u00d5ES T\u00c9CNICAS
+          </div>
+          <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; font-size: 13px; color: #94a3b8; white-space: pre-wrap; max-height: 120px; overflow-y: auto;">${escapeHtml(item.specs)}</div>
+        </div>
+        ` : ''}
+        
+        <div style="display: flex; gap: 10px;">
+          <button onclick="closeModal('modal-item-detail')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Fechar</button>
+          <button onclick="closeModal('modal-item-detail'); showEditItemModal('${item.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, var(--accent-cyan), #0891b2); border: none; border-radius: 10px; color: #000; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">Editar Item</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-item-detail');
+  if (existing) existing.remove();
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
 function showCreateItem() {
   const modal = document.getElementById('modal-create-item');
   modal.classList.remove('hidden');
   modal.classList.add('active');
+}
+
+function showEditItemModal(itemId) {
+  const item = state.inventory.find(i => i.id === itemId);
+  if (!item) return;
+  
+  // Por enquanto, abre o modal de criar e preenche com os dados (simplificado)
+  // TODO: Criar modal de edição dedicado
+  showNotification('Função de edição em desenvolvimento', 'info');
 }
 
 function closeModal(modalId) {
@@ -7158,75 +7247,107 @@ function showPurchaseDetails(purchaseId) {
   const purchase = state.purchases.find(p => p.id === purchaseId);
   if (!purchase) return;
   
-  const statusLabels = {
-    analise: 'Em Análise',
-    pedido: 'Pedido Feito',
-    chegando: 'Em Trânsito',
-    chegou: 'Entregue'
+  const statusConfig = {
+    analise: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: 'Em Análise', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>' },
+    pedido: { color: '#3b82f6', bg: 'rgba(59,130,246,0.15)', text: 'Pedido Feito', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>' },
+    chegando: { color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', text: 'Em Trânsito', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16 16,8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>' },
+    chegou: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', text: 'Entregue', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>' }
   };
   
-  const statusColors = {
-    analise: '#f59e0b',
-    pedido: '#3b82f6',
-    chegando: '#8b5cf6',
-    chegou: '#10b981'
-  };
+  const status = statusConfig[purchase.status] || statusConfig.analise;
   
   const photoHtml = purchase.photo_url 
-    ? `<div style="margin: 15px 0; text-align: center;">
-         <img src="${purchase.photo_url}" style="max-width: 100%; max-height: 300px; border-radius: 8px; cursor: pointer;" onclick="window.open('${purchase.photo_url}', '_blank')" title="Clique para abrir em nova aba">
+    ? `<div style="margin-top: 12px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+         <img src="${purchase.photo_url}" style="width: 100%; max-height: 250px; object-fit: cover; cursor: pointer; transition: transform 0.3s;" onclick="window.open('${purchase.photo_url}', '_blank')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
        </div>`
-    : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Nenhuma foto anexada</p>';
+    : `<div style="text-align: center; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" style="margin-bottom: 8px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+         <div style="color: #64748b; font-size: 13px;">Nenhuma foto anexada</div>
+       </div>`;
   
   const modalHtml = `
-    <div id="modal-purchase-details" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-purchase-details')">
-      <div class="modal" style="max-width: 600px;">
-        <div class="modal-header">
-          <h3 class="modal-title">📋 Detalhes da Requisição</h3>
-          <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-purchase-details')">×</span>
+    <div id="modal-purchase-details" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-purchase-details')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+      <div class="modal" style="max-width: 520px; background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%); border: 1px solid rgba(6,182,212,0.2); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(6,182,212,0.1);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(6,182,212,0.3);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 16px; color: #fff; max-width: 280px;">${escapeHtml(purchase.item_name)}</h3>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                <span style="background: ${status.bg}; color: ${status.color}; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                  ${status.icon} ${status.text}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button onclick="closeModal('modal-purchase-details')" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         
-        <div style="padding: 15px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 15px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h4 style="margin: 0; color: var(--accent-cyan);">${escapeHtml(purchase.item_name)}</h4>
-            <span style="background: ${statusColors[purchase.status]}; color: #000; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 12px;">
-              ${statusLabels[purchase.status]}
-            </span>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
+          <div style="background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.2); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 20px; font-weight: 700; color: var(--accent-cyan);">${purchase.quantity}</div>
+            <div style="font-size: 11px; color: #64748b;">${escapeHtml(purchase.unit || 'un')}</div>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
-            <div><strong>Quantidade:</strong> ${purchase.quantity} ${purchase.unit}</div>
-            <div><strong>Categoria:</strong> ${purchase.category || 'N/A'}</div>
-            <div><strong>Preço Unit.:</strong> R$ ${(purchase.unit_price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-            <div><strong>Total:</strong> R$ ${(purchase.total_cost || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-            <div><strong>Solicitante:</strong> ${escapeHtml(purchase.requested_by_name || 'N/A')}</div>
-            <div><strong>Data:</strong> ${new Date(purchase.created_at).toLocaleDateString('pt-BR')}</div>
-            ${purchase.supplier ? `<div style="grid-column: span 2;"><strong>Fornecedor:</strong> ${escapeHtml(purchase.supplier)}</div>` : ''}
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 14px; font-weight: 600; color: #fff;">R$ ${(purchase.unit_price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            <div style="font-size: 11px; color: #64748b;">Pre\u00e7o Unit.</div>
+          </div>
+          <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 14px; font-weight: 600; color: #10b981;">R$ ${(purchase.total_cost || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            <div style="font-size: 11px; color: #64748b;">Total</div>
           </div>
         </div>
         
-        <div style="margin-bottom: 15px;">
-          <h4 style="margin-bottom: 10px; color: var(--text-secondary);">📝 Observações</h4>
-          <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px; white-space: pre-wrap; font-size: 14px; max-height: 200px; overflow-y: auto;">
-            ${purchase.notes ? escapeHtml(purchase.notes) : '<span style="color: var(--text-secondary);">Nenhuma observação</span>'}
+        <div style="background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <div><span style="color: #64748b;">Solicitante:</span> <span style="color: #fff;">${escapeHtml(purchase.requested_by_name || 'N/A')}</span></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <div><span style="color: #64748b;">Data:</span> <span style="color: #fff;">${new Date(purchase.created_at).toLocaleDateString('pt-BR')}</span></div>
+            </div>
+            ${purchase.supplier ? `
+            <div style="display: flex; align-items: center; gap: 8px; grid-column: span 2;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+              <div><span style="color: #64748b;">Fornecedor:</span> <span style="color: #fff;">${escapeHtml(purchase.supplier)}</span></div>
+            </div>` : ''}
           </div>
         </div>
         
-        <div>
-          <h4 style="margin-bottom: 10px; color: var(--text-secondary);">📷 Foto Anexada</h4>
+        ${purchase.notes ? `
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            OBSERVA\u00c7\u00d5ES
+          </div>
+          <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; font-size: 13px; color: #94a3b8; white-space: pre-wrap; max-height: 140px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05);">${escapeHtml(purchase.notes)}</div>
+        </div>` : ''}
+        
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+            FOTO ANEXADA
+          </div>
           ${photoHtml}
         </div>
         
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-          <button class="btn-secondary" style="flex: 1;" onclick="closeModal('modal-purchase-details')">Fechar</button>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="closeModal('modal-purchase-details')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Fechar</button>
           ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin') || state.user.roles.includes('compras')) ? `
-            <button class="btn-primary" style="flex: 1;" onclick="closeModal('modal-purchase-details'); showAdvancePurchaseModal('${purchase.id}')">Avançar Status</button>
+            <button onclick="closeModal('modal-purchase-details'); showAdvancePurchaseModal('${purchase.id}')" style="flex: 1; padding: 12px; background: linear-gradient(135deg, var(--accent-cyan), #0891b2); border: none; border-radius: 10px; color: #000; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">Avan\u00e7ar Status</button>
           ` : ''}
         </div>
       </div>
     </div>
   `;
   
-  // Remover modal existente se houver
   const existing = document.getElementById('modal-purchase-details');
   if (existing) existing.remove();
   
