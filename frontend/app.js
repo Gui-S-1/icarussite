@@ -5955,26 +5955,36 @@ async function downloadReportAsPDF() {
     params = '?period=monthly';
   }
   
-  // Se temos endpoint específico, navegar diretamente (trigga DownloadListener no Android)
+  // Se temos endpoint específico
   if (pdfEndpoint) {
     try {
       var fullUrl = API_URL + pdfEndpoint + params + '&token=' + encodeURIComponent(state.token);
-      console.log('[PDF] Navegando para:', fullUrl);
+      console.log('[PDF] URL:', fullUrl);
       
-      // Criar link invisível e clicar - isso garante que o WebView intercepte como download
-      var link = document.createElement('a');
-      link.href = fullUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Detectar nome do arquivo pelo endpoint
+      var filename = 'relatorio';
+      if (pdfEndpoint.includes('dashboard')) filename = 'relatorio_dashboard';
+      else if (pdfEndpoint.includes('water')) filename = 'relatorio_agua';
+      else if (pdfEndpoint.includes('diesel')) filename = 'relatorio_diesel';
+      else if (pdfEndpoint.includes('generator')) filename = 'relatorio_gerador';
+      else if (pdfEndpoint.includes('orders')) filename = 'relatorio_ordens';
       
-      showNotification('Baixando PDF...', 'success');
+      // PRIORIDADE 1: Usar interface nativa Android (APK)
+      if (window.AndroidPdfDownloader && typeof window.AndroidPdfDownloader.downloadPdf === 'function') {
+        console.log('[PDF] Usando AndroidPdfDownloader nativo');
+        window.AndroidPdfDownloader.downloadPdf(fullUrl, filename);
+        showNotification('Baixando PDF...', 'success');
+        return;
+      }
+      
+      // PRIORIDADE 2: Browser normal - abrir em nova aba (vai baixar automaticamente)
+      console.log('[PDF] Abrindo em nova aba (browser)');
+      window.open(fullUrl, '_blank');
+      showNotification('Abrindo PDF...', 'success');
       return;
+      
     } catch (e) {
-      console.error('[PDF] Erro ao navegar:', e);
+      console.error('[PDF] Erro:', e);
     }
   }
   

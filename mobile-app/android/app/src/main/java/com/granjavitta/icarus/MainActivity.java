@@ -13,11 +13,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.webkit.CookieManager;
-import android.webkit.URLUtil;
-import android.webkit.WebResourceRequest;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -35,6 +32,7 @@ public class MainActivity extends BridgeActivity {
     private static final int PERMISSION_REQUEST_CODE = 1001;
     private long currentDownloadId = -1;
     private BroadcastReceiver downloadReceiver;
+    private String pendingDownloadUrl = null;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,91 +44,46 @@ public class MainActivity extends BridgeActivity {
     public void onStart() {
         super.onStart();
         
-        // Configurar WebView após delay para garantir que Capacitor inicializou
-        getBridge().getWebView().postDelayed(this::setupWebView, 500);
+        // Adicionar JavaScript interface após delay
+        getBridge().getWebView().postDelayed(() -> {
+            WebView webView = getBridge().getWebView();
+            if (webView != null) {
+                // Adicionar interface JavaScript para download de PDF
+                webView.addJavascriptInterface(new PdfDownloader(), "AndroidPdfDownloader");
+                Log.d(TAG, "JavaScript interface 'AndroidPdfDownloader' adicionada!");
+            }
+        }, 1000);
     }
     
-    private void setupWebView() {
-        WebView webView = getBridge().getWebView();
-        if (webView == null) {
-            Log.e(TAG, "WebView não encontrado!");
-            return;
+    /**
+     * Interface JavaScript para download de PDF
+     * Chamada pelo frontend: window.AndroidPdfDownloader.downloadPdf(url, filename)
+     */
+    public class PdfDownloader {
+        
+        @JavascriptInterface
+        public void downloadPdf(String url, String filename) {
+            Log.d(TAG, "=== downloadPdf chamado ===");
+            Log.d(TAG, "URL: " + url);
+            Log.d(TAG, "Filename: " + filename);
+            
+            runOnUiThread(() -> {
+                startPdfDownload(url, filename);
+            });
         }
         
-        // 1. Configurar DownloadListener (para downloads normais)
-        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
-            Log.d(TAG, "=== DownloadListener ===");
-            Log.d(TAG, "URL: " + url);
-            Log.d(TAG, "MIME: " + mimeType);
-            Log.d(TAG, "Disposition: " + contentDisposition);
-            
-            if (isPdfDownload(url, mimeType, contentDisposition)) {
-                startPdfDownload(url, contentDisposition);
-            } else {
-                startGenericDownload(url, contentDisposition, mimeType);
-            }
-        });
-        
-        // 2. Configurar WebViewClient para interceptar navegação para PDFs
-        WebViewClient originalClient = webView.getWebViewClient();
-        
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                Log.d(TAG, "=== shouldOverrideUrlLoading ===");
-                Log.d(TAG, "URL: " + url);
-                
-                // Interceptar URLs de PDF do nosso backend
-                if (url.contains("/api/pdf/") || url.endsWith(".pdf")) {
-                    Log.d(TAG, "PDF detectado! Iniciando download...");
-                    startPdfDownload(url, null);
-                    return true; // Impede o WebView de navegar
-                }
-                
-                // Deixar o cliente original lidar com outras URLs
-                if (originalClient != null) {
-                    return originalClient.shouldOverrideUrlLoading(view, request);
-                }
-                return false;
-            }
-            
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                Log.d(TAG, "=== shouldOverrideUrlLoading (legacy) ===");
-                Log.d(TAG, "URL: " + url);
-                
-                if (url.contains("/api/pdf/") || url.endsWith(".pdf")) {
-                    Log.d(TAG, "PDF detectado! Iniciando download...");
-                    startPdfDownload(url, null);
-                    return true;
-                }
-                
-                if (originalClient != null) {
-                    return originalClient.shouldOverrideUrlLoading(view, url);
-                }
-                return false;
-            }
-        });
-        
-        Log.d(TAG, "WebView configurado com sucesso!");
+        @JavascriptInterface
+        public boolean isAvailable() {
+            return true;
+        }
     }
     
-    private boolean isPdfDownload(String url, String mimeType, String contentDisposition) {
-        if (mimeType != null && mimeType.toLowerCase().contains("pdf")) return true;
-        if (url != null && url.toLowerCase().contains(".pdf")) return true;
-        if (url != null && url.contains("/api/pdf/")) return true;
-        if (contentDisposition != null && contentDisposition.toLowerCase().contains(".pdf")) return true;
-        return false;
-    }
-    
-    private void startPdfDownload(String url, String contentDisposition) {
-        Log.d(TAG, "=== startPdfDownload ===");
-        
-        // Verificar permissões (Android < 10)
+    private void startPdfDownload(String url, String filename) {
+        // Verificar permissões para Android < 10
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
+                pendingDownloadUrl = url;
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         PERMISSION_REQUEST_CODE);
@@ -140,123 +93,72 @@ public class MainActivity extends BridgeActivity {
         }
         
         try {
-            // Gerar nome do arquivo
-            String fileName = generateFileName(url, contentDisposition);
-            Log.d(TAG, "Arquivo: " + fileName);
+            // Gerar nome do arquivo se não fornecido
+            if (filename == null || filename.isEmpty()) {
+                filename = generateFileName(url);
+            }
+            
+            // Garantir extensão .pdf
+            if (!filename.toLowerCase().endsWith(".pdf")) {
+                filename = filename + ".pdf";
+            }
+            
+            Log.d(TAG, "Iniciando download: " + filename);
             
             // Criar request de download
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
             
-            // Adicionar cookies (importante para autenticação)
-            String cookies = CookieManager.getInstance().getCookie(url);
-            if (cookies != null && !cookies.isEmpty()) {
-                request.addRequestHeader("Cookie", cookies);
-            }
-            request.addRequestHeader("User-Agent", "IcarusApp/Android");
-            
-            // Configurações
-            request.setTitle("Baixando: " + fileName);
+            // Configurações do request
+            request.setTitle("Baixando: " + filename);
             request.setDescription("Relatório Icarus");
             request.setMimeType("application/pdf");
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             request.allowScanningByMediaScanner();
             
-            // Salvar em Downloads
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+            // Destino: pasta Downloads pública
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
             
             // Iniciar download
             DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
             currentDownloadId = dm.enqueue(request);
             
-            runOnUiThread(() -> {
-                Toast.makeText(this, "Baixando PDF...", Toast.LENGTH_SHORT).show();
-            });
-            
+            Toast.makeText(this, "Baixando PDF...", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Download iniciado! ID: " + currentDownloadId);
             
         } catch (Exception e) {
-            Log.e(TAG, "Erro no download: " + e.getMessage(), e);
-            runOnUiThread(() -> {
-                Toast.makeText(this, "Erro: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+            Log.e(TAG, "Erro ao baixar PDF: " + e.getMessage(), e);
+            Toast.makeText(this, "Erro ao baixar: " + e.getMessage(), Toast.LENGTH_LONG).show();
             
             // Fallback: abrir no navegador externo
             try {
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                 startActivity(browserIntent);
             } catch (Exception ex) {
-                Log.e(TAG, "Fallback também falhou", ex);
+                Log.e(TAG, "Fallback falhou", ex);
             }
         }
     }
     
-    private void startGenericDownload(String url, String contentDisposition, String mimeType) {
-        try {
-            String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
-            
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-            request.setTitle("Baixando: " + fileName);
-            request.setMimeType(mimeType != null ? mimeType : "application/octet-stream");
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
-            
-            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-            dm.enqueue(request);
-            
-            Toast.makeText(this, "Baixando arquivo...", Toast.LENGTH_SHORT).show();
-            
-        } catch (Exception e) {
-            Log.e(TAG, "Erro no download genérico: " + e.getMessage(), e);
-        }
-    }
-    
-    private String generateFileName(String url, String contentDisposition) {
-        String fileName = null;
+    private String generateFileName(String url) {
+        String fileName;
         
-        // 1. Tentar extrair do Content-Disposition
-        if (contentDisposition != null && contentDisposition.contains("filename")) {
-            try {
-                int idx = contentDisposition.indexOf("filename=");
-                if (idx >= 0) {
-                    fileName = contentDisposition.substring(idx + 9)
-                            .replace("\"", "")
-                            .replace("'", "")
-                            .split(";")[0]
-                            .trim();
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Erro ao parsear Content-Disposition", e);
-            }
+        if (url.contains("dashboard")) {
+            fileName = "relatorio_dashboard";
+        } else if (url.contains("water")) {
+            fileName = "relatorio_agua";
+        } else if (url.contains("diesel")) {
+            fileName = "relatorio_diesel";
+        } else if (url.contains("generator")) {
+            fileName = "relatorio_gerador";
+        } else if (url.contains("orders")) {
+            fileName = "relatorio_ordens";
+        } else {
+            fileName = "relatorio_icarus";
         }
         
-        // 2. Tentar extrair da URL
-        if (fileName == null || fileName.isEmpty()) {
-            if (url.contains("dashboard")) {
-                fileName = "relatorio_dashboard";
-            } else if (url.contains("water")) {
-                fileName = "relatorio_agua";
-            } else if (url.contains("diesel")) {
-                fileName = "relatorio_diesel";
-            } else if (url.contains("generator")) {
-                fileName = "relatorio_gerador";
-            } else if (url.contains("orders")) {
-                fileName = "relatorio_ordens";
-            } else {
-                fileName = "relatorio_icarus";
-            }
-        }
-        
-        // 3. Garantir extensão .pdf
-        if (!fileName.toLowerCase().endsWith(".pdf")) {
-            fileName = fileName + ".pdf";
-        }
-        
-        // 4. Adicionar timestamp para evitar sobrescrever
-        String baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+        // Adicionar timestamp
         String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
-        fileName = baseName + "_" + timestamp + ".pdf";
-        
-        return fileName;
+        return fileName + "_" + timestamp + ".pdf";
     }
     
     private void registerDownloadReceiver() {
@@ -265,14 +167,16 @@ public class MainActivity extends BridgeActivity {
             public void onReceive(Context context, Intent intent) {
                 long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
                 
-                if (downloadId == currentDownloadId) {
+                if (downloadId == currentDownloadId && downloadId != -1) {
                     Log.d(TAG, "Download concluído! ID: " + downloadId);
                     
                     DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
                     DownloadManager.Query query = new DownloadManager.Query();
                     query.setFilterById(downloadId);
                     
-                    try (Cursor cursor = dm.query(query)) {
+                    Cursor cursor = null;
+                    try {
+                        cursor = dm.query(query);
                         if (cursor != null && cursor.moveToFirst()) {
                             int statusIdx = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
                             int uriIdx = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
@@ -283,7 +187,7 @@ public class MainActivity extends BridgeActivity {
                             Log.d(TAG, "Status: " + status + ", URI: " + localUri);
                             
                             if (status == DownloadManager.STATUS_SUCCESSFUL && localUri != null) {
-                                openPdf(localUri);
+                                openPdfFile(localUri);
                             } else {
                                 runOnUiThread(() -> {
                                     Toast.makeText(context, "Erro no download", Toast.LENGTH_SHORT).show();
@@ -292,6 +196,10 @@ public class MainActivity extends BridgeActivity {
                         }
                     } catch (Exception e) {
                         Log.e(TAG, "Erro ao verificar download", e);
+                    } finally {
+                        if (cursor != null) {
+                            cursor.close();
+                        }
                     }
                 }
             }
@@ -307,20 +215,25 @@ public class MainActivity extends BridgeActivity {
         Log.d(TAG, "BroadcastReceiver registrado");
     }
     
-    private void openPdf(String uriString) {
+    private void openPdfFile(String uriString) {
         try {
             Log.d(TAG, "Abrindo PDF: " + uriString);
             
+            // Converter URI string para File
             Uri fileUri = Uri.parse(uriString);
             String path = fileUri.getPath();
             
             if (path == null) {
-                Toast.makeText(this, "PDF salvo em Downloads!", Toast.LENGTH_LONG).show();
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "PDF salvo em Downloads!", Toast.LENGTH_LONG).show();
+                });
                 return;
             }
             
             File file = new File(path);
+            Log.d(TAG, "Arquivo: " + file.getAbsolutePath() + ", existe: " + file.exists());
             
+            // Criar URI com FileProvider para Android 7+
             Uri contentUri;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 contentUri = FileProvider.getUriForFile(this,
@@ -329,22 +242,32 @@ public class MainActivity extends BridgeActivity {
                 contentUri = Uri.fromFile(file);
             }
             
+            // Criar intent para abrir PDF
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(contentUri, "application/pdf");
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
             
+            // Verificar se existe app para abrir PDF
             if (intent.resolveActivity(getPackageManager()) != null) {
                 startActivity(intent);
-                Toast.makeText(this, "PDF baixado com sucesso!", Toast.LENGTH_SHORT).show();
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "PDF baixado com sucesso!", Toast.LENGTH_SHORT).show();
+                });
             } else {
-                // Não tem leitor de PDF - mostrar localização
-                Toast.makeText(this, "PDF salvo em: Downloads/" + file.getName(), Toast.LENGTH_LONG).show();
+                // Sem leitor de PDF instalado
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "PDF salvo em Downloads/" + file.getName() + 
+                            "\nInstale um leitor de PDF para abrir.", Toast.LENGTH_LONG).show();
+                });
             }
             
         } catch (Exception e) {
             Log.e(TAG, "Erro ao abrir PDF: " + e.getMessage(), e);
-            Toast.makeText(this, "PDF salvo em Downloads!", Toast.LENGTH_LONG).show();
+            runOnUiThread(() -> {
+                Toast.makeText(this, "PDF salvo em Downloads!", Toast.LENGTH_LONG).show();
+            });
         }
     }
     
@@ -354,7 +277,13 @@ public class MainActivity extends BridgeActivity {
         
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permissão concedida! Tente novamente.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Permissão concedida! Tente baixar novamente.", Toast.LENGTH_SHORT).show();
+                
+                // Tentar download pendente
+                if (pendingDownloadUrl != null) {
+                    startPdfDownload(pendingDownloadUrl, null);
+                    pendingDownloadUrl = null;
+                }
             }
         }
     }
