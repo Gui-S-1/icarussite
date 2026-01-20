@@ -1,36 +1,118 @@
 // Configuração do Icarus - Frontend
 
-// URL fixa do GitHub para buscar configuração dinâmica
+// URLs de configuração
 const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/api-config.json';
+const SERVER_IP = 'http://159.203.8.237:3000'; // IP direto do servidor
 
 // URL padrão (fallback)
 let API_URL_DEFAULT = 'https://kong-dust-analysts-developers.trycloudflare.com';
 
-// Tentar carregar URL do backend do GitHub (não bloqueia o app)
-(async function loadDynamicConfig() {
+// Buscar URL do túnel diretamente do servidor via IP
+async function fetchTunnelUrlFromServer() {
   try {
-    const cached = localStorage.getItem('icarus_api_url');
-    const cachedTime = localStorage.getItem('icarus_api_url_time');
-    
-    // Usar cache se foi atualizado nas últimas 5 minutos
-    if (cached && cachedTime && (Date.now() - parseInt(cachedTime)) < 5 * 60 * 1000) {
-      window.ICARUS_API_URL = cached;
-      console.log('[Config] Usando URL do cache:', cached);
-      return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(SERVER_IP + '/tunnel-url', { 
+      signal: controller.signal,
+      cache: 'no-store'
+    });
+    clearTimeout(timeout);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.ok && data.url) {
+        console.log('[Config] URL obtida do servidor:', data.url);
+        return data.url;
+      }
     }
-    
+  } catch (e) {
+    console.log('[Config] Erro ao buscar URL do servidor via IP');
+  }
+  return null;
+}
+
+// Buscar URL do GitHub (fallback)
+async function fetchNewApiUrl() {
+  try {
     const response = await fetch(CONFIG_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (response.ok) {
       const config = await response.json();
       if (config.apiUrl) {
-        window.ICARUS_API_URL = config.apiUrl;
-        localStorage.setItem('icarus_api_url', config.apiUrl);
-        localStorage.setItem('icarus_api_url_time', Date.now().toString());
-        console.log('[Config] URL atualizada do GitHub:', config.apiUrl);
+        console.log('[Config] URL obtida do GitHub:', config.apiUrl);
+        return config.apiUrl;
       }
     }
   } catch (e) {
-    console.log('[Config] Erro ao buscar config, usando padrão');
+    console.log('[Config] Erro ao buscar config do GitHub');
+  }
+  return null;
+}
+
+async function testApiUrl(url) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(url + '/health', { 
+      signal: controller.signal,
+      cache: 'no-store'
+    });
+    clearTimeout(timeout);
+    return response.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Carregar e validar URL
+(async function loadDynamicConfig() {
+  // 1. Tentar URL do cache primeiro
+  const cached = localStorage.getItem('icarus_api_url');
+  if (cached) {
+    window.ICARUS_API_URL = cached;
+    console.log('[Config] Usando URL do cache:', cached);
+    
+    // Testar em background - se falhar, busca nova automaticamente
+    setTimeout(async () => {
+      const works = await testApiUrl(cached);
+      if (!works) {
+        console.log('[Config] URL do cache não responde, buscando nova...');
+        
+        // Tentar via IP direto primeiro (mais confiável)
+        let newUrl = await fetchTunnelUrlFromServer();
+        
+        // Se não conseguir via IP, tentar GitHub
+        if (!newUrl) {
+          newUrl = await fetchNewApiUrl();
+        }
+        
+        if (newUrl && newUrl !== cached) {
+          window.ICARUS_API_URL = newUrl;
+          localStorage.setItem('icarus_api_url', newUrl);
+          localStorage.setItem('icarus_api_url_time', Date.now().toString());
+          console.log('[Config] Nova URL aplicada:', newUrl);
+          // Recarrega a página para aplicar
+          if (document.readyState === 'complete') {
+            location.reload();
+          }
+        }
+      }
+    }, 1000);
+    return;
+  }
+  
+  // 2. Sem cache - buscar URL
+  // Tentar via IP direto primeiro
+  let newUrl = await fetchTunnelUrlFromServer();
+  
+  // Se não conseguir, tentar GitHub
+  if (!newUrl) {
+    newUrl = await fetchNewApiUrl();
+  }
+  
+  // Se ainda não tem, usar padrão
+  if (newUrl) {
+    window.ICARUS_API_URL = newUrl;
+    localStorage.setItem('icarus_api_url', newUrl);
+    localStorage.setItem('icarus_api_url_time', Date.now().toString());
   }
 })();
 
