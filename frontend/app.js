@@ -3340,10 +3340,10 @@ function renderPurchasesTable() {
     const totalCost = purchase.total_cost || 0;
     // Criar thumbnail da foto se existir
     const photoHtml = purchase.photo_url 
-      ? `<img src="${purchase.photo_url}" class="purchase-photo-thumb" onclick="showPurchasePhoto('${purchase.id}')" title="Clique para ampliar" alt="Foto da peça">`
+      ? `<img src="${purchase.photo_url}" class="purchase-photo-thumb" onclick="event.stopPropagation(); showPurchasePhoto('${purchase.id}')" title="Clique para ampliar" alt="Foto da peça">`
       : '<span style="color: var(--text-secondary); font-size: 11px;">Sem foto</span>';
     return `
-    <tr>
+    <tr onclick="showPurchaseDetails('${purchase.id}')" style="cursor: pointer;" title="Clique para ver detalhes">
       <td class="purchase-item-cell">
         <div class="purchase-item-info">
           <div class="purchase-photo-container">${photoHtml}</div>
@@ -7045,7 +7045,16 @@ function checkDieselAlerts() {
 }
 
 // Verificar e criar/remover requisição automática de diesel quando estoque baixo
+// Flag para evitar chamadas duplicadas
+var _dieselAutoRequestRunning = false;
+
 async function checkDieselAutoRequest(saldo) {
+  // Evitar execução duplicada
+  if (_dieselAutoRequestRunning) {
+    console.log('[Diesel] Auto-request já em execução, ignorando...');
+    return;
+  }
+  
   // Só usuários com permissão podem ver/criar requisições
   if (!state.user || !state.user.roles) {
     return;
@@ -7056,19 +7065,19 @@ async function checkDieselAutoRequest(saldo) {
                       state.user.roles.includes('diesel');
   if (!hasPermission) return;
   
+  _dieselAutoRequestRunning = true;
+  
   // Limite para considerar estoque baixo (100L ou menos)
   var LIMITE_BAIXO = 100;
   var dieselBaixo = saldo <= LIMITE_BAIXO;
   
   try {
-    // Carregar compras para verificar se já existe requisição de diesel
-    if (!state.purchases || state.purchases.length === 0) {
-      var resp = await fetch(API_URL + '/purchases', {
-        headers: { 'Authorization': 'Bearer ' + state.token }
-      });
-      var data = await resp.json();
-      if (data.ok) state.purchases = data.purchases;
-    }
+    // SEMPRE recarregar compras do servidor para ter dados atualizados
+    var resp = await fetch(API_URL + '/purchases', {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    var data = await resp.json();
+    if (data.ok) state.purchases = data.purchases || [];
     
     // Procurar requisição de diesel pendente (em análise ou pedido)
     var requisicaoDiesel = state.purchases.find(function(p) {
@@ -7139,7 +7148,89 @@ async function checkDieselAutoRequest(saldo) {
     }
   } catch (e) {
     console.error('[Diesel] Erro ao gerenciar requisição automática:', e);
+  } finally {
+    _dieselAutoRequestRunning = false;
   }
+}
+
+// Função para mostrar detalhes da requisição
+function showPurchaseDetails(purchaseId) {
+  const purchase = state.purchases.find(p => p.id === purchaseId);
+  if (!purchase) return;
+  
+  const statusLabels = {
+    analise: 'Em Análise',
+    pedido: 'Pedido Feito',
+    chegando: 'Em Trânsito',
+    chegou: 'Entregue'
+  };
+  
+  const statusColors = {
+    analise: '#f59e0b',
+    pedido: '#3b82f6',
+    chegando: '#8b5cf6',
+    chegou: '#10b981'
+  };
+  
+  const photoHtml = purchase.photo_url 
+    ? `<div style="margin: 15px 0; text-align: center;">
+         <img src="${purchase.photo_url}" style="max-width: 100%; max-height: 300px; border-radius: 8px; cursor: pointer;" onclick="window.open('${purchase.photo_url}', '_blank')" title="Clique para abrir em nova aba">
+       </div>`
+    : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Nenhuma foto anexada</p>';
+  
+  const modalHtml = `
+    <div id="modal-purchase-details" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-purchase-details')">
+      <div class="modal" style="max-width: 600px;">
+        <div class="modal-header">
+          <h3 class="modal-title">📋 Detalhes da Requisição</h3>
+          <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-purchase-details')">×</span>
+        </div>
+        
+        <div style="padding: 15px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 15px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0; color: var(--accent-cyan);">${escapeHtml(purchase.item_name)}</h4>
+            <span style="background: ${statusColors[purchase.status]}; color: #000; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 12px;">
+              ${statusLabels[purchase.status]}
+            </span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+            <div><strong>Quantidade:</strong> ${purchase.quantity} ${purchase.unit}</div>
+            <div><strong>Categoria:</strong> ${purchase.category || 'N/A'}</div>
+            <div><strong>Preço Unit.:</strong> R$ ${(purchase.unit_price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            <div><strong>Total:</strong> R$ ${(purchase.total_cost || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+            <div><strong>Solicitante:</strong> ${escapeHtml(purchase.requested_by_name || 'N/A')}</div>
+            <div><strong>Data:</strong> ${new Date(purchase.created_at).toLocaleDateString('pt-BR')}</div>
+            ${purchase.supplier ? `<div style="grid-column: span 2;"><strong>Fornecedor:</strong> ${escapeHtml(purchase.supplier)}</div>` : ''}
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <h4 style="margin-bottom: 10px; color: var(--text-secondary);">📝 Observações</h4>
+          <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px; white-space: pre-wrap; font-size: 14px; max-height: 200px; overflow-y: auto;">
+            ${purchase.notes ? escapeHtml(purchase.notes) : '<span style="color: var(--text-secondary);">Nenhuma observação</span>'}
+          </div>
+        </div>
+        
+        <div>
+          <h4 style="margin-bottom: 10px; color: var(--text-secondary);">📷 Foto Anexada</h4>
+          ${photoHtml}
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="btn-secondary" style="flex: 1;" onclick="closeModal('modal-purchase-details')">Fechar</button>
+          ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin') || state.user.roles.includes('compras')) ? `
+            <button class="btn-primary" style="flex: 1;" onclick="closeModal('modal-purchase-details'); showAdvancePurchaseModal('${purchase.id}')">Avançar Status</button>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Remover modal existente se houver
+  const existing = document.getElementById('modal-purchase-details');
+  if (existing) existing.remove();
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
 // Renderizar estatísticas do diesel
