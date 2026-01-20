@@ -2920,6 +2920,57 @@ function renderInventoryTable() {
       '</td>' +
     '</tr>';
   }).join('');
+  
+  // Renderizar versão mobile (cards)
+  renderInventoryMobile(itemsToShow, categoryLabels);
+}
+
+// Renderizar lista mobile do almoxarifado
+function renderInventoryMobile(items, categoryLabels) {
+  var mobileContainer = document.getElementById('almox-mobile-list');
+  
+  // Criar container se não existir
+  if (!mobileContainer) {
+    var tableContainer = document.querySelector('#almoxarifado-table');
+    if (tableContainer && tableContainer.parentElement) {
+      mobileContainer = document.createElement('div');
+      mobileContainer.id = 'almox-mobile-list';
+      mobileContainer.className = 'almox-mobile-list';
+      mobileContainer.style.display = 'none'; // Escondido por padrão (CSS mobile mostra)
+      tableContainer.parentElement.insertBefore(mobileContainer, tableContainer.nextSibling);
+    } else {
+      return;
+    }
+  }
+  
+  if (!items || items.length === 0) {
+    mobileContainer.innerHTML = '<div style="text-align:center; padding:40px 20px; color: var(--text-secondary);">Nenhum item encontrado</div>';
+    return;
+  }
+  
+  mobileContainer.innerHTML = items.map(function(item) {
+    var isLowStock = item.quantity <= (item.min_stock || 0);
+    var catLabel = categoryLabels[item.category] || item.category || '-';
+    
+    return '<div class="almox-mobile-item' + (isLowStock ? ' low-stock' : '') + '" onclick="showItemDetail(\'' + item.id + '\')">' +
+      '<div class="almox-mobile-item-header">' +
+        '<div>' +
+          '<div class="almox-mobile-item-name">' + escapeHtml(item.name) + '</div>' +
+          '<div class="almox-mobile-item-sku">SKU: ' + escapeHtml(item.sku || '-') + '</div>' +
+        '</div>' +
+        '<div class="almox-mobile-item-qty">' +
+          '<div class="qty-value">' + item.quantity + '</div>' +
+          '<div class="qty-unit">' + escapeHtml(item.unit || 'un') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="almox-mobile-item-details">' +
+        '<span>' + escapeHtml(catLabel) + '</span>' +
+        (item.brand ? '<span>' + escapeHtml(item.brand) + '</span>' : '') +
+        (item.location ? '<span>📍 ' + escapeHtml(item.location) + '</span>' : '') +
+        '<span>Min: ' + (item.min_stock || 0) + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 function updateAlmoxarifadoStats() {
@@ -5629,48 +5680,67 @@ function exportWaterReportPDF(selectedMonth) {
   const lastDate = formatDatePDF(sortedReadings[sortedReadings.length - 1].reading_date);
   const periodStr = firstDate.formatted + ' a ' + lastDate.formatted;
   
-  // NOVO CÁLCULO: Consumo = (última leitura do dia - primeira leitura do dia) para cada dia
-  // Soma o consumo de todos os dias do mês
+  // CÁLCULO 24H: Consumo do Dia X = Leitura 7h do Dia X+1 - Leitura 7h do Dia X
+  // Isso mede o consumo REAL de 24 horas
   function calculateConsumption(tank) {
     // Filtrar leituras do tanque específico
     const tankReadings = sortedReadings.filter(r => r.tank_name === tank);
     
     if (tankReadings.length === 0) return { total: 0, avg: 0, days: 0, dailyData: {} };
     
-    // Agrupar leituras por dia
-    const readingsByDay = {};
+    // Pegar apenas leituras das 7h (ou a primeira do dia se não tiver 7h)
+    const morningReadings = {};
     tankReadings.forEach(r => {
       const dayKey = formatDatePDF(r.reading_date).formatted;
-      if (!readingsByDay[dayKey]) readingsByDay[dayKey] = [];
-      readingsByDay[dayKey].push(r);
+      const dateObj = formatDatePDF(r.reading_date).dateObj;
+      const time = r.reading_time || '00:00';
+      const [h, m] = time.split(':').map(Number);
+      const timeMinutes = h * 60 + m;
+      
+      // Preferir leitura das 7h (entre 6h e 8h)
+      const isMorning = timeMinutes >= 360 && timeMinutes <= 480; // 6:00 a 8:00
+      
+      if (!morningReadings[dayKey]) {
+        morningReadings[dayKey] = { reading: r, dateObj: dateObj, isMorning: isMorning, time: timeMinutes };
+      } else if (isMorning && !morningReadings[dayKey].isMorning) {
+        // Substituir por leitura da manhã
+        morningReadings[dayKey] = { reading: r, dateObj: dateObj, isMorning: isMorning, time: timeMinutes };
+      } else if (isMorning && morningReadings[dayKey].isMorning) {
+        // Ambas são manhã, pegar a mais próxima das 7h
+        const current7hDiff = Math.abs(morningReadings[dayKey].time - 420); // 420 = 7:00
+        const new7hDiff = Math.abs(timeMinutes - 420);
+        if (new7hDiff < current7hDiff) {
+          morningReadings[dayKey] = { reading: r, dateObj: dateObj, isMorning: isMorning, time: timeMinutes };
+        }
+      }
     });
     
-    // Calcular consumo de cada dia (última - primeira)
+    // Ordenar dias cronologicamente
+    const sortedDays = Object.keys(morningReadings).sort((a, b) => {
+      return morningReadings[a].dateObj - morningReadings[b].dateObj;
+    });
+    
+    // Calcular consumo: Dia X = Leitura Dia X+1 - Leitura Dia X
     let total = 0;
     const dailyConsumption = {};
     
-    Object.keys(readingsByDay).forEach(dayKey => {
-      const dayReadings = readingsByDay[dayKey].sort((a, b) => {
-        const [hA, mA] = (a.reading_time || '00:00').split(':').map(Number);
-        const [hB, mB] = (b.reading_time || '00:00').split(':').map(Number);
-        return (hA * 60 + mA) - (hB * 60 + mB);
-      });
+    for (let i = 0; i < sortedDays.length - 1; i++) {
+      const currentDay = sortedDays[i];
+      const nextDay = sortedDays[i + 1];
       
-      if (dayReadings.length >= 2) {
-        // Consumo do dia = última leitura - primeira leitura
-        const firstReading = dayReadings[0].reading_value;
-        const lastReading = dayReadings[dayReadings.length - 1].reading_value;
-        const dayConsumption = lastReading - firstReading;
-        
-        if (dayConsumption > 0) {
-          dailyConsumption[dayKey] = dayConsumption;
-          total += dayConsumption;
-        }
-      } else if (dayReadings.length === 1) {
-        // Só uma leitura no dia - não dá pra calcular consumo
-        dailyConsumption[dayKey] = 0;
+      const currentReading = morningReadings[currentDay].reading.reading_value;
+      const nextReading = morningReadings[nextDay].reading.reading_value;
+      
+      // Consumo de 24h = leitura do dia seguinte - leitura do dia atual
+      const consumption = nextReading - currentReading;
+      
+      if (consumption > 0) {
+        dailyConsumption[currentDay] = consumption;
+        total += consumption;
+      } else {
+        dailyConsumption[currentDay] = 0; // Pode ser reset do hidrômetro ou erro
       }
-    });
+    }
     
     const daysWithConsumption = Object.keys(dailyConsumption).filter(k => dailyConsumption[k] > 0).length;
     return { 
@@ -5930,27 +6000,22 @@ async function downloadReportAsPDF() {
   var params = '';
   
   if (currentReportTitle && currentReportTitle.toLowerCase().includes('dashboard')) {
-    // Relatório de Dashboard
     var period = state.dashboardFilter || 'monthly';
     pdfEndpoint = '/api/pdf/dashboard-report';
     params = '?period=' + period;
   } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('água')) {
-    // Relatório de água
     var month = state.waterReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
     pdfEndpoint = '/api/pdf/water-report';
     params = '?month=' + month;
   } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('diesel')) {
-    // Relatório de diesel
     var month = state.dieselReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
     pdfEndpoint = '/api/pdf/diesel-report';
     params = '?month=' + month;
   } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('gerador')) {
-    // Relatório de gerador
     var month = state.generatorReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
     pdfEndpoint = '/api/pdf/generator-report';
     params = '?month=' + month;
   } else if (currentReportTitle && (currentReportTitle.toLowerCase().includes('ordem') || currentReportTitle.toLowerCase().includes('os'))) {
-    // Relatório de OS
     pdfEndpoint = '/api/pdf/orders-report';
     params = '?period=monthly';
   }
@@ -5961,7 +6026,7 @@ async function downloadReportAsPDF() {
       var fullUrl = API_URL + pdfEndpoint + params + '&token=' + encodeURIComponent(state.token);
       console.log('[PDF] URL:', fullUrl);
       
-      // Detectar nome do arquivo pelo endpoint
+      // Detectar nome do arquivo
       var filename = 'relatorio';
       if (pdfEndpoint.includes('dashboard')) filename = 'relatorio_dashboard';
       else if (pdfEndpoint.includes('water')) filename = 'relatorio_agua';
@@ -5969,26 +6034,61 @@ async function downloadReportAsPDF() {
       else if (pdfEndpoint.includes('generator')) filename = 'relatorio_gerador';
       else if (pdfEndpoint.includes('orders')) filename = 'relatorio_ordens';
       
-      // PRIORIDADE 1: Usar interface nativa Android (APK)
-      if (window.AndroidPdfDownloader && typeof window.AndroidPdfDownloader.downloadPdf === 'function') {
-        console.log('[PDF] Usando AndroidPdfDownloader nativo');
-        window.AndroidPdfDownloader.downloadPdf(fullUrl, filename);
-        showNotification('Baixando PDF...', 'success');
-        return;
+      // Adicionar timestamp
+      filename = filename + '_' + Date.now();
+      
+      // Detectar se estamos no APK Android (Capacitor)
+      var isAndroidApp = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      console.log('[PDF] isAndroidApp:', isAndroidApp);
+      
+      // ANDROID APK: Usar Plugin Capacitor
+      if (isAndroidApp && window.Capacitor && window.Capacitor.Plugins) {
+        console.log('[PDF] Usando Plugin Capacitor PdfDownloader');
+        
+        // Acessar plugin PdfDownloader
+        var PdfDownloader = window.Capacitor.Plugins.PdfDownloader;
+        
+        if (PdfDownloader && typeof PdfDownloader.download === 'function') {
+          console.log('[PDF] Plugin PdfDownloader encontrado!');
+          showNotification('📥 Baixando PDF...', 'info');
+          
+          try {
+            var result = await PdfDownloader.download({
+              url: fullUrl,
+              filename: filename
+            });
+            console.log('[PDF] Download result:', result);
+            showNotification('✅ PDF baixado com sucesso!', 'success');
+          } catch (err) {
+            console.error('[PDF] Erro no plugin:', err);
+            // Fallback: abrir no navegador externo
+            if (PdfDownloader && typeof PdfDownloader.openInBrowser === 'function') {
+              console.log('[PDF] Fallback: abrindo no navegador');
+              await PdfDownloader.openInBrowser({ url: fullUrl });
+              showNotification('📱 Abrindo no navegador...', 'info');
+            } else {
+              showNotification('❌ Erro ao baixar PDF', 'error');
+            }
+          }
+          return;
+        } else {
+          console.log('[PDF] Plugin PdfDownloader NÃO encontrado');
+          console.log('[PDF] Plugins disponíveis:', Object.keys(window.Capacitor.Plugins || {}));
+        }
       }
       
-      // PRIORIDADE 2: Browser normal - abrir em nova aba (vai baixar automaticamente)
-      console.log('[PDF] Abrindo em nova aba (browser)');
+      // BROWSER NORMAL: abrir em nova aba
+      console.log('[PDF] Browser - abrindo em nova aba');
       window.open(fullUrl, '_blank');
       showNotification('Abrindo PDF...', 'success');
       return;
-      
     } catch (e) {
       console.error('[PDF] Erro:', e);
+      showNotification('Erro ao gerar PDF', 'error');
     }
   }
   
-  // Fallback: usar print nativo (funciona em qualquer WebView)
+  // Fallback para relatórios sem endpoint específico: usar print
   showNotification('Abrindo impressão... Selecione "Salvar como PDF"', 'info');
   var iframe = document.getElementById('report-iframe');
   if (iframe && iframe.contentWindow) {
@@ -6944,62 +7044,101 @@ function checkDieselAlerts() {
   }
 }
 
-// Verificar e criar requisição automática de diesel quando estoque baixo
+// Verificar e criar/remover requisição automática de diesel quando estoque baixo
 async function checkDieselAutoRequest(saldo) {
-  // Só cria requisição se não tiver criado recentemente (usar localStorage para controle)
-  var lastRequest = localStorage.getItem('diesel_auto_request_date');
-  var today = new Date().toISOString().split('T')[0];
-  
-  // Se já criou requisição hoje, não criar outra
-  if (lastRequest === today) {
-    console.log('[Diesel] Requisição automática já criada hoje');
+  // Só usuários com permissão podem ver/criar requisições
+  if (!state.user || !state.user.roles) {
     return;
   }
   
-  // Só usuários admin podem ver/criar requisições automáticas
-  if (!state.user || !state.user.roles || !state.user.roles.includes('admin')) {
-    return;
-  }
+  var hasPermission = state.user.roles.includes('admin') || 
+                      state.user.roles.includes('compras') || 
+                      state.user.roles.includes('diesel');
+  if (!hasPermission) return;
+  
+  // Limite para considerar estoque baixo (100L ou menos)
+  var LIMITE_BAIXO = 100;
+  var dieselBaixo = saldo <= LIMITE_BAIXO;
   
   try {
-    // Calcular quantidade sugerida baseada no consumo do mês
-    var stats = state.dieselStats || {};
-    var consumoMes = stats.total_saida || stats.totalSaida || 0;
-    var quantidadeSugerida = Math.max(consumoMes, 200); // Mínimo 200L ou o consumo do mês
+    // Carregar compras para verificar se já existe requisição de diesel
+    if (!state.purchases || state.purchases.length === 0) {
+      var resp = await fetch(API_URL + '/purchases', {
+        headers: { 'Authorization': 'Bearer ' + state.token }
+      });
+      var data = await resp.json();
+      if (data.ok) state.purchases = data.purchases;
+    }
     
-    // Criar requisição de compra
-    var mensagem = 'REQUISIÇÃO AUTOMÁTICA DE DIESEL\\n\\n' +
-      'O sistema detectou que o estoque de diesel está baixo:\\n' +
-      '• Estoque atual: ' + saldo.toLocaleString('pt-BR') + ' litros\\n' +
-      '• Consumo do mês: ' + consumoMes.toLocaleString('pt-BR') + ' litros\\n' +
-      '• Quantidade sugerida: ' + quantidadeSugerida.toLocaleString('pt-BR') + ' litros\\n\\n' +
-      'Por favor, providencie o abastecimento o mais rápido possível.';
-    
-    var response = await fetch(API_URL + '/purchases', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.token
-      },
-      body: JSON.stringify({
-        item_name: 'DIESEL - Abastecimento Urgente',
-        quantity: quantidadeSugerida,
-        unit: 'L',
-        category: 'combustivel',
-        priority: 'high',
-        notes: mensagem,
-        requested_for: 'Joacir', // Responsável pelas compras
-        auto_generated: true
-      })
+    // Procurar requisição de diesel pendente (em análise ou pedido)
+    var requisicaoDiesel = state.purchases.find(function(p) {
+      var isDiesel = p.item_name && p.item_name.toLowerCase().includes('diesel');
+      var isPendente = p.status === 'analise' || p.status === 'pedido' || p.status === 'chegando';
+      var isAuto = p.auto_generated === true || (p.notes && p.notes.includes('AUTOMÁTICA'));
+      return isDiesel && isPendente && isAuto;
     });
     
-    if (response.ok) {
-      localStorage.setItem('diesel_auto_request_date', today);
-      showNotification('Requisição de diesel criada automaticamente para Joacir!', 'info');
-      console.log('[Diesel] Requisição automática criada com sucesso');
+    if (dieselBaixo) {
+      // Diesel baixo - criar requisição se não existe
+      if (!requisicaoDiesel) {
+        console.log('[Diesel] Estoque baixo (' + saldo + 'L) - criando requisição automática...');
+        
+        var stats = state.dieselStats || {};
+        var consumoMes = stats.total_saida || stats.totalSaida || 0;
+        var quantidadeSugerida = Math.max(consumoMes, 200);
+        
+        var mensagem = 'REQUISIÇÃO AUTOMÁTICA DE DIESEL\n\n' +
+          'O sistema detectou que o estoque de diesel está baixo:\n' +
+          '• Estoque atual: ' + saldo.toLocaleString('pt-BR') + ' litros\n' +
+          '• Consumo do mês: ' + consumoMes.toLocaleString('pt-BR') + ' litros\n' +
+          '• Quantidade sugerida: ' + quantidadeSugerida.toLocaleString('pt-BR') + ' litros\n\n' +
+          'Por favor, providencie o abastecimento o mais rápido possível.';
+        
+        var response = await fetch(API_URL + '/purchases', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + state.token
+          },
+          body: JSON.stringify({
+            item_name: '🛢️ DIESEL - Abastecimento Urgente',
+            quantity: quantidadeSugerida,
+            unit: 'L',
+            category: 'combustivel',
+            priority: 'high',
+            notes: mensagem,
+            auto_generated: true
+          })
+        });
+        
+        if (response.ok) {
+          showNotification('⛽ Requisição de diesel criada automaticamente!', 'warning');
+          console.log('[Diesel] Requisição automática criada com sucesso');
+          // Recarregar compras
+          await loadPurchases();
+        }
+      } else {
+        console.log('[Diesel] Requisição de diesel já existe:', requisicaoDiesel.id);
+      }
+    } else {
+      // Diesel OK - remover requisição automática se existir
+      if (requisicaoDiesel) {
+        console.log('[Diesel] Estoque OK (' + saldo + 'L) - removendo requisição automática...');
+        
+        var delResp = await fetch(API_URL + '/purchases/' + requisicaoDiesel.id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + state.token }
+        });
+        
+        if (delResp.ok) {
+          showNotification('✅ Requisição de diesel removida (estoque OK)', 'success');
+          console.log('[Diesel] Requisição automática removida');
+          await loadPurchases();
+        }
+      }
     }
   } catch (e) {
-    console.error('[Diesel] Erro ao criar requisição automática:', e);
+    console.error('[Diesel] Erro ao gerenciar requisição automática:', e);
   }
 }
 
