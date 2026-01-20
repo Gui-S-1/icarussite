@@ -352,7 +352,7 @@ public class MainActivity extends BridgeActivity {
     }
     
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         
         // Desregistrar receiver
