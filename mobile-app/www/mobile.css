@@ -1408,6 +1408,154 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
+     GRÁFICO DE TEMPERATURA MOBILE
+     ======================================== */
+  .water-main-chart {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 16px 12px !important;
+    margin-top: 12px !important;
+    overflow-x: auto !important;
+    min-height: 280px !important;
+  }
+
+  .water-main-chart > div {
+    min-width: 100% !important;
+  }
+
+  .water-main-chart svg {
+    min-width: 400px !important;
+    height: auto !important;
+    touch-action: pan-x !important;
+  }
+
+  /* Legenda do gráfico de temperatura */
+  .water-main-chart > div > div:first-child {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    padding: 10px 0 !important;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(239, 68, 68, 0.06)) !important;
+    border-radius: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .water-main-chart > div > div:first-child > div {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 4px 10px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 20px !important;
+  }
+
+  .water-main-chart > div > div:first-child > div > div {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 8px currentColor !important;
+  }
+
+  /* Container do SVG com scroll horizontal suave */
+  .water-main-chart > div > div:last-child {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(245, 158, 11, 0.3) transparent !important;
+    padding-bottom: 8px !important;
+  }
+
+  .water-main-chart > div > div:last-child::-webkit-scrollbar {
+    height: 6px !important;
+  }
+
+  .water-main-chart > div > div:last-child::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 3px !important;
+  }
+
+  .water-main-chart > div > div:last-child::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #f59e0b, #ef4444) !important;
+    border-radius: 3px !important;
+  }
+
+  /* Toggle de tipo de gráfico mobile */
+  .water-chart-toggle {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: center !important;
+    margin-bottom: 12px !important;
+  }
+
+  .water-chart-toggle-btn {
+    flex: 1 !important;
+    min-width: 100px !important;
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.3s !important;
+  }
+
+  .water-chart-toggle-btn.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    color: #60a5fa !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  .water-chart-toggle-btn:active {
+    transform: scale(0.97) !important;
+  }
+
+  /* Card de água premium mobile */
+  .water-chart-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Legenda do gráfico de água */
+  .chart-legend {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    justify-content: center !important;
+    margin-bottom: 12px !important;
+    padding: 10px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-radius: 10px !important;
+  }
+
+  .legend-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 11px !important;
+    color: var(--text-secondary) !important;
+    padding: 4px 10px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 20px !important;
+  }
+
+  .legend-dot {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* ========================================
      AUTO REFRESH INDICATOR
      ======================================== */
   #auto-refresh-indicator {
