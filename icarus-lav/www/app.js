@@ -450,7 +450,7 @@ function updateStats() {
 }
 
 // ===== GERAR PDF =====
-function exportPDF() {
+async function exportPDF() {
   var client = CLIENTS[state.currentClient];
   var entries = state.entries[state.currentClient] || [];
   
@@ -508,142 +508,107 @@ function exportPDF() {
     return new Date(a.date) - new Date(b.date);
   });
   
-  // SVG do logo Icarus (estrela)
-  var logoSvg = '<svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-    '<circle cx="50" cy="50" r="45" stroke="' + client.color + '" stroke-width="3" fill="none"/>' +
-    '<path d="M50 15 L56 42 L83 50 L56 58 L50 85 L44 58 L17 50 L44 42 Z" fill="' + client.color + '"/>' +
-  '</svg>';
-  
-  // Marca d'água
-  var watermarkSvg = '<svg style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.03;z-index:-1;" width="500" height="500" viewBox="0 0 100 100">' +
-    '<path d="M50 10 L58 40 L88 50 L58 60 L50 90 L42 60 L12 50 L42 40 Z" fill="#000"/>' +
-  '</svg>';
-  
-  // Criar HTML do PDF - Design Profissional
-  var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<title>Relatório ' + client.name + ' - Icarus</title>' +
+  // Criar HTML do PDF - Design Premium
+  var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>Relatório ' + client.name + '</title>' +
     '<style>' +
-      '@page { size: A4; margin: 15mm; }' +
+      '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");' +
+      '@page { size: A4; margin: 10mm; }' +
       '* { margin: 0; padding: 0; box-sizing: border-box; }' +
-      'body { font-family: "Segoe UI", Arial, sans-serif; color: #1a1a2e; background: #fff; padding: 20px; font-size: 11px; }' +
+      'body { font-family: "Inter", system-ui, sans-serif; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%); color: #fff; min-height: 100vh; padding: 20px; }' +
       
-      // Header com logo
-      '.header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 3px solid ' + client.color + '; margin-bottom: 20px; }' +
-      '.header-left { display: flex; align-items: center; gap: 15px; }' +
-      '.header-title { }' +
-      '.header-title h1 { font-size: 22px; color: ' + client.color + '; margin-bottom: 2px; }' +
-      '.header-title .subtitle { font-size: 12px; color: #666; }' +
-      '.header-right { text-align: right; }' +
-      '.header-right .period { font-size: 14px; font-weight: 600; color: #333; }' +
-      '.header-right .generated { font-size: 10px; color: #888; margin-top: 4px; }' +
+      // Header
+      '.header { text-align: center; padding: 30px 20px; background: linear-gradient(135deg, ' + client.color + '22, ' + client.color + '11); border: 1px solid ' + client.color + '44; border-radius: 20px; margin-bottom: 20px; }' +
+      '.header-icon { width: 70px; height: 70px; background: linear-gradient(135deg, ' + client.color + '33, ' + client.color + '11); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; border: 2px solid ' + client.color + '; }' +
+      '.header h1 { font-size: 24px; font-weight: 800; color: ' + client.color + '; letter-spacing: 2px; margin-bottom: 8px; }' +
+      '.header .subtitle { color: #94a3b8; font-size: 13px; }' +
+      '.header .period { display: inline-block; margin-top: 12px; padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 20px; font-size: 12px; color: #cbd5e1; }' +
       
-      // Cards de resumo
-      '.summary-cards { display: flex; gap: 15px; margin-bottom: 20px; }' +
-      '.summary-card { flex: 1; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 12px; padding: 15px; text-align: center; border-left: 4px solid ' + client.color + '; }' +
-      '.summary-card .icon { margin-bottom: 5px; }' +
-      '.summary-card .value { font-size: 26px; font-weight: 700; color: ' + client.color + '; }' +
-      '.summary-card .label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; }' +
-      '.summary-card.total { background: linear-gradient(135deg, ' + client.color + '22, ' + client.color + '11); border-left-color: ' + client.color + '; }' +
-      '.summary-card.total .value { color: ' + client.color + '; }' +
+      // Stats grid
+      '.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }' +
+      '.stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; text-align: center; }' +
+      '.stat-card .icon { font-size: 24px; margin-bottom: 8px; }' +
+      '.stat-card .value { font-size: 26px; font-weight: 700; color: ' + client.color + '; }' +
+      '.stat-card .label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }' +
+      '.stat-card.total { background: linear-gradient(135deg, ' + client.color + '22, ' + client.color + '11); border-color: ' + client.color + '44; }' +
       
-      // Info do cliente
-      '.client-info { background: #f8f9fa; border-radius: 10px; padding: 12px 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }' +
-      '.client-info-item { text-align: center; }' +
-      '.client-info-item .label { font-size: 9px; color: #888; text-transform: uppercase; }' +
-      '.client-info-item .value { font-size: 12px; font-weight: 600; color: #333; }' +
+      // Info bar
+      '.info-bar { display: flex; justify-content: space-around; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; margin-bottom: 20px; }' +
+      '.info-item { text-align: center; }' +
+      '.info-item .label { font-size: 9px; color: #64748b; text-transform: uppercase; }' +
+      '.info-item .value { font-size: 13px; font-weight: 600; color: #fff; }' +
       
-      // Tabela
-      '.table-container { margin-bottom: 15px; }' +
-      '.table-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }' +
-      '.table-title svg { color: ' + client.color + '; }' +
-      'table { width: 100%; border-collapse: collapse; font-size: 10px; }' +
-      'thead th { background: ' + client.color + '; color: white; padding: 10px 8px; text-align: center; font-weight: 600; }' +
-      'thead th:first-child { text-align: left; border-radius: 8px 0 0 0; }' +
-      'thead th:last-child { border-radius: 0 8px 0 0; }' +
-      'tbody td { padding: 8px; text-align: center; border-bottom: 1px solid #eee; }' +
+      // Table
+      '.table-section { background: rgba(255,255,255,0.02); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }' +
+      '.table-header { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }' +
+      '.table-header svg { color: ' + client.color + '; }' +
+      '.table-header h3 { font-size: 14px; font-weight: 600; }' +
+      'table { width: 100%; border-collapse: collapse; }' +
+      'thead th { background: ' + client.color + '; color: #000; padding: 12px 10px; font-size: 11px; font-weight: 600; text-align: center; }' +
+      'thead th:first-child { text-align: left; }' +
+      'tbody td { padding: 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }' +
       'tbody td:first-child { text-align: left; font-weight: 500; }' +
-      'tbody td:last-child { font-weight: 600; color: ' + client.color + '; }' +
-      'tbody tr:hover { background: #f8f9fa; }' +
-      'tfoot td { background: #f1f3f4; padding: 10px 8px; font-weight: 700; text-align: center; }' +
-      'tfoot td:first-child { text-align: left; border-radius: 0 0 0 8px; }' +
-      'tfoot td:last-child { color: ' + client.color + '; font-size: 12px; border-radius: 0 0 8px 0; }' +
+      'tbody td:last-child { color: ' + client.color + '; font-weight: 600; }' +
+      'tfoot td { background: rgba(255,255,255,0.05); padding: 12px 10px; font-weight: 700; text-align: center; font-size: 12px; }' +
+      'tfoot td:first-child { text-align: left; }' +
+      'tfoot td:last-child { color: ' + client.color + '; font-size: 14px; }' +
       
       // Footer
-      '.footer { margin-top: 20px; padding-top: 15px; border-top: 2px solid #eee; display: flex; justify-content: space-between; align-items: center; }' +
+      '.footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }' +
       '.footer-brand { display: flex; align-items: center; gap: 10px; }' +
-      '.footer-brand .name { font-size: 14px; font-weight: 700; color: ' + client.color + '; }' +
-      '.footer-brand .owner { font-size: 9px; color: #888; }' +
-      '.footer-qr { text-align: right; font-size: 9px; color: #888; }' +
+      '.footer-logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, ' + client.color + '33, ' + client.color + '11); display: flex; align-items: center; justify-content: center; border: 1px solid ' + client.color + '44; }' +
+      '.footer-text { }' +
+      '.footer-text .name { font-size: 14px; font-weight: 700; color: ' + client.color + '; }' +
+      '.footer-text .sub { font-size: 10px; color: #64748b; }' +
+      '.footer-info { text-align: right; font-size: 10px; color: #64748b; }' +
       
-      // Responsivo para impressão
-      '@media print { body { padding: 0; } }' +
+      // Print button
+      '.print-btn { display: block; width: 100%; padding: 14px; background: linear-gradient(135deg, ' + client.color + ', ' + client.color + 'cc); border: none; border-radius: 12px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }' +
+      
+      // Responsive
+      '@media (max-width: 480px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }' +
+      '@media print { .print-btn { display: none !important; } body { background: #fff !important; color: #1e293b !important; padding: 10px !important; } .header, .stat-card, .table-section { background: #f8fafc !important; border-color: #e2e8f0 !important; } .stat-card .value, .header h1 { color: ' + client.color + ' !important; } thead th { background: ' + client.color + ' !important; } tbody td, tfoot td { border-color: #e2e8f0 !important; } }' +
     '</style></head><body>' +
-    
-    watermarkSvg +
     
     // Header
     '<div class="header">' +
-      '<div class="header-left">' +
-        logoSvg +
-        '<div class="header-title">' +
-          '<h1>RELATÓRIO ' + client.name.toUpperCase() + '</h1>' +
-          '<div class="subtitle">Controle de Lavanderia</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="header-right">' +
-        '<div class="period">📅 ' + formatDate(state.period.start) + ' a ' + formatDate(state.period.end) + '</div>' +
-        '<div class="generated">Gerado em ' + new Date().toLocaleString('pt-BR') + '</div>' +
-      '</div>' +
+      '<div class="header-icon"><svg width="32" height="32" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="45" stroke="' + client.color + '" stroke-width="3" fill="none"/><path d="M50 15 L56 42 L83 50 L56 58 L50 85 L44 58 L17 50 L44 42 Z" fill="' + client.color + '"/></svg></div>' +
+      '<h1>RELATÓRIO ' + client.name.toUpperCase() + '</h1>' +
+      '<div class="subtitle">Controle de Lavanderia • Sistema Icarus</div>' +
+      '<div class="period">📅 ' + formatDate(state.period.start) + ' a ' + formatDate(state.period.end) + '</div>' +
     '</div>' +
     
-    // Cards de resumo
-    '<div class="summary-cards">' +
-      '<div class="summary-card">' +
-        '<div class="icon">👕</div>' +
-        '<div class="value">' + totalPieces + '</div>' +
-        '<div class="label">Total Peças</div>' +
-      '</div>';
+    // Stats
+    '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="icon">👕</div><div class="value">' + totalPieces + '</div><div class="label">Peças</div></div>';
   
   if (client.markingPrice > 0) {
-    printContent += '<div class="summary-card">' +
-        '<div class="icon">🏷️</div>' +
-        '<div class="value">' + totalMarkings + '</div>' +
-        '<div class="label">Marcações</div>' +
-      '</div>';
+    printContent += '<div class="stat-card"><div class="icon">🏷️</div><div class="value">' + totalMarkings + '</div><div class="label">Marcações</div></div>';
   }
   
-  printContent += '<div class="summary-card">' +
-        '<div class="icon">📊</div>' +
-        '<div class="value">' + sortedEntries.length + '</div>' +
-        '<div class="label">Lançamentos</div>' +
-      '</div>' +
-      '<div class="summary-card total">' +
-        '<div class="icon">💰</div>' +
-        '<div class="value">R$ ' + totalValue.toFixed(2) + '</div>' +
-        '<div class="label">Valor Total</div>' +
-      '</div>' +
+  printContent += '<div class="stat-card"><div class="icon">📊</div><div class="value">' + sortedEntries.length + '</div><div class="label">Lançamentos</div></div>' +
+      '<div class="stat-card total"><div class="icon">💰</div><div class="value">R$ ' + totalValue.toFixed(0) + '</div><div class="label">Total</div></div>' +
     '</div>' +
     
-    // Info do cliente
-    '<div class="client-info">' +
-      '<div class="client-info-item"><div class="label">Cliente</div><div class="value">' + client.name + '</div></div>' +
-      '<div class="client-info-item"><div class="label">Valor/Peça</div><div class="value">R$ ' + client.pricePerPiece.toFixed(2) + '</div></div>';
+    // Info bar
+    '<div class="info-bar">' +
+      '<div class="info-item"><div class="label">Cliente</div><div class="value">' + client.name + '</div></div>' +
+      '<div class="info-item"><div class="label">R$/Peça</div><div class="value">R$ ' + client.pricePerPiece.toFixed(2) + '</div></div>';
   
   if (client.markingPrice > 0) {
-    printContent += '<div class="client-info-item"><div class="label">Valor/Marcação</div><div class="value">R$ ' + client.markingPrice.toFixed(2) + '</div></div>';
+    printContent += '<div class="info-item"><div class="label">R$/Marcação</div><div class="value">R$ ' + client.markingPrice.toFixed(2) + '</div></div>';
   }
   
-  printContent += '<div class="client-info-item"><div class="label">Ciclo</div><div class="value">' + (client.billingCycle === 'biweekly' ? 'Quinzenal' : 'Mensal') + '</div></div>' +
+  printContent += '<div class="info-item"><div class="label">Ciclo</div><div class="value">' + (client.billingCycle === 'biweekly' ? 'Quinzenal' : 'Mensal') + '</div></div>' +
     '</div>' +
     
-    // Tabela de lançamentos
-    '<div class="table-container">' +
-      '<div class="table-title">' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
-        'Lançamentos do Período' +
+    // Table
+    '<div class="table-section">' +
+      '<div class="table-header">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+        '<h3>Lançamentos do Período</h3>' +
       '</div>' +
-      '<table>' +
-        '<thead><tr><th>Data</th>';
+      '<table><thead><tr><th>Data</th>';
   
   client.fields.forEach(function(field) {
     printContent += '<th>' + field.label + '</th>';
@@ -659,7 +624,6 @@ function exportPDF() {
     printContent += '<td>R$ ' + (entry.totalValue || 0).toFixed(2) + '</td></tr>';
   });
   
-  // Footer da tabela com totais
   printContent += '</tbody><tfoot><tr><td><strong>TOTAIS</strong></td>';
   client.fields.forEach(function(field) {
     printContent += '<td><strong>' + totalsByField[field.key] + '</strong></td>';
@@ -669,32 +633,66 @@ function exportPDF() {
     // Footer
     '<div class="footer">' +
       '<div class="footer-brand">' +
-        '<svg width="30" height="30" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" stroke="' + client.color + '" stroke-width="3" fill="none"/><path d="M50 20 L55 45 L80 50 L55 55 L50 80 L45 55 L20 50 L45 45 Z" fill="' + client.color + '"/></svg>' +
-        '<div>' +
-          '<div class="name">ICARUS</div>' +
-          '<div class="owner">Guilherme Braga de Queiroz</div>' +
-        '</div>' +
+        '<div class="footer-logo"><svg width="20" height="20" viewBox="0 0 100 100"><path d="M50 10 L58 40 L88 50 L58 60 L50 90 L42 60 L12 50 L42 40 Z" fill="' + client.color + '"/></svg></div>' +
+        '<div class="footer-text"><div class="name">ICARUS</div><div class="sub">Guilherme Braga</div></div>' +
       '</div>' +
-      '<div class="footer-qr">' +
-        '<div>Sistema de Gestão</div>' +
-        '<div>icarus.lav v1.0</div>' +
-      '</div>' +
+      '<div class="footer-info"><div>Gerado em ' + new Date().toLocaleString('pt-BR') + '</div><div>icarus.lav v1.0</div></div>' +
     '</div>' +
+    
+    // Print button
+    '<button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>' +
     
     '</body></html>';
   
-  // Abrir para impressão
-  var printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(function() {
-      printWindow.print();
-    }, 500);
-    showToast('PDF gerado!', 'success');
+  // Detectar se está no Capacitor (APK Android)
+  var isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+  
+  if (isCapacitor) {
+    // No Android: criar blob e abrir no navegador do sistema
+    try {
+      var blob = new Blob([printContent], { type: 'text/html' });
+      var url = URL.createObjectURL(blob);
+      
+      // Tentar abrir com Browser plugin
+      if (window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+        // Infelizmente blob URLs não funcionam no Browser plugin
+        // Vamos usar uma abordagem diferente: criar uma data URL
+        var dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(printContent);
+        
+        await window.Capacitor.Plugins.Browser.open({ 
+          url: dataUrl,
+          presentationStyle: 'fullscreen'
+        });
+        showToast('PDF aberto no navegador!', 'success');
+        return;
+      }
+    } catch (e) {
+      console.error('Erro ao abrir no navegador:', e);
+    }
+    
+    // Fallback: tentar window.open
+    var printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      showToast('PDF gerado!', 'success');
+    } else {
+      showToast('Permita pop-ups', 'error');
+    }
   } else {
-    showToast('Permita pop-ups para gerar PDF', 'error');
+    // No browser: abrir janela normalmente
+    var printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(function() {
+        printWindow.print();
+      }, 500);
+      showToast('PDF gerado!', 'success');
+    } else {
+      showToast('Permita pop-ups para gerar PDF', 'error');
+    }
   }
 }
 

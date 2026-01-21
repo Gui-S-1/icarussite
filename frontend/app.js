@@ -2901,9 +2901,25 @@ function renderInventoryTable() {
     var statusClass = item.quantity <= 0 ? 'badge-high' : (item.quantity <= (item.min_stock || 0) ? 'badge-warning' : 'badge-low');
     var statusText = item.quantity <= 0 ? '🔴 Zerado' : (item.quantity <= (item.min_stock || 0) ? '⚠️ Baixo' : '✅ OK');
     
+    // Criar descrição informativa do item
+    var descParts = [];
+    if (item.brand) descParts.push(item.brand);
+    if (item.specs) {
+      var specsPreview = item.specs.substring(0, 60) + (item.specs.length > 60 ? '...' : '');
+      descParts.push(specsPreview);
+    }
+    var descHtml = descParts.length > 0 
+      ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(descParts.join(' • ')) + '</div>'
+      : '<div style="font-size:11px; color:var(--text-muted); margin-top:2px; font-style:italic;">Sem descrição</div>';
+    
+    // Localização com ícone
+    var locationHtml = item.location 
+      ? '<span style="font-size: 12px; display:flex; align-items:center; gap:4px;"><span style="opacity:0.6;">📍</span>' + escapeHtml(item.location) + '</span>'
+      : '<span style="font-size: 11px; color:var(--text-muted); font-style:italic;">Não definido</span>';
+    
     return '<tr onclick="showItemDetail(\'' + sanitizeId(item.id) + '\')" style="cursor: pointer;" title="Clique para ver detalhes">' +
       '<td><code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-size: 11px;">' + escapeHtml(item.sku || '-') + '</code></td>' +
-      '<td><strong>' + escapeHtml(item.name) + '</strong></td>' +
+      '<td><div><strong>' + escapeHtml(item.name) + '</strong>' + descHtml + '</div></td>' +
       '<td><span class="category-badge ' + catClass + '">' + escapeHtml(categoryLabels[item.category] || item.category || '-') + '</span></td>' +
       '<td>' + escapeHtml(item.brand || '-') + '</td>' +
       '<td><div style="display:flex; align-items:center; gap:6px;">' +
@@ -2911,7 +2927,7 @@ function renderInventoryTable() {
         '<span style="color: var(--text-secondary); font-size:11px;">min ' + (item.min_stock || 0) + (item.max_stock ? ' / max ' + item.max_stock : '') + '</span>' +
       '</div></td>' +
       '<td>' + escapeHtml(item.unit) + '</td>' +
-      '<td><span style="font-size: 12px;">' + escapeHtml(item.location || '-') + '</span></td>' +
+      '<td>' + locationHtml + '</td>' +
       '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
       '<td onclick="event.stopPropagation()">' +
         '<button class="btn-small" onclick="adjustStock(' + item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">−</button>' +
@@ -2950,24 +2966,43 @@ function renderInventoryMobile(items, categoryLabels) {
   
   mobileContainer.innerHTML = items.map(function(item) {
     var isLowStock = item.quantity <= (item.min_stock || 0);
+    var isCritical = item.quantity <= 0;
     var catLabel = categoryLabels[item.category] || item.category || '-';
     
-    return '<div class="almox-mobile-item' + (isLowStock ? ' low-stock' : '') + '" onclick="showItemDetail(\'' + item.id + '\')">' +
+    // Criar descrição/specs preview
+    var specsPreview = item.specs 
+      ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:4px; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:6px; max-height:40px; overflow:hidden;">' + escapeHtml(item.specs.substring(0, 80) + (item.specs.length > 80 ? '...' : '')) + '</div>'
+      : '';
+    
+    // Status visual
+    var statusBadge = isCritical 
+      ? '<span style="font-size:10px; padding:2px 6px; background:rgba(239,68,68,0.2); color:#ef4444; border-radius:4px;">ZERADO</span>'
+      : isLowStock 
+        ? '<span style="font-size:10px; padding:2px 6px; background:rgba(245,158,11,0.2); color:#f59e0b; border-radius:4px;">ESTOQUE BAIXO</span>'
+        : '<span style="font-size:10px; padding:2px 6px; background:rgba(16,185,129,0.2); color:#10b981; border-radius:4px;">OK</span>';
+    
+    return '<div class="almox-mobile-item' + (isLowStock ? ' low-stock' : '') + '" onclick="showItemDetail(\'' + item.id + '\')" style="padding:12px;">' +
       '<div class="almox-mobile-item-header">' +
-        '<div>' +
-          '<div class="almox-mobile-item-name">' + escapeHtml(item.name) + '</div>' +
-          '<div class="almox-mobile-item-sku">SKU: ' + escapeHtml(item.sku || '-') + '</div>' +
+        '<div style="flex:1;">' +
+          '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">' +
+            '<div class="almox-mobile-item-name">' + escapeHtml(item.name) + '</div>' +
+            statusBadge +
+          '</div>' +
+          '<div class="almox-mobile-item-sku" style="display:flex; align-items:center; gap:8px;">' +
+            '<code style="background:var(--bg-secondary); padding:2px 6px; border-radius:4px; font-size:10px;">SKU: ' + escapeHtml(item.sku || '-') + '</code>' +
+            (item.brand ? '<span style="font-size:11px; color:var(--accent-cyan);">' + escapeHtml(item.brand) + '</span>' : '') +
+          '</div>' +
         '</div>' +
-        '<div class="almox-mobile-item-qty">' +
-          '<div class="qty-value">' + item.quantity + '</div>' +
-          '<div class="qty-unit">' + escapeHtml(item.unit || 'un') + '</div>' +
+        '<div class="almox-mobile-item-qty" style="text-align:right;">' +
+          '<div class="qty-value" style="font-size:24px; font-weight:700; color:' + (isCritical ? '#ef4444' : isLowStock ? '#f59e0b' : 'var(--accent-cyan)') + ';">' + item.quantity + '</div>' +
+          '<div class="qty-unit" style="font-size:11px; color:var(--text-secondary);">' + escapeHtml(item.unit || 'un') + '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="almox-mobile-item-details">' +
-        '<span>' + escapeHtml(catLabel) + '</span>' +
-        (item.brand ? '<span>' + escapeHtml(item.brand) + '</span>' : '') +
-        (item.location ? '<span>📍 ' + escapeHtml(item.location) + '</span>' : '') +
-        '<span>Min: ' + (item.min_stock || 0) + '</span>' +
+      specsPreview +
+      '<div class="almox-mobile-item-details" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">' +
+        '<span style="font-size:11px; padding:3px 8px; background:rgba(6,182,212,0.1); border-radius:4px;">' + escapeHtml(catLabel) + '</span>' +
+        (item.location ? '<span style="font-size:11px; display:flex; align-items:center; gap:4px;"><span>📍</span>' + escapeHtml(item.location) + '</span>' : '<span style="font-size:11px; color:var(--text-muted); font-style:italic;">Sem local</span>') +
+        '<span style="font-size:11px; color:var(--text-secondary);">Min: ' + (item.min_stock || 0) + (item.max_stock ? ' / Max: ' + item.max_stock : '') + '</span>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -3133,11 +3168,25 @@ function showItemDetail(itemId) {
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
-            ESPECIFICA\u00c7\u00d5ES T\u00c9CNICAS
+            ESPECIFICAÇÕES TÉCNICAS
           </div>
           <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; font-size: 13px; color: #94a3b8; white-space: pre-wrap; max-height: 120px; overflow-y: auto;">${escapeHtml(item.specs)}</div>
         </div>
-        ` : ''}
+        ` : `
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+            ESPECIFICAÇÕES TÉCNICAS
+          </div>
+          <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 16px; text-align: center;">
+            <div style="color: #64748b; font-size: 12px; margin-bottom: 8px;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; margin-bottom: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+            </div>
+            <div style="font-size: 12px; color: #64748b;">Nenhuma especificação cadastrada</div>
+            <div style="font-size: 11px; color: #475569; margin-top: 4px;">Clique em "Editar Item" para adicionar detalhes técnicos</div>
+          </div>
+        </div>
+        `}
         
         <div style="display: flex; gap: 10px;">
           <button onclick="closeModal('modal-item-detail')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Fechar</button>
@@ -5279,7 +5328,7 @@ function setWaterChartType(type) {
   }
 }
 
-// Renderizar gráfico de temperatura
+// Renderizar gráfico de temperatura - Mostra Mínima (7h) e Máxima (16h) do dia
 function renderTemperatureChart() {
   var container = document.getElementById('water-consumption-chart');
   if (!container) return;
@@ -5301,27 +5350,34 @@ function renderTemperatureChart() {
     return dateStr.split('T')[0];
   }
   
-  // Agrupar por data (média das temperaturas do dia)
+  // Agrupar por data - pegar temperatura das 7h (mínima) e 16h (máxima)
   var tempByDate = {};
   tempReadings.forEach(function(r) {
     var dateKey = getDateKey(r.reading_date);
     if (!tempByDate[dateKey]) {
-      tempByDate[dateKey] = { sum: 0, count: 0, min: r.temperature, max: r.temperature };
+      tempByDate[dateKey] = { temp7h: null, temp16h: null };
     }
-    tempByDate[dateKey].sum += r.temperature;
-    tempByDate[dateKey].count++;
-    tempByDate[dateKey].min = Math.min(tempByDate[dateKey].min, r.temperature);
-    tempByDate[dateKey].max = Math.max(tempByDate[dateKey].max, r.temperature);
+    // Temperatura das 7h = mínima do dia (manhã)
+    if (r.reading_time === '07:00') {
+      tempByDate[dateKey].temp7h = r.temperature;
+    }
+    // Temperatura das 16h = máxima do dia (tarde)
+    if (r.reading_time === '16:00') {
+      tempByDate[dateKey].temp16h = r.temperature;
+    }
   });
   
-  // Calcular médias
-  var dates = Object.keys(tempByDate).sort().slice(-14);
+  // Filtrar apenas dias com pelo menos uma leitura de temperatura
+  var dates = Object.keys(tempByDate).filter(function(d) {
+    return tempByDate[d].temp7h !== null || tempByDate[d].temp16h !== null;
+  }).sort().slice(-14);
+  
   var temps = dates.map(function(d) {
+    var data = tempByDate[d];
     return {
       date: d,
-      avg: tempByDate[d].sum / tempByDate[d].count,
-      min: tempByDate[d].min,
-      max: tempByDate[d].max
+      min: data.temp7h,   // Temperatura 7h = mínima
+      max: data.temp16h   // Temperatura 16h = máxima
     };
   });
   
@@ -5330,41 +5386,99 @@ function renderTemperatureChart() {
     return;
   }
   
-  var minTemp = Math.min(...temps.map(function(t) { return t.min; }));
-  var maxTemp = Math.max(...temps.map(function(t) { return t.max; }));
+  // Calcular range considerando min e max
+  var allTemps = [];
+  temps.forEach(function(t) {
+    if (t.min !== null) allTemps.push(t.min);
+    if (t.max !== null) allTemps.push(t.max);
+  });
+  
+  var minTemp = Math.min.apply(null, allTemps) - 2;
+  var maxTemp = Math.max.apply(null, allTemps) + 2;
   var tempRange = maxTemp - minTemp || 10;
   
-  // Renderizar gráfico de linha com área
-  container.innerHTML = '<div class="temp-chart-container">' +
-    '<div class="temp-chart-y-axis">' +
-      '<span>' + maxTemp.toFixed(1) + '°</span>' +
-      '<span>' + ((maxTemp + minTemp) / 2).toFixed(1) + '°</span>' +
-      '<span>' + minTemp.toFixed(1) + '°</span>' +
-    '</div>' +
-    '<div class="temp-chart-area">' +
-      '<svg viewBox="0 0 ' + (temps.length * 50) + ' 180" preserveAspectRatio="none" class="temp-chart-svg">' +
-        '<defs>' +
-          '<linearGradient id="tempGradient" x1="0%" y1="0%" x2="0%" y2="100%">' +
-            '<stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.4"/>' +
-            '<stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.05"/>' +
-          '</linearGradient>' +
-        '</defs>' +
-        '<path class="temp-area" d="' + generateTempAreaPath(temps, minTemp, tempRange) + '" fill="url(#tempGradient)"/>' +
-        '<path class="temp-line" d="' + generateTempLinePath(temps, minTemp, tempRange) + '" fill="none" stroke="#f59e0b" stroke-width="2"/>' +
-        temps.map(function(t, i) {
-          var x = i * 50 + 25;
-          var y = 180 - ((t.avg - minTemp) / tempRange) * 170 - 5;
-          return '<circle cx="' + x + '" cy="' + y + '" r="4" fill="#f59e0b" class="temp-point">' +
-            '<title>' + t.avg.toFixed(1) + '°C</title>' +
-          '</circle>';
-        }).join('') +
-      '</svg>' +
-      '<div class="temp-chart-labels">' +
-        temps.map(function(t) {
-          var parts = t.date.split('-');
-          return '<span>' + parts[2] + '/' + parts[1] + '</span>';
-        }).join('') +
+  // Gerar barras mostrando range min-max de cada dia
+  var barWidth = 30;
+  var chartWidth = temps.length * 60;
+  var chartHeight = 180;
+  
+  var barsHtml = temps.map(function(t, i) {
+    var x = i * 60 + 15;
+    var parts = t.date.split('-');
+    var dateLabel = parts[2] + '/' + parts[1];
+    
+    var hasMin = t.min !== null;
+    var hasMax = t.max !== null;
+    
+    if (!hasMin && !hasMax) {
+      return '<div class="temp-bar-group" style="flex:0 0 60px;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
+        '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:10px;">-</div>' +
+        '<span style="font-size:10px;color:var(--text-secondary);">' + dateLabel + '</span>' +
+      '</div>';
+    }
+    
+    var minY = hasMin ? chartHeight - ((t.min - minTemp) / tempRange) * (chartHeight - 30) : null;
+    var maxY = hasMax ? chartHeight - ((t.max - minTemp) / tempRange) * (chartHeight - 30) : null;
+    
+    // Barra com gradiente mostrando range de temperatura
+    var barHtml = '<div class="temp-bar-group" style="flex:0 0 60px;display:flex;flex-direction:column;align-items:center;gap:4px;">';
+    barHtml += '<div style="flex:1;position:relative;width:40px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;">';
+    
+    if (hasMin && hasMax) {
+      // Mostrar barra com range
+      var barHeight = Math.abs(maxY - minY);
+      var barBottom = chartHeight - Math.max(minY, maxY);
+      barHtml += '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;height:' + chartHeight + 'px;display:flex;flex-direction:column;justify-content:flex-end;">';
+      barHtml += '<div style="position:relative;width:100%;">';
+      // Máxima (16h) - ponto vermelho no topo
+      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - maxY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
+      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(239,68,68,0.5);" title="16h: ' + t.max.toFixed(1) + '°C"></div>';
+      barHtml += '<div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#ef4444;white-space:nowrap;">' + t.max.toFixed(1) + '°</div>';
+      barHtml += '</div>';
+      // Linha conectando
+      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - minY) + 'px;left:50%;transform:translateX(-50%);width:3px;height:' + barHeight + 'px;background:linear-gradient(to top,#3b82f6,#ef4444);border-radius:2px;"></div>';
+      // Mínima (7h) - ponto azul na base
+      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - minY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
+      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(59,130,246,0.5);" title="7h: ' + t.min.toFixed(1) + '°C"></div>';
+      barHtml += '<div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#3b82f6;white-space:nowrap;">' + t.min.toFixed(1) + '°</div>';
+      barHtml += '</div>';
+      barHtml += '</div>';
+      barHtml += '</div>';
+    } else if (hasMax) {
+      // Só tem 16h
+      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - maxY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
+      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(239,68,68,0.5);" title="16h: ' + t.max.toFixed(1) + '°C"></div>';
+      barHtml += '<div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#ef4444;white-space:nowrap;">' + t.max.toFixed(1) + '°</div>';
+      barHtml += '</div>';
+    } else if (hasMin) {
+      // Só tem 7h
+      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - minY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
+      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(59,130,246,0.5);" title="7h: ' + t.min.toFixed(1) + '°C"></div>';
+      barHtml += '<div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#3b82f6;white-space:nowrap;">' + t.min.toFixed(1) + '°</div>';
+      barHtml += '</div>';
+    }
+    
+    barHtml += '</div>';
+    barHtml += '<span style="font-size:10px;color:var(--text-secondary);margin-top:8px;">' + dateLabel + '</span>';
+    barHtml += '</div>';
+    
+    return barHtml;
+  }).join('');
+  
+  // Renderizar gráfico com legenda
+  container.innerHTML = '<div class="temp-chart-container" style="display:flex;flex-direction:column;gap:12px;">' +
+    '<div style="display:flex;justify-content:center;gap:20px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
+      '<div style="display:flex;align-items:center;gap:6px;">' +
+        '<div style="width:10px;height:10px;background:#3b82f6;border-radius:50%;"></div>' +
+        '<span style="font-size:11px;color:var(--text-secondary);">7h (Mínima)</span>' +
       '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px;">' +
+        '<div style="width:10px;height:10px;background:#ef4444;border-radius:50%;"></div>' +
+        '<span style="font-size:11px;color:var(--text-secondary);">16h (Máxima)</span>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:flex-end;justify-content:center;gap:0;padding:20px 10px 30px;min-height:220px;overflow-x:auto;">' +
+      barsHtml +
     '</div>' +
   '</div>';
 }
@@ -6084,6 +6198,14 @@ async function downloadReportAsPDF() {
   // Pegar URL da API (config.js define window.ICARUS_API_URL)
   var API_URL = window.ICARUS_API_URL || 'https://kong-dust-analysts-developers.trycloudflare.com';
   
+  // Garantir que a URL não termina com /
+  if (API_URL.endsWith('/')) {
+    API_URL = API_URL.slice(0, -1);
+  }
+  
+  console.log('[PDF] API_URL:', API_URL);
+  console.log('[PDF] currentReportTitle:', currentReportTitle);
+  
   // Detectar tipo de relatório pelo título atual
   var pdfEndpoint = null;
   var params = '';
@@ -6113,53 +6235,81 @@ async function downloadReportAsPDF() {
   if (pdfEndpoint) {
     try {
       var fullUrl = API_URL + pdfEndpoint + params + '&token=' + encodeURIComponent(state.token);
-      console.log('[PDF] URL:', fullUrl);
+      console.log('[PDF] URL completa:', fullUrl);
       
-      // Detectar se estamos no APK Android (Capacitor)
-      var isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      // Detectar se estamos no APK Android/iOS (Capacitor)
+      var isCapacitor = false;
+      try {
+        isCapacitor = typeof window.Capacitor !== 'undefined' && 
+                      window.Capacitor.isNativePlatform && 
+                      window.Capacitor.isNativePlatform();
+      } catch (e) {
+        console.log('[PDF] Erro ao detectar Capacitor:', e);
+      }
       console.log('[PDF] isCapacitor:', isCapacitor);
       
-      // CAPACITOR/ANDROID: Abrir no navegador do sistema
+      // CAPACITOR/ANDROID/iOS: Abrir no navegador do sistema
       if (isCapacitor) {
         console.log('[PDF] Capacitor detectado - abrindo no navegador do sistema');
         
-        // Usar Capacitor Browser plugin (nativo) para abrir no Chrome/navegador padrão
-        if (window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
-          try {
-            await window.Capacitor.Plugins.Browser.open({ url: fullUrl });
-            showNotification('📱 Abrindo PDF no navegador...', 'success');
+        // Método 1: Usar Capacitor Browser plugin (recomendado)
+        try {
+          if (window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+            console.log('[PDF] Tentando Browser plugin...');
+            await window.Capacitor.Plugins.Browser.open({ 
+              url: fullUrl,
+              windowName: '_system',
+              toolbarColor: '#0f172a'
+            });
+            showNotification('📄 PDF aberto no navegador!', 'success');
             return;
-          } catch (browserErr) {
-            console.log('[PDF] Browser plugin falhou, tentando App...', browserErr);
           }
+        } catch (browserErr) {
+          console.log('[PDF] Browser plugin erro:', browserErr);
         }
         
-        // Fallback: Usar Capacitor App plugin para abrir URL externa
-        if (window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-          try {
+        // Método 2: Usar App.openUrl (Capacitor App plugin)
+        try {
+          if (window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+            console.log('[PDF] Tentando App.openUrl...');
             await window.Capacitor.Plugins.App.openUrl({ url: fullUrl });
-            showNotification('📱 Abrindo PDF...', 'success');
+            showNotification('📄 PDF aberto!', 'success');
             return;
-          } catch (appErr) {
-            console.log('[PDF] App plugin falhou...', appErr);
           }
+        } catch (appErr) {
+          console.log('[PDF] App.openUrl erro:', appErr);
         }
         
-        // Último fallback: window.open com _system
+        // Método 3: Usar Cordova InAppBrowser (se disponível)
+        try {
+          if (window.cordova && window.cordova.InAppBrowser) {
+            console.log('[PDF] Tentando InAppBrowser...');
+            window.cordova.InAppBrowser.open(fullUrl, '_system', 'location=yes');
+            showNotification('📄 PDF aberto!', 'success');
+            return;
+          }
+        } catch (cordovaErr) {
+          console.log('[PDF] InAppBrowser erro:', cordovaErr);
+        }
+        
+        // Método 4: Fallback window.open com _system
+        console.log('[PDF] Fallback: window.open _system');
         window.open(fullUrl, '_system');
-        showNotification('📱 Abrindo PDF...', 'success');
+        showNotification('📄 Abrindo PDF...', 'success');
         return;
       }
       
       // BROWSER NORMAL: abrir em nova aba
-      console.log('[PDF] Browser - abrindo em nova aba');
+      console.log('[PDF] Browser desktop - abrindo em nova aba');
       window.open(fullUrl, '_blank');
       showNotification('Abrindo PDF...', 'success');
       return;
     } catch (e) {
-      console.error('[PDF] Erro:', e);
-      showNotification('Erro ao gerar PDF', 'error');
+      console.error('[PDF] Erro geral:', e);
+      showNotification('Erro ao gerar PDF: ' + e.message, 'error');
     }
+  } else {
+    console.log('[PDF] Nenhum endpoint detectado para:', currentReportTitle);
   }
   
   // Fallback para relatórios sem endpoint específico: usar print
