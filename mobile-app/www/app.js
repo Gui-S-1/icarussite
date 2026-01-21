@@ -10562,7 +10562,8 @@ function renderReports() {
     'geral': 'Geral',
     'manutencao': 'Manutenção',
     'incidente': 'Incidente',
-    'melhoria': 'Melhoria'
+    'melhoria': 'Melhoria',
+    'orcamento': 'Orçamento'
   };
   
   var html = '';
@@ -10693,7 +10694,7 @@ function openReport(reportId) {
   if (toolbar) toolbar.classList.add('hidden');
   if (viewer) viewer.classList.remove('hidden');
   
-  var categoryLabels = { 'geral': 'Geral', 'manutencao': 'Manutenção', 'incidente': 'Incidente', 'melhoria': 'Melhoria' };
+  var categoryLabels = { 'geral': 'Geral', 'manutencao': 'Manutenção', 'incidente': 'Incidente', 'melhoria': 'Melhoria', 'orcamento': 'Orçamento' };
   var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR', { 
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
   }) : '';
@@ -10707,6 +10708,9 @@ function openReport(reportId) {
   document.getElementById('viewer-title').textContent = report.title;
   document.getElementById('viewer-author').textContent = report.created_by_name || 'Anônimo';
   document.getElementById('viewer-content').textContent = report.content || '';
+  
+  // Análise inteligente do conteúdo
+  renderSmartAnalysis(report.content);
   
   // Mostrar visibilidade
   var visibilityEl = document.getElementById('viewer-visibility');
@@ -10774,6 +10778,126 @@ function closeReportViewer() {
   if (viewer) viewer.classList.add('hidden');
   
   state.currentReport = null;
+}
+
+// Modal de Exportação
+function openExportModal() {
+  var modal = document.getElementById('export-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeExportModal() {
+  var modal = document.getElementById('export-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+// Copiar relatório para clipboard
+function copyReportToClipboard() {
+  if (!state.currentReport) return;
+  
+  var report = state.currentReport;
+  var text = report.title + '\n\n' + (report.content || '');
+  text += '\n\n---\nGerado pelo Sistema ICARUS\nicarussite.vercel.app';
+  
+  navigator.clipboard.writeText(text).then(function() {
+    showNotification('Conteúdo copiado!', 'success');
+  }).catch(function() {
+    showNotification('Erro ao copiar', 'error');
+  });
+}
+
+// Compartilhar relatório
+function shareReport() {
+  if (!state.currentReport) return;
+  
+  var report = state.currentReport;
+  var text = '*' + report.title + '*\n\n' + (report.content || '').substring(0, 500);
+  if (report.content && report.content.length > 500) text += '...';
+  text += '\n\n_Gerado pelo Sistema ICARUS_';
+  
+  var whatsappUrl = 'https://wa.me/?text=' + encodeURIComponent(text);
+  
+  if (navigator.share) {
+    navigator.share({
+      title: report.title,
+      text: text,
+      url: 'https://icarussite.vercel.app'
+    }).catch(function() {
+      window.open(whatsappUrl, '_blank');
+    });
+  } else {
+    window.open(whatsappUrl, '_blank');
+  }
+}
+
+// Análise inteligente do conteúdo - detecta valores, quantidades, datas
+function analyzeReportContent(content) {
+  if (!content) return [];
+  
+  var tags = [];
+  
+  // Detectar valores em reais (R$ X,XX ou R$ X.XXX,XX)
+  var moneyRegex = /R\$\s*[\d.,]+/gi;
+  var moneyMatches = content.match(moneyRegex);
+  if (moneyMatches) {
+    var total = 0;
+    moneyMatches.forEach(function(m) {
+      tags.push({ type: 'value', text: m.trim() });
+      var numStr = m.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+      var num = parseFloat(numStr);
+      if (!isNaN(num)) total += num;
+    });
+    if (moneyMatches.length > 1 && total > 0) {
+      tags.push({ type: 'total', text: 'Total: R$ ' + total.toFixed(2).replace('.', ',') });
+    }
+  }
+  
+  // Detectar quantidades (X unidades, X peças, X un, Qtd: X)
+  var qtyRegex = /(\d+)\s*(unidade|unidades|un|peça|peças|pç|pcs|qtd|quantidade)/gi;
+  var qtyMatches = content.match(qtyRegex);
+  if (qtyMatches) {
+    qtyMatches.slice(0, 3).forEach(function(m) {
+      tags.push({ type: 'quantity', text: m.trim() });
+    });
+  }
+  
+  // Detectar datas (XX/XX/XXXX)
+  var dateRegex = /\d{1,2}\/\d{1,2}\/\d{2,4}/g;
+  var dateMatches = content.match(dateRegex);
+  if (dateMatches) {
+    dateMatches.slice(0, 2).forEach(function(m) {
+      tags.push({ type: 'date', text: m });
+    });
+  }
+  
+  return tags.slice(0, 8); // Limitar a 8 tags
+}
+
+// Renderizar análise inteligente
+function renderSmartAnalysis(content) {
+  var container = document.getElementById('viewer-smart-analysis');
+  var contentEl = document.getElementById('smart-analysis-content');
+  
+  if (!container || !contentEl) return;
+  
+  var tags = analyzeReportContent(content);
+  
+  if (tags.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.style.display = 'block';
+  contentEl.innerHTML = tags.map(function(tag, i) {
+    var icons = {
+      value: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+      quantity: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>',
+      date: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+      total: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>'
+    };
+    return '<span class="smart-tag ' + tag.type + '" style="animation-delay: ' + (i * 0.1) + 's">' + 
+      (icons[tag.type] || '') + tag.text + '</span>';
+  }).join('');
 }
 
 // Função para gerar PDF premium via backend

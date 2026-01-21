@@ -6727,6 +6727,11 @@
       border-color: #22c55e;
       color: #4ade80;
     }
+    .forum-filter-chip.orcamento.active {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+      border-color: #f59e0b;
+      color: #fbbf24;
+    }
     .forum-search {
       display: flex;
       align-items: center;
@@ -7014,6 +7019,243 @@
       background: linear-gradient(135deg, #ec4899, #db2777);
       color: #fff;
       border-color: #ec4899;
+    }
+    .forum-action-btn.export-btn {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
+      color: #22c55e;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    .forum-action-btn.export-btn:hover {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      border-color: #22c55e;
+      box-shadow: 0 8px 25px rgba(34, 197, 94, 0.35);
+    }
+
+    /* Análise Inteligente */
+    .forum-smart-analysis {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+    }
+    .smart-analysis-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #60a5fa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    .smart-analysis-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .smart-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      animation: fadeInUp 0.3s ease forwards;
+    }
+    .smart-tag.value {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08));
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+    }
+    .smart-tag.quantity {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.08));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+    }
+    .smart-tag.date {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(168, 85, 247, 0.08));
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      color: #c084fc;
+    }
+    .smart-tag.total {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.08));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modal de Exportação Premium */
+    .export-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .export-modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .export-modal {
+      background: linear-gradient(135deg, rgba(15, 15, 20, 0.98) 0%, rgba(25, 15, 35, 0.98) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 24px;
+      padding: 32px;
+      width: 90%;
+      max-width: 500px;
+      transform: scale(0.9) translateY(20px);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .export-modal-overlay.active .export-modal {
+      transform: scale(1) translateY(0);
+    }
+    .export-modal::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #22c55e, #4ade80, #a855f7, #22c55e);
+      background-size: 200% 100%;
+      animation: gradientFlow 3s ease infinite;
+    }
+    .export-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .export-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .export-modal-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4ade80;
+    }
+    .export-modal-title h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+    }
+    .export-modal-title p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 4px 0 0;
+    }
+    .export-modal-close {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .export-modal-close:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+    .export-options {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .export-option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .export-option:hover {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(34, 197, 94, 0.03));
+      transform: translateX(6px);
+    }
+    .export-option-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .export-option-icon.pdf {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.1));
+      color: #ec4899;
+    }
+    .export-option-icon.print {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+      color: #60a5fa;
+    }
+    .export-option-icon.copy {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1));
+      color: #c084fc;
+    }
+    .export-option-icon.share {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+      color: #fbbf24;
+    }
+    .export-option-info {
+      flex: 1;
+    }
+    .export-option-info h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 4px;
+    }
+    .export-option-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .export-option-arrow {
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    .export-option:hover .export-option-arrow {
+      color: #4ade80;
+      transform: translateX(4px);
     }
 
     /* Artigo/Post Completo - Premium Glass */
@@ -9730,6 +9972,13 @@
                 </svg>
                 Melhorias
               </button>
+              <button class="forum-filter-chip orcamento" data-category="orcamento" onclick="setReportCategory('orcamento', this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Orçamentos
+              </button>
             </div>
             <div class="forum-search">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -9757,19 +10006,11 @@
                 Voltar ao Fórum
               </button>
               <div class="forum-viewer-actions">
-                <button class="forum-action-btn pdf-btn" onclick="generateReportPDF()" title="Gerar PDF Premium">
+                <button class="forum-action-btn export-btn" onclick="openExportModal()" title="Exportar Relatório">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                  </svg>
-                </button>
-                <button class="forum-action-btn" onclick="printReport()" title="Imprimir">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 6 2 18 2 18 9"/>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                    <rect x="6" y="14" width="12" height="8"/>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
                 </button>
                 <button class="forum-action-btn danger" id="btn-delete-report" onclick="deleteReport()" title="Excluir Relatório" style="display: none;">
@@ -9802,6 +10043,16 @@
                   <span class="forum-author-role">Manutenção</span>
                 </div>
               </div>
+              
+              <!-- Análise Inteligente do Conteúdo -->
+              <div id="viewer-smart-analysis" class="forum-smart-analysis" style="display: none;">
+                <div class="smart-analysis-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Análise Inteligente
+                </div>
+                <div id="smart-analysis-content" class="smart-analysis-content"></div>
+              </div>
+              
               <div class="forum-article-divider"></div>
               <div class="forum-article-body" id="viewer-content">
                 <!-- Conteúdo do relatório -->
@@ -9818,9 +10069,12 @@
             
             <!-- Propaganda Icarus no Footer -->
             <div class="forum-promo-footer">
-              <div class="forum-promo-logo">✡ ICARUS</div>
+              <div class="forum-promo-logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                ICARUS
+              </div>
               <div class="forum-promo-text">Sistema de Gestão Inteligente • Granja Vitta</div>
-              <div class="forum-promo-contact">(xx) xxxxx-xxxx</div>
+              <div class="forum-promo-contact">(62) 98493-0056 • icarussite.vercel.app</div>
             </div>
             </div>
           </div>
@@ -11689,11 +11943,11 @@
             background-repeat: no-repeat;
             background-position: right 16px center;
           " onfocus="this.style.borderColor='rgba(168,85,247,0.5)';this.style.boxShadow='0 0 20px rgba(168,85,247,0.2)'" onblur="this.style.borderColor='rgba(168,85,247,0.2)';this.style.boxShadow='none'">
-            <option value="geral" style="background: #1a1a2e; color: #fff;">📋 Geral</option>
-            <option value="manutencao" style="background: #1a1a2e; color: #fff;">🔧 Manutenção</option>
-            <option value="incidente" style="background: #1a1a2e; color: #fff;">⚠️ Incidente</option>
-            <option value="melhoria" style="background: #1a1a2e; color: #fff;">✨ Melhoria</option>
-            <option value="orcamento" style="background: #1a1a2e; color: #fff;">💰 Orçamento</option>
+            <option value="geral" style="background: #1a1a2e; color: #fff;">Geral</option>
+            <option value="manutencao" style="background: #1a1a2e; color: #fff;">Manutenção</option>
+            <option value="incidente" style="background: #1a1a2e; color: #fff;">Incidente</option>
+            <option value="melhoria" style="background: #1a1a2e; color: #fff;">Melhoria</option>
+            <option value="orcamento" style="background: #1a1a2e; color: #fff;">Orçamento</option>
           </select>
         </div>
 
@@ -11881,5 +12135,108 @@
       });
     }
   </script>
-</body>
-</html>
+
+  <!-- Modal de Exportação Premium -->
+  <div id="export-modal" class="export-modal-overlay" onclick="if(event.target === this) closeExportModal()">
+    <div class="export-modal">
+      <div class="export-modal-header">
+        <div class="export-modal-title">
+          <div class="export-modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Exportar Relatório</h3>
+            <p>Escolha o formato de exportação</p>
+          </div>
+        </div>
+        <button class="export-modal-close" onclick="closeExportModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="export-options">
+        <div class="export-option" onclick="generateReportPDF(); closeExportModal();">
+          <div class="export-option-icon pdf">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="export-option-info">
+            <h4>PDF Premium</h4>
+            <p>Documento formatado com logo Icarus e design profissional</p>
+          </div>
+          <div class="export-option-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="export-option" onclick="printReport(); closeExportModal();">
+          <div class="export-option-icon print">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+          </div>
+          <div class="export-option-info">
+            <h4>Imprimir</h4>
+            <p>Abrir diálogo de impressão do navegador</p>
+          </div>
+          <div class="export-option-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="export-option" onclick="copyReportToClipboard(); closeExportModal();">
+          <div class="export-option-icon copy">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </div>
+          <div class="export-option-info">
+            <h4>Copiar Texto</h4>
+            <p>Copiar conteúdo do relatório para a área de transferência</p>
+          </div>
+          <div class="export-option-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="export-option" onclick="shareReport(); closeExportModal();">
+          <div class="export-option-icon share">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </div>
+          <div class="export-option-info">
+            <h4>Compartilhar</h4>
+            <p>Compartilhar via WhatsApp ou outras plataformas</p>
+          </div>
+          <div class="export-option-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
