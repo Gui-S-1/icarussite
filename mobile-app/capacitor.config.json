@@ -10,11 +10,16 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_icon",
       "iconColor": "#d4af37"
+    },
+    "Browser": {
+      "presentationStyle": "fullscreen"
     }
   },
+  "android": {
+    "allowMixedContent": true
+  },
   "server": {
-    "url": "https://icarus-sys.vercel.app",
-    "cleartext": false,
+    "cleartext": true,
     "androidScheme": "https",
     "allowNavigation": ["*"]
   }

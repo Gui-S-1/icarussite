@@ -5357,117 +5357,130 @@ function renderTemperatureChart() {
     if (!tempByDate[dateKey]) {
       tempByDate[dateKey] = { temp7h: null, temp16h: null };
     }
-    // Temperatura das 7h = mínima do dia (manhã)
     if (r.reading_time === '07:00') {
       tempByDate[dateKey].temp7h = r.temperature;
     }
-    // Temperatura das 16h = máxima do dia (tarde)
     if (r.reading_time === '16:00') {
       tempByDate[dateKey].temp16h = r.temperature;
     }
   });
   
-  // Filtrar apenas dias com pelo menos uma leitura de temperatura
+  // Filtrar dias com dados
   var dates = Object.keys(tempByDate).filter(function(d) {
     return tempByDate[d].temp7h !== null || tempByDate[d].temp16h !== null;
   }).sort().slice(-14);
   
-  var temps = dates.map(function(d) {
-    var data = tempByDate[d];
-    return {
-      date: d,
-      min: data.temp7h,   // Temperatura 7h = mínima
-      max: data.temp16h   // Temperatura 16h = máxima
-    };
-  });
-  
-  if (temps.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Dados insuficientes para o gráfico</p>';
+  if (dates.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Dados insuficientes</p>';
     return;
   }
   
-  // Calcular range considerando min e max
+  // Calcular range de temperatura
   var allTemps = [];
-  temps.forEach(function(t) {
-    if (t.min !== null) allTemps.push(t.min);
-    if (t.max !== null) allTemps.push(t.max);
+  dates.forEach(function(d) {
+    if (tempByDate[d].temp7h !== null) allTemps.push(tempByDate[d].temp7h);
+    if (tempByDate[d].temp16h !== null) allTemps.push(tempByDate[d].temp16h);
   });
   
-  var minTemp = Math.min.apply(null, allTemps) - 2;
-  var maxTemp = Math.max.apply(null, allTemps) + 2;
+  var minTemp = Math.floor(Math.min.apply(null, allTemps) - 1);
+  var maxTemp = Math.ceil(Math.max.apply(null, allTemps) + 1);
   var tempRange = maxTemp - minTemp || 10;
   
-  // Gerar barras mostrando range min-max de cada dia
-  var barWidth = 30;
-  var chartWidth = temps.length * 60;
-  var chartHeight = 180;
+  // Dimensões do gráfico SVG
+  var svgWidth = Math.max(dates.length * 55, 400);
+  var svgHeight = 200;
+  var paddingLeft = 35;
+  var paddingRight = 15;
+  var paddingTop = 25;
+  var paddingBottom = 35;
+  var chartWidth = svgWidth - paddingLeft - paddingRight;
+  var chartHeight = svgHeight - paddingTop - paddingBottom;
   
-  var barsHtml = temps.map(function(t, i) {
-    var x = i * 60 + 15;
-    var parts = t.date.split('-');
+  // Função para calcular posição Y
+  function getY(temp) {
+    return paddingTop + chartHeight - ((temp - minTemp) / tempRange * chartHeight);
+  }
+  
+  // Função para calcular posição X
+  function getX(index) {
+    return paddingLeft + (index + 0.5) * (chartWidth / dates.length);
+  }
+  
+  // Criar linhas de grade horizontais
+  var gridLines = '';
+  var yLabels = '';
+  var numGridLines = 5;
+  for (var i = 0; i <= numGridLines; i++) {
+    var tempVal = minTemp + (tempRange * i / numGridLines);
+    var y = getY(tempVal);
+    gridLines += '<line x1="' + paddingLeft + '" y1="' + y + '" x2="' + (svgWidth - paddingRight) + '" y2="' + y + '" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>';
+    yLabels += '<text x="' + (paddingLeft - 5) + '" y="' + (y + 3) + '" text-anchor="end" fill="#64748b" font-size="9">' + tempVal.toFixed(0) + '°</text>';
+  }
+  
+  // Criar path das linhas e pontos
+  var path7h = '';
+  var path16h = '';
+  var points7h = '';
+  var points16h = '';
+  var labels = '';
+  var xLabels = '';
+  
+  dates.forEach(function(d, i) {
+    var x = getX(i);
+    var data = tempByDate[d];
+    var parts = d.split('-');
     var dateLabel = parts[2] + '/' + parts[1];
     
-    var hasMin = t.min !== null;
-    var hasMax = t.max !== null;
+    // Label do eixo X
+    xLabels += '<text x="' + x + '" y="' + (svgHeight - 8) + '" text-anchor="middle" fill="#64748b" font-size="9">' + dateLabel + '</text>';
     
-    if (!hasMin && !hasMax) {
-      return '<div class="temp-bar-group" style="flex:0 0 60px;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
-        '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:10px;">-</div>' +
-        '<span style="font-size:10px;color:var(--text-secondary);">' + dateLabel + '</span>' +
-      '</div>';
+    // Ponto e linha da 7h (mínima - azul)
+    if (data.temp7h !== null) {
+      var y7 = getY(data.temp7h);
+      if (path7h === '') {
+        path7h = 'M' + x + ',' + y7;
+      } else {
+        path7h += ' L' + x + ',' + y7;
+      }
+      points7h += '<circle cx="' + x + '" cy="' + y7 + '" r="5" fill="#3b82f6" stroke="#fff" stroke-width="2"/>';
+      labels += '<text x="' + x + '" y="' + (y7 + 16) + '" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="600">' + data.temp7h.toFixed(1) + '°</text>';
     }
     
-    var minY = hasMin ? chartHeight - ((t.min - minTemp) / tempRange) * (chartHeight - 30) : null;
-    var maxY = hasMax ? chartHeight - ((t.max - minTemp) / tempRange) * (chartHeight - 30) : null;
-    
-    // Barra com gradiente mostrando range de temperatura
-    var barHtml = '<div class="temp-bar-group" style="flex:0 0 60px;display:flex;flex-direction:column;align-items:center;gap:4px;">';
-    barHtml += '<div style="flex:1;position:relative;width:40px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;">';
-    
-    if (hasMin && hasMax) {
-      // Mostrar barra com range
-      var barHeight = Math.abs(maxY - minY);
-      var barBottom = chartHeight - Math.max(minY, maxY);
-      barHtml += '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;height:' + chartHeight + 'px;display:flex;flex-direction:column;justify-content:flex-end;">';
-      barHtml += '<div style="position:relative;width:100%;">';
-      // Máxima (16h) - ponto vermelho no topo
-      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - maxY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
-      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(239,68,68,0.5);" title="16h: ' + t.max.toFixed(1) + '°C"></div>';
-      barHtml += '<div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#ef4444;white-space:nowrap;">' + t.max.toFixed(1) + '°</div>';
-      barHtml += '</div>';
-      // Linha conectando
-      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - minY) + 'px;left:50%;transform:translateX(-50%);width:3px;height:' + barHeight + 'px;background:linear-gradient(to top,#3b82f6,#ef4444);border-radius:2px;"></div>';
-      // Mínima (7h) - ponto azul na base
-      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - minY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
-      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(59,130,246,0.5);" title="7h: ' + t.min.toFixed(1) + '°C"></div>';
-      barHtml += '<div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#3b82f6;white-space:nowrap;">' + t.min.toFixed(1) + '°</div>';
-      barHtml += '</div>';
-      barHtml += '</div>';
-      barHtml += '</div>';
-    } else if (hasMax) {
-      // Só tem 16h
-      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - maxY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
-      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(239,68,68,0.5);" title="16h: ' + t.max.toFixed(1) + '°C"></div>';
-      barHtml += '<div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#ef4444;white-space:nowrap;">' + t.max.toFixed(1) + '°</div>';
-      barHtml += '</div>';
-    } else if (hasMin) {
-      // Só tem 7h
-      barHtml += '<div style="position:absolute;bottom:' + (chartHeight - minY) + 'px;left:50%;transform:translateX(-50%);z-index:2;">';
-      barHtml += '<div style="width:12px;height:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(59,130,246,0.5);" title="7h: ' + t.min.toFixed(1) + '°C"></div>';
-      barHtml += '<div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:#3b82f6;white-space:nowrap;">' + t.min.toFixed(1) + '°</div>';
-      barHtml += '</div>';
+    // Ponto e linha da 16h (máxima - vermelho)
+    if (data.temp16h !== null) {
+      var y16 = getY(data.temp16h);
+      if (path16h === '') {
+        path16h = 'M' + x + ',' + y16;
+      } else {
+        path16h += ' L' + x + ',' + y16;
+      }
+      points16h += '<circle cx="' + x + '" cy="' + y16 + '" r="5" fill="#ef4444" stroke="#fff" stroke-width="2"/>';
+      labels += '<text x="' + x + '" y="' + (y16 - 8) + '" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">' + data.temp16h.toFixed(1) + '°</text>';
     }
-    
-    barHtml += '</div>';
-    barHtml += '<span style="font-size:10px;color:var(--text-secondary);margin-top:8px;">' + dateLabel + '</span>';
-    barHtml += '</div>';
-    
-    return barHtml;
-  }).join('');
+  });
   
-  // Renderizar gráfico com legenda
-  container.innerHTML = '<div class="temp-chart-container" style="display:flex;flex-direction:column;gap:12px;">' +
-    '<div style="display:flex;justify-content:center;gap:20px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
+  // Montar SVG
+  var svg = '<svg width="100%" height="' + svgHeight + '" viewBox="0 0 ' + svgWidth + ' ' + svgHeight + '" preserveAspectRatio="xMidYMid meet" style="overflow:visible;">';
+  svg += gridLines;
+  svg += yLabels;
+  svg += xLabels;
+  
+  // Linhas
+  if (path7h) svg += '<path d="' + path7h + '" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>';
+  if (path16h) svg += '<path d="' + path16h + '" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>';
+  
+  // Pontos
+  svg += points7h;
+  svg += points16h;
+  
+  // Labels de valor
+  svg += labels;
+  
+  svg += '</svg>';
+  
+  // Renderizar
+  container.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' +
+    '<div style="display:flex;justify-content:center;gap:24px;padding:8px 0;">' +
       '<div style="display:flex;align-items:center;gap:6px;">' +
         '<div style="width:10px;height:10px;background:#3b82f6;border-radius:50%;"></div>' +
         '<span style="font-size:11px;color:var(--text-secondary);">7h (Mínima)</span>' +
@@ -5477,33 +5490,8 @@ function renderTemperatureChart() {
         '<span style="font-size:11px;color:var(--text-secondary);">16h (Máxima)</span>' +
       '</div>' +
     '</div>' +
-    '<div style="display:flex;align-items:flex-end;justify-content:center;gap:0;padding:20px 10px 30px;min-height:220px;overflow-x:auto;">' +
-      barsHtml +
-    '</div>' +
+    '<div style="overflow-x:auto;padding:0 5px;">' + svg + '</div>' +
   '</div>';
-}
-
-// Gerar path da linha de temperatura
-function generateTempLinePath(temps, minTemp, tempRange) {
-  return temps.map(function(t, i) {
-    var x = i * 50 + 25;
-    var y = 180 - ((t.avg - minTemp) / tempRange) * 170 - 5;
-    return (i === 0 ? 'M' : 'L') + x + ' ' + y;
-  }).join(' ');
-}
-
-// Gerar path da área de temperatura
-function generateTempAreaPath(temps, minTemp, tempRange) {
-  var linePath = temps.map(function(t, i) {
-    var x = i * 50 + 25;
-    var y = 180 - ((t.avg - minTemp) / tempRange) * 170 - 5;
-    return (i === 0 ? 'M' : 'L') + x + ' ' + y;
-  }).join(' ');
-  
-  var lastX = (temps.length - 1) * 50 + 25;
-  var firstX = 25;
-  
-  return linePath + ' L' + lastX + ' 180 L' + firstX + ' 180 Z';
 }
 
 // Renderizar histórico
