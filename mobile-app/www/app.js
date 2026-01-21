@@ -4507,15 +4507,27 @@ function renderChecklists() {
     mensal: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>'
   };
   
-  container.innerHTML = state.checklists.map(cl => `
-    <div class="checklist-item-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; margin-bottom: 14px; transition: all 0.2s;">
+  container.innerHTML = state.checklists.map(cl => {
+    // Verificar se automação está ativa
+    const isAutoEnabled = cl.auto_complete === true;
+    const autoFreqDays = cl.frequency_days || 1;
+    const lastAutoRun = cl.last_auto_run ? new Date(cl.last_auto_run).toLocaleDateString('pt-BR') : null;
+    
+    return `
+    <div class="checklist-item-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; margin-bottom: 14px; transition: all 0.2s; ${isAutoEnabled ? 'border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);' : ''}">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
         <div style="display: flex; gap: 14px; align-items: flex-start;">
-          <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 11l3 3L22 4"/>
-              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-            </svg>
+          <div style="width: 44px; height: 44px; background: linear-gradient(135deg, ${isAutoEnabled ? 'rgba(168, 85, 247, 0.2) 0%, rgba(139, 92, 246, 0.1)' : 'rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1)'} 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: ${isAutoEnabled ? '#a855f7' : '#10b981'};">
+            ${isAutoEnabled ? `
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            ` : `
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+              </svg>
+            `}
           </div>
           <div>
             <h4 style="margin: 0 0 4px 0; color: var(--text-primary); font-size: 16px; font-weight: 600;">${escapeHtml(cl.name)}</h4>
@@ -4529,13 +4541,28 @@ function renderChecklists() {
             </p>
           </div>
         </div>
-        <span style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border-radius: 20px; font-size: 12px; font-weight: 500;">
-          ${frequencyIcons[cl.frequency] || ''}
-          ${escapeHtml(frequencyLabels[cl.frequency] || cl.frequency)}
-        </span>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+          <span style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border-radius: 20px; font-size: 12px; font-weight: 500;">
+            ${frequencyIcons[cl.frequency] || ''}
+            ${escapeHtml(frequencyLabels[cl.frequency] || cl.frequency)}
+          </span>
+          ${isAutoEnabled ? `
+            <span style="display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.1)); color: #a855f7; border-radius: 15px; font-size: 10px; font-weight: 600; text-transform: uppercase; border: 1px solid rgba(168, 85, 247, 0.3);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+              Auto • A cada ${autoFreqDays} dia${autoFreqDays > 1 ? 's' : ''}
+            </span>
+          ` : ''}
+        </div>
       </div>
       
       ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 14px 0; padding-left: 58px;">${escapeHtml(cl.description)}</p>` : ''}
+      
+      ${isAutoEnabled && lastAutoRun ? `
+        <div style="margin: 0 0 14px 0; padding: 10px 14px; padding-left: 58px; display: inline-flex; align-items: center; gap: 8px; background: rgba(168, 85, 247, 0.08); border-radius: 8px; font-size: 12px; color: #c084fc; margin-left: 58px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Última execução automática: ${lastAutoRun}
+        </div>
+      ` : ''}
       
       <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; padding-left: 58px;">
         ${(cl.items || []).slice(0, 4).map(item => `
@@ -4547,8 +4574,8 @@ function renderChecklists() {
         ${(cl.items?.length || 0) > 4 ? `<span style="font-size: 12px; padding: 6px 10px; color: var(--text-secondary);">+${cl.items.length - 4} mais</span>` : ''}
       </div>
       
-      <div style="display: flex; gap: 10px; padding-left: 58px;">
-        <button class="btn-checklist-execute" onclick="openExecuteChecklist('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; padding-left: 58px;">
+        <button class="btn-checklist-execute" onclick="openExecuteChecklist('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           Executar
         </button>
@@ -4557,6 +4584,10 @@ function renderChecklists() {
           Histórico
         </button>
         ${canEdit ? `
+          <button class="btn-checklist-auto" onclick="showChecklistAutomation('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: ${isAutoEnabled ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(168, 85, 247, 0.1)'}; border: 1px solid ${isAutoEnabled ? 'transparent' : 'rgba(168, 85, 247, 0.3)'}; border-radius: 8px; color: ${isAutoEnabled ? '#fff' : '#a855f7'}; font-size: 13px; cursor: pointer; font-weight: ${isAutoEnabled ? '600' : '400'}; ${isAutoEnabled ? 'box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);' : ''}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+            ${isAutoEnabled ? 'Automático' : 'Automatizar'}
+          </button>
           <button class="btn-checklist-secondary" onclick="editChecklist('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Editar
@@ -4568,7 +4599,122 @@ function renderChecklists() {
         ` : ''}
       </div>
     </div>
-  `).join('');
+  `}).join('');
+}
+
+// Mostrar modal de automação de checklist
+function showChecklistAutomation(checklistId) {
+  const checklist = state.checklists.find(c => c.id === checklistId);
+  if (!checklist) return;
+  
+  const isEnabled = checklist.auto_complete === true;
+  const freqDays = checklist.frequency_days || 1;
+  
+  const modalHtml = `
+    <div id="modal-checklist-automation" class="modal-overlay active" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #0f0f14 0%, #1a1020 100%); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 20px; max-width: 420px; width: 100%; padding: 28px; animation: slideInMagenta 0.3s ease-out;">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #a855f7, #7c3aed); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 18px; color: #fff; font-weight: 700;">Automação de Checklist</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.6);">${escapeHtml(checklist.name)}</p>
+          </div>
+        </div>
+        
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;">
+            <strong style="color: #c084fc;">Automação:</strong> Quando ativada, o checklist será marcado como concluído automaticamente na frequência definida (ex: dia sim, dia não).
+          </p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
+            <input type="checkbox" id="auto-enabled" ${isEnabled ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #a855f7;">
+            <div>
+              <span style="font-size: 14px; font-weight: 600; color: #fff;">Ativar execução automática</span>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Marca automaticamente como feito</p>
+            </div>
+          </label>
+        </div>
+        
+        <div style="margin-bottom: 24px;">
+          <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 8px;">Frequência (em dias)</label>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" onclick="setAutoFreq(1)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 1 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 1 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">Diário</button>
+            <button type="button" onclick="setAutoFreq(2)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 2 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 2 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">Dia sim/não</button>
+            <button type="button" onclick="setAutoFreq(3)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 3 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 3 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">A cada 3 dias</button>
+          </div>
+          <input type="hidden" id="auto-freq-days" value="${freqDays}">
+        </div>
+        
+        <div style="display: flex; gap: 12px;">
+          <button onclick="closeChecklistAutomation()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-secondary); font-size: 14px; cursor: pointer;">Cancelar</button>
+          <button onclick="saveChecklistAutomation('${checklistId}')" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);">Salvar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Definir frequência na modal
+function setAutoFreq(days) {
+  document.getElementById('auto-freq-days').value = days;
+  
+  // Atualizar visual dos botões
+  document.querySelectorAll('.freq-btn').forEach((btn, i) => {
+    const btnDays = i + 1;
+    if (btnDays === days) {
+      btn.style.background = 'linear-gradient(135deg, #a855f7, #7c3aed)';
+      btn.style.borderColor = 'transparent';
+    } else {
+      btn.style.background = 'rgba(255,255,255,0.05)';
+      btn.style.borderColor = 'var(--border-color)';
+    }
+  });
+}
+
+// Fechar modal de automação
+function closeChecklistAutomation() {
+  const modal = document.getElementById('modal-checklist-automation');
+  if (modal) modal.remove();
+}
+
+// Salvar configuração de automação
+async function saveChecklistAutomation(checklistId) {
+  const enabled = document.getElementById('auto-enabled').checked;
+  const freqDays = parseInt(document.getElementById('auto-freq-days').value) || 1;
+  
+  try {
+    const response = await fetch(`${API_URL}/checklists/${checklistId}/automation`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.token
+      },
+      body: JSON.stringify({
+        auto_complete: enabled,
+        frequency_days: freqDays
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.ok) {
+      closeChecklistAutomation();
+      await loadChecklists();
+      renderChecklists();
+      showNotification(enabled ? 'Automação ativada com sucesso!' : 'Automação desativada', 'success');
+    } else {
+      showNotification(data.error || 'Erro ao salvar automação', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar automação:', error);
+    showNotification('Erro ao salvar automação', 'error');
+  }
 }
 
 // Show create checklist modal
@@ -10427,11 +10573,30 @@ function renderReports() {
     var authorName = report.created_by_name || 'Anônimo';
     var initials = authorName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
     
+    // Ícones extras (visibilidade e anexos)
+    var attachments = report.attachments || [];
+    var extraIcons = '';
+    
+    if (report.visibility === 'private') {
+      extraIcons += '<span style="color: #ef4444; font-size: 10px; display: flex; align-items: center; gap: 3px;">' +
+        '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+        'Privado' +
+      '</span>';
+    }
+    
+    if (attachments.length > 0) {
+      extraIcons += '<span style="color: #f59e0b; font-size: 10px; display: flex; align-items: center; gap: 3px;">' +
+        '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
+        attachments.length +
+      '</span>';
+    }
+    
     html += '<div class="forum-post" onclick="openReport(\'' + report.id + '\')">' +
       '<div class="forum-post-avatar">' + initials + '</div>' +
       '<div class="forum-post-content">' +
         '<div class="forum-post-header">' +
           '<span class="forum-post-category ' + (report.category || 'geral') + '">' + catLabel + '</span>' +
+          (extraIcons ? '<div style="display: flex; gap: 10px;">' + extraIcons + '</div>' : '') +
           '<span class="forum-post-meta">' + dateStr + '</span>' +
         '</div>' +
         '<h3 class="forum-post-title">' + escapeHtml(report.title) + '</h3>' +
@@ -10543,10 +10708,59 @@ function openReport(reportId) {
   document.getElementById('viewer-author').textContent = report.created_by_name || 'Anônimo';
   document.getElementById('viewer-content').textContent = report.content || '';
   
-  // Mostrar/esconder botão de deletar baseado em permissão
+  // Mostrar visibilidade
+  var visibilityEl = document.getElementById('viewer-visibility');
+  if (visibilityEl) {
+    if (report.visibility === 'private') {
+      visibilityEl.textContent = 'PRIVADO';
+      visibilityEl.style.background = 'rgba(239, 68, 68, 0.15)';
+      visibilityEl.style.color = '#ef4444';
+      visibilityEl.style.display = 'inline-block';
+    } else {
+      visibilityEl.textContent = 'PÚBLICO';
+      visibilityEl.style.background = 'rgba(34, 197, 94, 0.15)';
+      visibilityEl.style.color = '#22c55e';
+      visibilityEl.style.display = 'inline-block';
+    }
+  }
+  
+  // Mostrar anexos
+  var attachmentsContainer = document.getElementById('viewer-attachments');
+  var attachmentsList = document.getElementById('viewer-attachments-list');
+  var attachments = report.attachments || [];
+  
+  if (attachments.length > 0 && attachmentsContainer && attachmentsList) {
+    attachmentsContainer.style.display = 'block';
+    attachmentsList.innerHTML = attachments.map(function(att, i) {
+      var isImage = att.url && (att.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) || att.url.includes('imgur') || att.url.includes('drive.google'));
+      return '<a href="' + escapeHtml(att.url) + '" target="_blank" style="' +
+        'display: flex; align-items: center; gap: 10px; padding: 12px 16px; ' +
+        'background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); ' +
+        'border-radius: 10px; text-decoration: none; transition: all 0.2s;' +
+        '" onmouseover="this.style.borderColor=\'rgba(245,158,11,0.5)\'" onmouseout="this.style.borderColor=\'rgba(245,158,11,0.2)\'">' +
+        '<div style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #f59e0b;">' +
+        (isImage 
+          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+          : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
+        ) +
+        '</div>' +
+        '<div style="flex: 1;">' +
+        '<div style="font-size: 13px; font-weight: 600; color: #f59e0b;">' + escapeHtml(att.name || 'Anexo ' + (i + 1)) + '</div>' +
+        '<div style="font-size: 11px; color: rgba(255,255,255,0.5);">Clique para abrir</div>' +
+        '</div>' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
+        '</a>';
+    }).join('');
+  } else if (attachmentsContainer) {
+    attachmentsContainer.style.display = 'none';
+  }
+  
+  // Mostrar/esconder botão de deletar baseado em permissão (dono ou admin)
   var deleteBtn = document.getElementById('btn-delete-report');
   if (deleteBtn) {
-    deleteBtn.style.display = state.canWriteRelatorios ? 'flex' : 'none';
+    var isOwner = report.created_by === state.user.id;
+    var isAdmin = state.user.roles && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all'));
+    deleteBtn.style.display = (isOwner || isAdmin) ? 'flex' : 'none';
   }
 }
 
@@ -10562,6 +10776,32 @@ function closeReportViewer() {
   state.currentReport = null;
 }
 
+// Função para gerar PDF premium via backend
+async function generateReportPDF() {
+  if (!state.currentReport) return;
+  
+  try {
+    showNotification('Gerando PDF...', 'info');
+    
+    var pdfUrl = API_URL + '/maintenance-reports/' + state.currentReport.id + '/pdf';
+    
+    // Abrir PDF no navegador
+    if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
+      var Browser = Capacitor.Plugins.Browser;
+      if (Browser) {
+        await Browser.open({ url: pdfUrl + '?token=' + state.token });
+      } else {
+        window.open(pdfUrl + '?token=' + state.token, '_blank');
+      }
+    } else {
+      window.open(pdfUrl + '?token=' + state.token, '_blank');
+    }
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    showNotification('Erro ao gerar PDF', 'error');
+  }
+}
+
 // Função para imprimir relatório como PDF
 function printReport() {
   var article = document.getElementById('forum-article-content');
@@ -10574,20 +10814,23 @@ function printReport() {
   printWindow.document.write('<html><head><title>' + report.title + '</title>');
   printWindow.document.write('<style>');
   printWindow.document.write('body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #333; }');
-  printWindow.document.write('.header { border-bottom: 2px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }');
-  printWindow.document.write('.logo { font-size: 24px; font-weight: bold; color: #6366f1; margin-bottom: 5px; }');
+  printWindow.document.write('.header { border-bottom: 2px solid #ec4899; padding-bottom: 20px; margin-bottom: 30px; }');
+  printWindow.document.write('.logo { font-size: 24px; font-weight: bold; color: #ec4899; margin-bottom: 5px; }');
   printWindow.document.write('.subtitle { font-size: 12px; color: #888; }');
-  printWindow.document.write('.category { display: inline-block; padding: 4px 12px; background: #f0f0f0; border-radius: 15px; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; }');
+  printWindow.document.write('.category { display: inline-block; padding: 4px 12px; background: #fdf2f8; border-radius: 15px; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; color: #ec4899; }');
   printWindow.document.write('.title { font-size: 28px; font-weight: bold; margin: 0 0 15px 0; color: #111; }');
   printWindow.document.write('.meta { font-size: 13px; color: #666; margin-bottom: 30px; }');
   printWindow.document.write('.content { font-size: 14px; line-height: 1.8; white-space: pre-wrap; }');
-  printWindow.document.write('.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999; }');
+  printWindow.document.write('.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #fce7f3; font-size: 11px; color: #999; }');
+  printWindow.document.write('.promo { background: linear-gradient(135deg, #fdf2f8, #fae8ff); padding: 15px; border-radius: 10px; margin-top: 30px; }');
+  printWindow.document.write('.promo-title { font-weight: bold; color: #ec4899; }');
   printWindow.document.write('</style></head><body>');
   printWindow.document.write('<div class="header"><div class="logo">✡ ICARUS</div><div class="subtitle">Central de Relatórios • Granja Vitta</div></div>');
   printWindow.document.write('<div class="category">' + (report.category || 'Geral') + '</div>');
   printWindow.document.write('<h1 class="title">' + escapeHtml(report.title) + '</h1>');
   printWindow.document.write('<div class="meta">Por <strong>' + (report.created_by_name || 'Anônimo') + '</strong> em ' + dateStr + '</div>');
   printWindow.document.write('<div class="content">' + escapeHtml(report.content) + '</div>');
+  printWindow.document.write('<div class="promo"><div class="promo-title">Sistema ICARUS</div><div>Gestão Inteligente • Contato: (xx) xxxxx-xxxx</div></div>');
   printWindow.document.write('<div class="footer">Relatório gerado pelo Sistema Icarus em ' + new Date().toLocaleDateString('pt-BR') + '</div>');
   printWindow.document.write('</body></html>');
   printWindow.document.close();
@@ -10599,9 +10842,18 @@ function printReport() {
 
 // Função para deletar relatório
 async function deleteReport() {
-  if (!state.currentReport || !state.canWriteRelatorios) return;
+  if (!state.currentReport) return;
   
-  if (!confirm('Tem certeza que deseja excluir este relatório?')) return;
+  // Verificar permissão (dono ou admin)
+  var isOwner = state.currentReport.created_by === state.user.id;
+  var isAdmin = state.user.roles && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all'));
+  
+  if (!isOwner && !isAdmin) {
+    showNotification('Você não tem permissão para excluir este relatório', 'error');
+    return;
+  }
+  
+  if (!confirm('Tem certeza que deseja excluir este relatório permanentemente?')) return;
   
   try {
     var response = await fetch(API_URL + '/maintenance-reports/' + state.currentReport.id, {
@@ -10625,6 +10877,9 @@ async function deleteReport() {
   }
 }
 
+// Array temporário para anexos
+var reportAttachments = [];
+
 function showNewReportModal() {
   if (!state.canWriteRelatorios) {
     showNotification('Você não tem permissão para criar relatórios', 'error');
@@ -10635,6 +10890,15 @@ function showNewReportModal() {
   document.getElementById('report-category').value = 'geral';
   document.getElementById('report-content').value = '';
   
+  // Reset visibilidade
+  var publicRadio = document.getElementById('report-visibility-public');
+  if (publicRadio) publicRadio.checked = true;
+  
+  // Reset anexos
+  reportAttachments = [];
+  var attachmentsList = document.getElementById('report-attachments-list');
+  if (attachmentsList) attachmentsList.innerHTML = '';
+  
   document.getElementById('report-modal').classList.add('active');
 }
 
@@ -10642,11 +10906,61 @@ function closeReportModal() {
   document.getElementById('report-modal').classList.remove('active');
 }
 
+// Adicionar anexo à lista
+function addReportAttachment() {
+  var input = document.getElementById('report-attachment-input');
+  if (!input) return;
+  
+  var url = input.value.trim();
+  if (!url) {
+    showNotification('Cole um link válido', 'error');
+    return;
+  }
+  
+  // Validar URL básica
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  
+  // Extrair nome do arquivo
+  var name = url.split('/').pop().split('?')[0] || 'Anexo';
+  if (name.length > 30) name = name.substring(0, 30) + '...';
+  
+  reportAttachments.push({ url: url, name: name });
+  input.value = '';
+  
+  renderReportAttachments();
+}
+
+function renderReportAttachments() {
+  var list = document.getElementById('report-attachments-list');
+  if (!list) return;
+  
+  list.innerHTML = reportAttachments.map(function(att, i) {
+    return '<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px;">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
+      '<span style="flex: 1; font-size: 12px; color: #f59e0b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(att.name) + '</span>' +
+      '<button type="button" onclick="removeReportAttachment(' + i + ')" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px;">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>' +
+      '</div>';
+  }).join('');
+}
+
+function removeReportAttachment(index) {
+  reportAttachments.splice(index, 1);
+  renderReportAttachments();
+}
+
 async function saveReport() {
   try {
     var title = document.getElementById('report-title').value.trim();
     var category = document.getElementById('report-category').value;
     var content = document.getElementById('report-content').value.trim();
+    
+    // Visibilidade
+    var privateRadio = document.getElementById('report-visibility-private');
+    var visibility = (privateRadio && privateRadio.checked) ? 'private' : 'public';
     
     if (!title || !content) {
       showNotification('Título e conteúdo são obrigatórios', 'error');
@@ -10659,7 +10973,13 @@ async function saveReport() {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + state.token
       },
-      body: JSON.stringify({ title: title, category: category, content: content })
+      body: JSON.stringify({ 
+        title: title, 
+        category: category, 
+        content: content,
+        visibility: visibility,
+        attachments: reportAttachments
+      })
     });
     
     var data = await response.json();
