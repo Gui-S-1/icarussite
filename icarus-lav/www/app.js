@@ -450,6 +450,41 @@ function updateStats() {
 }
 
 // ===== GERAR PDF =====
+// URL da API do Icarus (para gerar PDF bonito quando online)
+var ICARUS_API_URL = 'https://kong-dust-analysts-developers.trycloudflare.com';
+
+// Função para buscar URL atualizada do túnel
+async function getApiUrl() {
+  try {
+    // Tentar pegar do servidor direto
+    var response = await fetch('http://159.203.8.237:3000/tunnel-url', { 
+      signal: AbortSignal.timeout(3000)
+    });
+    if (response.ok) {
+      var data = await response.json();
+      if (data.ok && data.url) {
+        ICARUS_API_URL = data.url;
+        return data.url;
+      }
+    }
+  } catch (e) {
+    // Ignorar erro - usar URL padrão
+  }
+  return ICARUS_API_URL;
+}
+
+// Verificar se tem conexão com internet
+async function hasInternet() {
+  try {
+    var response = await fetch(ICARUS_API_URL + '/api/version', {
+      signal: AbortSignal.timeout(5000)
+    });
+    return response.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function exportPDF() {
   var client = CLIENTS[state.currentClient];
   var entries = state.entries[state.currentClient] || [];
@@ -507,6 +542,93 @@ async function exportPDF() {
   var sortedEntries = filteredEntries.slice().sort(function(a, b) {
     return new Date(a.date) - new Date(b.date);
   });
+  
+  // ===== TENTAR GERAR PDF NO SERVIDOR (quando online) =====
+  var isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+  
+  if (isCapacitor) {
+    try {
+      // Atualizar URL da API
+      await getApiUrl();
+      
+      // Verificar se tem internet
+      var online = await hasInternet();
+      
+      if (online) {
+        showToast('Conectando ao servidor...', 'info');
+        
+        // Preparar dados para o backend
+        var pdfData = {
+          client: {
+            name: client.name,
+            color: client.color,
+            pricePerPiece: client.pricePerPiece,
+            markingPrice: client.markingPrice,
+            billingCycle: client.billingCycle,
+            fields: client.fields
+          },
+          entries: sortedEntries,
+          period: {
+            start: periodStart,
+            end: periodEnd,
+            label: formatDate(state.period.start) + ' a ' + formatDate(state.period.end)
+          },
+          totals: {
+            pieces: totalPieces,
+            markings: totalMarkings,
+            value: totalValue,
+            byField: totalsByField
+          }
+        };
+        
+        // Chamar endpoint do backend
+        var response = await fetch(ICARUS_API_URL + '/api/pdf/lav-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pdfData),
+          signal: AbortSignal.timeout(15000)
+        });
+        
+        if (response.ok) {
+          // Recebemos o PDF - abrir no navegador do sistema
+          var pdfBlob = await response.blob();
+          var pdfUrl = URL.createObjectURL(pdfBlob);
+          
+          // Usar Browser plugin para abrir
+          if (window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+            // Criar URL temporária no servidor ou usar data URL
+            var reader = new FileReader();
+            reader.onload = async function() {
+              var dataUrl = reader.result;
+              try {
+                await window.Capacitor.Plugins.Browser.open({
+                  url: dataUrl,
+                  presentationStyle: 'fullscreen'
+                });
+                showToast('📄 PDF gerado com sucesso!', 'success');
+              } catch (e) {
+                // Fallback: abrir em nova janela
+                window.open(pdfUrl, '_system');
+                showToast('📄 PDF aberto!', 'success');
+              }
+            };
+            reader.readAsDataURL(pdfBlob);
+            return;
+          } else {
+            // Fallback sem Browser plugin
+            window.open(pdfUrl, '_system');
+            showToast('📄 PDF gerado!', 'success');
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.log('Erro ao gerar PDF no servidor, usando fallback local:', e);
+    }
+  }
+  
+  // ===== FALLBACK: Gerar HTML local (offline ou erro) =====
+  showToast('Gerando relatório local...', 'info');
   
   // Criar HTML do PDF - Design Premium
   var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +

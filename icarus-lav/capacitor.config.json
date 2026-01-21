@@ -10,9 +10,17 @@
     },
     "Preferences": {
       "group": "IcarusLavGroup"
+    },
+    "Browser": {
+      "presentationStyle": "fullscreen"
     }
   },
   "android": {
     "allowMixedContent": true
+  },
+  "server": {
+    "cleartext": true,
+    "androidScheme": "https",
+    "allowNavigation": ["*"]
   }
 }
