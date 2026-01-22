@@ -11287,42 +11287,122 @@ async function generateReportPDF() {
   }
 }
 
-// Função para imprimir relatório como PDF
+// Função para imprimir relatório como PDF - Design Premium Magenta
 function printReport() {
   var article = document.getElementById('forum-article-content');
   if (!article || !state.currentReport) return;
   
   var printWindow = window.open('', '_blank');
   var report = state.currentReport;
-  var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR') : '';
+  var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
   
-  printWindow.document.write('<html><head><title>' + report.title + '</title>');
+  // Estrela de Davi SVG (6 pontas)
+  var starOfDavid = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 14.5,8 21,8.5 16,13 17.5,20 12,16.5 6.5,20 8,13 3,8.5 9.5,8" stroke="#ec4899" stroke-width="1.5" fill="none"/><polygon points="12,22 9.5,16 3,15.5 8,11 6.5,4 12,7.5 17.5,4 16,11 21,15.5 14.5,16" stroke="#ec4899" stroke-width="1.5" fill="none"/></svg>';
+  
+  printWindow.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + report.title + ' - ICARUS</title>');
   printWindow.document.write('<style>');
-  printWindow.document.write('body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #333; }');
-  printWindow.document.write('.header { border-bottom: 2px solid #ec4899; padding-bottom: 20px; margin-bottom: 30px; }');
-  printWindow.document.write('.logo { font-size: 24px; font-weight: bold; color: #ec4899; margin-bottom: 5px; }');
-  printWindow.document.write('.subtitle { font-size: 12px; color: #888; }');
-  printWindow.document.write('.category { display: inline-block; padding: 4px 12px; background: #fdf2f8; border-radius: 15px; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; color: #ec4899; }');
-  printWindow.document.write('.title { font-size: 28px; font-weight: bold; margin: 0 0 15px 0; color: #111; }');
-  printWindow.document.write('.meta { font-size: 13px; color: #666; margin-bottom: 30px; }');
-  printWindow.document.write('.content { font-size: 14px; line-height: 1.8; white-space: pre-wrap; }');
-  printWindow.document.write('.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #fce7f3; font-size: 11px; color: #999; }');
-  printWindow.document.write('.promo { background: linear-gradient(135deg, #fdf2f8, #fae8ff); padding: 15px; border-radius: 10px; margin-top: 30px; }');
-  printWindow.document.write('.promo-title { font-weight: bold; color: #ec4899; }');
+  printWindow.document.write('@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");');
+  printWindow.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
+  printWindow.document.write('body { font-family: "Inter", -apple-system, sans-serif; background: #fff; color: #1a1a2e; line-height: 1.6; }');
+  printWindow.document.write('.page { max-width: 210mm; min-height: 297mm; margin: 0 auto; padding: 40px 50px; position: relative; }');
+  
+  // Header com gradiente magenta
+  printWindow.document.write('.header { display: flex; align-items: center; justify-content: space-between; padding: 25px 30px; background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%); border-radius: 16px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(236, 72, 153, 0.3); }');
+  printWindow.document.write('.header-left { display: flex; align-items: center; gap: 15px; }');
+  printWindow.document.write('.logo-icon { width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }');
+  printWindow.document.write('.logo-text { color: #fff; }');
+  printWindow.document.write('.logo-title { font-size: 28px; font-weight: 700; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }');
+  printWindow.document.write('.logo-subtitle { font-size: 11px; opacity: 0.9; letter-spacing: 1px; }');
+  printWindow.document.write('.header-date { color: rgba(255,255,255,0.9); font-size: 12px; text-align: right; }');
+  
+  // Categoria badge
+  printWindow.document.write('.category-badge { display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #fdf2f8, #fce7f3); border: 2px solid #f9a8d4; border-radius: 25px; font-size: 12px; text-transform: uppercase; font-weight: 600; color: #db2777; letter-spacing: 1px; margin-bottom: 20px; }');
+  
+  // Título
+  printWindow.document.write('.title { font-size: 32px; font-weight: 700; color: #1a1a2e; margin-bottom: 20px; line-height: 1.3; border-left: 4px solid #ec4899; padding-left: 20px; }');
+  
+  // Meta info
+  printWindow.document.write('.meta { display: flex; align-items: center; gap: 20px; padding: 15px 20px; background: #fdf2f8; border-radius: 12px; margin-bottom: 30px; }');
+  printWindow.document.write('.meta-author { display: flex; align-items: center; gap: 10px; }');
+  printWindow.document.write('.meta-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px; }');
+  printWindow.document.write('.meta-name { font-weight: 600; color: #1a1a2e; }');
+  printWindow.document.write('.meta-role { font-size: 12px; color: #6b7280; }');
+  printWindow.document.write('.meta-date { margin-left: auto; font-size: 13px; color: #6b7280; }');
+  
+  // Conteúdo
+  printWindow.document.write('.content { font-size: 15px; line-height: 1.9; white-space: pre-wrap; color: #374151; padding: 25px; background: #fafafa; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 40px; }');
+  
+  // Promo box
+  printWindow.document.write('.promo { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%); padding: 25px 30px; border-radius: 16px; display: flex; align-items: center; gap: 20px; margin-bottom: 25px; }');
+  printWindow.document.write('.promo-logo { width: 60px; height: 60px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4); }');
+  printWindow.document.write('.promo-info { flex: 1; }');
+  printWindow.document.write('.promo-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 5px; }');
+  printWindow.document.write('.promo-subtitle { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }');
+  printWindow.document.write('.promo-contact { display: flex; align-items: center; gap: 8px; color: #ec4899; font-size: 15px; font-weight: 600; }');
+  
+  // Footer
+  printWindow.document.write('.footer { text-align: center; padding-top: 20px; border-top: 2px solid #fce7f3; }');
+  printWindow.document.write('.footer-text { font-size: 11px; color: #9ca3af; }');
+  printWindow.document.write('.footer-brand { font-size: 12px; color: #ec4899; font-weight: 500; margin-top: 5px; }');
+  
+  // Print styles
+  printWindow.document.write('@media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .page { padding: 30px 40px; } }');
   printWindow.document.write('</style></head><body>');
-  printWindow.document.write('<div class="header"><div class="logo">✡ ICARUS</div><div class="subtitle">Central de Relatórios • Granja Vitta</div></div>');
-  printWindow.document.write('<div class="category">' + (report.category || 'Geral') + '</div>');
+  
+  printWindow.document.write('<div class="page">');
+  
+  // Header
+  printWindow.document.write('<div class="header">');
+  printWindow.document.write('<div class="header-left">');
+  printWindow.document.write('<div class="logo-icon">' + starOfDavid.replace(/#ec4899/g, '#fff') + '</div>');
+  printWindow.document.write('<div class="logo-text"><div class="logo-title">ICARUS</div><div class="logo-subtitle">Sistema de Gestão Inteligente</div></div>');
+  printWindow.document.write('</div>');
+  printWindow.document.write('<div class="header-date">Central de Relatórios<br>Granja Vitta</div>');
+  printWindow.document.write('</div>');
+  
+  // Category
+  var categoryName = (report.category || 'geral').toUpperCase();
+  printWindow.document.write('<div class="category-badge">' + categoryName + '</div>');
+  
+  // Title
   printWindow.document.write('<h1 class="title">' + escapeHtml(report.title) + '</h1>');
-  printWindow.document.write('<div class="meta">Por <strong>' + (report.created_by_name || 'Anônimo') + '</strong> em ' + dateStr + '</div>');
+  
+  // Meta
+  var authorInitial = (report.created_by_name || 'A')[0].toUpperCase();
+  printWindow.document.write('<div class="meta">');
+  printWindow.document.write('<div class="meta-author">');
+  printWindow.document.write('<div class="meta-avatar">' + authorInitial + '</div>');
+  printWindow.document.write('<div><div class="meta-name">' + (report.created_by_name || 'Anônimo') + '</div><div class="meta-role">Equipe de Manutenção</div></div>');
+  printWindow.document.write('</div>');
+  printWindow.document.write('<div class="meta-date">' + dateStr + '</div>');
+  printWindow.document.write('</div>');
+  
+  // Content
   printWindow.document.write('<div class="content">' + escapeHtml(report.content) + '</div>');
-  printWindow.document.write('<div class="promo"><div class="promo-title">Sistema ICARUS</div><div>Gestão Inteligente • Contato: (xx) xxxxx-xxxx</div></div>');
-  printWindow.document.write('<div class="footer">Relatório gerado pelo Sistema Icarus em ' + new Date().toLocaleDateString('pt-BR') + '</div>');
+  
+  // Promo
+  printWindow.document.write('<div class="promo">');
+  printWindow.document.write('<div class="promo-logo">' + starOfDavid.replace(/#ec4899/g, '#fff') + '</div>');
+  printWindow.document.write('<div class="promo-info">');
+  printWindow.document.write('<div class="promo-title">Sistema ICARUS</div>');
+  printWindow.document.write('<div class="promo-subtitle">Gestão Inteligente de Manutenção • Granja Vitta</div>');
+  printWindow.document.write('<div class="promo-contact"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> (62) 98493-0056</div>');
+  printWindow.document.write('</div>');
+  printWindow.document.write('</div>');
+  
+  // Footer
+  printWindow.document.write('<div class="footer">');
+  printWindow.document.write('<div class="footer-text">Relatório gerado pelo Sistema Icarus em ' + new Date().toLocaleDateString('pt-BR') + '</div>');
+  printWindow.document.write('<div class="footer-brand">© 2025 ICARUS • Desenvolvido por Guilherme Braga</div>');
+  printWindow.document.write('</div>');
+  
+  printWindow.document.write('</div>');
   printWindow.document.write('</body></html>');
   printWindow.document.close();
   
   setTimeout(function() {
     printWindow.print();
-  }, 250);
+  }, 300);
 }
 
 // Função para deletar relatório
