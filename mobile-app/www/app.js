@@ -2351,6 +2351,18 @@ async function deleteOrder(orderId) {
 function showCreateOS() {
   // Limpar form
   document.getElementById('form-create-os').reset();
+  
+  // Mostrar seção de atribuição apenas para manutenção
+  const assignSection = document.getElementById('os-assign-section');
+  if (assignSection) {
+    const canAssign = state.user && state.user.roles && (
+      state.user.roles.includes('admin') || 
+      state.user.roles.includes('os_manage_all') || 
+      state.user.roles.includes('tecnico')
+    );
+    assignSection.style.display = canAssign ? 'block' : 'none';
+  }
+  
   const modal = document.getElementById('modal-create-os');
   modal.classList.remove('hidden');
   modal.classList.add('active');
@@ -4913,6 +4925,24 @@ function openExecuteChecklist(checklistId) {
     </div>
   `).join('');
   
+  // Mostrar opção de criar OS apenas para manutenção
+  const createOSSection = document.getElementById('chk-create-os-section');
+  const createOSCheck = document.getElementById('chk-create-os-check');
+  const executorSelect = document.getElementById('chk-os-executor-select');
+  
+  if (createOSSection) {
+    const canCreateOS = state.user && state.user.roles && (
+      state.user.roles.includes('admin') || 
+      state.user.roles.includes('os_manage_all') || 
+      state.user.roles.includes('tecnico')
+    );
+    createOSSection.style.display = canCreateOS ? 'block' : 'none';
+    
+    // Reset estado
+    if (createOSCheck) createOSCheck.checked = false;
+    if (executorSelect) executorSelect.style.display = 'none';
+  }
+  
   const modal = document.getElementById('modal-execute-checklist');
   modal.classList.remove('hidden');
   modal.classList.add('active');
@@ -4950,6 +4980,43 @@ function updateChecklistProgress() {
   });
 }
 
+// Toggle seção de executor quando marca criar OS
+function toggleChecklistOSExecutor() {
+  const checkbox = document.getElementById('chk-create-os-check');
+  const executorSection = document.getElementById('chk-os-executor-select');
+  
+  if (checkbox && checkbox.checked) {
+    executorSection.style.display = 'block';
+    loadChecklistOSExecutors();
+  } else if (executorSection) {
+    executorSection.style.display = 'none';
+  }
+}
+
+// Carregar lista de técnicos para o select
+async function loadChecklistOSExecutors() {
+  const select = document.getElementById('chk-os-executor');
+  if (!select) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/users`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    const data = await response.json();
+    
+    if (data.ok) {
+      const technicians = (data.users || []).filter(u => 
+        u.roles && (u.roles.includes('tecnico') || u.roles.includes('os_manage_all') || u.roles.includes('admin'))
+      );
+      
+      select.innerHTML = '<option value="">-- Selecione o técnico --</option>' +
+        technicians.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+    }
+  } catch (error) {
+    console.error('Erro ao carregar técnicos:', error);
+  }
+}
+
 // Submit checklist execution
 async function submitChecklistExecution() {
   const checklistId = state.currentChecklistId;
@@ -4963,6 +5030,16 @@ async function submitChecklistExecution() {
     checked: cb.checked
   }));
   
+  // Verificar se deve criar OS
+  const createOSCheck = document.getElementById('chk-create-os-check');
+  const createOS = createOSCheck && createOSCheck.checked;
+  const executorId = createOS ? document.getElementById('chk-os-executor')?.value : null;
+  
+  if (createOS && !executorId) {
+    showNotification('Selecione um técnico para a OS', 'warning');
+    return;
+  }
+  
   try {
     const response = await fetch(`${API_URL}/checklists/${checklistId}/execute`, {
       method: 'POST',
@@ -4975,6 +5052,11 @@ async function submitChecklistExecution() {
     
     const data = await response.json();
     if (data.ok) {
+      // Se marcou para criar OS, criar a OS também
+      if (createOS && executorId) {
+        await createOSFromChecklist(checklistId, executorId, notes);
+      }
+      
       closeModal('modal-execute-checklist');
       showNotification('Checklist executado com sucesso!', 'success');
     } else {
@@ -4982,6 +5064,45 @@ async function submitChecklistExecution() {
     }
   } catch (error) {
     showNotification('Erro ao executar checklist: ' + error.message, 'error');
+  }
+}
+
+// Criar OS a partir do checklist
+async function createOSFromChecklist(checklistId, executorId, notes) {
+  const checklist = state.checklists.find(c => c.id === checklistId);
+  if (!checklist) return;
+  
+  // Montar descrição com os itens do checklist
+  const itemsDesc = (checklist.items || []).map((item, i) => `${i + 1}. ${item.description}`).join('\n');
+  const description = `Originado do Checklist: ${checklist.name}\n\nItens:\n${itemsDesc}${notes ? '\n\nObservações: ' + notes : ''}`;
+  
+  const orderData = {
+    title: `Checklist: ${checklist.name}`,
+    description: description,
+    sector: checklist.sector || 'Manutenção',
+    priority: 'medium',
+    assigned_to: executorId
+  };
+  
+  try {
+    const response = await fetch(`${API_URL}/orders`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderData)
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('Ordem de Serviço criada!', 'success');
+      await loadOrders(); // Atualizar lista de OS
+    } else {
+      showNotification('Erro ao criar OS: ' + (data.error || ''), 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao criar OS do checklist:', error);
   }
 }
 
@@ -8764,6 +8885,7 @@ function exportGeneratorReportPDF() {
 
 function exportDashboardReport() {
   const orders = state.orders || [];
+  const checklists = state.checklists || [];
   const filter = state.dashboardFilter || 'daily';
   
   // Usar o mesmo range do dashboard
@@ -8791,6 +8913,20 @@ function exportDashboardReport() {
   const completed = filteredOrders.filter(o => o.status === 'completed').length;
   const total = filteredOrders.length;
   const aproveitamento = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  // Dados de checklists para o relatório
+  const checklistStats = {
+    total: checklists.length,
+    automaticos: checklists.filter(c => c.auto_complete).length,
+    manuais: checklists.filter(c => !c.auto_complete).length,
+    lista: checklists.map(c => ({
+      name: c.name,
+      sector: c.sector || 'N/A',
+      items: (c.items || []).length,
+      auto: c.auto_complete ? 'Sim' : 'Não',
+      frequency: c.auto_complete ? (c.frequency_days === 1 ? 'Diário' : c.frequency_days === 2 ? 'Dia sim/não' : `A cada ${c.frequency_days} dias`) : 'Manual'
+    }))
+  };
   
   // Agrupar por executor - usando assigned_users que é o formato correto
   const byExecutor = {};
@@ -9516,6 +9652,59 @@ function exportDashboardReport() {
           }).join('')}
         </tbody>
       </table>
+    </div>
+
+    <!-- SEÇÃO CHECKLISTS -->
+    <div class="table-card" style="margin-top: 20px;">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #059669, #10b981);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </div>
+        <h3>Checklists de Manutenção</h3>
+      </div>
+      <div class="stats-row" style="display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 120px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
+          <div style="font-size: 24px; font-weight: 700; color: #10b981;">${checklistStats.total}</div>
+          <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Total Checklists</div>
+        </div>
+        <div style="flex: 1; min-width: 120px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
+          <div style="font-size: 24px; font-weight: 700; color: #8b5cf6;">${checklistStats.automaticos}</div>
+          <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Automáticos</div>
+        </div>
+        <div style="flex: 1; min-width: 120px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
+          <div style="font-size: 24px; font-weight: 700; color: #3b82f6;">${checklistStats.manuais}</div>
+          <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Manuais</div>
+        </div>
+      </div>
+      ${checklistStats.lista.length > 0 ? `
+      <table>
+        <thead>
+          <tr>
+            <th>Checklist</th>
+            <th>Setor</th>
+            <th>Itens</th>
+            <th>Automático</th>
+            <th>Frequência</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${checklistStats.lista.map(c => `
+            <tr>
+              <td><strong>${c.name}</strong></td>
+              <td>${c.sector}</td>
+              <td style="text-align: center;">${c.items}</td>
+              <td style="text-align: center;">
+                <span style="display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; ${c.auto === 'Sim' ? 'background: rgba(16, 185, 129, 0.2); color: #10b981;' : 'background: rgba(100, 116, 139, 0.2); color: #94a3b8;'}">${c.auto}</span>
+              </td>
+              <td style="text-align: center; font-size: 12px; color: #94a3b8;">${c.frequency}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      ` : '<p style="text-align: center; color: #64748b; padding: 20px;">Nenhum checklist cadastrado</p>'}
     </div>
 
     <div class="footer">
@@ -10684,12 +10873,19 @@ async function loadReportsData() {
 
 function renderReports() {
   var container = document.getElementById('relatorios-list');
+  var postsContainer = document.querySelector('.forum-posts-container');
   var viewer = document.getElementById('report-viewer');
   if (!container) return;
   
-  // Mostrar lista, esconder viewer
-  container.classList.remove('hidden');
-  if (viewer) viewer.classList.add('hidden');
+  // Se há um relatório aberto, não esconder o viewer
+  if (state.currentReport) {
+    // Manter viewer visível, apenas atualizar dados internos se necessário
+  } else {
+    // Mostrar lista, esconder viewer
+    container.classList.remove('hidden');
+    if (postsContainer) postsContainer.classList.remove('hidden');
+    if (viewer) viewer.classList.add('hidden');
+  }
   
   var reports = state.reports || [];
   
@@ -10848,10 +11044,12 @@ function openReport(reportId) {
   state.currentReport = report;
   
   var container = document.getElementById('relatorios-list');
+  var postsContainer = document.querySelector('.forum-posts-container');
   var toolbar = document.querySelector('.forum-toolbar');
   var viewer = document.getElementById('report-viewer');
   
   if (container) container.classList.add('hidden');
+  if (postsContainer) postsContainer.classList.add('hidden');
   if (toolbar) toolbar.classList.add('hidden');
   if (viewer) viewer.classList.remove('hidden');
   
@@ -10931,10 +11129,12 @@ function openReport(reportId) {
 
 function closeReportViewer() {
   var container = document.getElementById('relatorios-list');
+  var postsContainer = document.querySelector('.forum-posts-container');
   var toolbar = document.querySelector('.forum-toolbar');
   var viewer = document.getElementById('report-viewer');
   
   if (container) container.classList.remove('hidden');
+  if (postsContainer) postsContainer.classList.remove('hidden');
   if (toolbar) toolbar.classList.remove('hidden');
   if (viewer) viewer.classList.add('hidden');
   

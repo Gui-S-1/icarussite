@@ -6959,7 +6959,10 @@
 
     /* Lista de Posts Compacta Discord-Style */
     .forum-posts-container {
-      min-height: 200px;
+      /* min-height removido para evitar espaço vazio */
+    }
+    .forum-posts-container:empty {
+      display: none;
     }
     .forum-posts-list {
       display: flex;
@@ -10901,8 +10904,8 @@
           " onfocus="this.style.borderColor='rgba(212,175,55,0.5)';this.style.boxShadow='0 0 20px rgba(212,175,55,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'"></textarea>
         </div>
 
-        <!-- Atribuir para -->
-        <div style="margin-bottom: 24px;">
+        <!-- Atribuir para (somente manutenção pode ver) -->
+        <div id="os-assign-section" style="margin-bottom: 24px; display: none;">
           <label style="display: block; font-size: 11px; font-weight: 600; color: #d4af37; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -11686,6 +11689,31 @@
         </label>
         <textarea id="execute-checklist-notes" class="chk-exec-textarea" placeholder="Adicione observações gerais sobre esta execução..."></textarea>
       </div>
+      
+      <!-- Opção de criar OS (apenas manutenção) -->
+      <div id="chk-create-os-section" class="chk-create-os-section" style="display: none;">
+        <div class="chk-create-os-toggle">
+          <label class="chk-toggle-wrapper">
+            <input type="checkbox" id="chk-create-os-check" onchange="toggleChecklistOSExecutor()">
+            <span class="chk-toggle-slider"></span>
+          </label>
+          <span class="chk-toggle-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Criar Ordem de Serviço
+          </span>
+        </div>
+        <div id="chk-os-executor-select" class="chk-os-executor-select" style="display: none;">
+          <label>Responsável pela OS:</label>
+          <select id="chk-os-executor">
+            <option value="">-- Selecione o técnico --</option>
+          </select>
+        </div>
+      </div>
 
       <!-- Ações com botões épicos -->
       <div class="chk-exec-actions">
@@ -12033,6 +12061,95 @@
     }
     .chk-exec-textarea::placeholder {
       color: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Seção de criar OS */
+    .chk-create-os-section {
+      position: relative;
+      z-index: 1;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(234, 179, 8, 0.05));
+      border-top: 1px solid rgba(245, 158, 11, 0.2);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .chk-create-os-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .chk-toggle-wrapper {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+    .chk-toggle-wrapper input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .chk-toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+    .chk-toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    .chk-toggle-wrapper input:checked + .chk-toggle-slider {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    .chk-toggle-wrapper input:checked + .chk-toggle-slider::before {
+      transform: translateX(20px);
+    }
+    .chk-toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fbbf24;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .chk-os-executor-select {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 10px;
+    }
+    .chk-os-executor-select label {
+      display: block;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 8px;
+    }
+    .chk-os-executor-select select {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    .chk-os-executor-select select:focus {
+      outline: none;
+      border-color: #f59e0b;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
     }
     
     /* Actions épicos */
