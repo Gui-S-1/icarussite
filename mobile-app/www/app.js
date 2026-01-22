@@ -1165,6 +1165,115 @@ function updateDashboardStats() {
 
   // Recent activity - compact format
   renderRecentActivity();
+  
+  // Carregar dados de checklists para o dashboard
+  loadChecklistDashboard();
+}
+
+// ========== CHECKLIST DASHBOARD ==========
+async function loadChecklistDashboard() {
+  try {
+    const response = await fetch(`${API_URL}/checklists/dashboard-stats`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      renderChecklistDashboard(data);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar checklist dashboard:', error);
+    // Fallback com dados mock se endpoint não existir
+    renderChecklistDashboard({
+      today_total: 0,
+      today_auto: 0,
+      today_manual: 0,
+      pending: 0,
+      streak_days: 0,
+      recent_executions: []
+    });
+  }
+}
+
+function renderChecklistDashboard(data) {
+  // Atualizar stats
+  const totalEl = document.getElementById('chk-total-exec');
+  const autoEl = document.getElementById('chk-auto-exec');
+  const manualEl = document.getElementById('chk-manual-exec');
+  const pendingEl = document.getElementById('chk-pending');
+  const streakEl = document.getElementById('streak-days');
+  
+  if (totalEl) totalEl.textContent = data.today_total || 0;
+  if (autoEl) autoEl.textContent = data.today_auto || 0;
+  if (manualEl) manualEl.textContent = data.today_manual || 0;
+  if (pendingEl) pendingEl.textContent = data.pending || 0;
+  if (streakEl) streakEl.textContent = data.streak_days || 0;
+  
+  // Atualizar ring chart
+  const total = (data.today_auto || 0) + (data.today_manual || 0) + (data.pending || 0);
+  const completed = (data.today_auto || 0) + (data.today_manual || 0);
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  const ringProgress = document.getElementById('ring-progress');
+  const ringPercent = document.getElementById('ring-percent');
+  
+  if (ringProgress) {
+    const circumference = 2 * Math.PI * 40; // 251.2
+    const dashArray = (percent / 100) * circumference;
+    ringProgress.style.strokeDasharray = `${dashArray} ${circumference}`;
+    ringProgress.style.stroke = percent >= 80 ? '#10b981' : percent >= 50 ? '#f59e0b' : '#ef4444';
+  }
+  if (ringPercent) {
+    ringPercent.textContent = percent + '%';
+    ringPercent.style.color = percent >= 80 ? '#10b981' : percent >= 50 ? '#f59e0b' : '#ef4444';
+  }
+  
+  // Atualizar legend
+  const legendAuto = document.getElementById('legend-auto');
+  const legendManual = document.getElementById('legend-manual');
+  const legendPending = document.getElementById('legend-pending');
+  
+  if (legendAuto) legendAuto.textContent = data.today_auto || 0;
+  if (legendManual) legendManual.textContent = data.today_manual || 0;
+  if (legendPending) legendPending.textContent = data.pending || 0;
+  
+  // Renderizar timeline
+  renderChecklistTimeline(data.recent_executions || []);
+}
+
+function renderChecklistTimeline(executions) {
+  const container = document.getElementById('timeline-items');
+  if (!container) return;
+  
+  if (executions.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.4); font-size: 12px;">
+        Nenhuma execução hoje
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = executions.slice(0, 5).map(exec => {
+    const isAuto = exec.is_auto || false;
+    const time = exec.executed_at ? new Date(exec.executed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    const name = exec.checklist_name || 'Checklist';
+    
+    return `
+      <div class="timeline-item">
+        <div class="timeline-item-icon ${isAuto ? 'auto' : 'manual'}">
+          ${isAuto 
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>'
+          }
+        </div>
+        <div class="timeline-item-info">
+          <div class="timeline-item-name">${escapeHtml(name)}</div>
+          <div class="timeline-item-time">${time} • ${isAuto ? 'Automático' : 'Manual'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function updateDashboardSummary(filteredOrders, completed, total) {
@@ -4776,17 +4885,69 @@ function openExecuteChecklist(checklistId) {
   document.getElementById('execute-checklist-title').textContent = checklist.name;
   document.getElementById('execute-checklist-notes').value = '';
   
+  const items = checklist.items || [];
   const container = document.getElementById('execute-checklist-items');
-  container.innerHTML = (checklist.items || []).map((item, idx) => `
-    <div class="checkbox-item" style="margin-bottom: 8px;">
-      <input type="checkbox" id="exec-item-${idx}" data-item-id="${sanitizeId(item.id)}">
-      <label for="exec-item-${idx}" style="flex: 1;">${escapeHtml(item.description)}</label>
+  
+  // Atualizar contadores
+  const totalCount = document.getElementById('chk-total-count');
+  const checkedCount = document.getElementById('chk-checked-count');
+  if (totalCount) totalCount.textContent = items.length;
+  if (checkedCount) checkedCount.textContent = '0';
+  
+  // Reset progress bar
+  const progressFill = document.getElementById('chk-progress-fill');
+  if (progressFill) progressFill.style.width = '0%';
+  
+  container.innerHTML = items.map((item, idx) => `
+    <div class="chk-exec-item" data-idx="${idx}" onclick="toggleChecklistItem(this, ${idx})">
+      <span class="chk-item-num">${idx + 1}</span>
+      <div class="chk-checkbox-wrapper">
+        <input type="checkbox" id="exec-item-${idx}" data-item-id="${sanitizeId(item.id)}" onchange="updateChecklistProgress()">
+        <div class="chk-checkbox-custom">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+      </div>
+      <span class="chk-item-label">${escapeHtml(item.description)}</span>
     </div>
   `).join('');
   
   const modal = document.getElementById('modal-execute-checklist');
   modal.classList.remove('hidden');
   modal.classList.add('active');
+}
+
+// Toggle checklist item ao clicar na linha inteira
+function toggleChecklistItem(element, idx) {
+  const checkbox = element.querySelector('input[type="checkbox"]');
+  if (checkbox) {
+    checkbox.checked = !checkbox.checked;
+    element.classList.toggle('checked', checkbox.checked);
+    updateChecklistProgress();
+  }
+}
+
+// Atualizar progress bar do checklist
+function updateChecklistProgress() {
+  const checkboxes = document.querySelectorAll('#execute-checklist-items input[type="checkbox"]');
+  const total = checkboxes.length;
+  const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+  
+  const checkedCount = document.getElementById('chk-checked-count');
+  const progressFill = document.getElementById('chk-progress-fill');
+  
+  if (checkedCount) checkedCount.textContent = checked;
+  if (progressFill) {
+    const percent = total > 0 ? (checked / total) * 100 : 0;
+    progressFill.style.width = percent + '%';
+  }
+  
+  // Atualizar classes checked nas linhas
+  checkboxes.forEach((cb, i) => {
+    const item = cb.closest('.chk-exec-item');
+    if (item) item.classList.toggle('checked', cb.checked);
+  });
 }
 
 // Submit checklist execution
