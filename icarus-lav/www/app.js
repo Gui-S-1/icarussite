@@ -4846,6 +4846,27 @@ function showCreateChecklist() {
   modal.classList.add('active');
 }
 
+// Toggle para mostrar opções de frequência automática
+function toggleChecklistAutoOptions() {
+  const checkbox = document.getElementById('checklist-auto-complete');
+  const options = document.getElementById('checklist-auto-options');
+  const slider = document.getElementById('checklist-auto-slider');
+  
+  if (checkbox && checkbox.checked) {
+    if (options) options.style.display = 'block';
+    if (slider) {
+      slider.style.left = '22px';
+      slider.style.background = '#10b981';
+    }
+  } else {
+    if (options) options.style.display = 'none';
+    if (slider) {
+      slider.style.left = '2px';
+      slider.style.background = '#666';
+    }
+  }
+}
+
 // Create checklist from form
 async function createChecklistFromForm(event) {
   event.preventDefault();
@@ -4855,6 +4876,16 @@ async function createChecklistFromForm(event) {
   const frequency = document.getElementById('checklist-frequency').value;
   const description = document.getElementById('checklist-description').value.trim();
   const itemsText = document.getElementById('checklist-items').value.trim();
+  
+  // Automação
+  const autoComplete = document.getElementById('checklist-auto-complete');
+  const auto_complete = autoComplete ? autoComplete.checked : false;
+  
+  let frequency_days = 1;
+  if (auto_complete) {
+    const selectedRadio = document.querySelector('input[name="frequency-days"]:checked');
+    frequency_days = selectedRadio ? parseInt(selectedRadio.value) : 1;
+  }
   
   const items = itemsText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
   
@@ -4870,7 +4901,7 @@ async function createChecklistFromForm(event) {
         'Authorization': `Bearer ${state.token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, sector, frequency, description, items })
+      body: JSON.stringify({ name, sector, frequency, description, items, auto_complete, frequency_days })
     });
     
     const data = await response.json();

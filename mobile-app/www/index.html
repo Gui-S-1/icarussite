@@ -6921,12 +6921,14 @@
       background: linear-gradient(135deg, #111114 0%, #18151d 100%);
       border: 1px solid rgba(236, 72, 153, 0.25);
       border-radius: 12px;
-      padding: 16px 20px;
+      padding: 20px 24px;
       margin-bottom: 14px;
       overflow: hidden;
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
     }
     .forum-header::before {
       content: '';
@@ -6934,7 +6936,7 @@
       left: 0;
       top: 0;
       bottom: 0;
-      width: 3px;
+      width: 4px;
       background: linear-gradient(180deg, #ec4899, #a855f7);
     }
     .forum-header-bg {
@@ -6943,20 +6945,22 @@
     .forum-orb, .forum-orb-1, .forum-orb-2, .forum-orb-3 {
       display: none;
     }
-    .forum-header-content {
-      position: relative;
-      z-index: 1;
+    .forum-header-left {
       display: flex;
       align-items: center;
       gap: 16px;
       flex: 1;
+      min-width: 200px;
+    }
+    .forum-header-content {
+      display: none;
     }
     .forum-icon-badge {
-      width: 42px;
-      height: 42px;
-      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.12));
-      border: 1px solid rgba(236, 72, 153, 0.35);
-      border-radius: 10px;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(168, 85, 247, 0.15));
+      border: 1px solid rgba(236, 72, 153, 0.4);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -6964,28 +6968,29 @@
       flex-shrink: 0;
     }
     .forum-icon-badge svg {
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
     }
     .forum-icon-animated {
       animation: none;
     }
     .forum-title-group {
-      flex: 1;
-      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
     .forum-title {
-      font-size: 17px;
+      font-size: 20px;
       font-weight: 700;
       background: linear-gradient(135deg, #fff, #f472b6);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin: 0 0 2px 0;
+      margin: 0;
     }
     .forum-subtitle {
-      font-size: 11px;
-      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
       margin: 0;
       display: flex;
       align-items: center;
@@ -6993,22 +6998,22 @@
     }
     .forum-subtitle::before {
       content: '';
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
       background: #22c55e;
       border-radius: 50%;
-      box-shadow: 0 0 6px #22c55e;
+      box-shadow: 0 0 8px #22c55e;
     }
     .forum-stats {
       display: flex;
-      gap: 8px;
+      gap: 10px;
     }
     .forum-stat {
       text-align: center;
-      padding: 8px 14px;
+      padding: 10px 16px;
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
       transition: all 0.2s;
     }
     .forum-stat:hover {
@@ -7017,7 +7022,7 @@
     }
     .forum-stat-value {
       display: block;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 700;
       color: #f472b6;
     }
@@ -10300,36 +10305,34 @@
 
         <!-- ========== RELATÓRIOS - FÓRUM PREMIUM ========== -->
         <div id="relatorios-view" class="view">
-          <!-- Header Premium com Animação -->
+          <!-- Header Premium Reorganizado -->
           <div class="forum-header">
-            <div class="forum-header-bg">
-              <div class="forum-orb forum-orb-1"></div>
-              <div class="forum-orb forum-orb-2"></div>
-              <div class="forum-orb forum-orb-3"></div>
-            </div>
-            <div class="forum-header-content">
+            <!-- Coluna 1: Ícone + Título -->
+            <div class="forum-header-left">
               <div class="forum-icon-badge">
-                <svg class="forum-icon-animated" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 9h8" stroke-linecap="round" opacity="0.5"/>
-                  <path d="M8 13h5" stroke-linecap="round" opacity="0.5"/>
                 </svg>
               </div>
               <div class="forum-title-group">
                 <h1 class="forum-title">Central de Relatórios</h1>
                 <p class="forum-subtitle">Fórum da Manutenção • Granja Vitta</p>
               </div>
-              <div class="forum-stats">
-                <div class="forum-stat">
-                  <span class="forum-stat-value" id="forum-total-posts">0</span>
-                  <span class="forum-stat-label">Posts</span>
-                </div>
-                <div class="forum-stat">
-                  <span class="forum-stat-value" id="forum-this-month">0</span>
-                  <span class="forum-stat-label">Este Mês</span>
-                </div>
+            </div>
+            
+            <!-- Coluna 2: Stats -->
+            <div class="forum-stats">
+              <div class="forum-stat">
+                <span class="forum-stat-value" id="forum-total-posts">0</span>
+                <span class="forum-stat-label">Posts</span>
+              </div>
+              <div class="forum-stat">
+                <span class="forum-stat-value" id="forum-this-month">0</span>
+                <span class="forum-stat-label">Este Mês</span>
               </div>
             </div>
+            
+            <!-- Coluna 3: Botão -->
             <div class="forum-header-actions" id="relatorios-write-actions">
               <button class="forum-new-post-btn" onclick="showNewReportModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -11771,26 +11774,31 @@
 
   <!-- Modal: Create Checklist -->
   <div id="modal-create-checklist" class="modal-overlay hidden" onclick="if(event.target === this) closeModal('modal-create-checklist')">
-    <div class="modal" style="max-width: 550px;">
-      <div class="modal-header">
-        <h3 class="modal-title">Novo Checklist</h3>
-        <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-create-checklist')">×</span>
+    <div class="modal" style="max-width: 600px; background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.3);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(16, 185, 129, 0.2);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <h3 class="modal-title" style="color: #fff; margin: 0;">Novo Checklist</h3>
+        </div>
+        <span style="cursor: pointer; font-size: 24px; color: rgba(255,255,255,0.5);" onclick="closeModal('modal-create-checklist')">×</span>
       </div>
       
-      <form id="form-create-checklist" onsubmit="createChecklistFromForm(event)">
-        <div class="form-group">
-          <label>Nome do Checklist *</label>
-          <input type="text" id="checklist-name" name="name" required placeholder="Ex: Yamasa Sala de Ovos - Lubrificação">
+      <form id="form-create-checklist" onsubmit="createChecklistFromForm(event)" style="padding: 20px;">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 6px; display: block;">Nome do Checklist *</label>
+          <input type="text" id="checklist-name" name="name" required placeholder="Ex: Yamasa Sala de Ovos - Lubrificação" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
         </div>
 
-        <div class="form-row">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
           <div class="form-group">
-            <label>Setor</label>
-            <input type="text" id="checklist-sector" name="sector" placeholder="Ex: Sala de Ovos, Produção">
+            <label style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 6px; display: block;">Setor</label>
+            <input type="text" id="checklist-sector" name="sector" placeholder="Ex: Sala de Ovos" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
           </div>
           <div class="form-group">
-            <label>Frequência</label>
-            <select id="checklist-frequency" name="frequency">
+            <label style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 6px; display: block;">Tipo de Frequência</label>
+            <select id="checklist-frequency" name="frequency" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
               <option value="diario">Diário</option>
               <option value="semanal">Semanal</option>
               <option value="mensal">Mensal</option>
@@ -11798,19 +11806,52 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Descrição</label>
-          <textarea id="checklist-description" name="description" placeholder="Descreva o objetivo deste checklist"></textarea>
+        <!-- Seção de Automação -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span style="color: #10b981; font-weight: 600; font-size: 14px;">Execução Automática</span>
+            </div>
+            <label style="position: relative; width: 44px; height: 24px; cursor: pointer;">
+              <input type="checkbox" id="checklist-auto-complete" onchange="toggleChecklistAutoOptions()" style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 12px; transition: 0.3s;"></span>
+              <span id="checklist-auto-slider" style="position: absolute; left: 2px; top: 2px; width: 20px; height: 20px; background: #666; border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+          
+          <div id="checklist-auto-options" style="display: none;">
+            <p style="color: rgba(255,255,255,0.5); font-size: 12px; margin: 0 0 12px 0;">O sistema preencherá automaticamente às 11:00</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;" class="freq-option" data-days="1">
+                <input type="radio" name="frequency-days" value="1" checked style="accent-color: #10b981;">
+                <span style="color: #fff; font-size: 13px;">Todo dia</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;" class="freq-option" data-days="2">
+                <input type="radio" name="frequency-days" value="2" style="accent-color: #10b981;">
+                <span style="color: #fff; font-size: 13px;">Dia sim, dia não</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;" class="freq-option" data-days="3">
+                <input type="radio" name="frequency-days" value="3" style="accent-color: #10b981;">
+                <span style="color: #fff; font-size: 13px;">A cada 3 dias</span>
+              </label>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Itens do Checklist (um por linha) *</label>
-          <textarea id="checklist-items" name="items" required rows="6" placeholder="Verificar nível de óleo&#10;Lubrificar engrenagens&#10;Checar temperatura&#10;Inspecionar correias"></textarea>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 6px; display: block;">Descrição</label>
+          <textarea id="checklist-description" name="description" placeholder="Descreva o objetivo deste checklist" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px; min-height: 60px; resize: vertical;"></textarea>
         </div>
 
-        <div class="modal-actions">
-          <button type="button" class="btn-small btn-cancel" onclick="closeModal('modal-create-checklist')">Cancelar</button>
-          <button type="submit" class="btn-small btn-primary">Criar Checklist</button>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 6px; display: block;">Itens do Checklist (um por linha) *</label>
+          <textarea id="checklist-items" name="items" required rows="5" placeholder="Verificar nível de óleo&#10;Lubrificar engrenagens&#10;Checar temperatura&#10;Inspecionar correias" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px; resize: vertical;"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" onclick="closeModal('modal-create-checklist')" style="padding: 12px 24px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer;">Cancelar</button>
+          <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Criar Checklist</button>
         </div>
       </form>
     </div>
