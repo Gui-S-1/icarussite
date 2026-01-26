@@ -12797,55 +12797,57 @@ let notasData = {
 // Verificar se usuário tem permissão para ver Notas & Boletos
 function canAccessNotas() {
   const user = state.user;
-  if (!user) return false;
+  if (!user) {
+    console.log('canAccessNotas - sem usuário');
+    return false;
+  }
   
-  const username = (user.username || user.name || '').toLowerCase();
-  const role = (user.role || '').toLowerCase();
-  const roles = (user.roles || []).map(r => r.toLowerCase());
+  const username = (user.username || user.name || '').toLowerCase().trim();
+  const role = (user.role || '').toLowerCase().trim();
+  const roles = (user.roles || []).map(r => String(r).toLowerCase().trim());
   
-  // Bruno, José Walter, ou role Manutenção/Admin
-  const allowedUsers = ['bruno', 'jose walter', 'josewalter', 'josé walter', 'joséwalter'];
-  const allowedRoles = ['manutencao', 'manutenção', 'admin', 'owner', 'maintenance'];
+  console.log('=== canAccessNotas DEBUG ===' );
+  console.log('username:', username);
+  console.log('role:', role);
+  console.log('roles:', roles);
+  console.log('user object:', user);
   
-  console.log('canAccessNotas - user:', username, 'role:', role, 'roles:', roles);
-  
-  // Verificar username
-  if (allowedUsers.some(u => username.includes(u))) {
-    console.log('Acesso permitido por username');
+  // SIMPLIFICADO: Se role contém 'manut' ou é admin/owner, tem acesso
+  if (role.includes('manut') || role === 'admin' || role === 'owner') {
+    console.log('ACESSO PERMITIDO por role:', role);
     return true;
   }
   
-  // Verificar role único - agora verificando se role contém algum dos allowedRoles
-  if (role) {
-    for (const allowed of allowedRoles) {
-      if (role === allowed || role.includes(allowed) || allowed.includes(role)) {
-        console.log('Acesso permitido por role:', role);
-        return true;
-      }
+  // Verificar no array de roles
+  for (const r of roles) {
+    if (r.includes('manut') || r === 'admin' || r === 'owner') {
+      console.log('ACESSO PERMITIDO por roles[]:', r);
+      return true;
     }
   }
   
-  // Verificar array de roles
-  if (roles.length > 0) {
-    for (const r of roles) {
-      for (const allowed of allowedRoles) {
-        if (r === allowed || r.includes(allowed) || allowed.includes(r)) {
-          console.log('Acesso permitido por roles array:', r);
-          return true;
-        }
-      }
-    }
+  // Verificar por nome de usuário específico
+  if (username.includes('bruno') || username.includes('walter') || username.includes('manut')) {
+    console.log('ACESSO PERMITIDO por username:', username);
+    return true;
   }
   
-  console.log('Acesso NEGADO');
+  console.log('ACESSO NEGADO');
   return false;
 }
 
 // Inicializar aba de Notas & Boletos
 function initNotasTab() {
   const tabNotas = document.getElementById('tab-notas');
+  console.log('initNotasTab - tabNotas element:', tabNotas);
+  console.log('initNotasTab - canAccessNotas():', canAccessNotas());
+  
   if (tabNotas) {
-    tabNotas.style.display = canAccessNotas() ? 'flex' : 'none';
+    // SEMPRE mostrar a aba para usuários com permissão
+    const hasAccess = canAccessNotas();
+    console.log('initNotasTab - hasAccess:', hasAccess);
+    tabNotas.style.display = hasAccess ? 'flex' : 'none';
+    tabNotas.style.cssText = hasAccess ? 'padding: 12px 24px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; cursor: pointer; display: flex !important; align-items: center; gap: 8px; transition: 0.3s;' : 'display: none !important;';
   }
   
   if (canAccessNotas()) {
