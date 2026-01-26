@@ -508,7 +508,7 @@ function navigateTo(view) {
   
   state.currentView = view; // Salvar view atual para polling
   
-  // Update active nav
+  // Update active nav (sidebar desktop)
   document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.remove('active');
     if (item.getAttribute('data-view') === view) {
@@ -516,6 +516,21 @@ function navigateTo(view) {
       console.log('Nav item ativado:', item);
     }
   });
+  
+  // Update mobile bottom nav
+  const mainMobileViews = ['dashboard', 'os', 'controle-agua', 'controle-diesel', 'lavanderia'];
+  document.querySelectorAll('.mobile-nav-item').forEach(item => {
+    item.classList.remove('active');
+    // Se é uma view principal, marcar diretamente
+    if (mainMobileViews.includes(view) && item.getAttribute('data-view') === view) {
+      item.classList.add('active');
+    }
+  });
+  // Se não é uma view principal, marcar "Mais" como ativo
+  if (!mainMobileViews.includes(view)) {
+    const moreItem = document.querySelector('.mobile-nav-item[data-view="mobile-more"]');
+    if (moreItem) moreItem.classList.add('active');
+  }
 
   // Update active view - ESCONDER TODAS primeiro
   document.querySelectorAll('.view').forEach(v => {
