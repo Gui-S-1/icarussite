@@ -1832,47 +1832,76 @@ function showOSDetail(orderId) {
       ${['declie', 'eduardo', 'vanderlei', 'alissom'].map(username => {
         const user = state.users.find(u => u.username.toLowerCase() === username);
         const isChecked = user && assignedIds.includes(user.id);
-        return `<div class="checkbox-item"><input type="checkbox" id="detail-assign-${username}" value="${username}" ${isChecked ? 'checked' : ''}><label for="detail-assign-${username}">${username.charAt(0).toUpperCase() + username.slice(1)}</label></div>`;
+        const checkboxStyle = 'display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; cursor: pointer;';
+        return `<label style="${checkboxStyle}"><input type="checkbox" id="detail-assign-${username}" value="${username}" ${isChecked ? 'checked' : ''} style="accent-color: #a78bfa; width: 16px; height: 16px;"><span style="font-size: 13px; color: #fff;">${username.charAt(0).toUpperCase() + username.slice(1)}</span></label>`;
       }).join('')}
     `;
   } else {
     checkboxContainer.innerHTML = '';
   }
   
-  // Ações
+  // Ações com estilo moderno
   const actionsContainer = document.getElementById('detail-os-actions');
-  let actions = '<button type="button" class="btn-small btn-cancel" onclick="closeModal(\'modal-os-detail\')">Fechar</button>';
+  const btnBase = 'padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;';
+  const btnCancel = `${btnBase} background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);`;
+  const btnPrimary = `${btnBase} background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; color: #fff; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);`;
+  const btnSuccess = `${btnBase} background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);`;
+  const btnWarning = `${btnBase} background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: #fff; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);`;
+  const btnDanger = `${btnBase} background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;`;
+  
+  let actions = `<button type="button" style="${btnCancel}" onclick="closeModal('modal-os-detail')">Fechar</button>`;
   
   // Botão salvar - manutenção pode salvar mesmo em OS concluída
   if (canEditAssignments) {
-    actions += `<button type="button" class="btn-small btn-primary" onclick="updateOSAssignments('${order.id}')">Salvar Alterações</button>`;
+    actions += `<button type="button" style="${btnPrimary}" onclick="updateOSAssignments('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar
+    </button>`;
   }
   
   if (canEdit && order.status === 'pending') {
-    actions += `<button type="button" class="btn-small btn-primary" onclick="startOrder('${order.id}'); closeModal('modal-os-detail')">Iniciar</button>`;
+    actions += `<button type="button" style="${btnSuccess}" onclick="startOrder('${order.id}'); closeModal('modal-os-detail')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Iniciar
+    </button>`;
   }
   
   if (canEdit && order.status === 'in_progress') {
-    actions += `<button type="button" class="btn-small btn-warning" onclick="pauseOrder('${order.id}')">⏸ Pausar</button>`;
+    actions += `<button type="button" style="${btnWarning}" onclick="pauseOrder('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      Pausar
+    </button>`;
     // Somente manutenção pode concluir
     if (canManageAll) {
-      actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+      actions += `<button type="button" style="${btnSuccess}" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Concluir
+      </button>`;
     }
   }
   
   // Se estiver pausada, mostrar botão de retomar
   if (canEdit && order.status === 'paused') {
-    actions += `<button type="button" class="btn-small btn-primary" onclick="resumeOrder('${order.id}')">▶ Retomar</button>`;
+    actions += `<button type="button" style="${btnPrimary}" onclick="resumeOrder('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Retomar
+    </button>`;
     // Somente manutenção pode concluir
     if (canManageAll) {
-      actions += `<button type="button" class="btn-small btn-success" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+      actions += `<button type="button" style="${btnSuccess}" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Concluir
+      </button>`;
     }
   }
   
   // Botão excluir - criador pode excluir sua OS, manutenção pode excluir qualquer
   const canDelete = order.requested_by === state.user.id || state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all');
   if (canDelete) {
-    actions += `<button type="button" class="btn-small btn-danger" onclick="deleteOrder('${order.id}')">Excluir</button>`;
+    actions += `<button type="button" style="${btnDanger}" onclick="deleteOrder('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      Excluir
+    </button>`;
   }
   
   actionsContainer.innerHTML = actions;
@@ -4632,7 +4661,9 @@ function renderChecklists() {
     // Verificar se automação está ativa
     const isAutoEnabled = cl.auto_complete === true;
     const autoFreqDays = cl.frequency_days || 1;
+    const autoTime = cl.auto_time || '11:00';
     const lastAutoRun = cl.last_auto_run ? new Date(cl.last_auto_run).toLocaleDateString('pt-BR') : null;
+    const freqLabel = autoFreqDays === 1 ? 'Diário' : autoFreqDays === 2 ? 'Dia S/N' : autoFreqDays === 7 ? 'Semanal' : `${autoFreqDays}d`;
     
     return `
     <div class="checklist-item-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; margin-bottom: 14px; transition: all 0.2s; ${isAutoEnabled ? 'border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);' : ''}">
@@ -4669,8 +4700,8 @@ function renderChecklists() {
           </span>
           ${isAutoEnabled ? `
             <span style="display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.1)); color: #a855f7; border-radius: 15px; font-size: 10px; font-weight: 600; text-transform: uppercase; border: 1px solid rgba(168, 85, 247, 0.3);">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
-              Auto • A cada ${autoFreqDays} dia${autoFreqDays > 1 ? 's' : ''}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${autoTime} • ${freqLabel}${cl.auto_create_os ? ' • +OS' : ''}
             </span>
           ` : ''}
         </div>
@@ -4679,9 +4710,9 @@ function renderChecklists() {
       ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 14px 0; padding-left: 58px;">${escapeHtml(cl.description)}</p>` : ''}
       
       ${isAutoEnabled && lastAutoRun ? `
-        <div style="margin: 0 0 14px 0; padding: 10px 14px; padding-left: 58px; display: inline-flex; align-items: center; gap: 8px; background: rgba(168, 85, 247, 0.08); border-radius: 8px; font-size: 12px; color: #c084fc; margin-left: 58px;">
+        <div style="margin: 0 0 14px 0; padding: 10px 14px; display: inline-flex; align-items: center; gap: 8px; background: rgba(168, 85, 247, 0.08); border-radius: 8px; font-size: 12px; color: #c084fc; margin-left: 58px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Última execução automática: ${lastAutoRun}
+          Última execução: ${lastAutoRun}
         </div>
       ` : ''}
       
@@ -4730,49 +4761,128 @@ function showChecklistAutomation(checklistId) {
   
   const isEnabled = checklist.auto_complete === true;
   const freqDays = checklist.frequency_days || 1;
+  const autoTime = checklist.auto_time || '11:00';
+  const autoCreateOS = checklist.auto_create_os || false;
+  const autoOsExecutor = checklist.auto_os_executor || '';
+  const autoOsTitle = checklist.auto_os_title || `Checklist: ${checklist.name}`;
+  
+  // Carregar técnicos para o select
+  const technicians = (state.users || []).filter(u => 
+    u.roles && (u.roles.includes('tecnico') || u.roles.includes('os_manage_all') || u.roles.includes('admin'))
+  );
+  
+  const techOptions = technicians.map(t => 
+    `<option value="${t.id}" ${autoOsExecutor === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`
+  ).join('');
   
   const modalHtml = `
-    <div id="modal-checklist-automation" class="modal-overlay active" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #0f0f14 0%, #1a1020 100%); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 20px; max-width: 420px; width: 100%; padding: 28px; animation: slideInMagenta 0.3s ease-out;">
-        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
-          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #a855f7, #7c3aed); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-          </div>
-          <div>
-            <h3 style="margin: 0; font-size: 18px; color: #fff; font-weight: 700;">Automação de Checklist</h3>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.6);">${escapeHtml(checklist.name)}</p>
-          </div>
-        </div>
+    <div id="modal-checklist-automation" class="modal-overlay active" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: linear-gradient(145deg, rgba(15, 15, 25, 0.98), rgba(20, 12, 35, 0.98)); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 24px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; animation: slideInMagenta 0.3s ease-out; box-shadow: 0 25px 80px rgba(168, 85, 247, 0.25), inset 0 1px 1px rgba(255,255,255,0.08);">
         
-        <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-          <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;">
-            <strong style="color: #c084fc;">Automação:</strong> Quando ativada, o checklist será marcado como concluído automaticamente na frequência definida (ex: dia sim, dia não).
-          </p>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
-            <input type="checkbox" id="auto-enabled" ${isEnabled ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #a855f7;">
-            <div>
-              <span style="font-size: 14px; font-weight: 600; color: #fff;">Ativar execução automática</span>
-              <p style="margin: 4px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Marca automaticamente como feito</p>
+        <!-- Header -->
+        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.12) 0%, transparent 100%); border-bottom: 1px solid rgba(168, 85, 247, 0.15);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 54px; height: 54px; background: linear-gradient(135deg, #a855f7, #7c3aed); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
             </div>
-          </label>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 8px;">Frequência (em dias)</label>
-          <div style="display: flex; gap: 10px;">
-            <button type="button" onclick="setAutoFreq(1)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 1 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 1 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">Diário</button>
-            <button type="button" onclick="setAutoFreq(2)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 2 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 2 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">Dia sim/não</button>
-            <button type="button" onclick="setAutoFreq(3)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 3 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 3 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">A cada 3 dias</button>
+            <div style="flex: 1;">
+              <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">Automação de Checklist</h3>
+              <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">${escapeHtml(checklist.name)}</p>
+            </div>
+            <button onclick="closeChecklistAutomation()" style="background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 8px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <input type="hidden" id="auto-freq-days" value="${freqDays}">
         </div>
         
-        <div style="display: flex; gap: 12px;">
-          <button onclick="closeChecklistAutomation()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-secondary); font-size: 14px; cursor: pointer;">Cancelar</button>
-          <button onclick="saveChecklistAutomation('${checklistId}')" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);">Salvar</button>
+        <div style="padding: 24px 28px;">
+          <!-- Toggle Ativar -->
+          <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 14px; padding: 18px; margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <div>
+                  <span style="font-size: 15px; font-weight: 600; color: #fff;">Execução Automática</span>
+                  <p style="margin: 2px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Marca como concluído automaticamente</p>
+                </div>
+              </div>
+              <div style="position: relative; width: 52px; height: 28px;">
+                <input type="checkbox" id="auto-enabled" ${isEnabled ? 'checked' : ''} onchange="toggleAutoOptions()" style="opacity: 0; width: 0; height: 0;">
+                <span style="position: absolute; inset: 0; background: ${isEnabled ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)'}; border-radius: 14px; transition: 0.3s; cursor: pointer;" onclick="document.getElementById('auto-enabled').click()"></span>
+                <span style="position: absolute; left: ${isEnabled ? '26px' : '3px'}; top: 3px; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: 0.3s; cursor: pointer;" onclick="document.getElementById('auto-enabled').click()"></span>
+              </div>
+            </label>
+          </div>
+          
+          <!-- Opções de Automação -->
+          <div id="auto-options-container" style="display: ${isEnabled ? 'block' : 'none'};">
+            
+            <!-- Horário -->
+            <div style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Horário de Execução
+              </label>
+              <input type="time" id="auto-time" value="${autoTime}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: #fff; font-size: 15px; font-family: inherit;">
+            </div>
+            
+            <!-- Frequência -->
+            <div style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 10px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Frequência
+              </label>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                <button type="button" onclick="setAutoFreq(1)" class="freq-btn" data-freq="1" style="padding: 12px 8px; background: ${freqDays === 1 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 1 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Diário</button>
+                <button type="button" onclick="setAutoFreq(2)" class="freq-btn" data-freq="2" style="padding: 12px 8px; background: ${freqDays === 2 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 2 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Dia S/N</button>
+                <button type="button" onclick="setAutoFreq(3)" class="freq-btn" data-freq="3" style="padding: 12px 8px; background: ${freqDays === 3 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 3 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">3 dias</button>
+                <button type="button" onclick="setAutoFreq(7)" class="freq-btn" data-freq="7" style="padding: 12px 8px; background: ${freqDays === 7 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 7 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Semanal</button>
+              </div>
+              <input type="hidden" id="auto-freq-days" value="${freqDays}">
+            </div>
+            
+            <!-- Criar OS -->
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 14px; padding: 18px; margin-bottom: 18px;">
+              <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                  <div>
+                    <span style="font-size: 14px; font-weight: 600; color: #fff;">Criar OS Automática</span>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.5);">Cria e fecha a OS automaticamente</p>
+                  </div>
+                </div>
+                <input type="checkbox" id="auto-create-os" ${autoCreateOS ? 'checked' : ''} onchange="toggleAutoOSOptions()" style="width: 20px; height: 20px; accent-color: #10b981;">
+              </label>
+              
+              <div id="auto-os-options" style="display: ${autoCreateOS ? 'block' : 'none'};">
+                <div style="margin-bottom: 12px;">
+                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Título da OS</label>
+                  <input type="text" id="auto-os-title" value="${escapeHtml(autoOsTitle)}" placeholder="Título da OS" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 14px;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Responsável (quem executou)</label>
+                  <select id="auto-os-executor" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 14px;">
+                    <option value="">-- Selecione --</option>
+                    ${techOptions}
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Info -->
+            <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 14px; margin-bottom: 20px;">
+              <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <strong>Dia S/N:</strong> Executa dia 26, pula 27, executa 28, etc.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Botões -->
+          <div style="display: flex; gap: 12px;">
+            <button onclick="closeChecklistAutomation()" style="flex: 1; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; cursor: pointer;">Cancelar</button>
+            <button onclick="saveChecklistAutomation('${checklistId}')" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);">Salvar Configuração</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4781,19 +4891,47 @@ function showChecklistAutomation(checklistId) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+// Toggle opções de automação
+function toggleAutoOptions() {
+  const enabled = document.getElementById('auto-enabled').checked;
+  const container = document.getElementById('auto-options-container');
+  if (container) {
+    container.style.display = enabled ? 'block' : 'none';
+  }
+  
+  // Atualizar visual do toggle
+  const toggle = document.getElementById('auto-enabled');
+  const parent = toggle.parentElement;
+  const track = parent.querySelector('span:first-of-type');
+  const thumb = parent.querySelector('span:last-of-type');
+  if (track && thumb) {
+    track.style.background = enabled ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)';
+    thumb.style.left = enabled ? '26px' : '3px';
+  }
+}
+
+// Toggle opções de criar OS
+function toggleAutoOSOptions() {
+  const enabled = document.getElementById('auto-create-os').checked;
+  const container = document.getElementById('auto-os-options');
+  if (container) {
+    container.style.display = enabled ? 'block' : 'none';
+  }
+}
+
 // Definir frequência na modal
 function setAutoFreq(days) {
   document.getElementById('auto-freq-days').value = days;
   
   // Atualizar visual dos botões
-  document.querySelectorAll('.freq-btn').forEach((btn, i) => {
-    const btnDays = i + 1;
+  document.querySelectorAll('.freq-btn').forEach(btn => {
+    const btnDays = parseInt(btn.dataset.freq);
     if (btnDays === days) {
       btn.style.background = 'linear-gradient(135deg, #a855f7, #7c3aed)';
       btn.style.borderColor = 'transparent';
     } else {
       btn.style.background = 'rgba(255,255,255,0.05)';
-      btn.style.borderColor = 'var(--border-color)';
+      btn.style.borderColor = 'rgba(255,255,255,0.15)';
     }
   });
 }
@@ -4808,6 +4946,16 @@ function closeChecklistAutomation() {
 async function saveChecklistAutomation(checklistId) {
   const enabled = document.getElementById('auto-enabled').checked;
   const freqDays = parseInt(document.getElementById('auto-freq-days').value) || 1;
+  const autoTime = document.getElementById('auto-time')?.value || '11:00';
+  const autoCreateOS = document.getElementById('auto-create-os')?.checked || false;
+  const autoOsTitle = document.getElementById('auto-os-title')?.value || '';
+  const autoOsExecutor = document.getElementById('auto-os-executor')?.value || '';
+  
+  // Validar se escolheu responsável quando criar OS
+  if (enabled && autoCreateOS && !autoOsExecutor) {
+    showNotification('Selecione um responsável para a OS automática', 'warning');
+    return;
+  }
   
   try {
     const response = await fetch(`${API_URL}/checklists/${checklistId}/automation`, {
@@ -4818,7 +4966,11 @@ async function saveChecklistAutomation(checklistId) {
       },
       body: JSON.stringify({
         auto_complete: enabled,
-        frequency_days: freqDays
+        frequency_days: freqDays,
+        auto_time: autoTime,
+        auto_create_os: autoCreateOS,
+        auto_os_title: autoOsTitle,
+        auto_os_executor: autoOsExecutor
       })
     });
     
@@ -4826,9 +4978,9 @@ async function saveChecklistAutomation(checklistId) {
     
     if (data.ok) {
       closeChecklistAutomation();
-      await loadChecklists();
+      state.checklists = data.checklists || state.checklists;
       renderChecklists();
-      showNotification(enabled ? 'Automação ativada com sucesso!' : 'Automação desativada', 'success');
+      showNotification(enabled ? `Automação ativada para ${autoTime}!` : 'Automação desativada', 'success');
     } else {
       showNotification(data.error || 'Erro ao salvar automação', 'error');
     }

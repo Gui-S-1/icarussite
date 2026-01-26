@@ -1264,10 +1264,10 @@
       padding: 0;
       overflow: hidden;
       min-height: calc(100vh - 60px);
-      background: linear-gradient(135deg, #0f0a1e 0%, #1a0f2e 50%, #0d0618 100%);
+      background: var(--bg-primary);
     }
     
-    /* Fundo com luzes animadas */
+    /* Fundo com luzes animadas sutis */
     .dashboard-neo-bg {
       position: absolute;
       top: 0;
@@ -1281,32 +1281,35 @@
     .dashboard-neo-bg::before {
       content: '';
       position: absolute;
-      top: 20%;
-      left: 10%;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
-      animation: dashboardGlow 8s ease-in-out infinite;
+      top: 10%;
+      left: 5%;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+      animation: dashboardGlow 12s ease-in-out infinite;
+      filter: blur(40px);
     }
     .dashboard-neo-bg::after {
       content: '';
       position: absolute;
-      bottom: 20%;
-      right: 10%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
-      animation: dashboardGlow 10s ease-in-out infinite 2s;
+      bottom: 10%;
+      right: 5%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
+      animation: dashboardGlow 15s ease-in-out infinite 3s;
+      filter: blur(50px);
     }
     .orb {
       position: absolute;
       border-radius: 50%;
-      filter: blur(40px);
-      animation: floatOrb 15s ease-in-out infinite;
+      filter: blur(60px);
+      animation: floatOrb 20s ease-in-out infinite;
+      opacity: 0.6;
     }
-    .orb-1 { width: 200px; height: 200px; background: rgba(139, 92, 246, 0.2); top: 10%; left: 20%; animation-delay: 0s; }
-    .orb-2 { width: 150px; height: 150px; background: rgba(168, 85, 247, 0.15); top: 60%; right: 15%; animation-delay: 3s; }
-    .orb-3 { width: 100px; height: 100px; background: rgba(192, 132, 252, 0.2); bottom: 20%; left: 40%; animation-delay: 6s; }
+    .orb-1 { width: 180px; height: 180px; background: rgba(139, 92, 246, 0.12); top: 15%; left: 25%; animation-delay: 0s; }
+    .orb-2 { width: 120px; height: 120px; background: rgba(168, 85, 247, 0.1); top: 55%; right: 20%; animation-delay: 4s; }
+    .orb-3 { width: 80px; height: 80px; background: rgba(212, 175, 55, 0.1); bottom: 25%; left: 35%; animation-delay: 8s; }
     
     .dashboard-neo-content {
       position: relative;
@@ -11150,105 +11153,151 @@
     </div>
   </div>
 
-  <!-- Modal: OS Details -->
+  <!-- Modal: OS Details - REDESIGN GLASS BLUR -->
   <div id="modal-os-detail" class="modal-overlay hidden" onclick="if(event.target === this) closeModal('modal-os-detail')">
-    <div class="modal" style="max-width: 600px;">
-      <div class="modal-header">
-        <h3 class="modal-title" id="detail-os-title">Detalhes da OS</h3>
-        <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-os-detail')">×</span>
+    <div class="modal os-detail-modal-neo" style="
+      max-width: 580px;
+      width: 95%;
+      background: linear-gradient(145deg, rgba(15, 15, 25, 0.98), rgba(20, 12, 35, 0.98));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 24px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(139, 92, 246, 0.15), inset 0 1px 1px rgba(255,255,255,0.06);
+    ">
+      <!-- Glow decorativo -->
+      <div style="position: absolute; top: -80px; right: -60px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%); pointer-events: none; border-radius: 50%; filter: blur(40px);"></div>
+      
+      <!-- Header -->
+      <div style="padding: 22px 24px; background: linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; position: relative;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.2)); border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div>
+            <h3 id="detail-os-title" style="margin: 0; font-size: 18px; font-weight: 700; color: #fff; line-height: 1.3;">Detalhes da OS</h3>
+            <p style="margin: 3px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Ordem de Serviço</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-os-detail')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px; cursor: pointer; color: rgba(255,255,255,0.5); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
       
-      <div class="os-detail-info">
-        <div class="os-info-item">
-          <div class="os-info-label">Status</div>
-          <div class="os-info-value"><span id="detail-os-status" class="badge"></span></div>
-        </div>
-        <div class="os-info-item">
-          <div class="os-info-label">Urgência</div>
-          <div class="os-info-value"><span id="detail-os-priority" class="badge"></span></div>
-        </div>
-        <div class="os-info-item">
-          <div class="os-info-label">Local / Setor</div>
-          <div class="os-info-value" id="detail-os-sector">-</div>
-        </div>
-        <div class="os-info-item">
-          <div class="os-info-label">👤 Solicitante</div>
-          <div class="os-info-value" id="detail-os-solicitante" style="color: var(--accent-gold);">-</div>
-        </div>
-        <div class="os-info-item">
-          <div class="os-info-label">Criada em</div>
-          <div class="os-info-value" id="detail-os-created">-</div>
-        </div>
-        <div class="os-info-item" id="detail-os-started-row">
-          <div class="os-info-label">⏱ Iniciada em</div>
-          <div class="os-info-value" id="detail-os-started">-</div>
-        </div>
-        <div class="os-info-item" id="detail-os-finished-row">
-          <div class="os-info-label">✓ Finalizada em</div>
-          <div class="os-info-value" id="detail-os-finished">-</div>
-        </div>
-        <div class="os-info-item" id="detail-os-tempo-row" style="background: var(--accent-gold); background: linear-gradient(90deg, rgba(218,165,32,0.15), transparent); border-radius: 6px; padding: 8px;">
-          <div class="os-info-label" style="font-weight: 600;">⏰ Tempo Total</div>
-          <div class="os-info-value" id="detail-os-tempo" style="font-weight: 600; color: var(--accent-gold);">-</div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Observações</label>
-        <div style="padding: 12px; background: var(--bg-secondary); border-radius: 6px; min-height: 60px;" id="detail-os-description">-</div>
-      </div>
-
-      <div class="form-group">
-        <label>Atribuída para</label>
-        <div class="os-assigned-users" id="detail-os-assigned"></div>
-        <div class="checkbox-group" id="detail-assign-checkboxes" style="margin-top: 12px;"></div>
-      </div>
-
-      <!-- Seção de Datas Retroativas (só para manutenção) -->
-      <div class="form-group" id="detail-retroactive-dates" style="display: none; background: rgba(212, 175, 55, 0.08); padding: 14px; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.2); margin-top: 12px;">
-        <label style="color: var(--accent-gold); font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          Preenchimento Retroativo
-        </label>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
-          Deixe em branco para usar a data/hora atual ao iniciar ou concluir.
-        </p>
-        <div class="form-row" style="gap: 12px;">
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <label style="font-size: 12px;">📍 Data/Hora de Início</label>
-            <input type="datetime-local" id="detail-started-at-custom" style="font-size: 13px;">
+      <!-- Content com scroll -->
+      <div style="padding: 20px 24px; max-height: calc(80vh - 180px); overflow-y: auto;">
+        <!-- Status e Priority em linha -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px;">
+            <span style="font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px;">Status</span>
+            <div style="margin-top: 6px;"><span id="detail-os-status" class="badge"></span></div>
           </div>
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <label style="font-size: 12px;">✓ Data/Hora de Conclusão</label>
-            <input type="datetime-local" id="detail-finished-at-custom" style="font-size: 13px;">
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px;">
+            <span style="font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px;">Urgência</span>
+            <div style="margin-top: 6px;"><span id="detail-os-priority" class="badge"></span></div>
           </div>
         </div>
-        <div class="form-row" style="gap: 12px; margin-top: 12px;">
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <label style="font-size: 12px;">⏸️ Tempo de Descanso (minutos)</label>
-            <input type="number" id="detail-break-minutes" min="0" placeholder="Ex: 60 para 1h de almoço" style="font-size: 13px;">
-            <small style="color: var(--text-secondary); font-size: 11px;">Será descontado do tempo total trabalhado</small>
+        
+        <!-- Info compacta -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: grid; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <span style="font-size: 13px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Setor
+              </span>
+              <span id="detail-os-sector" style="font-size: 13px; color: #fff; font-weight: 500;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <span style="font-size: 13px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Solicitante
+              </span>
+              <span id="detail-os-solicitante" style="font-size: 13px; color: #d4af37; font-weight: 500;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Criada em
+              </span>
+              <span id="detail-os-created" style="font-size: 13px; color: #fff;">-</span>
+            </div>
           </div>
         </div>
-        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(212, 175, 55, 0.2);">
-          <button type="button" class="btn-small btn-success" onclick="closeOrderWithRetroactiveDates()" style="width: 100%; padding: 10px; font-weight: 600;">
-            ✓ Fechar OS com Datas Retroativas
+        
+        <!-- Timeline de tempo -->
+        <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(168, 85, 247, 0.05)); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span style="font-size: 13px; font-weight: 600; color: #a78bfa;">Cronograma</span>
+          </div>
+          <div style="display: grid; gap: 10px;">
+            <div id="detail-os-started-row" style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; color: rgba(255,255,255,0.5);">⏱ Iniciada</span>
+              <span id="detail-os-started" style="font-size: 12px; color: #fff;">-</span>
+            </div>
+            <div id="detail-os-finished-row" style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; color: rgba(255,255,255,0.5);">✓ Finalizada</span>
+              <span id="detail-os-finished" style="font-size: 12px; color: #fff;">-</span>
+            </div>
+            <div id="detail-os-tempo-row" style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(139, 92, 246, 0.2);">
+              <span style="font-size: 13px; font-weight: 600; color: #d4af37;">⏰ Tempo Total</span>
+              <span id="detail-os-tempo" style="font-size: 14px; font-weight: 700; color: #d4af37;">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Descrição -->
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Observações</label>
+          <div id="detail-os-description" style="padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; font-size: 13px; color: rgba(255,255,255,0.8); min-height: 50px; line-height: 1.5;">-</div>
+        </div>
+
+        <!-- Técnicos atribuídos -->
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Técnicos Atribuídos</label>
+          <div id="detail-os-assigned" class="os-assigned-users" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+          <div id="detail-assign-checkboxes" style="margin-top: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;"></div>
+        </div>
+
+        <!-- Retroativo colapsável -->
+        <div id="detail-retroactive-dates" style="display: none; background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.03)); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span style="font-size: 14px; font-weight: 600; color: #d4af37;">Preenchimento Retroativo</span>
+          </div>
+          <p style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 14px;">Deixe em branco para usar a data/hora atual.</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="font-size: 11px; color: rgba(255,255,255,0.5); display: block; margin-bottom: 6px;">📍 Início</label>
+              <input type="datetime-local" id="detail-started-at-custom" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 12px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; color: rgba(255,255,255,0.5); display: block; margin-bottom: 6px;">✓ Conclusão</label>
+              <input type="datetime-local" id="detail-finished-at-custom" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 12px;">
+            </div>
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 11px; color: rgba(255,255,255,0.5); display: block; margin-bottom: 6px;">⏸️ Descanso (min)</label>
+            <input type="number" id="detail-break-minutes" min="0" placeholder="Ex: 60" style="width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 12px;">
+          </div>
+          <button type="button" onclick="closeOrderWithRetroactiveDates()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #d4af37, #b8962e); border: none; border-radius: 10px; color: #000; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Fechar OS com Datas Retroativas
           </button>
-          <small style="color: var(--text-secondary); font-size: 11px; display: block; text-align: center; margin-top: 6px;">
-            Preencha as datas acima e clique para concluir
-          </small>
+        </div>
+
+        <!-- Comentário -->
+        <div>
+          <label style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Comentário / Andamento</label>
+          <textarea id="detail-os-note" placeholder="Ex: esperando parafusos chegarem" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; font-size: 13px; min-height: 60px; resize: vertical; font-family: inherit;"></textarea>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Comentário / Andamento</label>
-        <textarea id="detail-os-note" placeholder="Ex: esperando parafusos chegarem" style="min-height: 70px;"></textarea>
-      </div>
-
-      <div class="modal-actions" id="detail-os-actions"></div>
+      <!-- Footer com ações -->
+      <div id="detail-os-actions" style="padding: 16px 24px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end;"></div>
     </div>
   </div>
 
