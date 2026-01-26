@@ -12807,16 +12807,27 @@ function canAccessNotas() {
   const allowedUsers = ['bruno', 'jose walter', 'josewalter', 'josé walter', 'joséwalter'];
   const allowedRoles = ['manutencao', 'manutenção', 'admin', 'owner', 'maintenance'];
   
+  console.log('canAccessNotas - user:', username, 'role:', role, 'roles:', roles);
+  
   // Verificar username
-  if (allowedUsers.some(u => username.includes(u))) return true;
+  if (allowedUsers.some(u => username.includes(u))) {
+    console.log('Acesso permitido por username');
+    return true;
+  }
   
   // Verificar role único
-  if (allowedRoles.some(r => role.includes(r))) return true;
+  if (role && allowedRoles.some(r => role.includes(r))) {
+    console.log('Acesso permitido por role:', role);
+    return true;
+  }
   
   // Verificar array de roles
-  if (roles.some(r => allowedRoles.some(ar => r.includes(ar)))) return true;
+  if (roles.some(r => allowedRoles.some(ar => r.includes(ar)))) {
+    console.log('Acesso permitido por roles array');
+    return true;
+  }
   
-  console.log('canAccessNotas - user:', username, 'role:', role, 'roles:', roles);
+  console.log('Acesso NEGADO');
   return false;
 }
 
