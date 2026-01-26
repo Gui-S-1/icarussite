@@ -12839,19 +12839,27 @@ function canAccessNotas() {
 // Inicializar aba de Notas & Boletos
 function initNotasTab() {
   const tabNotas = document.getElementById('tab-notas');
-  console.log('initNotasTab - tabNotas element:', tabNotas);
-  console.log('initNotasTab - canAccessNotas():', canAccessNotas());
+  const tabForum = document.getElementById('tab-forum');
+  const forumContent = document.getElementById('forum-content');
+  const notasContent = document.getElementById('notas-content');
   
   if (tabNotas) {
-    // SEMPRE mostrar a aba para usuários com permissão
     const hasAccess = canAccessNotas();
-    console.log('initNotasTab - hasAccess:', hasAccess);
     tabNotas.style.display = hasAccess ? 'flex' : 'none';
-    tabNotas.style.cssText = hasAccess ? 'padding: 12px 24px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; cursor: pointer; display: flex !important; align-items: center; gap: 8px; transition: 0.3s;' : 'display: none !important;';
   }
   
-  if (canAccessNotas()) {
-    loadNotas();
+  // SEMPRE iniciar no Fórum (não em Notas)
+  if (tabForum && forumContent && notasContent) {
+    tabForum.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    tabForum.style.color = '#fff';
+    tabForum.style.border = 'none';
+    if (tabNotas) {
+      tabNotas.style.background = 'rgba(255,255,255,0.05)';
+      tabNotas.style.color = 'rgba(255,255,255,0.6)';
+      tabNotas.style.border = '1px solid rgba(255,255,255,0.1)';
+    }
+    forumContent.style.display = 'block';
+    notasContent.style.display = 'none';
   }
 }
 
@@ -12919,9 +12927,9 @@ async function saveNotas() {
   // Salvar localmente primeiro
   localStorage.setItem('icarus_notas_' + state.user?.tenant_id, JSON.stringify(notasData.items));
   
-  // Tentar salvar no backend
+  // Tentar sincronizar com o backend
   try {
-    await fetch(`${API_BASE_URL}/notas`, {
+    const response = await fetch(`${API_BASE_URL}/notas/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -12929,8 +12937,12 @@ async function saveNotas() {
       },
       body: JSON.stringify({ notas: notasData.items })
     });
+    
+    if (response.ok) {
+      console.log('Notas sincronizadas com o servidor');
+    }
   } catch (e) {
-    console.log('Notas salvas localmente');
+    console.log('Notas salvas localmente (offline)');
   }
 }
 
@@ -13465,7 +13477,15 @@ function viewNota(id) {
               <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px 0;">${escapeHtml(item.empresa)}</h2>
               <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">${escapeHtml(item.setor || 'Setor não informado')}</p>
             </div>
-            <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">×</button>
+            <div style="display: flex; gap: 8px;">
+              <button onclick="exportNotaHTML('${item.id}')" title="Exportar HTML" style="background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; width: 40px; height: 40px; color: #a78bfa; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              </button>
+              <button onclick="exportNotaPDF('${item.id}')" title="Exportar PDF" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; width: 40px; height: 40px; color: #ef4444; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h6"/></svg>
+              </button>
+              <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">×</button>
+            </div>
           </div>
           
           <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: ${statusColor}20; border: 1px solid ${statusColor}40; border-radius: 20px;">
@@ -13537,8 +13557,8 @@ function viewNota(id) {
         </div>
         
         <!-- Ações -->
-        <div style="padding: 16px 24px 24px; display: flex; gap: 12px;">
-          <button onclick="closeViewNotaModal(); openNovaNotaModal('${item.id}')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <div style="padding: 16px 24px 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button onclick="closeViewNotaModal(); openNovaNotaModal('${item.id}')" style="flex: 1; min-width: 120px; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Editar
           </button>
@@ -13546,7 +13566,7 @@ function viewNota(id) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             Excluir
           </button>
-          <button onclick="markNotaAsPaid('${item.id}')" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; ${item.status === 'pago' ? 'opacity: 0.5; pointer-events: none;' : ''}">
+          <button onclick="markNotaAsPaid('${item.id}')" style="flex: 1; min-width: 140px; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; ${item.status === 'pago' ? 'opacity: 0.5; pointer-events: none;' : ''}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             ${item.status === 'pago' ? 'Já Pago' : 'Marcar como Pago'}
           </button>
@@ -13585,6 +13605,609 @@ function deleteNota(id) {
   updateNotasStats();
   closeViewNotaModal();
   showNotification('Entrada excluída', 'success');
+}
+
+// ============================================
+// EXPORTAÇÃO DE NOTAS - PDF E HTML PREMIUM
+// ============================================
+
+function generateNotaHTMLContent(item) {
+  const now = new Date();
+  const venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
+  const diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
+  
+  let statusColor = '#10b981';
+  let statusText = 'Pendente';
+  let statusBg = 'rgba(16, 185, 129, 0.15)';
+  
+  if (item.status === 'pago') {
+    statusColor = '#22c55e';
+    statusText = '✓ PAGO';
+    statusBg = 'rgba(34, 197, 94, 0.15)';
+  } else if (item.status === 'aguardando') {
+    statusColor = '#f59e0b';
+    statusText = 'AGUARDANDO';
+    statusBg = 'rgba(245, 158, 11, 0.15)';
+  } else if (diasVenc !== null && diasVenc < 0) {
+    statusColor = '#ef4444';
+    statusText = 'VENCIDO';
+    statusBg = 'rgba(239, 68, 68, 0.15)';
+  }
+  
+  const valor = parseFloat(item.valor_boleto || item.valor_nota || 0);
+  
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documento Financeiro - ${escapeHtml(item.empresa)} | ICARUS</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0a0a12 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    /* Header Premium */
+    .header {
+      background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), transparent);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .logo-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(212, 175, 55, 0.3);
+    }
+    
+    .logo-icon svg { width: 32px; height: 32px; }
+    
+    .logo-text h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 3px;
+    }
+    
+    .logo-text p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    
+    .doc-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .doc-number {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+    
+    .doc-date {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+    }
+    
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: ${statusBg};
+      border: 2px solid ${statusColor};
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 700;
+      color: ${statusColor};
+      letter-spacing: 1px;
+    }
+    
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: ${statusColor};
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* Main Card */
+    .main-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    
+    .empresa-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .empresa-info h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    
+    .empresa-info .setor {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .valor-destaque {
+      text-align: right;
+    }
+    
+    .valor-destaque .label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    
+    .valor-destaque .valor {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    /* Descrição */
+    .descricao {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .descricao h3 {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    
+    .descricao p {
+      font-size: 15px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.7;
+    }
+    
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .info-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 18px;
+    }
+    
+    .info-item .label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    
+    .info-item .value {
+      font-size: 16px;
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    /* Valores Cards */
+    .valores-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .valor-card {
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .valor-card.nota {
+      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05));
+      border: 1px solid rgba(139,92,246,0.4);
+    }
+    
+    .valor-card.boleto {
+      background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05));
+      border: 1px solid rgba(6,182,212,0.4);
+    }
+    
+    .valor-card .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+    
+    .valor-card.nota .icon { background: rgba(139,92,246,0.3); }
+    .valor-card.boleto .icon { background: rgba(6,182,212,0.3); }
+    
+    .valor-card .tipo {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    
+    .valor-card.nota .tipo { color: #a78bfa; }
+    .valor-card.boleto .tipo { color: #22d3ee; }
+    
+    .valor-card .amount {
+      font-size: 28px;
+      font-weight: 800;
+    }
+    
+    .valor-card.nota .amount { color: #a78bfa; }
+    .valor-card.boleto .amount { color: #22d3ee; }
+    
+    /* Anexos */
+    .anexos-section {
+      margin-bottom: 24px;
+    }
+    
+    .anexos-section h3 {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    
+    .anexos-grid {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .anexo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+    
+    .anexo-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .anexo-btn.nota {
+      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(139,92,246,0.1));
+      border: 1px solid rgba(139,92,246,0.5);
+      color: #a78bfa;
+    }
+    
+    .anexo-btn.boleto {
+      background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(6,182,212,0.1));
+      border: 1px solid rgba(6,182,212,0.5);
+      color: #22d3ee;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 32px 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .footer-logo .icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .footer-logo h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #d4af37;
+      letter-spacing: 2px;
+    }
+    
+    .footer p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 8px;
+    }
+    
+    .footer .tech {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 1px;
+    }
+    
+    /* Responsivo */
+    @media (max-width: 600px) {
+      .container { padding: 20px 12px; }
+      .header { padding: 20px; }
+      .main-card { padding: 20px; }
+      .valores-grid { grid-template-columns: 1fr; }
+      .empresa-header { flex-direction: column; gap: 20px; }
+      .valor-destaque { text-align: left; }
+      .valor-destaque .valor { font-size: 28px; }
+    }
+    
+    /* Print */
+    @media print {
+      html, body { background: #fff !important; color: #000 !important; }
+      .header, .main-card { border-color: #ddd !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-section">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>ICARUS</h1>
+          <p>Sistema de Gestão Premium</p>
+        </div>
+      </div>
+      
+      <div class="doc-info">
+        <div>
+          <div class="doc-number">Doc #${item.id.slice(-8).toUpperCase()}</div>
+          <div class="doc-date">Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
+        </div>
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          ${statusText}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Card -->
+    <div class="main-card">
+      <div class="empresa-header">
+        <div class="empresa-info">
+          <h2>${escapeHtml(item.empresa)}</h2>
+          <div class="setor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ${escapeHtml(item.setor || 'Setor não informado')}
+          </div>
+        </div>
+        <div class="valor-destaque">
+          <div class="label">Valor Total</div>
+          <div class="valor">R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+        </div>
+      </div>
+      
+      <!-- Descrição -->
+      <div class="descricao">
+        <h3>Descrição do Serviço/Produto</h3>
+        <p>${escapeHtml(item.descricao)}</p>
+      </div>
+      
+      <!-- Info Grid -->
+      <div class="info-grid">
+        ${item.responsavel ? `
+        <div class="info-item">
+          <div class="label">Responsável</div>
+          <div class="value">${escapeHtml(item.responsavel)}</div>
+        </div>` : ''}
+        
+        ${item.data_emissao ? `
+        <div class="info-item">
+          <div class="label">Data de Emissão</div>
+          <div class="value">${new Date(item.data_emissao).toLocaleDateString('pt-BR')}</div>
+        </div>` : ''}
+        
+        ${venc ? `
+        <div class="info-item">
+          <div class="label">Data de Vencimento</div>
+          <div class="value" style="color: ${statusColor}">${venc.toLocaleDateString('pt-BR')}</div>
+        </div>` : ''}
+        
+        <div class="info-item">
+          <div class="label">Cadastrado por</div>
+          <div class="value">${escapeHtml(item.created_by_name || 'Sistema')}</div>
+        </div>
+      </div>
+      
+      <!-- Valores -->
+      ${item.valor_nota || item.valor_boleto ? `
+      <div class="valores-grid">
+        ${item.valor_nota ? `
+        <div class="valor-card nota">
+          <div class="icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="tipo">Nota Fiscal</div>
+          <div class="amount">R$ ${parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+        </div>` : ''}
+        
+        ${item.valor_boleto ? `
+        <div class="valor-card boleto">
+          <div class="icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
+          </div>
+          <div class="tipo">Boleto</div>
+          <div class="amount">R$ ${parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+        </div>` : ''}
+      </div>` : ''}
+      
+      <!-- Anexos -->
+      ${item.nota_anexo || item.boleto_anexo ? `
+      <div class="anexos-section">
+        <h3>📎 Documentos Anexados</h3>
+        <div class="anexos-grid">
+          ${item.nota_anexo ? `
+          <a href="${item.nota_anexo.data}" download="${item.nota_anexo.name}" class="anexo-btn nota">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Baixar Nota Fiscal
+          </a>` : ''}
+          
+          ${item.boleto_anexo ? `
+          <a href="${item.boleto_anexo.data}" download="${item.boleto_anexo.name}" class="anexo-btn boleto">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Baixar Boleto
+          </a>` : ''}
+        </div>
+      </div>` : ''}
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-logo">
+        <div class="icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <h3>ICARUS</h3>
+      </div>
+      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>
+      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>
+      <div class="tech">Tecnologia Premium • ${new Date().getFullYear()}</div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// Exportar Nota como HTML
+function exportNotaHTML(id) {
+  const item = notasData.items.find(i => i.id === id);
+  if (!item) return;
+  
+  const htmlContent = generateNotaHTMLContent(item);
+  
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ICARUS_Nota_${item.empresa.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('HTML exportado com sucesso!', 'success');
+}
+
+// Exportar Nota como PDF
+function exportNotaPDF(id) {
+  const item = notasData.items.find(i => i.id === id);
+  if (!item) return;
+  
+  const htmlContent = generateNotaHTMLContent(item);
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+  
+  showNotification('Preparando PDF para impressão...', 'success');
 }
 
 // Inicializar quando entrar na view de relatórios
