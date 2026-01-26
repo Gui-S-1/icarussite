@@ -14185,7 +14185,11 @@ function generateNotaHTMLContent(item) {
       <p>Documento gerado automaticamente pelo Sistema ICARUS</p>
       <p>Gestão Inteligente de Manutenção • Granja Vitta</p>
       <p style="margin-top: 12px; color: rgba(255,255,255,0.6);">📞 (62) 98493-0056</p>
-      <div class="tech">Tecnologia Premium • ${new Date().getFullYear()}</div>
+      <div class="tech" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Desenvolvido por</div>
+        <div style="font-size: 13px; color: #f472b6; font-weight: 600;">Guilherme Braga de Queiroz</div>
+        <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px;">© ${new Date().getFullYear()} Sistema ICARUS • Todos os direitos reservados</div>
+      </div>
     </div>
   </div>
 </body>
