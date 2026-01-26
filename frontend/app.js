@@ -10096,6 +10096,382 @@ function exportDashboardReport() {
   showReportInPage(htmlContent, 'Relatório Dashboard', 'Relatório do Dashboard gerado!', dashboardReportData);
 }
 
+// ========== DROPDOWN DE EXPORTAÇÃO ==========
+
+function toggleExportDropdown(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById('export-dropdown');
+  if (dropdown) {
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function closeExportDropdown() {
+  const dropdown = document.getElementById('export-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+  const container = document.querySelector('.export-dropdown-container');
+  if (container && !container.contains(e.target)) {
+    closeExportDropdown();
+  }
+});
+
+// ========== EXPORTAR DASHBOARD HTML INTERATIVO ==========
+
+function exportDashboardHTML() {
+  const orders = state.orders || [];
+  const checklists = state.checklists || [];
+  const filter = state.dashboardFilter || 'daily';
+  
+  // Usar o mesmo range do dashboard
+  const { startDate, endDate } = getDateRange();
+  let periodLabel = 'Hoje';
+  
+  if (state.dashboardMonth) {
+    const [year, month] = state.dashboardMonth.split('-');
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    periodLabel = monthNames[parseInt(month) - 1] + ' ' + year;
+  } else if (filter === 'weekly') {
+    periodLabel = 'Esta Semana';
+  } else if (filter === 'monthly') {
+    periodLabel = 'Este Mês';
+  }
+  
+  const filteredOrders = orders.filter(o => {
+    const created = new Date(o.created_at);
+    return created >= startDate && created <= endDate;
+  });
+  
+  // Status corretos do sistema
+  const pending = filteredOrders.filter(o => o.status === 'pending').length;
+  const inProgress = filteredOrders.filter(o => o.status === 'in_progress' || o.status === 'paused').length;
+  const completed = filteredOrders.filter(o => o.status === 'completed').length;
+  const total = filteredOrders.length;
+  const aproveitamento = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  // Agrupar por executor
+  const byExecutor = {};
+  filteredOrders.forEach(o => {
+    if (o.assigned_users && Array.isArray(o.assigned_users) && o.assigned_users.length > 0) {
+      o.assigned_users.forEach(user => {
+        const name = user.name || user.username || 'Não atribuído';
+        if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
+        byExecutor[name].total++;
+        if (o.status === 'completed') byExecutor[name].completed++;
+        if (o.worked_minutes) byExecutor[name].minutes += o.worked_minutes;
+      });
+    } else {
+      const name = 'Não atribuído';
+      if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
+      byExecutor[name].total++;
+      if (o.status === 'completed') byExecutor[name].completed++;
+    }
+  });
+  
+  // Agrupar por setor
+  const bySetor = {};
+  filteredOrders.forEach(o => {
+    const setor = o.sector || 'Não especificado';
+    if (!bySetor[setor]) bySetor[setor] = 0;
+    bySetor[setor]++;
+  });
+  
+  // Dados de checklists
+  const checklistStats = {
+    total: checklists.length,
+    automaticos: checklists.filter(c => c.auto_complete).length,
+    manuais: checklists.filter(c => !c.auto_complete).length,
+    lista: checklists.map(c => ({
+      name: c.name,
+      sector: c.sector || 'N/A',
+      items: (c.items || []).length,
+      auto: c.auto_complete ? 'Sim' : 'Não',
+      frequency: c.auto_complete ? (c.frequency_days === 1 ? 'Diário' : c.frequency_days === 2 ? 'Dia sim/não' : 'A cada ' + c.frequency_days + ' dias') : 'Manual'
+    }))
+  };
+  
+  const now = new Date();
+  const dataGeracao = now.toLocaleDateString('pt-BR');
+  const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  // Gerar HTML completo com CSS e JS embutidos
+  const htmlContent = '<!DOCTYPE html>' +
+'<html lang="pt-BR">' +
+'<head>' +
+  '<meta charset="UTF-8">' +
+  '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">' +
+  '<title>Dashboard ICARUS - ' + periodLabel + '</title>' +
+  '<style>' +
+    '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");' +
+    '*{margin:0;padding:0;box-sizing:border-box}' +
+    'html{font-size:16px}' +
+    'body{font-family:"Inter",system-ui,-apple-system,sans-serif;background:#050510;color:#fff;min-height:100vh;padding:20px;overflow-x:hidden}' +
+    'body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(139,92,246,0.02) 1px,transparent 1px),linear-gradient(rgba(139,92,246,0.02) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}' +
+    '.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}' +
+    '.orb-1{width:400px;height:400px;background:rgba(139,92,246,0.15);top:-100px;right:-100px}' +
+    '.orb-2{width:350px;height:350px;background:rgba(212,175,55,0.1);bottom:-100px;left:-100px}' +
+    '.container{max-width:1400px;margin:0 auto;position:relative;z-index:1}' +
+    '.header{text-align:center;padding:32px 24px;background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(212,175,55,0.05));border:1px solid rgba(139,92,246,0.2);border-radius:20px;margin-bottom:24px;position:relative;overflow:hidden}' +
+    '.header::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#d4af37,#8b5cf6)}' +
+    '.header-icon{display:inline-flex;align-items:center;justify-content:center;width:70px;height:70px;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(139,92,246,0.2));border:1px solid rgba(212,175,55,0.3);border-radius:18px;margin-bottom:16px}' +
+    '.header h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#d4af37,#f0d060);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}' +
+    '.header .subtitle{color:#94a3b8;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}' +
+    '.header .subtitle strong{color:#fff}' +
+    '.period-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);padding:10px 18px;border-radius:12px;font-size:13px;color:#a78bfa;margin-top:16px}' +
+    '.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}' +
+    '.stat-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px 20px;text-align:center;transition:transform 0.3s,border-color 0.3s}' +
+    '.stat-card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,0.3)}' +
+    '.stat-card.gold{border-color:rgba(212,175,55,0.3);background:linear-gradient(180deg,rgba(212,175,55,0.08) 0%,transparent 100%)}' +
+    '.stat-card .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}' +
+    '.stat-card.pending .stat-icon{background:rgba(251,146,60,0.15);color:#fb923c}' +
+    '.stat-card.progress .stat-icon{background:rgba(59,130,246,0.15);color:#3b82f6}' +
+    '.stat-card.completed .stat-icon{background:rgba(16,185,129,0.15);color:#10b981}' +
+    '.stat-card.total .stat-icon{background:rgba(139,92,246,0.15);color:#a78bfa}' +
+    '.stat-card.gold .stat-icon{background:rgba(212,175,55,0.15);color:#d4af37}' +
+    '.stat-card h3{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600}' +
+    '.stat-card .value{font-size:36px;font-weight:800}' +
+    '.stat-card.pending .value{color:#fb923c}' +
+    '.stat-card.progress .value{color:#3b82f6}' +
+    '.stat-card.completed .value{color:#10b981}' +
+    '.stat-card.total .value{color:#a78bfa}' +
+    '.stat-card.gold .value{color:#d4af37}' +
+    '.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}' +
+    '.chart-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px}' +
+    '.chart-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}' +
+    '.chart-header svg{color:#a78bfa}' +
+    '.chart-header h3{font-size:16px;font-weight:600}' +
+    '.chart-container{position:relative;height:280px}' +
+    '.table-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:24px}' +
+    '.table-header{display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid rgba(255,255,255,0.06)}' +
+    '.table-header svg{color:#a78bfa}' +
+    '.table-header h3{font-size:16px;font-weight:600}' +
+    '.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}' +
+    'table{width:100%;border-collapse:collapse;min-width:600px}' +
+    'th{background:rgba(139,92,246,0.1);color:#a78bfa;padding:14px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:600}' +
+    'td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:14px}' +
+    'tr:hover{background:rgba(139,92,246,0.03)}' +
+    '.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}' +
+    '.badge.sim{background:rgba(16,185,129,0.15);color:#10b981}' +
+    '.badge.nao{background:rgba(100,116,139,0.15);color:#94a3b8}' +
+    '.footer{text-align:center;padding:32px 20px}' +
+    '.icarus-brand{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 auto 20px;padding:20px 28px;background:linear-gradient(135deg,rgba(212,175,55,0.08),rgba(139,92,246,0.08));border:1px solid rgba(212,175,55,0.2);border-radius:16px;max-width:400px}' +
+    '.icarus-logo{display:flex;align-items:center;justify-content:center;width:52px;height:52px;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.1));border-radius:12px;border:1px solid rgba(212,175,55,0.3)}' +
+    '.icarus-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px}' +
+    '.icarus-title{font-size:15px;font-weight:700;color:#d4af37;letter-spacing:2px}' +
+    '.icarus-subtitle{font-size:10px;color:#64748b}' +
+    '.icarus-contact{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#22d3ee;margin-top:2px}' +
+    '.footer-text{color:#64748b;font-size:12px;margin-top:16px}' +
+    '.footer-brand{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;color:#64748b;font-size:12px}' +
+    '@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr}}' +
+    '@media(max-width:768px){body{padding:12px}.header{padding:24px 16px;border-radius:16px}.header h1{font-size:22px}.header-icon{width:56px;height:56px}.stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}.stat-card{padding:16px 14px;border-radius:14px}.stat-card .stat-icon{width:40px;height:40px;margin-bottom:12px}.stat-card h3{font-size:10px}.stat-card .value{font-size:28px}.charts-row{grid-template-columns:1fr;gap:14px}.chart-card{padding:16px;border-radius:14px}.chart-container{height:220px}.table-card{border-radius:14px}.table-header{padding:16px}.th{padding:12px 14px;font-size:10px}td{padding:12px 14px;font-size:13px}.footer{padding:24px 16px}.icarus-brand{flex-direction:column;text-align:center;padding:16px}.icarus-info{align-items:center}.footer-brand{flex-direction:column;gap:4px}}' +
+    '@media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr}.stat-card .value{font-size:24px}.stat-card:nth-child(5){grid-column:span 2}}' +
+  '</style>' +
+  '<script src="https://cdn.jsdelivr.net/npm/chart.js"></' + 'script>' +
+'</head>' +
+'<body>' +
+  '<div class="orb orb-1"></div>' +
+  '<div class="orb orb-2"></div>' +
+  '<div class="container">' +
+    '<div class="header">' +
+      '<div class="header-icon">' +
+        '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' +
+      '</div>' +
+      '<h1>Dashboard ICARUS</h1>' +
+      '<p class="subtitle"><strong>Granja Vitta</strong> <span style="color:#64748b">•</span> Sistema de Gestão</p>' +
+      '<div class="period-badge">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+        periodLabel + ' <span style="color:#64748b">|</span> Gerado em ' + dataGeracao + ' às ' + horaGeracao +
+      '</div>' +
+    '</div>' +
+    
+    '<div class="stats-grid">' +
+      '<div class="stat-card pending">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>' +
+        '<h3>Pendentes</h3>' +
+        '<div class="value">' + pending + '</div>' +
+      '</div>' +
+      '<div class="stat-card progress">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>' +
+        '<h3>Em Andamento</h3>' +
+        '<div class="value">' + inProgress + '</div>' +
+      '</div>' +
+      '<div class="stat-card completed">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
+        '<h3>Concluídas</h3>' +
+        '<div class="value">' + completed + '</div>' +
+      '</div>' +
+      '<div class="stat-card total">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>' +
+        '<h3>Total</h3>' +
+        '<div class="value">' + total + '</div>' +
+      '</div>' +
+      '<div class="stat-card gold">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>' +
+        '<h3>Aproveitamento</h3>' +
+        '<div class="value">' + aproveitamento + '%</div>' +
+      '</div>' +
+    '</div>' +
+    
+    '<div class="charts-row">' +
+      '<div class="chart-card">' +
+        '<div class="chart-header">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
+          '<h3>Desempenho por Executor</h3>' +
+        '</div>' +
+        '<div class="chart-container"><canvas id="executorChart"></canvas></div>' +
+      '</div>' +
+      '<div class="chart-card">' +
+        '<div class="chart-header">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>' +
+          '<h3>Ordens por Setor</h3>' +
+        '</div>' +
+        '<div class="chart-container"><canvas id="setorChart"></canvas></div>' +
+      '</div>' +
+    '</div>' +
+    
+    (checklistStats.lista.length > 0 ? 
+    '<div class="table-card">' +
+      '<div class="table-header">' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<h3>Checklists Cadastrados (' + checklistStats.total + ')</h3>' +
+      '</div>' +
+      '<div class="table-scroll">' +
+        '<table>' +
+          '<thead><tr><th>Nome</th><th>Setor</th><th>Itens</th><th>Automático</th><th>Frequência</th></tr></thead>' +
+          '<tbody>' +
+            checklistStats.lista.map(function(c) {
+              return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.sector + '</td><td style="text-align:center">' + c.items + '</td><td style="text-align:center"><span class="badge ' + (c.auto === 'Sim' ? 'sim' : 'nao') + '">' + c.auto + '</span></td><td style="text-align:center;color:#94a3b8">' + c.frequency + '</td></tr>';
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>' : '') +
+    
+    '<div class="table-card">' +
+      '<div class="table-header">' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' +
+        '<h3>Resumo por Executor</h3>' +
+      '</div>' +
+      '<div class="table-scroll">' +
+        '<table>' +
+          '<thead><tr><th>Executor</th><th>Total</th><th>Concluídas</th><th>Taxa</th></tr></thead>' +
+          '<tbody>' +
+            Object.entries(byExecutor).map(function(entry) {
+              const name = entry[0];
+              const data = entry[1];
+              const taxa = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0;
+              return '<tr><td><strong>' + name + '</strong></td><td style="text-align:center">' + data.total + '</td><td style="text-align:center;color:#10b981">' + data.completed + '</td><td style="text-align:center;color:#d4af37">' + taxa + '%</td></tr>';
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>' +
+    
+    '<div class="footer">' +
+      '<div class="icarus-brand">' +
+        '<div class="icarus-logo">' +
+          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+        '</div>' +
+        '<div class="icarus-info">' +
+          '<span class="icarus-title">ICARUS SYSTEM</span>' +
+          '<span class="icarus-subtitle">Sistema Inteligente de Gestão</span>' +
+          '<span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> (38) 99988-2730</span>' +
+        '</div>' +
+      '</div>' +
+      '<p class="footer-text">Snapshot interativo gerado offline • Funciona em qualquer dispositivo</p>' +
+      '<p class="footer-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> Desenvolvido por Guilherme Braga • © 2025-2026</p>' +
+    '</div>' +
+  '</div>' +
+  
+  '<script>' +
+    'const executorData = ' + JSON.stringify(byExecutor) + ';' +
+    'const setorData = ' + JSON.stringify(bySetor) + ';' +
+    
+    'document.addEventListener("DOMContentLoaded", function() {' +
+      // Gráfico de Executores
+      'new Chart(document.getElementById("executorChart"), {' +
+        'type: "bar",' +
+        'data: {' +
+          'labels: Object.keys(executorData),' +
+          'datasets: [{' +
+            'label: "Concluídas",' +
+            'data: Object.values(executorData).map(d => d.completed),' +
+            'backgroundColor: "rgba(16, 185, 129, 0.8)",' +
+            'borderColor: "#10b981",' +
+            'borderWidth: 0,' +
+            'borderRadius: 6,' +
+            'borderSkipped: false' +
+          '}, {' +
+            'label: "Total",' +
+            'data: Object.values(executorData).map(d => d.total),' +
+            'backgroundColor: "rgba(139, 92, 246, 0.6)",' +
+            'borderColor: "#8b5cf6",' +
+            'borderWidth: 0,' +
+            'borderRadius: 6,' +
+            'borderSkipped: false' +
+          '}]' +
+        '},' +
+        'options: {' +
+          'responsive: true,' +
+          'maintainAspectRatio: false,' +
+          'plugins: {' +
+            'legend: {' +
+              'labels: { color: "#94a3b8", padding: 16, font: { family: "Inter", size: 12 } }' +
+            '}' +
+          '},' +
+          'scales: {' +
+            'x: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.03)" } },' +
+            'y: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.03)" } }' +
+          '}' +
+        '}' +
+      '});' +
+      
+      // Gráfico de Setores
+      'const colors = ["#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#ec4899", "#14b8a6", "#f97316"];' +
+      'new Chart(document.getElementById("setorChart"), {' +
+        'type: "doughnut",' +
+        'data: {' +
+          'labels: Object.keys(setorData),' +
+          'datasets: [{' +
+            'data: Object.values(setorData),' +
+            'backgroundColor: colors.slice(0, Object.keys(setorData).length),' +
+            'borderWidth: 0,' +
+            'hoverOffset: 8' +
+          '}]' +
+        '},' +
+        'options: {' +
+          'responsive: true,' +
+          'maintainAspectRatio: false,' +
+          'plugins: {' +
+            'legend: {' +
+              'position: "right",' +
+              'labels: { color: "#94a3b8", padding: 12, font: { family: "Inter", size: 11 }, boxWidth: 16 }' +
+            '}' +
+          '}' +
+        '}' +
+      '});' +
+    '});' +
+  '</' + 'script>' +
+'</body>' +
+'</html>';
+
+  // Criar blob e baixar como arquivo HTML
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Dashboard_ICARUS_' + dataGeracao.replace(/\//g, '-') + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('HTML interativo baixado com sucesso!', 'success');
+}
+
 // ========== EXPORTAÇÃO ALMOXARIFADO ==========
 
 function exportAlmoxarifadoReport() {
@@ -12031,6 +12407,17 @@ function generateDiariasPDF() {
   const dataGeracao = now.toLocaleDateString('pt-BR');
   const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   
+  // Estrela de Davi SVG (hexagrama - dois triângulos sobrepostos)
+  const starOfDavidSVG = `<svg width="40" height="40" viewBox="0 0 100 100" fill="none">
+    <polygon points="50,5 95,75 5,75" fill="none" stroke="#ec4899" stroke-width="4"/>
+    <polygon points="50,95 5,25 95,25" fill="none" stroke="#ec4899" stroke-width="4"/>
+  </svg>`;
+  
+  const starOfDavidSmall = `<svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+    <polygon points="50,5 95,75 5,75" fill="none" stroke="#fff" stroke-width="5"/>
+    <polygon points="50,95 5,25 95,25" fill="none" stroke="#fff" stroke-width="5"/>
+  </svg>`;
+  
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -12040,28 +12427,31 @@ function generateDiariasPDF() {
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         @page { size: A4; margin: 0; }
-        body { 
+        html, body { 
           font-family: 'Segoe UI', system-ui, sans-serif;
-          background: linear-gradient(180deg, #0f0a1a 0%, #1a0f25 100%);
+          background: #0a0a12;
           color: #fff;
           min-height: 100vh;
+          width: 100%;
         }
         .page {
           padding: 40px;
           min-height: 100vh;
           position: relative;
           overflow: hidden;
+          background: linear-gradient(145deg, #0a0a12 0%, #12081a 50%, #0a0a12 100%);
         }
         /* Decoração de fundo */
         .bg-decoration {
           position: absolute;
           border-radius: 50%;
-          filter: blur(80px);
-          opacity: 0.3;
+          filter: blur(100px);
+          opacity: 0.25;
           pointer-events: none;
         }
-        .bg-1 { width: 300px; height: 300px; background: #ec4899; top: -100px; right: -100px; }
-        .bg-2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -150px; left: -150px; }
+        .bg-1 { width: 350px; height: 350px; background: #ec4899; top: -120px; right: -120px; }
+        .bg-2 { width: 450px; height: 450px; background: #8b5cf6; bottom: -180px; left: -180px; }
+        .bg-3 { width: 200px; height: 200px; background: #22c55e; bottom: 20%; right: 10%; opacity: 0.15; }
         
         /* Header Premium */
         .header {
@@ -12091,9 +12481,7 @@ function generateDiariasPDF() {
         .logo-text h1 {
           font-size: 28px;
           font-weight: 800;
-          background: linear-gradient(135deg, #ec4899, #f472b6);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: #ec4899;
           letter-spacing: -0.5px;
         }
         .logo-text p {
@@ -12117,7 +12505,7 @@ function generateDiariasPDF() {
         
         /* Info Card */
         .info-card {
-          background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.1));
+          background: rgba(20, 15, 30, 0.8);
           border: 1px solid rgba(236, 72, 153, 0.3);
           border-radius: 20px;
           padding: 30px;
@@ -12141,8 +12529,8 @@ function generateDiariasPDF() {
           margin-bottom: 20px;
         }
         .star-icon {
-          width: 50px;
-          height: 50px;
+          width: 55px;
+          height: 55px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -12150,6 +12538,7 @@ function generateDiariasPDF() {
         .info-header h2 {
           font-size: 24px;
           font-weight: 700;
+          color: #fff;
         }
         .info-header p {
           font-size: 13px;
@@ -12174,6 +12563,7 @@ function generateDiariasPDF() {
           padding: 16px;
           background: rgba(255,255,255,0.03);
           font-size: 14px;
+          color: #fff;
         }
         .weeks-table tr td:first-child { border-radius: 10px 0 0 10px; }
         .weeks-table tr td:last-child { border-radius: 0 10px 10px 0; }
@@ -12192,14 +12582,14 @@ function generateDiariasPDF() {
           color: #fff;
         }
         .day-badge.inactive {
-          background: rgba(255,255,255,0.05);
+          background: rgba(255,255,255,0.08);
           color: rgba(255,255,255,0.3);
         }
         .value { color: #22c55e; font-weight: 700; font-size: 16px; }
         
         /* Resumo Total */
         .total-section {
-          background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
+          background: rgba(34, 197, 94, 0.1);
           border: 2px solid rgba(34, 197, 94, 0.4);
           border-radius: 20px;
           padding: 30px;
@@ -12237,33 +12627,40 @@ function generateDiariasPDF() {
           padding-top: 20px;
           border-top: 1px solid rgba(255,255,255,0.1);
         }
-        .footer-brand {
+        .footer-left {
           display: flex;
           align-items: center;
           gap: 12px;
         }
-        .footer-brand svg {
+        .footer-left svg {
           opacity: 0.6;
         }
         .footer-text {
           font-size: 11px;
           color: rgba(255,255,255,0.4);
         }
-        .contact {
-          text-align: right;
-        }
-        .contact p {
-          font-size: 11px;
-          color: rgba(255,255,255,0.5);
-        }
-        .contact .phone {
+        .footer-phone {
           font-size: 14px;
           color: #ec4899;
           font-weight: 600;
+          margin-top: 4px;
+        }
+        .footer-right {
+          text-align: right;
+        }
+        .footer-right p {
+          font-size: 11px;
+          color: rgba(255,255,255,0.4);
+        }
+        .footer-right .company {
+          font-size: 14px;
+          color: rgba(255,255,255,0.6);
+          font-weight: 500;
         }
         
         @media print {
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .page { background: #0a0a12 !important; }
         }
       </style>
     </head>
@@ -12271,14 +12668,12 @@ function generateDiariasPDF() {
       <div class="page">
         <div class="bg-decoration bg-1"></div>
         <div class="bg-decoration bg-2"></div>
+        <div class="bg-decoration bg-3"></div>
         
         <div class="header">
           <div class="logo-section">
             <div class="logo-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
-                <polygon points="12 2 15 9.5 22 9.5 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.5 9 9.5"/>
-                <polygon points="12 22 9 14.5 2 14.5 7.5 10 5.5 3 12 7 18.5 3 16.5 10 22 14.5 15 14.5"/>
-              </svg>
+              ${starOfDavidSmall}
             </div>
             <div class="logo-text">
               <h1>ICARUS</h1>
@@ -12294,9 +12689,7 @@ function generateDiariasPDF() {
         <div class="info-card">
           <div class="info-header">
             <div class="star-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="#ec4899">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
+              ${starOfDavidSVG}
             </div>
             <div>
               <h2>Guilherme Braga</h2>
@@ -12349,18 +12742,20 @@ function generateDiariasPDF() {
         </div>
         
         <div class="footer">
-          <div class="footer-brand">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          <div class="footer-left">
+            <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+              <polygon points="50,5 95,75 5,75" fill="none" stroke="#ec4899" stroke-width="6"/>
+              <polygon points="50,95 5,25 95,25" fill="none" stroke="#ec4899" stroke-width="6"/>
             </svg>
             <div>
               <p class="footer-text">Sistema ICARUS © 2025-2026</p>
               <p class="footer-text">Desenvolvido por Guilherme Braga</p>
+              <p class="footer-phone">📞 (38) 99988-2730</p>
             </div>
           </div>
-          <div class="contact">
-            <p>Granja Vitta</p>
-            <p class="phone">📞 (XX) XXXXX-XXXX</p>
+          <div class="footer-right">
+            <p class="company">Granja Vitta</p>
+            <p>Gestão de Manutenção</p>
           </div>
         </div>
       </div>
