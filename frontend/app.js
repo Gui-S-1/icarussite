@@ -11811,3 +11811,566 @@ async function saveReport() {
 }
 
 // escapeHtml function moved to top of file for security
+
+// ============================================
+// SISTEMA DE DIÁRIAS - GUILHERME BRAGA
+// ============================================
+
+let diariasData = {
+  semanas: [],
+  valorDiaria: 110
+};
+
+function openDiariasModal() {
+  // Carregar dados do localStorage
+  const saved = localStorage.getItem('icarus_diarias_guilherme');
+  if (saved) {
+    try {
+      diariasData = JSON.parse(saved);
+    } catch(e) {}
+  }
+  
+  // Garantir que temos pelo menos a semana atual
+  if (!diariasData.semanas || diariasData.semanas.length === 0) {
+    diariasData.semanas = [createNewWeek()];
+  }
+  
+  const modalHtml = `
+    <div id="modal-diarias" class="modal-overlay active" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: linear-gradient(145deg, rgba(15, 10, 25, 0.98), rgba(20, 15, 35, 0.98)); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 24px; max-width: 700px; width: 100%; max-height: 90vh; overflow: hidden; box-shadow: 0 30px 100px rgba(236, 72, 153, 0.2), inset 0 1px 1px rgba(255,255,255,0.1);">
+        
+        <!-- Header com Estrela de Davi -->
+        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(236, 72, 153, 0.15) 0%, transparent 100%); border-bottom: 1px solid rgba(236, 72, 153, 0.2); display: flex; align-items: center; gap: 16px;">
+          <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);">
+            <!-- Estrela de Davi -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
+              <polygon points="12 2 15 9.5 22 9.5 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.5 9 9.5"/>
+              <polygon points="12 22 9 14.5 2 14.5 7.5 10 5.5 3 12 7 18.5 3 16.5 10 22 14.5 15 14.5"/>
+            </svg>
+          </div>
+          <div style="flex: 1;">
+            <h3 style="margin: 0; font-size: 22px; color: #fff; font-weight: 700;">Controle de Diárias</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Guilherme Braga • R$ ${diariasData.valorDiaria.toFixed(2)} por dia</p>
+          </div>
+          <button onclick="closeDiariasModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 36px; height: 36px; color: #888; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+        </div>
+        
+        <div style="padding: 24px 28px; max-height: calc(90vh - 200px); overflow-y: auto;">
+          
+          <!-- Semanas -->
+          <div id="diarias-semanas-container">
+            ${renderDiariasSemanas()}
+          </div>
+          
+          <!-- Adicionar Semana -->
+          <button onclick="addDiariaSemana()" style="width: 100%; padding: 14px; background: rgba(236, 72, 153, 0.1); border: 2px dashed rgba(236, 72, 153, 0.3); border-radius: 12px; color: #ec4899; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; transition: 0.3s;" onmouseover="this.style.background='rgba(236, 72, 153, 0.15)'" onmouseout="this.style.background='rgba(236, 72, 153, 0.1)'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adicionar Semana
+          </button>
+          
+          <!-- Resumo -->
+          <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.1)); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Total de Dias Trabalhados</p>
+                <p style="font-size: 28px; font-weight: 700; color: #22c55e; margin: 0;" id="diarias-total-dias">${calcTotalDias()}</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Valor Total</p>
+                <p style="font-size: 28px; font-weight: 700; color: #22c55e; margin: 0;" id="diarias-total-valor">R$ ${(calcTotalDias() * diariasData.valorDiaria).toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Footer Buttons -->
+        <div style="padding: 20px 28px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 12px;">
+          <button onclick="closeDiariasModal()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer;">Fechar</button>
+          <button onclick="generateDiariasPDF()" style="flex: 2; padding: 14px; background: linear-gradient(135deg, #ec4899, #db2777); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Gerar Relatório PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeDiariasModal() {
+  const modal = document.getElementById('modal-diarias');
+  if (modal) modal.remove();
+}
+
+function createNewWeek() {
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - today.getDay() + 1);
+  
+  return {
+    id: Date.now(),
+    startDate: monday.toISOString().split('T')[0],
+    dias: {
+      seg: false,
+      ter: false,
+      qua: false,
+      qui: false,
+      sex: false,
+      sab: false
+    }
+  };
+}
+
+function renderDiariasSemanas() {
+  return diariasData.semanas.map((semana, index) => {
+    const startDate = new Date(semana.startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 5);
+    
+    const diasCount = Object.values(semana.dias).filter(v => v).length;
+    const valorSemana = diasCount * diariasData.valorDiaria;
+    
+    return `
+      <div class="diaria-semana-card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <p style="font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px 0;">Semana ${index + 1}</p>
+            <p style="font-size: 14px; color: #fff; margin: 0;">
+              <input type="date" value="${semana.startDate}" onchange="updateSemanaDate(${index}, this.value)" style="background: transparent; border: none; color: #ec4899; font-size: 14px; cursor: pointer;">
+            </p>
+          </div>
+          <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+            <div>
+              <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 0;">${diasCount} dias</p>
+              <p style="font-size: 16px; color: #22c55e; font-weight: 600; margin: 0;">R$ ${valorSemana.toFixed(2)}</p>
+            </div>
+            ${index > 0 ? `<button onclick="removeSemana(${index})" style="background: rgba(239, 68, 68, 0.1); border: none; border-radius: 8px; width: 32px; height: 32px; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>` : ''}
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
+          ${['seg', 'ter', 'qua', 'qui', 'sex', 'sab'].map((dia, diaIndex) => {
+            const diaDate = new Date(startDate);
+            diaDate.setDate(startDate.getDate() + diaIndex);
+            const isChecked = semana.dias[dia];
+            return `
+              <button onclick="toggleDia(${index}, '${dia}')" style="padding: 12px 8px; background: ${isChecked ? 'linear-gradient(135deg, #ec4899, #db2777)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isChecked ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.2s; ${isChecked ? 'box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);' : ''}">
+                <p style="font-size: 10px; color: ${isChecked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)'}; text-transform: uppercase; margin: 0 0 4px 0;">${dia}</p>
+                <p style="font-size: 12px; color: ${isChecked ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500; margin: 0;">${diaDate.getDate()}/${diaDate.getMonth() + 1}</p>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleDia(semanaIndex, dia) {
+  diariasData.semanas[semanaIndex].dias[dia] = !diariasData.semanas[semanaIndex].dias[dia];
+  saveDiariasData();
+  refreshDiariasUI();
+}
+
+function updateSemanaDate(semanaIndex, newDate) {
+  diariasData.semanas[semanaIndex].startDate = newDate;
+  saveDiariasData();
+  refreshDiariasUI();
+}
+
+function addDiariaSemana() {
+  const lastSemana = diariasData.semanas[diariasData.semanas.length - 1];
+  const lastDate = new Date(lastSemana.startDate);
+  lastDate.setDate(lastDate.getDate() + 7);
+  
+  diariasData.semanas.push({
+    id: Date.now(),
+    startDate: lastDate.toISOString().split('T')[0],
+    dias: { seg: false, ter: false, qua: false, qui: false, sex: false, sab: false }
+  });
+  
+  saveDiariasData();
+  refreshDiariasUI();
+}
+
+function removeSemana(index) {
+  if (diariasData.semanas.length > 1) {
+    diariasData.semanas.splice(index, 1);
+    saveDiariasData();
+    refreshDiariasUI();
+  }
+}
+
+function calcTotalDias() {
+  return diariasData.semanas.reduce((total, semana) => {
+    return total + Object.values(semana.dias).filter(v => v).length;
+  }, 0);
+}
+
+function saveDiariasData() {
+  localStorage.setItem('icarus_diarias_guilherme', JSON.stringify(diariasData));
+}
+
+function refreshDiariasUI() {
+  const container = document.getElementById('diarias-semanas-container');
+  if (container) {
+    container.innerHTML = renderDiariasSemanas();
+  }
+  
+  const totalDias = document.getElementById('diarias-total-dias');
+  const totalValor = document.getElementById('diarias-total-valor');
+  if (totalDias) totalDias.textContent = calcTotalDias();
+  if (totalValor) totalValor.textContent = 'R$ ' + (calcTotalDias() * diariasData.valorDiaria).toFixed(2);
+}
+
+function generateDiariasPDF() {
+  const totalDias = calcTotalDias();
+  const totalValor = totalDias * diariasData.valorDiaria;
+  const now = new Date();
+  const dataGeracao = now.toLocaleDateString('pt-BR');
+  const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Relatório de Diárias - Guilherme Braga</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page { size: A4; margin: 0; }
+        body { 
+          font-family: 'Segoe UI', system-ui, sans-serif;
+          background: linear-gradient(180deg, #0f0a1a 0%, #1a0f25 100%);
+          color: #fff;
+          min-height: 100vh;
+        }
+        .page {
+          padding: 40px;
+          min-height: 100vh;
+          position: relative;
+          overflow: hidden;
+        }
+        /* Decoração de fundo */
+        .bg-decoration {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.3;
+          pointer-events: none;
+        }
+        .bg-1 { width: 300px; height: 300px; background: #ec4899; top: -100px; right: -100px; }
+        .bg-2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -150px; left: -150px; }
+        
+        /* Header Premium */
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-bottom: 30px;
+          border-bottom: 1px solid rgba(236, 72, 153, 0.3);
+          margin-bottom: 30px;
+          position: relative;
+        }
+        .logo-section {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
+        .logo-icon {
+          width: 70px;
+          height: 70px;
+          background: linear-gradient(135deg, #ec4899, #db2777);
+          border-radius: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
+        }
+        .logo-text h1 {
+          font-size: 28px;
+          font-weight: 800;
+          background: linear-gradient(135deg, #ec4899, #f472b6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: -0.5px;
+        }
+        .logo-text p {
+          font-size: 12px;
+          color: rgba(255,255,255,0.5);
+          letter-spacing: 2px;
+          text-transform: uppercase;
+        }
+        .date-section {
+          text-align: right;
+        }
+        .date-section .date {
+          font-size: 24px;
+          font-weight: 700;
+          color: #fff;
+        }
+        .date-section .time {
+          font-size: 14px;
+          color: rgba(255,255,255,0.5);
+        }
+        
+        /* Info Card */
+        .info-card {
+          background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.1));
+          border: 1px solid rgba(236, 72, 153, 0.3);
+          border-radius: 20px;
+          padding: 30px;
+          margin-bottom: 30px;
+          position: relative;
+        }
+        .info-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #ec4899, #8b5cf6, #ec4899);
+          border-radius: 20px 20px 0 0;
+        }
+        .info-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 20px;
+        }
+        .star-icon {
+          width: 50px;
+          height: 50px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .info-header h2 {
+          font-size: 24px;
+          font-weight: 700;
+        }
+        .info-header p {
+          font-size: 13px;
+          color: rgba(255,255,255,0.5);
+        }
+        
+        /* Tabela de Semanas */
+        .weeks-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0 8px;
+        }
+        .weeks-table th {
+          text-align: left;
+          padding: 12px 16px;
+          font-size: 11px;
+          color: rgba(255,255,255,0.4);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .weeks-table td {
+          padding: 16px;
+          background: rgba(255,255,255,0.03);
+          font-size: 14px;
+        }
+        .weeks-table tr td:first-child { border-radius: 10px 0 0 10px; }
+        .weeks-table tr td:last-child { border-radius: 0 10px 10px 0; }
+        .day-badges {
+          display: flex;
+          gap: 6px;
+        }
+        .day-badge {
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+        .day-badge.active {
+          background: linear-gradient(135deg, #ec4899, #db2777);
+          color: #fff;
+        }
+        .day-badge.inactive {
+          background: rgba(255,255,255,0.05);
+          color: rgba(255,255,255,0.3);
+        }
+        .value { color: #22c55e; font-weight: 700; font-size: 16px; }
+        
+        /* Resumo Total */
+        .total-section {
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
+          border: 2px solid rgba(34, 197, 94, 0.4);
+          border-radius: 20px;
+          padding: 30px;
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .total-label {
+          font-size: 14px;
+          color: rgba(255,255,255,0.6);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .total-value {
+          font-size: 42px;
+          font-weight: 800;
+          color: #22c55e;
+        }
+        .total-dias {
+          font-size: 18px;
+          color: #22c55e;
+          opacity: 0.8;
+        }
+        
+        /* Footer */
+        .footer {
+          position: absolute;
+          bottom: 30px;
+          left: 40px;
+          right: 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 20px;
+          border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .footer-brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .footer-brand svg {
+          opacity: 0.6;
+        }
+        .footer-text {
+          font-size: 11px;
+          color: rgba(255,255,255,0.4);
+        }
+        .contact {
+          text-align: right;
+        }
+        .contact p {
+          font-size: 11px;
+          color: rgba(255,255,255,0.5);
+        }
+        .contact .phone {
+          font-size: 14px;
+          color: #ec4899;
+          font-weight: 600;
+        }
+        
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="page">
+        <div class="bg-decoration bg-1"></div>
+        <div class="bg-decoration bg-2"></div>
+        
+        <div class="header">
+          <div class="logo-section">
+            <div class="logo-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
+                <polygon points="12 2 15 9.5 22 9.5 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.5 9 9.5"/>
+                <polygon points="12 22 9 14.5 2 14.5 7.5 10 5.5 3 12 7 18.5 3 16.5 10 22 14.5 15 14.5"/>
+              </svg>
+            </div>
+            <div class="logo-text">
+              <h1>ICARUS</h1>
+              <p>Sistema de Gestão</p>
+            </div>
+          </div>
+          <div class="date-section">
+            <p class="date">${dataGeracao}</p>
+            <p class="time">Gerado às ${horaGeracao}</p>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <div class="info-header">
+            <div class="star-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="#ec4899">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <div>
+              <h2>Guilherme Braga</h2>
+              <p>Relatório de Diárias • Valor: R$ ${diariasData.valorDiaria.toFixed(2)}/dia</p>
+            </div>
+          </div>
+          
+          <table class="weeks-table">
+            <thead>
+              <tr>
+                <th>Semana</th>
+                <th>Período</th>
+                <th>Dias Trabalhados</th>
+                <th style="text-align: right;">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${diariasData.semanas.map((semana, i) => {
+                const startDate = new Date(semana.startDate);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 5);
+                const diasCount = Object.values(semana.dias).filter(v => v).length;
+                const valorSemana = diasCount * diariasData.valorDiaria;
+                
+                return `
+                  <tr>
+                    <td><strong>Semana ${i + 1}</strong></td>
+                    <td>${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}</td>
+                    <td>
+                      <div class="day-badges">
+                        ${['seg', 'ter', 'qua', 'qui', 'sex', 'sab'].map(dia => 
+                          `<span class="day-badge ${semana.dias[dia] ? 'active' : 'inactive'}">${dia.toUpperCase()}</span>`
+                        ).join('')}
+                      </div>
+                    </td>
+                    <td style="text-align: right;" class="value">R$ ${valorSemana.toFixed(2)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="total-section">
+          <div>
+            <p class="total-label">Total a Receber</p>
+            <p class="total-dias">${totalDias} dias trabalhados</p>
+          </div>
+          <p class="total-value">R$ ${totalValor.toFixed(2)}</p>
+        </div>
+        
+        <div class="footer">
+          <div class="footer-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <div>
+              <p class="footer-text">Sistema ICARUS © 2025-2026</p>
+              <p class="footer-text">Desenvolvido por Guilherme Braga</p>
+            </div>
+          </div>
+          <div class="contact">
+            <p>Granja Vitta</p>
+            <p class="phone">📞 (XX) XXXXX-XXXX</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+}
