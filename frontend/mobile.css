@@ -3695,3 +3695,151 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     display: none;
   }
 }
+
+/* ========================================
+   RELATÓRIOS - TABS FÓRUM / NOTAS & BOLETOS
+   ======================================== */
+@media (max-width: 768px) {
+  .relatorios-tabs {
+    display: flex !important;
+    gap: 6px !important;
+    padding: 0 12px !important;
+    margin-bottom: 12px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .relatorios-tabs button,
+  .relatorios-tab,
+  #tab-forum,
+  #tab-notas {
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #tab-notas {
+    display: flex !important;
+  }
+
+  /* Seção Notas & Boletos Mobile */
+  #notas-content {
+    padding: 0 !important;
+  }
+
+  #notas-content > div:first-child {
+    padding: 0 12px 16px 12px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  #notas-content h2 {
+    font-size: 18px !important;
+  }
+
+  /* Stats Cards Mobile */
+  #notas-content > div:nth-child(2) {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    padding: 0 12px 16px 12px !important;
+  }
+
+  #notas-content > div:nth-child(2) > div {
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  #notas-content > div:nth-child(2) p:last-child {
+    font-size: 22px !important;
+  }
+
+  /* Filtros Notas Mobile */
+  #notas-content > div:nth-child(3) {
+    padding: 0 12px 12px 12px !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .notas-filter {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #notas-search {
+    min-width: 150px !important;
+  }
+
+  /* Lista de Notas Mobile */
+  #notas-list {
+    padding: 0 12px !important;
+  }
+
+  .nota-card {
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 16px !important;
+  }
+
+  .nota-card > div:first-child {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .nota-card > div:last-child {
+    text-align: left !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .nota-card > div:last-child p:first-child {
+    font-size: 18px !important;
+  }
+
+  /* Modal Nova Nota Mobile */
+  #modal-nova-nota > div {
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  #modal-nova-nota form > div > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal View Nota Mobile */
+  #modal-view-nota > div {
+    max-height: 100vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin-top: auto !important;
+    max-width: 100% !important;
+  }
+
+  #modal-view-nota > div > div:last-child {
+    flex-direction: column !important;
+  }
+
+  #modal-view-nota > div > div:last-child button {
+    width: 100% !important;
+  }
+}
+
+/* Mobile muito pequeno */
+@media (max-width: 400px) {
+  #notas-content > div:nth-child(2) {
+    grid-template-columns: 1fr !important;
+  }
+
+  .relatorios-tabs button {
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+  }
+}
