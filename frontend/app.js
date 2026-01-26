@@ -6818,8 +6818,17 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
     downloadReportAsPDF();
   };
   
+  // Botão Baixar HTML Interativo
+  const btnHTML = document.createElement('button');
+  btnHTML.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12l-2 2 2 2"/><path d="M14 12l2 2-2 2"/></svg><span>Baixar HTML</span>';
+  btnHTML.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
+  btnHTML.onclick = function() {
+    exportDashboardHTML();
+  };
+  
   actionsDiv.appendChild(btnPrint);
   actionsDiv.appendChild(btnDownload);
+  actionsDiv.appendChild(btnHTML);
   
   toolbar.appendChild(btnBack);
   toolbar.appendChild(actionsDiv);
@@ -12326,9 +12335,11 @@ function renderDiariasSemanas() {
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
-          ${['seg', 'ter', 'qua', 'qui', 'sex', 'sab'].map((dia, diaIndex) => {
+          ${['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].map((dia, diaIndex) => {
             const diaDate = new Date(startDate);
-            diaDate.setDate(startDate.getDate() + diaIndex);
+            // Sábado é -2 dias a partir de segunda, os outros são 0,1,2,3,4
+            const dayOffset = dia === 'sab' ? -2 : diaIndex - 1;
+            diaDate.setDate(startDate.getDate() + dayOffset);
             const isChecked = semana.dias[dia];
             return `
               <button onclick="toggleDia(${index}, '${dia}')" style="padding: 12px 8px; background: ${isChecked ? 'linear-gradient(135deg, #ec4899, #db2777)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isChecked ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.2s; ${isChecked ? 'box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);' : ''}">
@@ -12720,7 +12731,7 @@ function generateDiariasPDF() {
                     <td>${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}</td>
                     <td>
                       <div class="day-badges">
-                        ${['seg', 'ter', 'qua', 'qui', 'sex', 'sab'].map(dia => 
+                        ${['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].map(dia => 
                           `<span class="day-badge ${semana.dias[dia] ? 'active' : 'inactive'}">${dia.toUpperCase()}</span>`
                         ).join('')}
                       </div>
