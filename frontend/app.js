@@ -12811,594 +12811,174 @@ function exportDiariasHTML() {
   const dataGeracao = now.toLocaleDateString('pt-BR');
   const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   
-  const htmlContent = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diárias - Guilherme Braga | ICARUS</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  // Gerar HTML das semanas separadamente para evitar problemas com template literals aninhados
+  let semanasHTML = '';
+  diariasData.semanas.forEach((semana, index) => {
+    const startDate = new Date(semana.startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 5);
+    const diasCount = Object.values(semana.dias).filter(v => v).length;
+    const valorSemana = diasCount * diariasData.valorDiaria;
     
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    let diasHTML = '';
+    ['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].forEach((dia, diaIndex) => {
+      const diaDate = new Date(startDate);
+      const dayOffset = dia === 'sab' ? -2 : diaIndex - 1;
+      diaDate.setDate(startDate.getDate() + dayOffset);
+      const isChecked = semana.dias[dia];
+      diasHTML += '<div class="day-card ' + (isChecked ? 'active' : 'inactive') + '">' +
+        '<div class="day-name">' + dia + '</div>' +
+        '<div class="day-date">' + diaDate.getDate() + '/' + (diaDate.getMonth() + 1) + '</div>' +
+      '</div>';
+    });
     
-    html, body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #1a0a14 0%, #2d1a2e 50%, #1a0a14 100%);
-      min-height: 100vh;
-      color: #fff;
-      overflow-x: hidden;
-    }
-    
-    /* Partículas animadas */
-    .particles {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 0;
-    }
-    
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: #ec4899;
-      border-radius: 50%;
-      opacity: 0.3;
-      animation: float 15s infinite ease-in-out;
-    }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10% { opacity: 0.3; }
-      90% { opacity: 0.3; }
-      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
-    }
-    
-    /* Gradientes de fundo animados */
-    .bg-glow {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.15;
-      animation: pulse-glow 8s infinite ease-in-out alternate;
-    }
-    
-    .bg-glow-1 { width: 500px; height: 500px; background: #ec4899; top: -200px; right: -200px; animation-delay: 0s; }
-    .bg-glow-2 { width: 600px; height: 600px; background: #8b5cf6; bottom: -300px; left: -300px; animation-delay: 2s; }
-    .bg-glow-3 { width: 300px; height: 300px; background: #22c55e; bottom: 20%; right: 10%; animation-delay: 4s; }
-    
-    @keyframes pulse-glow {
-      0% { transform: scale(1); opacity: 0.1; }
-      100% { transform: scale(1.3); opacity: 0.2; }
-    }
-    
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    /* Header com animação */
-    .header {
-      background: linear-gradient(145deg, rgba(236, 72, 153, 0.15), transparent);
-      border: 1px solid rgba(236, 72, 153, 0.4);
-      border-radius: 24px;
-      padding: 32px;
-      margin-bottom: 32px;
-      position: relative;
-      overflow: hidden;
-      animation: slideDown 0.8s ease-out;
-    }
-    
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .header::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, #ec4899, #8b5cf6, #ec4899, transparent);
-      animation: shimmer 3s infinite linear;
-    }
-    
-    @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    
-    .logo-section {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-    
-    .logo-icon {
-      width: 70px;
-      height: 70px;
-      background: linear-gradient(135deg, #ec4899, #db2777);
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 40px rgba(236, 72, 153, 0.5);
-      animation: logoFloat 3s infinite ease-in-out;
-    }
-    
-    @keyframes logoFloat {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-8px) rotate(5deg); }
-    }
-    
-    /* Estrela de Davi animada */
-    .star-of-david {
-      width: 36px;
-      height: 36px;
-      animation: rotateStar 20s infinite linear;
-    }
-    
-    @keyframes rotateStar {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    
-    .logo-text h1 {
-      font-size: 32px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #ec4899, #f472b6, #ec4899);
-      background-size: 200% 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: gradientShift 3s infinite ease-in-out;
-    }
-    
-    @keyframes gradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    
-    .logo-text p {
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-      letter-spacing: 2px;
-    }
-    
-    .header-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    
-    .user-badge {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 50px;
-    }
-    
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 16px;
-    }
-    
-    .date-badge {
-      padding: 12px 20px;
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 12px;
-      text-align: right;
-    }
-    
-    .date-badge .date { font-size: 18px; font-weight: 700; color: #a78bfa; }
-    .date-badge .time { font-size: 12px; color: rgba(255,255,255,0.5); }
-    
-    /* Cards das semanas */
-    .weeks-container {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    
-    .week-card {
-      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px;
-      padding: 24px;
-      animation: fadeInUp 0.6s ease-out backwards;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    
-    .week-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 60px rgba(236, 72, 153, 0.2);
-      border-color: rgba(236, 72, 153, 0.3);
-    }
-    
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .week-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .week-number {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .week-number .num {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #ec4899, #db2777);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 14px;
-    }
-    
-    .week-number .label { font-size: 13px; color: rgba(255,255,255,0.5); }
-    .week-number .dates { font-size: 15px; font-weight: 600; }
-    
-    .week-value {
-      text-align: right;
-    }
-    
-    .week-value .days { font-size: 12px; color: rgba(255,255,255,0.5); }
-    .week-value .amount { font-size: 24px; font-weight: 800; color: #22c55e; }
-    
-    /* Grade de dias */
-    .days-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
-    }
-    
-    .day-card {
-      padding: 16px 10px;
-      border-radius: 14px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .day-card.active {
-      background: linear-gradient(135deg, #ec4899, #db2777);
-      box-shadow: 0 8px 30px rgba(236, 72, 153, 0.4);
-      transform: scale(1.05);
-    }
-    
-    .day-card.inactive {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .day-card.active::before {
-      content: '✓';
-      position: absolute;
-      top: 5px;
-      right: 8px;
-      font-size: 10px;
-      opacity: 0.7;
-    }
-    
-    .day-card:hover {
-      transform: scale(1.08);
-    }
-    
-    .day-name {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-      opacity: 0.6;
-    }
-    
-    .day-date {
-      font-size: 14px;
-      font-weight: 600;
-    }
-    
-    .day-card.active .day-name,
-    .day-card.active .day-date { opacity: 1; }
-    
-    /* Card de totais */
-    .total-card {
-      margin-top: 32px;
-      background: linear-gradient(145deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
-      border: 2px solid rgba(34, 197, 94, 0.4);
-      border-radius: 24px;
-      padding: 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      animation: fadeInUp 0.8s ease-out 0.5s backwards;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .total-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(45deg, transparent 30%, rgba(34, 197, 94, 0.1) 50%, transparent 70%);
-      animation: shine 3s infinite;
-    }
-    
-    @keyframes shine {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    
-    .total-info {
-      position: relative;
-      z-index: 1;
-    }
-    
-    .total-label {
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-    
-    .total-days {
-      font-size: 20px;
-      color: #22c55e;
-      font-weight: 600;
-    }
-    
-    .total-amount {
-      font-size: 48px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #22c55e, #4ade80);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      position: relative;
-      z-index: 1;
-      text-shadow: 0 0 60px rgba(34, 197, 94, 0.5);
-    }
-    
-    /* Footer */
-    .footer {
-      margin-top: 48px;
-      padding-top: 32px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      text-align: center;
-      animation: fadeInUp 0.8s ease-out 0.7s backwards;
-    }
-    
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .footer-logo .icon {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #ec4899, #db2777);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .footer-logo h3 {
-      font-size: 20px;
-      color: #ec4899;
-      letter-spacing: 2px;
-    }
-    
-    .footer p {
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      margin-bottom: 8px;
-    }
-    
-    .footer .phone {
-      font-size: 16px;
-      color: #f472b6;
-      font-weight: 600;
-      margin: 16px 0;
-    }
-    
-    .footer .dev {
-      margin-top: 20px;
-      padding: 16px;
-      background: rgba(236, 72, 153, 0.1);
-      border-radius: 12px;
-      display: inline-block;
-    }
-    
-    .footer .dev-label {
-      font-size: 10px;
-      color: rgba(255,255,255,0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .footer .dev-name {
-      font-size: 14px;
-      color: #f472b6;
-      font-weight: 600;
-      margin-top: 4px;
-    }
-    
-    .footer .copyright {
-      margin-top: 16px;
-      font-size: 11px;
-      color: rgba(255,255,255,0.3);
-    }
-    
-    /* Responsivo */
-    @media (max-width: 600px) {
-      .container { padding: 20px 12px; }
-      .header { padding: 20px; }
-      .days-grid { grid-template-columns: repeat(3, 1fr); }
-      .total-card { flex-direction: column; text-align: center; gap: 16px; }
-      .total-amount { font-size: 36px; }
-      .header-info { justify-content: center; }
-    }
-  </style>
-</head>
-<body>
-  <!-- Efeitos de fundo -->
-  <div class="bg-glow bg-glow-1"></div>
-  <div class="bg-glow bg-glow-2"></div>
-  <div class="bg-glow bg-glow-3"></div>
+    semanasHTML += '<div class="week-card" style="animation-delay: ' + (index * 0.1) + 's;">' +
+      '<div class="week-header">' +
+        '<div class="week-number">' +
+          '<div class="num">' + (index + 1) + '</div>' +
+          '<div><div class="label">Semana</div>' +
+          '<div class="dates">' + startDate.toLocaleDateString('pt-BR') + ' - ' + endDate.toLocaleDateString('pt-BR') + '</div></div>' +
+        '</div>' +
+        '<div class="week-value">' +
+          '<div class="days">' + diasCount + ' dias</div>' +
+          '<div class="amount">R$ ' + valorSemana.toFixed(2) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="days-grid">' + diasHTML + '</div>' +
+    '</div>';
+  });
   
-  <!-- Partículas -->
-  <div class="particles">
-    ${Array.from({length: 20}, (_, i) => `<div class="particle" style="left: ${Math.random() * 100}%; animation-delay: ${Math.random() * 15}s; animation-duration: ${10 + Math.random() * 10}s;"></div>`).join('')}
-  </div>
+  // Gerar partículas
+  let particlesHTML = '';
+  for (let i = 0; i < 20; i++) {
+    particlesHTML += '<div class="particle" style="left: ' + (Math.random() * 100) + '%; animation-delay: ' + (Math.random() * 15) + 's; animation-duration: ' + (10 + Math.random() * 10) + 's;"></div>';
+  }
   
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <div class="logo-section">
-        <div class="logo-icon">
-          <svg class="star-of-david" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="4">
-            <polygon points="50,5 95,75 5,75"/>
-            <polygon points="50,95 5,25 95,25"/>
-          </svg>
-        </div>
-        <div class="logo-text">
-          <h1>ICARUS</h1>
-          <p>Controle de Diárias</p>
-        </div>
-      </div>
-      
-      <div class="header-info">
-        <div class="user-badge">
-          <div class="user-avatar">GB</div>
-          <div>
-            <div style="font-weight: 600;">Guilherme Braga</div>
-            <div style="font-size: 12px; color: rgba(255,255,255,0.5);">R$ ${diariasData.valorDiaria.toFixed(2)}/dia</div>
-          </div>
-        </div>
-        <div class="date-badge">
-          <div class="date">${dataGeracao}</div>
-          <div class="time">Gerado às ${horaGeracao}</div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Semanas -->
-    <div class="weeks-container">
-      ${diariasData.semanas.map((semana, index) => {
-        const startDate = new Date(semana.startDate);
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 5);
-        const diasCount = Object.values(semana.dias).filter(v => v).length;
-        const valorSemana = diasCount * diariasData.valorDiaria;
-        
-        return \`
-          <div class="week-card" style="animation-delay: \${index * 0.1}s;">
-            <div class="week-header">
-              <div class="week-number">
-                <div class="num">\${index + 1}</div>
-                <div>
-                  <div class="label">Semana</div>
-                  <div class="dates">\${startDate.toLocaleDateString('pt-BR')} - \${endDate.toLocaleDateString('pt-BR')}</div>
-                </div>
-              </div>
-              <div class="week-value">
-                <div class="days">\${diasCount} dias</div>
-                <div class="amount">R$ \${valorSemana.toFixed(2)}</div>
-              </div>
-            </div>
-            <div class="days-grid">
-              \${['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].map((dia, diaIndex) => {
-                const diaDate = new Date(startDate);
-                const dayOffset = dia === 'sab' ? -2 : diaIndex - 1;
-                diaDate.setDate(startDate.getDate() + dayOffset);
-                const isChecked = semana.dias[dia];
-                return \\\`
-                  <div class="day-card \\\${isChecked ? 'active' : 'inactive'}">
-                    <div class="day-name">\\\${dia}</div>
-                    <div class="day-date">\\\${diaDate.getDate()}/\\\${diaDate.getMonth() + 1}</div>
-                  </div>
-                \\\`;
-              }).join('')}
-            </div>
-          </div>
-        \`;
-      }).join('')}
-    </div>
-    
-    <!-- Total -->
-    <div class="total-card">
-      <div class="total-info">
-        <div class="total-label">Total a Receber</div>
-        <div class="total-days">${totalDias} dias trabalhados</div>
-      </div>
-      <div class="total-amount">R$ ${totalValor.toFixed(2)}</div>
-    </div>
-    
-    <!-- Footer -->
-    <div class="footer">
-      <div class="footer-logo">
-        <div class="icon">
-          <svg width="22" height="22" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="5">
-            <polygon points="50,5 95,75 5,75"/>
-            <polygon points="50,95 5,25 95,25"/>
-          </svg>
-        </div>
-        <h3>ICARUS</h3>
-      </div>
-      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>
-      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>
-      <div class="phone">📞 (62) 98493-0056</div>
-      <div class="dev">
-        <div class="dev-label">Desenvolvido por</div>
-        <div class="dev-name">Guilherme Braga de Queiroz</div>
-      </div>
-      <div class="copyright">© ${new Date().getFullYear()} Sistema ICARUS • Todos os direitos reservados</div>
-    </div>
-  </div>
-</body>
-</html>`;
+  const htmlContent = '<!DOCTYPE html>' +
+'<html lang="pt-BR">' +
+'<head>' +
+'  <meta charset="UTF-8">' +
+'  <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+'  <title>Diárias - Guilherme Braga | ICARUS</title>' +
+'  <style>' +
+'    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");' +
+'    * { margin: 0; padding: 0; box-sizing: border-box; }' +
+'    html, body { font-family: "Inter", sans-serif; background: linear-gradient(135deg, #1a0a14 0%, #2d1a2e 50%, #1a0a14 100%); min-height: 100vh; color: #fff; overflow-x: hidden; }' +
+'    .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }' +
+'    .particle { position: absolute; width: 4px; height: 4px; background: #ec4899; border-radius: 50%; opacity: 0.3; animation: float 15s infinite ease-in-out; }' +
+'    @keyframes float { 0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-100px) rotate(720deg); opacity: 0; } }' +
+'    .bg-glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.15; animation: pulse-glow 8s infinite ease-in-out alternate; }' +
+'    .bg-glow-1 { width: 500px; height: 500px; background: #ec4899; top: -200px; right: -200px; }' +
+'    .bg-glow-2 { width: 600px; height: 600px; background: #8b5cf6; bottom: -300px; left: -300px; animation-delay: 2s; }' +
+'    .bg-glow-3 { width: 300px; height: 300px; background: #22c55e; bottom: 20%; right: 10%; animation-delay: 4s; }' +
+'    @keyframes pulse-glow { 0% { transform: scale(1); opacity: 0.1; } 100% { transform: scale(1.3); opacity: 0.2; } }' +
+'    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }' +
+'    .header { background: linear-gradient(145deg, rgba(236, 72, 153, 0.15), transparent); border: 1px solid rgba(236, 72, 153, 0.4); border-radius: 24px; padding: 32px; margin-bottom: 32px; position: relative; overflow: hidden; animation: slideDown 0.8s ease-out; }' +
+'    @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }' +
+'    .header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #ec4899, #8b5cf6, #ec4899, transparent); animation: shimmer 3s infinite linear; }' +
+'    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }' +
+'    .logo-section { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }' +
+'    .logo-icon { width: 70px; height: 70px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(236, 72, 153, 0.5); animation: logoFloat 3s infinite ease-in-out; }' +
+'    @keyframes logoFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(5deg); } }' +
+'    .star-of-david { width: 36px; height: 36px; animation: rotateStar 20s infinite linear; }' +
+'    @keyframes rotateStar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }' +
+'    .logo-text h1 { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #ec4899, #f472b6, #ec4899); background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientShift 3s infinite ease-in-out; }' +
+'    @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }' +
+'    .logo-text p { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 2px; }' +
+'    .header-info { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }' +
+'    .user-badge { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; }' +
+'    .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }' +
+'    .date-badge { padding: 12px 20px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; text-align: right; }' +
+'    .date-badge .date { font-size: 18px; font-weight: 700; color: #a78bfa; }' +
+'    .date-badge .time { font-size: 12px; color: rgba(255,255,255,0.5); }' +
+'    .weeks-container { display: flex; flex-direction: column; gap: 16px; }' +
+'    .week-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 24px; animation: fadeInUp 0.6s ease-out backwards; transition: transform 0.3s, box-shadow 0.3s; }' +
+'    .week-card:hover { transform: translateY(-5px); box-shadow: 0 20px 60px rgba(236, 72, 153, 0.2); border-color: rgba(236, 72, 153, 0.3); }' +
+'    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }' +
+'    .week-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }' +
+'    .week-number { display: flex; align-items: center; gap: 12px; }' +
+'    .week-number .num { width: 36px; height: 36px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }' +
+'    .week-number .label { font-size: 13px; color: rgba(255,255,255,0.5); }' +
+'    .week-number .dates { font-size: 15px; font-weight: 600; }' +
+'    .week-value { text-align: right; }' +
+'    .week-value .days { font-size: 12px; color: rgba(255,255,255,0.5); }' +
+'    .week-value .amount { font-size: 24px; font-weight: 800; color: #22c55e; }' +
+'    .days-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }' +
+'    .day-card { padding: 16px 10px; border-radius: 14px; text-align: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }' +
+'    .day-card.active { background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 8px 30px rgba(236, 72, 153, 0.4); transform: scale(1.05); }' +
+'    .day-card.inactive { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); }' +
+'    .day-card.active::before { content: "✓"; position: absolute; top: 5px; right: 8px; font-size: 10px; opacity: 0.7; }' +
+'    .day-card:hover { transform: scale(1.08); }' +
+'    .day-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.6; }' +
+'    .day-date { font-size: 14px; font-weight: 600; }' +
+'    .day-card.active .day-name, .day-card.active .day-date { opacity: 1; }' +
+'    .total-card { margin-top: 32px; background: linear-gradient(145deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1)); border: 2px solid rgba(34, 197, 94, 0.4); border-radius: 24px; padding: 32px; display: flex; justify-content: space-between; align-items: center; animation: fadeInUp 0.8s ease-out 0.5s backwards; position: relative; overflow: hidden; }' +
+'    .total-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, transparent 30%, rgba(34, 197, 94, 0.1) 50%, transparent 70%); animation: shine 3s infinite; }' +
+'    @keyframes shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }' +
+'    .total-info { position: relative; z-index: 1; }' +
+'    .total-label { font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }' +
+'    .total-days { font-size: 20px; color: #22c55e; font-weight: 600; }' +
+'    .total-amount { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #22c55e, #4ade80); -webkit-background-clip: text; -webkit-text-fill-color: transparent; position: relative; z-index: 1; }' +
+'    .footer { margin-top: 48px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; animation: fadeInUp 0.8s ease-out 0.7s backwards; }' +
+'    .footer-logo { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }' +
+'    .footer-logo .icon { width: 44px; height: 44px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 12px; display: flex; align-items: center; justify-content: center; }' +
+'    .footer-logo h3 { font-size: 20px; color: #ec4899; letter-spacing: 2px; }' +
+'    .footer p { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }' +
+'    .footer .phone { font-size: 16px; color: #f472b6; font-weight: 600; margin: 16px 0; }' +
+'    .footer .dev { margin-top: 20px; padding: 16px; background: rgba(236, 72, 153, 0.1); border-radius: 12px; display: inline-block; }' +
+'    .footer .dev-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; }' +
+'    .footer .dev-name { font-size: 14px; color: #f472b6; font-weight: 600; margin-top: 4px; }' +
+'    .footer .copyright { margin-top: 16px; font-size: 11px; color: rgba(255,255,255,0.3); }' +
+'    @media (max-width: 600px) { .container { padding: 20px 12px; } .header { padding: 20px; } .days-grid { grid-template-columns: repeat(3, 1fr); } .total-card { flex-direction: column; text-align: center; gap: 16px; } .total-amount { font-size: 36px; } .header-info { justify-content: center; } }' +
+'  </style>' +
+'</head>' +
+'<body>' +
+'  <div class="bg-glow bg-glow-1"></div>' +
+'  <div class="bg-glow bg-glow-2"></div>' +
+'  <div class="bg-glow bg-glow-3"></div>' +
+'  <div class="particles">' + particlesHTML + '</div>' +
+'  <div class="container">' +
+'    <div class="header">' +
+'      <div class="logo-section">' +
+'        <div class="logo-icon">' +
+'          <svg class="star-of-david" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="4"><polygon points="50,5 95,75 5,75"/><polygon points="50,95 5,25 95,25"/></svg>' +
+'        </div>' +
+'        <div class="logo-text"><h1>ICARUS</h1><p>Controle de Diárias</p></div>' +
+'      </div>' +
+'      <div class="header-info">' +
+'        <div class="user-badge">' +
+'          <div class="user-avatar">GB</div>' +
+'          <div><div style="font-weight: 600;">Guilherme Braga</div><div style="font-size: 12px; color: rgba(255,255,255,0.5);">R$ ' + diariasData.valorDiaria.toFixed(2) + '/dia</div></div>' +
+'        </div>' +
+'        <div class="date-badge"><div class="date">' + dataGeracao + '</div><div class="time">Gerado às ' + horaGeracao + '</div></div>' +
+'      </div>' +
+'    </div>' +
+'    <div class="weeks-container">' + semanasHTML + '</div>' +
+'    <div class="total-card">' +
+'      <div class="total-info"><div class="total-label">Total a Receber</div><div class="total-days">' + totalDias + ' dias trabalhados</div></div>' +
+'      <div class="total-amount">R$ ' + totalValor.toFixed(2) + '</div>' +
+'    </div>' +
+'    <div class="footer">' +
+'      <div class="footer-logo">' +
+'        <div class="icon"><svg width="22" height="22" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="5"><polygon points="50,5 95,75 5,75"/><polygon points="50,95 5,25 95,25"/></svg></div>' +
+'        <h3>ICARUS</h3>' +
+'      </div>' +
+'      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>' +
+'      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>' +
+'      <div class="phone">📞 (62) 98493-0056</div>' +
+'      <div class="dev"><div class="dev-label">Desenvolvido por</div><div class="dev-name">Guilherme Braga de Queiroz</div></div>' +
+'      <div class="copyright">© ' + new Date().getFullYear() + ' Sistema ICARUS • Todos os direitos reservados</div>' +
+'    </div>' +
+'  </div>' +
+'</body>' +
+'</html>';
 
   // Download do arquivo HTML
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = \`Diarias_GuilhermeBraga_\${new Date().toISOString().split('T')[0]}.html\`;
+  a.download = 'Diarias_GuilhermeBraga_' + new Date().toISOString().split('T')[0] + '.html';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
