@@ -11062,13 +11062,17 @@
                 backdrop-filter: blur(20px);
               ">
                 <!-- Locais simples -->
-                <div onclick="selectSector('Sala de Ovos')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  🥚 Sala de Ovos
+                <div onclick="selectSector('Sala de Ovos')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><ellipse cx="12" cy="12" rx="8" ry="10"/></svg>
+                  Sala de Ovos
                 </div>
                 <!-- Vertical com sub-opções -->
                 <div class="sector-group">
                   <div onclick="toggleSectorSub('vertical')" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.1)'" onmouseout="this.style.background='transparent'">
-                    <span>🏗️ Vertical</span>
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+                      Vertical
+                    </span>
                     <svg id="icon-vertical" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" style="transition: 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                   <div id="sub-vertical" style="display: none; background: rgba(0,0,0,0.2);">
@@ -11080,7 +11084,10 @@
                 <!-- Galpão com sub-opções -->
                 <div class="sector-group">
                   <div onclick="toggleSectorSub('galpao')" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.1)'" onmouseout="this.style.background='transparent'">
-                    <span>🏭 Galpão</span>
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M3 21h18M3 7v14M21 7v14M6 21V10M10 21V10M14 21V10M18 21V10M12 2L3 7h18L12 2z"/></svg>
+                      Galpão
+                    </span>
                     <svg id="icon-galpao" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" style="transition: 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                   <div id="sub-galpao" style="display: none; background: rgba(0,0,0,0.2);">
@@ -11090,26 +11097,41 @@
                   </div>
                 </div>
                 <!-- Outros locais -->
-                <div onclick="selectSector('Expedição')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  📦 Expedição
+                <div onclick="selectSector('Expedição')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  Expedição
                 </div>
-                <div onclick="selectSector('Cantina')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  🍽️ Cantina
+                <div onclick="selectSector('Cantina')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+                  Cantina
                 </div>
-                <div onclick="selectSector('Escritório')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  🏢 Escritório
+                <div onclick="selectSector('Escritório')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  Escritório
                 </div>
-                <div onclick="selectSector('Oficina')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  🔧 Oficina
+                <div onclick="selectSector('Oficina')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                  Oficina
                 </div>
-                <div onclick="selectSector('Almoxarifado')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  📋 Almoxarifado
+                <div onclick="selectSector('Almoxarifado')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                  Almoxarifado
                 </div>
-                <div onclick="selectSector('Fábrica de Ração')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  🌾 Fábrica de Ração
+                <div onclick="selectSector('Fábrica de Ração')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                  Fábrica de Ração
                 </div>
-                <div onclick="selectSector('Vertical Esteira Central')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; transition: 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
-                  ⚙️ Vertical Esteira Central
+                <div onclick="selectSector('Caixa de Água')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                  Caixa de Água
+                </div>
+                <div onclick="selectSector('Forno')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M12 2c-5.33 4-8 8-8 12a8 8 0 0 0 16 0c0-4-2.67-8-8-12z"/></svg>
+                  Forno
+                </div>
+                <div onclick="selectSector('Vertical Esteira Central')" class="sector-option" style="padding: 12px 16px; cursor: pointer; color: #fff; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.background='rgba(212,175,55,0.15)'" onmouseout="this.style.background='transparent'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  Vertical Esteira Central
                 </div>
               </div>
             </div>
