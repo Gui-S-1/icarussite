@@ -13819,13 +13819,13 @@ function deleteNota(id) {
 // ============================================
 
 function generateNotaHTMLContent(item) {
-  const now = new Date();
-  const venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
-  const diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
+  var now = new Date();
+  var venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
+  var diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
   
-  let statusColor = '#10b981';
-  let statusText = 'Pendente';
-  let statusBg = 'rgba(16, 185, 129, 0.15)';
+  var statusColor = '#10b981';
+  var statusText = 'Pendente';
+  var statusBg = 'rgba(16, 185, 129, 0.15)';
   
   if (item.status === 'pago') {
     statusColor = '#22c55e';
@@ -13841,551 +13841,756 @@ function generateNotaHTMLContent(item) {
     statusBg = 'rgba(239, 68, 68, 0.15)';
   }
   
-  const valor = parseFloat(item.valor_boleto || item.valor_nota || 0);
+  var valor = parseFloat(item.valor_boleto || item.valor_nota || 0);
+  var valorFormatted = valor.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+  var valorNotaFormatted = item.valor_nota ? parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
+  var valorBoletoFormatted = item.valor_boleto ? parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
+  var docId = item.id.slice(-8).toUpperCase();
+  var dataEmissao = new Date().toLocaleDateString('pt-BR');
+  var horaEmissao = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+  var anoAtual = new Date().getFullYear();
   
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Documento Financeiro - ${escapeHtml(item.empresa)} | ICARUS</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    html, body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #1a0a14 0%, #2d1a2e 50%, #1a0a14 100%);
-      min-height: 100vh;
-      color: #fff;
+  var html = '<!DOCTYPE html>\n';
+  html += '<html lang="pt-BR">\n';
+  html += '<head>\n';
+  html += '  <meta charset="UTF-8">\n';
+  html += '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+  html += '  <title>Documento Financeiro - ' + escapeHtml(item.empresa) + ' | ICARUS</title>\n';
+  html += '  <style>\n';
+  html += '    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");\n';
+  html += '    \n';
+  html += '    * { margin: 0; padding: 0; box-sizing: border-box; }\n';
+  html += '    \n';
+  html += '    html, body {\n';
+  html += '      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;\n';
+  html += '      background: linear-gradient(135deg, #1a0a14 0%, #2d1a2e 50%, #1a0a14 100%);\n';
+  html += '      min-height: 100vh;\n';
+  html += '      color: #fff;\n';
+  html += '      overflow-x: hidden;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Animated Background */\n';
+  html += '    .bg-animation {\n';
+  html += '      position: fixed;\n';
+  html += '      top: 0;\n';
+  html += '      left: 0;\n';
+  html += '      width: 100%;\n';
+  html += '      height: 100%;\n';
+  html += '      pointer-events: none;\n';
+  html += '      z-index: 0;\n';
+  html += '      overflow: hidden;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow {\n';
+  html += '      position: absolute;\n';
+  html += '      border-radius: 50%;\n';
+  html += '      filter: blur(80px);\n';
+  html += '      opacity: 0.4;\n';
+  html += '      animation: floatGlow 8s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow-1 {\n';
+  html += '      width: 400px;\n';
+  html += '      height: 400px;\n';
+  html += '      background: radial-gradient(circle, #db2777 0%, transparent 70%);\n';
+  html += '      top: -100px;\n';
+  html += '      right: -100px;\n';
+  html += '      animation-delay: 0s;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow-2 {\n';
+  html += '      width: 300px;\n';
+  html += '      height: 300px;\n';
+  html += '      background: radial-gradient(circle, #ec4899 0%, transparent 70%);\n';
+  html += '      bottom: 10%;\n';
+  html += '      left: -50px;\n';
+  html += '      animation-delay: -4s;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow-3 {\n';
+  html += '      width: 250px;\n';
+  html += '      height: 250px;\n';
+  html += '      background: radial-gradient(circle, #f472b6 0%, transparent 70%);\n';
+  html += '      top: 50%;\n';
+  html += '      right: 10%;\n';
+  html += '      animation-delay: -2s;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes floatGlow {\n';
+  html += '      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }\n';
+  html += '      25% { transform: translate(30px, -20px) scale(1.1); opacity: 0.5; }\n';
+  html += '      50% { transform: translate(-20px, 30px) scale(0.9); opacity: 0.3; }\n';
+  html += '      75% { transform: translate(20px, 20px) scale(1.05); opacity: 0.45; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Particles */\n';
+  html += '    .particles {\n';
+  html += '      position: fixed;\n';
+  html += '      top: 0;\n';
+  html += '      left: 0;\n';
+  html += '      width: 100%;\n';
+  html += '      height: 100%;\n';
+  html += '      pointer-events: none;\n';
+  html += '      z-index: 1;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .particle {\n';
+  html += '      position: absolute;\n';
+  html += '      width: 4px;\n';
+  html += '      height: 4px;\n';
+  html += '      background: #db2777;\n';
+  html += '      border-radius: 50%;\n';
+  html += '      animation: particleFloat 15s linear infinite;\n';
+  html += '      opacity: 0;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes particleFloat {\n';
+  html += '      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }\n';
+  html += '      10% { opacity: 0.6; }\n';
+  html += '      90% { opacity: 0.6; }\n';
+  html += '      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .container {\n';
+  html += '      max-width: 800px;\n';
+  html += '      margin: 0 auto;\n';
+  html += '      padding: 40px 20px;\n';
+  html += '      position: relative;\n';
+  html += '      z-index: 10;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Fade In Animation */\n';
+  html += '    @keyframes fadeInUp {\n';
+  html += '      from { opacity: 0; transform: translateY(30px); }\n';
+  html += '      to { opacity: 1; transform: translateY(0); }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Header Premium */\n';
+  html += '    .header {\n';
+  html += '      background: linear-gradient(145deg, rgba(219, 39, 119, 0.15), rgba(236, 72, 153, 0.05));\n';
+  html += '      border: 1px solid rgba(219, 39, 119, 0.4);\n';
+  html += '      border-radius: 24px;\n';
+  html += '      padding: 32px;\n';
+  html += '      margin-bottom: 32px;\n';
+  html += '      position: relative;\n';
+  html += '      overflow: hidden;\n';
+  html += '      animation: fadeInUp 0.6s ease-out;\n';
+  html += '      backdrop-filter: blur(20px);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .header::before {\n';
+  html += '      content: "";\n';
+  html += '      position: absolute;\n';
+  html += '      top: -50%;\n';
+  html += '      right: -20%;\n';
+  html += '      width: 300px;\n';
+  html += '      height: 300px;\n';
+  html += '      background: radial-gradient(circle, rgba(219, 39, 119, 0.3) 0%, transparent 70%);\n';
+  html += '      border-radius: 50%;\n';
+  html += '      animation: floatGlow 6s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Shimmer Effect */\n';
+  html += '    .header::after {\n';
+  html += '      content: "";\n';
+  html += '      position: absolute;\n';
+  html += '      top: 0;\n';
+  html += '      left: -100%;\n';
+  html += '      width: 100%;\n';
+  html += '      height: 100%;\n';
+  html += '      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);\n';
+  html += '      animation: shimmer 3s infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes shimmer {\n';
+  html += '      0% { left: -100%; }\n';
+  html += '      100% { left: 100%; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-section {\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 16px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      position: relative;\n';
+  html += '      z-index: 1;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-icon {\n';
+  html += '      width: 60px;\n';
+  html += '      height: 60px;\n';
+  html += '      background: linear-gradient(135deg, #db2777, #ec4899);\n';
+  html += '      border-radius: 16px;\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      box-shadow: 0 8px 32px rgba(219, 39, 119, 0.4);\n';
+  html += '      animation: pulse 2s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-icon svg { width: 32px; height: 32px; }\n';
+  html += '    \n';
+  html += '    .logo-text h1 {\n';
+  html += '      font-size: 28px;\n';
+  html += '      font-weight: 800;\n';
+  html += '      background: linear-gradient(135deg, #db2777, #f472b6);\n';
+  html += '      -webkit-background-clip: text;\n';
+  html += '      -webkit-text-fill-color: transparent;\n';
+  html += '      background-clip: text;\n';
+  html += '      letter-spacing: 3px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-text p {\n';
+  html += '      font-size: 11px;\n';
+  html += '      color: rgba(255,255,255,0.5);\n';
+  html += '      letter-spacing: 2px;\n';
+  html += '      text-transform: uppercase;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .doc-info {\n';
+  html += '      display: flex;\n';
+  html += '      justify-content: space-between;\n';
+  html += '      align-items: center;\n';
+  html += '      flex-wrap: wrap;\n';
+  html += '      gap: 16px;\n';
+  html += '      position: relative;\n';
+  html += '      z-index: 1;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .doc-number {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .doc-date {\n';
+  html += '      font-size: 13px;\n';
+  html += '      color: rgba(255,255,255,0.6);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Status Badge */\n';
+  html += '    .status-badge {\n';
+  html += '      display: inline-flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 8px;\n';
+  html += '      padding: 12px 24px;\n';
+  html += '      background: ' + statusBg + ';\n';
+  html += '      border: 2px solid ' + statusColor + ';\n';
+  html += '      border-radius: 50px;\n';
+  html += '      font-size: 14px;\n';
+  html += '      font-weight: 700;\n';
+  html += '      color: ' + statusColor + ';\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .status-badge:hover {\n';
+  html += '      transform: scale(1.05);\n';
+  html += '      box-shadow: 0 0 20px ' + statusColor + '40;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .status-dot {\n';
+  html += '      width: 10px;\n';
+  html += '      height: 10px;\n';
+  html += '      background: ' + statusColor + ';\n';
+  html += '      border-radius: 50%;\n';
+  html += '      animation: pulse 2s infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes pulse {\n';
+  html += '      0%, 100% { opacity: 1; transform: scale(1); }\n';
+  html += '      50% { opacity: 0.6; transform: scale(1.1); }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Main Card */\n';
+  html += '    .main-card {\n';
+  html += '      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));\n';
+  html += '      border: 1px solid rgba(255,255,255,0.1);\n';
+  html += '      border-radius: 24px;\n';
+  html += '      padding: 32px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      animation: fadeInUp 0.6s ease-out 0.2s both;\n';
+  html += '      backdrop-filter: blur(20px);\n';
+  html += '      position: relative;\n';
+  html += '      overflow: hidden;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .main-card:hover {\n';
+  html += '      border-color: rgba(219, 39, 119, 0.3);\n';
+  html += '      transform: translateY(-2px);\n';
+  html += '      box-shadow: 0 20px 60px rgba(219, 39, 119, 0.15);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .empresa-header {\n';
+  html += '      display: flex;\n';
+  html += '      justify-content: space-between;\n';
+  html += '      align-items: flex-start;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      padding-bottom: 24px;\n';
+  html += '      border-bottom: 1px solid rgba(255,255,255,0.1);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .empresa-info h2 {\n';
+  html += '      font-size: 24px;\n';
+  html += '      font-weight: 700;\n';
+  html += '      color: #fff;\n';
+  html += '      margin-bottom: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .empresa-info .setor {\n';
+  html += '      font-size: 14px;\n';
+  html += '      color: rgba(255,255,255,0.5);\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-destaque {\n';
+  html += '      text-align: right;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-destaque .label {\n';
+  html += '      font-size: 11px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 4px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-destaque .valor {\n';
+  html += '      font-size: 36px;\n';
+  html += '      font-weight: 800;\n';
+  html += '      background: linear-gradient(135deg, #10b981, #34d399);\n';
+  html += '      -webkit-background-clip: text;\n';
+  html += '      -webkit-text-fill-color: transparent;\n';
+  html += '      background-clip: text;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Descrição */\n';
+  html += '    .descricao {\n';
+  html += '      background: rgba(255,255,255,0.03);\n';
+  html += '      border-radius: 16px;\n';
+  html += '      padding: 20px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .descricao:hover {\n';
+  html += '      background: rgba(255,255,255,0.05);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .descricao h3 {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 12px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .descricao p {\n';
+  html += '      font-size: 15px;\n';
+  html += '      color: rgba(255,255,255,0.8);\n';
+  html += '      line-height: 1.7;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Info Grid */\n';
+  html += '    .info-grid {\n';
+  html += '      display: grid;\n';
+  html += '      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n';
+  html += '      gap: 16px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item {\n';
+  html += '      background: rgba(255,255,255,0.03);\n';
+  html += '      border-radius: 14px;\n';
+  html += '      padding: 18px;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '      border: 1px solid transparent;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item:hover {\n';
+  html += '      background: rgba(255,255,255,0.06);\n';
+  html += '      border-color: rgba(219, 39, 119, 0.2);\n';
+  html += '      transform: translateY(-2px);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item .label {\n';
+  html += '      font-size: 10px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 6px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item .value {\n';
+  html += '      font-size: 16px;\n';
+  html += '      color: #fff;\n';
+  html += '      font-weight: 600;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Valores Cards */\n';
+  html += '    .valores-grid {\n';
+  html += '      display: grid;\n';
+  html += '      grid-template-columns: 1fr 1fr;\n';
+  html += '      gap: 16px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card {\n';
+  html += '      border-radius: 16px;\n';
+  html += '      padding: 24px;\n';
+  html += '      text-align: center;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card:hover {\n';
+  html += '      transform: translateY(-4px) scale(1.02);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota {\n';
+  html += '      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05));\n';
+  html += '      border: 1px solid rgba(139,92,246,0.4);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota:hover {\n';
+  html += '      box-shadow: 0 15px 40px rgba(139,92,246,0.25);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.boleto {\n';
+  html += '      background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05));\n';
+  html += '      border: 1px solid rgba(6,182,212,0.4);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.boleto:hover {\n';
+  html += '      box-shadow: 0 15px 40px rgba(6,182,212,0.25);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card .icon {\n';
+  html += '      width: 48px;\n';
+  html += '      height: 48px;\n';
+  html += '      border-radius: 12px;\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      margin: 0 auto 12px;\n';
+  html += '      transition: transform 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card:hover .icon {\n';
+  html += '      transform: scale(1.1) rotate(5deg);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota .icon { background: rgba(139,92,246,0.3); }\n';
+  html += '    .valor-card.boleto .icon { background: rgba(6,182,212,0.3); }\n';
+  html += '    \n';
+  html += '    .valor-card .tipo {\n';
+  html += '      font-size: 11px;\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota .tipo { color: #a78bfa; }\n';
+  html += '    .valor-card.boleto .tipo { color: #22d3ee; }\n';
+  html += '    \n';
+  html += '    .valor-card .amount {\n';
+  html += '      font-size: 28px;\n';
+  html += '      font-weight: 800;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota .amount { color: #a78bfa; }\n';
+  html += '    .valor-card.boleto .amount { color: #22d3ee; }\n';
+  html += '    \n';
+  html += '    /* Anexos */\n';
+  html += '    .anexos-section {\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexos-section h3 {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 16px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexos-grid {\n';
+  html += '      display: flex;\n';
+  html += '      gap: 12px;\n';
+  html += '      flex-wrap: wrap;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn {\n';
+  html += '      display: inline-flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 10px;\n';
+  html += '      padding: 14px 20px;\n';
+  html += '      border-radius: 12px;\n';
+  html += '      text-decoration: none;\n';
+  html += '      font-size: 14px;\n';
+  html += '      font-weight: 600;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn:hover {\n';
+  html += '      transform: translateY(-3px) scale(1.02);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.nota {\n';
+  html += '      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(139,92,246,0.1));\n';
+  html += '      border: 1px solid rgba(139,92,246,0.5);\n';
+  html += '      color: #a78bfa;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.nota:hover {\n';
+  html += '      box-shadow: 0 10px 30px rgba(139,92,246,0.3);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.boleto {\n';
+  html += '      background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(6,182,212,0.1));\n';
+  html += '      border: 1px solid rgba(6,182,212,0.5);\n';
+  html += '      color: #22d3ee;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.boleto:hover {\n';
+  html += '      box-shadow: 0 10px 30px rgba(6,182,212,0.3);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Footer */\n';
+  html += '    .footer {\n';
+  html += '      text-align: center;\n';
+  html += '      padding: 32px 20px;\n';
+  html += '      border-top: 1px solid rgba(255,255,255,0.1);\n';
+  html += '      animation: fadeInUp 0.6s ease-out 0.4s both;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer-logo {\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      gap: 12px;\n';
+  html += '      margin-bottom: 16px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer-logo .icon {\n';
+  html += '      width: 40px;\n';
+  html += '      height: 40px;\n';
+  html += '      background: linear-gradient(135deg, #db2777, #ec4899);\n';
+  html += '      border-radius: 10px;\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      animation: pulse 2s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer-logo h3 {\n';
+  html += '      font-size: 18px;\n';
+  html += '      font-weight: 700;\n';
+  html += '      color: #db2777;\n';
+  html += '      letter-spacing: 2px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer p {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      margin-bottom: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer .tech {\n';
+  html += '      font-size: 10px;\n';
+  html += '      color: rgba(255,255,255,0.3);\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Responsivo */\n';
+  html += '    @media (max-width: 600px) {\n';
+  html += '      .container { padding: 20px 12px; }\n';
+  html += '      .header { padding: 20px; }\n';
+  html += '      .main-card { padding: 20px; }\n';
+  html += '      .valores-grid { grid-template-columns: 1fr; }\n';
+  html += '      .empresa-header { flex-direction: column; gap: 20px; }\n';
+  html += '      .valor-destaque { text-align: left; }\n';
+  html += '      .valor-destaque .valor { font-size: 28px; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Print */\n';
+  html += '    @media print {\n';
+  html += '      html, body { background: #fff !important; color: #000 !important; }\n';
+  html += '      .header, .main-card { border-color: #ddd !important; }\n';
+  html += '      .bg-animation, .particles { display: none !important; }\n';
+  html += '    }\n';
+  html += '  </style>\n';
+  html += '</head>\n';
+  html += '<body>\n';
+  html += '  <!-- Background Animation -->\n';
+  html += '  <div class="bg-animation">\n';
+  html += '    <div class="bg-glow bg-glow-1"></div>\n';
+  html += '    <div class="bg-glow bg-glow-2"></div>\n';
+  html += '    <div class="bg-glow bg-glow-3"></div>\n';
+  html += '  </div>\n';
+  html += '  \n';
+  html += '  <!-- Particles -->\n';
+  html += '  <div class="particles">\n';
+  for (var p = 0; p < 20; p++) {
+    var leftPos = Math.random() * 100;
+    var delay = Math.random() * 15;
+    var duration = 10 + Math.random() * 10;
+    var size = 2 + Math.random() * 4;
+    html += '    <div class="particle" style="left: ' + leftPos + '%; animation-delay: -' + delay + 's; animation-duration: ' + duration + 's; width: ' + size + 'px; height: ' + size + 'px;"></div>\n';
+  }
+  html += '  </div>\n';
+  html += '  \n';
+  html += '  <div class="container">\n';
+  html += '    <!-- Header -->\n';
+  html += '    <div class="header">\n';
+  html += '      <div class="logo-section">\n';
+  html += '        <div class="logo-icon">\n';
+  html += '          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">\n';
+  html += '            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>\n';
+  html += '            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>\n';
+  html += '          </svg>\n';
+  html += '        </div>\n';
+  html += '        <div class="logo-text">\n';
+  html += '          <h1>ICARUS</h1>\n';
+  html += '          <p>Sistema de Gestão Premium</p>\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  html += '      \n';
+  html += '      <div class="doc-info">\n';
+  html += '        <div>\n';
+  html += '          <div class="doc-number">Doc #' + docId + '</div>\n';
+  html += '          <div class="doc-date">Emitido em ' + dataEmissao + ' às ' + horaEmissao + '</div>\n';
+  html += '        </div>\n';
+  html += '        <div class="status-badge">\n';
+  html += '          <span class="status-dot"></span>\n';
+  html += '          ' + statusText + '\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  html += '    </div>\n';
+  html += '    \n';
+  html += '    <!-- Main Card -->\n';
+  html += '    <div class="main-card">\n';
+  html += '      <div class="empresa-header">\n';
+  html += '        <div class="empresa-info">\n';
+  html += '          <h2>' + escapeHtml(item.empresa) + '</h2>\n';
+  html += '          <div class="setor">\n';
+  html += '            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>\n';
+  html += '            ' + escapeHtml(item.setor || 'Setor não informado') + '\n';
+  html += '          </div>\n';
+  html += '        </div>\n';
+  html += '        <div class="valor-destaque">\n';
+  html += '          <div class="label">Valor Total</div>\n';
+  html += '          <div class="valor">R$ ' + valorFormatted + '</div>\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  html += '      \n';
+  html += '      <!-- Descrição -->\n';
+  html += '      <div class="descricao">\n';
+  html += '        <h3>Descrição do Serviço/Produto</h3>\n';
+  html += '        <p>' + escapeHtml(item.descricao) + '</p>\n';
+  html += '      </div>\n';
+  html += '      \n';
+  html += '      <!-- Info Grid -->\n';
+  html += '      <div class="info-grid">\n';
+  if (item.responsavel) {
+    html += '        <div class="info-item">\n';
+    html += '          <div class="label">Responsável</div>\n';
+    html += '          <div class="value">' + escapeHtml(item.responsavel) + '</div>\n';
+    html += '        </div>\n';
+  }
+  if (item.data_emissao) {
+    html += '        <div class="info-item">\n';
+    html += '          <div class="label">Data de Emissão</div>\n';
+    html += '          <div class="value">' + new Date(item.data_emissao).toLocaleDateString('pt-BR') + '</div>\n';
+    html += '        </div>\n';
+  }
+  if (venc) {
+    html += '        <div class="info-item">\n';
+    html += '          <div class="label">Data de Vencimento</div>\n';
+    html += '          <div class="value" style="color: ' + statusColor + '">' + venc.toLocaleDateString('pt-BR') + '</div>\n';
+    html += '        </div>\n';
+  }
+  html += '        <div class="info-item">\n';
+  html += '          <div class="label">Cadastrado por</div>\n';
+  html += '          <div class="value">' + escapeHtml(item.created_by_name || 'Sistema') + '</div>\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  
+  // Valores
+  if (item.valor_nota || item.valor_boleto) {
+    html += '      <!-- Valores -->\n';
+    html += '      <div class="valores-grid">\n';
+    if (item.valor_nota) {
+      html += '        <div class="valor-card nota">\n';
+      html += '          <div class="icon">\n';
+      html += '            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>\n';
+      html += '          </div>\n';
+      html += '          <div class="tipo">Nota Fiscal</div>\n';
+      html += '          <div class="amount">R$ ' + valorNotaFormatted + '</div>\n';
+      html += '        </div>\n';
     }
-    
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 40px 20px;
+    if (item.valor_boleto) {
+      html += '        <div class="valor-card boleto">\n';
+      html += '          <div class="icon">\n';
+      html += '            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>\n';
+      html += '          </div>\n';
+      html += '          <div class="tipo">Boleto</div>\n';
+      html += '          <div class="amount">R$ ' + valorBoletoFormatted + '</div>\n';
+      html += '        </div>\n';
     }
-    
-    /* Header Premium */
-    .header {
-      background: linear-gradient(145deg, rgba(219, 39, 119, 0.15), transparent);
-      border: 1px solid rgba(219, 39, 119, 0.4);
-      border-radius: 24px;
-      padding: 32px;
-      margin-bottom: 32px;
-      position: relative;
-      overflow: hidden;
+    html += '      </div>\n';
+  }
+  
+  // Anexos
+  if (item.nota_anexo || item.boleto_anexo) {
+    html += '      <!-- Anexos -->\n';
+    html += '      <div class="anexos-section">\n';
+    html += '        <h3>📎 Documentos Anexados</h3>\n';
+    html += '        <div class="anexos-grid">\n';
+    if (item.nota_anexo) {
+      html += '          <a href="' + item.nota_anexo.data + '" download="' + item.nota_anexo.name + '" class="anexo-btn nota">\n';
+      html += '            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>\n';
+      html += '            Baixar Nota Fiscal\n';
+      html += '          </a>\n';
     }
-    
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(219, 39, 119, 0.2) 0%, transparent 70%);
-      border-radius: 50%;
+    if (item.boleto_anexo) {
+      html += '          <a href="' + item.boleto_anexo.data + '" download="' + item.boleto_anexo.name + '" class="anexo-btn boleto">\n';
+      html += '            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>\n';
+      html += '            Baixar Boleto\n';
+      html += '          </a>\n';
     }
-    
-    .logo-section {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .logo-icon {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #db2777, #ec4899);
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 32px rgba(219, 39, 119, 0.4);
-    }
-    
-    .logo-icon svg { width: 32px; height: 32px; }
-    
-    .logo-text h1 {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #db2777, #f472b6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: 3px;
-    }
-    
-    .logo-text p {
-      font-size: 11px;
-      color: rgba(255,255,255,0.5);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-    
-    .doc-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .doc-number {
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-    }
-    
-    .doc-date {
-      font-size: 13px;
-      color: rgba(255,255,255,0.6);
-    }
-    
-    /* Status Badge */
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: ${statusBg};
-      border: 2px solid ${statusColor};
-      border-radius: 50px;
-      font-size: 14px;
-      font-weight: 700;
-      color: ${statusColor};
-      letter-spacing: 1px;
-    }
-    
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      background: ${statusColor};
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    
-    /* Main Card */
-    .main-card {
-      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 32px;
-      margin-bottom: 24px;
-    }
-    
-    .empresa-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .empresa-info h2 {
-      font-size: 24px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 8px;
-    }
-    
-    .empresa-info .setor {
-      font-size: 14px;
-      color: rgba(255,255,255,0.5);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .valor-destaque {
-      text-align: right;
-    }
-    
-    .valor-destaque .label {
-      font-size: 11px;
-      color: rgba(255,255,255,0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-    
-    .valor-destaque .valor {
-      font-size: 36px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #10b981, #34d399);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    /* Descrição */
-    .descricao {
-      background: rgba(255,255,255,0.03);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .descricao h3 {
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-    }
-    
-    .descricao p {
-      font-size: 15px;
-      color: rgba(255,255,255,0.8);
-      line-height: 1.7;
-    }
-    
-    /* Info Grid */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .info-item {
-      background: rgba(255,255,255,0.03);
-      border-radius: 14px;
-      padding: 18px;
-    }
-    
-    .info-item .label {
-      font-size: 10px;
-      color: rgba(255,255,255,0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-    }
-    
-    .info-item .value {
-      font-size: 16px;
-      color: #fff;
-      font-weight: 600;
-    }
-    
-    /* Valores Cards */
-    .valores-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .valor-card {
-      border-radius: 16px;
-      padding: 24px;
-      text-align: center;
-    }
-    
-    .valor-card.nota {
-      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05));
-      border: 1px solid rgba(139,92,246,0.4);
-    }
-    
-    .valor-card.boleto {
-      background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05));
-      border: 1px solid rgba(6,182,212,0.4);
-    }
-    
-    .valor-card .icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 12px;
-    }
-    
-    .valor-card.nota .icon { background: rgba(139,92,246,0.3); }
-    .valor-card.boleto .icon { background: rgba(6,182,212,0.3); }
-    
-    .valor-card .tipo {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-    
-    .valor-card.nota .tipo { color: #a78bfa; }
-    .valor-card.boleto .tipo { color: #22d3ee; }
-    
-    .valor-card .amount {
-      font-size: 28px;
-      font-weight: 800;
-    }
-    
-    .valor-card.nota .amount { color: #a78bfa; }
-    .valor-card.boleto .amount { color: #22d3ee; }
-    
-    /* Anexos */
-    .anexos-section {
-      margin-bottom: 24px;
-    }
-    
-    .anexos-section h3 {
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 16px;
-    }
-    
-    .anexos-grid {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    
-    .anexo-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 20px;
-      border-radius: 12px;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      transition: transform 0.2s;
-    }
-    
-    .anexo-btn:hover {
-      transform: translateY(-2px);
-    }
-    
-    .anexo-btn.nota {
-      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(139,92,246,0.1));
-      border: 1px solid rgba(139,92,246,0.5);
-      color: #a78bfa;
-    }
-    
-    .anexo-btn.boleto {
-      background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(6,182,212,0.1));
-      border: 1px solid rgba(6,182,212,0.5);
-      color: #22d3ee;
-    }
-    
-    /* Footer */
-    .footer {
-      text-align: center;
-      padding: 32px 20px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    
-    .footer-logo .icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #db2777, #ec4899);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .footer-logo h3 {
-      font-size: 18px;
-      font-weight: 700;
-      color: #db2777;
-      letter-spacing: 2px;
-    }
-    
-    .footer p {
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      margin-bottom: 8px;
-    }
-    
-    .footer .tech {
-      font-size: 10px;
-      color: rgba(255,255,255,0.3);
-      letter-spacing: 1px;
-    }
-    
-    /* Responsivo */
-    @media (max-width: 600px) {
-      .container { padding: 20px 12px; }
-      .header { padding: 20px; }
-      .main-card { padding: 20px; }
-      .valores-grid { grid-template-columns: 1fr; }
-      .empresa-header { flex-direction: column; gap: 20px; }
-      .valor-destaque { text-align: left; }
-      .valor-destaque .valor { font-size: 28px; }
-    }
-    
-    /* Print */
-    @media print {
-      html, body { background: #fff !important; color: #000 !important; }
-      .header, .main-card { border-color: #ddd !important; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <div class="logo-section">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
-            <!-- Estrela de Davi (Hexagrama) -->
-            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>
-            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>
-          </svg>
-        </div>
-        <div class="logo-text">
-          <h1>ICARUS</h1>
-          <p>Sistema de Gestão Premium</p>
-        </div>
-      </div>
-      
-      <div class="doc-info">
-        <div>
-          <div class="doc-number">Doc #${item.id.slice(-8).toUpperCase()}</div>
-          <div class="doc-date">Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
-        </div>
-        <div class="status-badge">
-          <span class="status-dot"></span>
-          ${statusText}
-        </div>
-      </div>
-    </div>
-    
-    <!-- Main Card -->
-    <div class="main-card">
-      <div class="empresa-header">
-        <div class="empresa-info">
-          <h2>${escapeHtml(item.empresa)}</h2>
-          <div class="setor">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            ${escapeHtml(item.setor || 'Setor não informado')}
-          </div>
-        </div>
-        <div class="valor-destaque">
-          <div class="label">Valor Total</div>
-          <div class="valor">R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-        </div>
-      </div>
-      
-      <!-- Descrição -->
-      <div class="descricao">
-        <h3>Descrição do Serviço/Produto</h3>
-        <p>${escapeHtml(item.descricao)}</p>
-      </div>
-      
-      <!-- Info Grid -->
-      <div class="info-grid">
-        ${item.responsavel ? `
-        <div class="info-item">
-          <div class="label">Responsável</div>
-          <div class="value">${escapeHtml(item.responsavel)}</div>
-        </div>` : ''}
-        
-        ${item.data_emissao ? `
-        <div class="info-item">
-          <div class="label">Data de Emissão</div>
-          <div class="value">${new Date(item.data_emissao).toLocaleDateString('pt-BR')}</div>
-        </div>` : ''}
-        
-        ${venc ? `
-        <div class="info-item">
-          <div class="label">Data de Vencimento</div>
-          <div class="value" style="color: ${statusColor}">${venc.toLocaleDateString('pt-BR')}</div>
-        </div>` : ''}
-        
-        <div class="info-item">
-          <div class="label">Cadastrado por</div>
-          <div class="value">${escapeHtml(item.created_by_name || 'Sistema')}</div>
-        </div>
-      </div>
-      
-      <!-- Valores -->
-      ${item.valor_nota || item.valor_boleto ? `
-      <div class="valores-grid">
-        ${item.valor_nota ? `
-        <div class="valor-card nota">
-          <div class="icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </div>
-          <div class="tipo">Nota Fiscal</div>
-          <div class="amount">R$ ${parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-        </div>` : ''}
-        
-        ${item.valor_boleto ? `
-        <div class="valor-card boleto">
-          <div class="icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
-          </div>
-          <div class="tipo">Boleto</div>
-          <div class="amount">R$ ${parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-        </div>` : ''}
-      </div>` : ''}
-      
-      <!-- Anexos -->
-      ${item.nota_anexo || item.boleto_anexo ? `
-      <div class="anexos-section">
-        <h3>📎 Documentos Anexados</h3>
-        <div class="anexos-grid">
-          ${item.nota_anexo ? `
-          <a href="${item.nota_anexo.data}" download="${item.nota_anexo.name}" class="anexo-btn nota">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Baixar Nota Fiscal
-          </a>` : ''}
-          
-          ${item.boleto_anexo ? `
-          <a href="${item.boleto_anexo.data}" download="${item.boleto_anexo.name}" class="anexo-btn boleto">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Baixar Boleto
-          </a>` : ''}
-        </div>
-      </div>` : ''}
-    </div>
-    
-    <!-- Footer -->
-    <div class="footer">
-      <div class="footer-logo">
-        <div class="icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
-            <!-- Estrela de Davi -->
-            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>
-            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>
-          </svg>
-        </div>
-        <h3>ICARUS</h3>
-      </div>
-      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>
-      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>
-      <p style="margin-top: 12px; color: rgba(255,255,255,0.6);">📞 (62) 98493-0056</p>
-      <div class="tech" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Desenvolvido por</div>
-        <div style="font-size: 13px; color: #f472b6; font-weight: 600;">Guilherme Braga de Queiroz</div>
-        <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px;">© ${new Date().getFullYear()} Sistema ICARUS • Todos os direitos reservados</div>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
+    html += '        </div>\n';
+    html += '      </div>\n';
+  }
+  
+  html += '    </div>\n';
+  html += '    \n';
+  html += '    <!-- Footer -->\n';
+  html += '    <div class="footer">\n';
+  html += '      <div class="footer-logo">\n';
+  html += '        <div class="icon">\n';
+  html += '          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">\n';
+  html += '            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>\n';
+  html += '            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>\n';
+  html += '          </svg>\n';
+  html += '        </div>\n';
+  html += '        <h3>ICARUS</h3>\n';
+  html += '      </div>\n';
+  html += '      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>\n';
+  html += '      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>\n';
+  html += '      <p style="margin-top: 12px; color: rgba(255,255,255,0.6);">📞 (62) 98493-0056</p>\n';
+  html += '      <div class="tech" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">\n';
+  html += '        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Desenvolvido por</div>\n';
+  html += '        <div style="font-size: 13px; color: #f472b6; font-weight: 600;">Guilherme Braga de Queiroz</div>\n';
+  html += '        <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px;">© ' + anoAtual + ' Sistema ICARUS • Todos os direitos reservados</div>\n';
+  html += '      </div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n';
+  html += '</body>\n';
+  html += '</html>';
+  
+  return html;
 }
 
 // Exportar Nota como HTML
