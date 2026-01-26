@@ -11478,6 +11478,9 @@ async function loadRelatorios() {
     await loadReportsData();
     renderReports();
     
+    // Inicializar aba de Notas & Boletos se usuário tiver permissão
+    initNotasTab();
+    
   } catch (error) {
     console.error('Erro ao carregar relatórios:', error);
   }
@@ -12798,12 +12801,23 @@ function canAccessNotas() {
   
   const username = (user.username || user.name || '').toLowerCase();
   const role = (user.role || '').toLowerCase();
+  const roles = (user.roles || []).map(r => r.toLowerCase());
   
-  // Bruno, José Walter, ou role Manutenção
+  // Bruno, José Walter, ou role Manutenção/Admin
   const allowedUsers = ['bruno', 'jose walter', 'josewalter', 'josé walter', 'joséwalter'];
-  const allowedRoles = ['manutencao', 'manutenção', 'admin', 'owner'];
+  const allowedRoles = ['manutencao', 'manutenção', 'admin', 'owner', 'maintenance'];
   
-  return allowedUsers.some(u => username.includes(u)) || allowedRoles.some(r => role.includes(r));
+  // Verificar username
+  if (allowedUsers.some(u => username.includes(u))) return true;
+  
+  // Verificar role único
+  if (allowedRoles.some(r => role.includes(r))) return true;
+  
+  // Verificar array de roles
+  if (roles.some(r => allowedRoles.some(ar => r.includes(ar)))) return true;
+  
+  console.log('canAccessNotas - user:', username, 'role:', role, 'roles:', roles);
+  return false;
 }
 
 // Inicializar aba de Notas & Boletos
