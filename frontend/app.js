@@ -12815,16 +12815,26 @@ function canAccessNotas() {
     return true;
   }
   
-  // Verificar role único
-  if (role && allowedRoles.some(r => role.includes(r))) {
-    console.log('Acesso permitido por role:', role);
-    return true;
+  // Verificar role único - agora verificando se role contém algum dos allowedRoles
+  if (role) {
+    for (const allowed of allowedRoles) {
+      if (role === allowed || role.includes(allowed) || allowed.includes(role)) {
+        console.log('Acesso permitido por role:', role);
+        return true;
+      }
+    }
   }
   
   // Verificar array de roles
-  if (roles.some(r => allowedRoles.some(ar => r.includes(ar)))) {
-    console.log('Acesso permitido por roles array');
-    return true;
+  if (roles.length > 0) {
+    for (const r of roles) {
+      for (const allowed of allowedRoles) {
+        if (r === allowed || r.includes(allowed) || allowed.includes(r)) {
+          console.log('Acesso permitido por roles array:', r);
+          return true;
+        }
+      }
+    }
   }
   
   console.log('Acesso NEGADO');
