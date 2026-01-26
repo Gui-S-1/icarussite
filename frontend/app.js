@@ -13664,7 +13664,7 @@ function generateNotaHTMLContent(item) {
     
     html, body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0a0a12 100%);
+      background: linear-gradient(135deg, #1a0a14 0%, #2d1a2e 50%, #1a0a14 100%);
       min-height: 100vh;
       color: #fff;
     }
@@ -13677,8 +13677,8 @@ function generateNotaHTMLContent(item) {
     
     /* Header Premium */
     .header {
-      background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), transparent);
-      border: 1px solid rgba(212, 175, 55, 0.3);
+      background: linear-gradient(145deg, rgba(219, 39, 119, 0.15), transparent);
+      border: 1px solid rgba(219, 39, 119, 0.4);
       border-radius: 24px;
       padding: 32px;
       margin-bottom: 32px;
@@ -13693,7 +13693,7 @@ function generateNotaHTMLContent(item) {
       right: -20%;
       width: 300px;
       height: 300px;
-      background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(219, 39, 119, 0.2) 0%, transparent 70%);
       border-radius: 50%;
     }
     
@@ -13709,12 +13709,12 @@ function generateNotaHTMLContent(item) {
     .logo-icon {
       width: 60px;
       height: 60px;
-      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      background: linear-gradient(135deg, #db2777, #ec4899);
       border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 32px rgba(212, 175, 55, 0.3);
+      box-shadow: 0 8px 32px rgba(219, 39, 119, 0.4);
     }
     
     .logo-icon svg { width: 32px; height: 32px; }
@@ -13722,7 +13722,7 @@ function generateNotaHTMLContent(item) {
     .logo-text h1 {
       font-size: 28px;
       font-weight: 800;
-      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      background: linear-gradient(135deg, #db2777, #f472b6);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: 3px;
@@ -14006,7 +14006,7 @@ function generateNotaHTMLContent(item) {
     .footer-logo .icon {
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      background: linear-gradient(135deg, #db2777, #ec4899);
       border-radius: 10px;
       display: flex;
       align-items: center;
@@ -14016,7 +14016,7 @@ function generateNotaHTMLContent(item) {
     .footer-logo h3 {
       font-size: 18px;
       font-weight: 700;
-      color: #d4af37;
+      color: #db2777;
       letter-spacing: 2px;
     }
     
@@ -14056,8 +14056,10 @@ function generateNotaHTMLContent(item) {
     <div class="header">
       <div class="logo-section">
         <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
+            <!-- Estrela de Davi (Hexagrama) -->
+            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>
+            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>
           </svg>
         </div>
         <div class="logo-text">
@@ -14172,14 +14174,17 @@ function generateNotaHTMLContent(item) {
     <div class="footer">
       <div class="footer-logo">
         <div class="icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
+            <!-- Estrela de Davi -->
+            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>
+            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>
           </svg>
         </div>
         <h3>ICARUS</h3>
       </div>
       <p>Documento gerado automaticamente pelo Sistema ICARUS</p>
       <p>Gestão Inteligente de Manutenção • Granja Vitta</p>
+      <p style="margin-top: 12px; color: rgba(255,255,255,0.6);">📞 (62) 98493-0056</p>
       <div class="tech">Tecnologia Premium • ${new Date().getFullYear()}</div>
     </div>
   </div>
