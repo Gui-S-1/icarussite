@@ -4942,6 +4942,70 @@ function closeChecklistAutomation() {
   if (modal) modal.remove();
 }
 
+// ============================================
+// DROPDOWN DE SETOR/LOCAL PARA OS
+// ============================================
+
+function toggleSectorDropdown() {
+  const options = document.getElementById('os-sector-options');
+  const btn = document.getElementById('os-sector-btn');
+  if (options) {
+    const isOpen = options.style.display === 'block';
+    options.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+      btn.style.borderColor = 'rgba(212,175,55,0.5)';
+      btn.style.boxShadow = '0 0 20px rgba(212,175,55,0.2)';
+    } else {
+      btn.style.borderColor = 'rgba(255,255,255,0.1)';
+      btn.style.boxShadow = 'none';
+    }
+  }
+}
+
+function toggleSectorSub(group) {
+  const sub = document.getElementById('sub-' + group);
+  const icon = document.getElementById('icon-' + group);
+  if (sub) {
+    const isOpen = sub.style.display === 'block';
+    sub.style.display = isOpen ? 'none' : 'block';
+    if (icon) {
+      icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+  }
+}
+
+function selectSector(value) {
+  const input = document.getElementById('os-sector');
+  const text = document.getElementById('os-sector-text');
+  const btn = document.getElementById('os-sector-btn');
+  const options = document.getElementById('os-sector-options');
+  
+  if (input) input.value = value;
+  if (text) {
+    text.textContent = value;
+    text.style.color = '#fff';
+  }
+  if (btn) {
+    btn.style.borderColor = 'rgba(212,175,55,0.3)';
+    btn.style.boxShadow = 'none';
+  }
+  if (options) options.style.display = 'none';
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('os-sector-dropdown');
+  const options = document.getElementById('os-sector-options');
+  if (dropdown && options && !dropdown.contains(e.target)) {
+    options.style.display = 'none';
+    const btn = document.getElementById('os-sector-btn');
+    if (btn) {
+      btn.style.borderColor = 'rgba(255,255,255,0.1)';
+      btn.style.boxShadow = 'none';
+    }
+  }
+});
+
 // Salvar configuração de automação
 async function saveChecklistAutomation(checklistId) {
   const enabled = document.getElementById('auto-enabled').checked;
