@@ -12780,3 +12780,795 @@ function generateDiariasPDF() {
     printWindow.print();
   }, 500);
 }
+
+// ============================================
+// SISTEMA DE NOTAS & BOLETOS - GESTÃO FINANCEIRA
+// ============================================
+
+let notasData = {
+  items: [],
+  filter: 'all',
+  search: ''
+};
+
+// Verificar se usuário tem permissão para ver Notas & Boletos
+function canAccessNotas() {
+  const user = state.user;
+  if (!user) return false;
+  
+  const username = (user.username || user.name || '').toLowerCase();
+  const role = (user.role || '').toLowerCase();
+  
+  // Bruno, José Walter, ou role Manutenção
+  const allowedUsers = ['bruno', 'jose walter', 'josewalter', 'josé walter', 'joséwalter'];
+  const allowedRoles = ['manutencao', 'manutenção', 'admin', 'owner'];
+  
+  return allowedUsers.some(u => username.includes(u)) || allowedRoles.some(r => role.includes(r));
+}
+
+// Inicializar aba de Notas & Boletos
+function initNotasTab() {
+  const tabNotas = document.getElementById('tab-notas');
+  if (tabNotas) {
+    tabNotas.style.display = canAccessNotas() ? 'flex' : 'none';
+  }
+  
+  if (canAccessNotas()) {
+    loadNotas();
+  }
+}
+
+// Alternar entre Fórum e Notas
+function switchRelatoriosTab(tab) {
+  const tabForum = document.getElementById('tab-forum');
+  const tabNotas = document.getElementById('tab-notas');
+  const forumContent = document.getElementById('forum-content');
+  const notasContent = document.getElementById('notas-content');
+  
+  if (tab === 'forum') {
+    tabForum.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    tabForum.style.color = '#fff';
+    tabForum.style.border = 'none';
+    tabNotas.style.background = 'rgba(255,255,255,0.05)';
+    tabNotas.style.color = 'rgba(255,255,255,0.6)';
+    tabNotas.style.border = '1px solid rgba(255,255,255,0.1)';
+    forumContent.style.display = 'block';
+    notasContent.style.display = 'none';
+  } else {
+    tabNotas.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    tabNotas.style.color = '#fff';
+    tabNotas.style.border = 'none';
+    tabForum.style.background = 'rgba(255,255,255,0.05)';
+    tabForum.style.color = 'rgba(255,255,255,0.6)';
+    tabForum.style.border = '1px solid rgba(255,255,255,0.1)';
+    forumContent.style.display = 'none';
+    notasContent.style.display = 'block';
+    loadNotas();
+  }
+}
+
+// Carregar notas do localStorage ou API
+async function loadNotas() {
+  try {
+    // Tentar carregar do backend primeiro
+    const response = await fetch(`${API_BASE_URL}/notas`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      notasData.items = data.notas || [];
+    } else {
+      // Fallback para localStorage
+      const saved = localStorage.getItem('icarus_notas_' + state.user?.tenant_id);
+      if (saved) {
+        notasData.items = JSON.parse(saved);
+      }
+    }
+  } catch (e) {
+    // Fallback para localStorage
+    const saved = localStorage.getItem('icarus_notas_' + state.user?.tenant_id);
+    if (saved) {
+      notasData.items = JSON.parse(saved);
+    }
+  }
+  
+  renderNotas();
+  updateNotasStats();
+}
+
+// Salvar notas
+async function saveNotas() {
+  // Salvar localmente primeiro
+  localStorage.setItem('icarus_notas_' + state.user?.tenant_id, JSON.stringify(notasData.items));
+  
+  // Tentar salvar no backend
+  try {
+    await fetch(`${API_BASE_URL}/notas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({ notas: notasData.items })
+    });
+  } catch (e) {
+    console.log('Notas salvas localmente');
+  }
+}
+
+// Atualizar estatísticas
+function updateNotasStats() {
+  const now = new Date();
+  const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  let totalPendente = 0;
+  let vence7dias = 0;
+  let vencidos = 0;
+  let esteMes = 0;
+  
+  notasData.items.forEach(item => {
+    if (item.status !== 'pago') {
+      totalPendente += parseFloat(item.valor_boleto || item.valor_nota || 0);
+      
+      if (item.data_vencimento) {
+        const venc = new Date(item.data_vencimento);
+        if (venc < now) {
+          vencidos++;
+        } else if (venc <= sevenDays) {
+          vence7dias++;
+        }
+      }
+    }
+    
+    const created = new Date(item.created_at);
+    if (created >= startOfMonth) {
+      esteMes++;
+    }
+  });
+  
+  document.getElementById('notas-total-pendente').textContent = 'R$ ' + totalPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  document.getElementById('notas-vence-7dias').textContent = vence7dias;
+  document.getElementById('notas-vencidos').textContent = vencidos;
+  document.getElementById('notas-este-mes').textContent = esteMes;
+  
+  // Badge de pendentes
+  const badge = document.getElementById('notas-pending-badge');
+  if (badge) {
+    const pendentes = notasData.items.filter(i => i.status === 'pendente' || i.status === 'aguardando').length;
+    badge.textContent = pendentes;
+    badge.style.display = pendentes > 0 ? 'inline' : 'none';
+  }
+}
+
+// Renderizar lista de notas
+function renderNotas() {
+  const container = document.getElementById('notas-list');
+  if (!container) return;
+  
+  let filtered = notasData.items;
+  
+  // Aplicar filtro
+  if (notasData.filter !== 'all') {
+    filtered = filtered.filter(i => i.status === notasData.filter);
+  }
+  
+  // Aplicar busca
+  if (notasData.search) {
+    const search = notasData.search.toLowerCase();
+    filtered = filtered.filter(i => 
+      (i.empresa || '').toLowerCase().includes(search) ||
+      (i.descricao || '').toLowerCase().includes(search) ||
+      (i.responsavel || '').toLowerCase().includes(search)
+    );
+  }
+  
+  // Ordenar por data de vencimento
+  filtered.sort((a, b) => {
+    if (!a.data_vencimento) return 1;
+    if (!b.data_vencimento) return -1;
+    return new Date(a.data_vencimento) - new Date(b.data_vencimento);
+  });
+  
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.4);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 16px; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p style="font-size: 16px; margin: 0 0 8px 0;">${notasData.filter === 'all' ? 'Nenhuma nota ou boleto cadastrado' : 'Nenhum item encontrado'}</p>
+        <p style="font-size: 13px; margin: 0;">Clique em "Nova Entrada" para adicionar</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = filtered.map(item => {
+    const now = new Date();
+    const venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
+    const diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
+    
+    let statusColor = '#10b981';
+    let statusText = 'Pendente';
+    let statusBg = 'rgba(16, 185, 129, 0.15)';
+    
+    if (item.status === 'pago') {
+      statusColor = '#22c55e';
+      statusText = 'Pago';
+      statusBg = 'rgba(34, 197, 94, 0.15)';
+    } else if (item.status === 'aguardando') {
+      statusColor = '#f59e0b';
+      statusText = 'Aguardando';
+      statusBg = 'rgba(245, 158, 11, 0.15)';
+    } else if (diasVenc !== null && diasVenc < 0) {
+      statusColor = '#ef4444';
+      statusText = 'Vencido';
+      statusBg = 'rgba(239, 68, 68, 0.15)';
+    } else if (diasVenc !== null && diasVenc <= 7) {
+      statusColor = '#fb923c';
+      statusText = 'Vence em ' + diasVenc + 'd';
+      statusBg = 'rgba(251, 146, 60, 0.15)';
+    }
+    
+    const valor = parseFloat(item.valor_boleto || item.valor_nota || 0);
+    const temNota = item.nota_anexo ? true : false;
+    const temBoleto = item.boleto_anexo ? true : false;
+    
+    return `
+      <div class="nota-card" onclick="viewNota('${item.id}')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; margin-bottom: 12px; cursor: pointer; transition: 0.3s; display: flex; gap: 16px; align-items: flex-start;" onmouseover="this.style.borderColor='rgba(16,185,129,0.3)';this.style.background='rgba(16,185,129,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)'">
+        
+        <!-- Ícone/Avatar da Empresa -->
+        <div style="width: 56px; height: 56px; background: linear-gradient(135deg, ${statusBg}, transparent); border: 1px solid ${statusColor}30; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="1.5">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="M7 15h0M2 9h20"/>
+          </svg>
+        </div>
+        
+        <!-- Info Principal -->
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(item.empresa || 'Empresa não informada')}</h3>
+            <span style="padding: 4px 10px; background: ${statusBg}; color: ${statusColor}; font-size: 11px; font-weight: 600; border-radius: 20px; white-space: nowrap;">${statusText}</span>
+          </div>
+          
+          <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0 0 10px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(item.descricao || 'Sem descrição')}</p>
+          
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: rgba(255,255,255,0.4);">
+            ${item.responsavel ? `<span style="display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escapeHtml(item.responsavel)}</span>` : ''}
+            ${venc ? `<span style="display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Venc: ${venc.toLocaleDateString('pt-BR')}</span>` : ''}
+            <span style="display: flex; align-items: center; gap: 6px;">
+              ${temNota ? '<span style="background: rgba(139,92,246,0.2); color: #a78bfa; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600;">NOTA</span>' : ''}
+              ${temBoleto ? '<span style="background: rgba(6,182,212,0.2); color: #22d3ee; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600;">BOLETO</span>' : ''}
+            </span>
+          </div>
+        </div>
+        
+        <!-- Valor -->
+        <div style="text-align: right; flex-shrink: 0;">
+          <p style="font-size: 20px; font-weight: 700; color: ${statusColor}; margin: 0;">R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;">${new Date(item.created_at).toLocaleDateString('pt-BR')}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Filtro de notas
+function setNotasFilter(filter, btn) {
+  notasData.filter = filter;
+  
+  // Atualizar visual dos botões
+  document.querySelectorAll('.notas-filter').forEach(b => {
+    b.style.background = 'rgba(255,255,255,0.05)';
+    b.style.color = 'rgba(255,255,255,0.6)';
+    b.style.border = '1px solid rgba(255,255,255,0.1)';
+  });
+  
+  btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+  btn.style.color = '#fff';
+  btn.style.border = 'none';
+  
+  renderNotas();
+}
+
+// Busca de notas
+function searchNotas(query) {
+  notasData.search = query;
+  renderNotas();
+}
+
+// Modal Nova Nota/Boleto
+function openNovaNotaModal(editId = null) {
+  const isEdit = editId !== null;
+  const item = isEdit ? notasData.items.find(i => i.id === editId) : null;
+  
+  const modalHtml = `
+    <div id="modal-nova-nota" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+      <div style="background: linear-gradient(145deg, rgba(15, 20, 25, 0.98), rgba(10, 15, 20, 0.98)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 24px; max-width: 700px; width: 100%; max-height: 95vh; overflow-y: auto; box-shadow: 0 30px 100px rgba(16, 185, 129, 0.15);">
+        
+        <!-- Header -->
+        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10;">
+          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
+          </div>
+          <div style="flex: 1;">
+            <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">${isEdit ? 'Editar' : 'Nova'} Entrada Financeira</h3>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Nota fiscal e/ou boleto de fornecedor</p>
+          </div>
+          <button onclick="closeNovaNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+        </div>
+        
+        <form id="form-nova-nota" onsubmit="saveNota(event, '${editId || ''}')" style="padding: 24px 28px;">
+          
+          <!-- Seção: Dados da Empresa -->
+          <div style="margin-bottom: 24px;">
+            <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Dados do Fornecedor
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Empresa / Fornecedor *</label>
+                <input type="text" id="nota-empresa" value="${item?.empresa || ''}" required placeholder="Ex: Auto Peças Silva, Eletro Center..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" oninput="smartFillNota(this.value)">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Responsável pelo Serviço</label>
+                <select id="nota-responsavel" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+                  <option value="">Selecione...</option>
+                  ${(state.users || []).map(u => `<option value="${u.name}" ${item?.responsavel === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+                  <option value="Terceiro">Terceiro (Externo)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Setor/Local</label>
+                <select id="nota-setor" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+                  <option value="">Selecione...</option>
+                  <option value="Sala de Ovos" ${item?.setor === 'Sala de Ovos' ? 'selected' : ''}>Sala de Ovos</option>
+                  <option value="Vertical 1" ${item?.setor === 'Vertical 1' ? 'selected' : ''}>Vertical 1</option>
+                  <option value="Vertical 2" ${item?.setor === 'Vertical 2' ? 'selected' : ''}>Vertical 2</option>
+                  <option value="Vertical 3" ${item?.setor === 'Vertical 3' ? 'selected' : ''}>Vertical 3</option>
+                  <option value="Galpão 1" ${item?.setor === 'Galpão 1' ? 'selected' : ''}>Galpão 1</option>
+                  <option value="Galpão 2" ${item?.setor === 'Galpão 2' ? 'selected' : ''}>Galpão 2</option>
+                  <option value="Galpão 3" ${item?.setor === 'Galpão 3' ? 'selected' : ''}>Galpão 3</option>
+                  <option value="Expedição" ${item?.setor === 'Expedição' ? 'selected' : ''}>Expedição</option>
+                  <option value="Cantina" ${item?.setor === 'Cantina' ? 'selected' : ''}>Cantina</option>
+                  <option value="Escritório" ${item?.setor === 'Escritório' ? 'selected' : ''}>Escritório</option>
+                  <option value="Oficina" ${item?.setor === 'Oficina' ? 'selected' : ''}>Oficina</option>
+                  <option value="Fábrica de Ração" ${item?.setor === 'Fábrica de Ração' ? 'selected' : ''}>Fábrica de Ração</option>
+                  <option value="Geral" ${item?.setor === 'Geral' ? 'selected' : ''}>Geral</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção: Descrição -->
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Descrição do Serviço/Produto *</label>
+            <textarea id="nota-descricao" required placeholder="Descreva o serviço prestado ou produtos adquiridos..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px; min-height: 80px; resize: vertical;">${item?.descricao || ''}</textarea>
+          </div>
+          
+          <!-- Seção: Valores -->
+          <div style="margin-bottom: 24px;">
+            <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Valores
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Valor da Nota Fiscal</label>
+                <input type="text" id="nota-valor-nota" value="${item?.valor_nota ? 'R$ ' + parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : ''}" placeholder="R$ 0,00" style="width: 100%; padding: 14px 16px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 12px; color: #a78bfa; font-size: 16px; font-weight: 600;" oninput="formatCurrency(this)">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Valor do Boleto</label>
+                <input type="text" id="nota-valor-boleto" value="${item?.valor_boleto ? 'R$ ' + parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : ''}" placeholder="R$ 0,00" style="width: 100%; padding: 14px 16px; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); border-radius: 12px; color: #22d3ee; font-size: 16px; font-weight: 600;" oninput="formatCurrency(this)">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Data de Emissão</label>
+                <input type="date" id="nota-data-emissao" value="${item?.data_emissao || new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Data de Vencimento</label>
+                <input type="date" id="nota-data-vencimento" value="${item?.data_vencimento || ''}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção: Anexos -->
+          <div style="margin-bottom: 24px;">
+            <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Anexos (Nota Fiscal e/ou Boleto)
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <!-- Upload Nota Fiscal -->
+              <div>
+                <label style="display: block; width: 100%; padding: 24px; background: rgba(139,92,246,0.1); border: 2px dashed rgba(139,92,246,0.3); border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s;" onmouseover="this.style.borderColor='rgba(139,92,246,0.6)'" onmouseout="this.style.borderColor='rgba(139,92,246,0.3)'">
+                  <input type="file" id="nota-anexo-nota" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'nota')">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5" style="margin: 0 auto 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  <p style="font-size: 13px; color: #a78bfa; font-weight: 600; margin: 0;">Nota Fiscal</p>
+                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-nota-name">${item?.nota_anexo ? '✓ Arquivo anexado' : 'Clique para anexar'}</p>
+                </label>
+              </div>
+              
+              <!-- Upload Boleto -->
+              <div>
+                <label style="display: block; width: 100%; padding: 24px; background: rgba(6,182,212,0.1); border: 2px dashed rgba(6,182,212,0.3); border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s;" onmouseover="this.style.borderColor='rgba(6,182,212,0.6)'" onmouseout="this.style.borderColor='rgba(6,182,212,0.3)'">
+                  <input type="file" id="nota-anexo-boleto" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'boleto')">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.5" style="margin: 0 auto 8px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
+                  <p style="font-size: 13px; color: #22d3ee; font-weight: 600; margin: 0;">Boleto</p>
+                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-boleto-name">${item?.boleto_anexo ? '✓ Arquivo anexado' : 'Clique para anexar'}</p>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção: Status -->
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">Status do Pagamento</label>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: ${!item || item.status === 'pendente' ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${!item || item.status === 'pendente' ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.3s;">
+                <input type="radio" name="nota-status" value="pendente" ${!item || item.status === 'pendente' ? 'checked' : ''} style="display: none;">
+                <span style="font-size: 13px; color: ${!item || item.status === 'pendente' ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500;">Pendente</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: ${item?.status === 'aguardando' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${item?.status === 'aguardando' ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.3s;">
+                <input type="radio" name="nota-status" value="aguardando" ${item?.status === 'aguardando' ? 'checked' : ''} style="display: none;">
+                <span style="font-size: 13px; color: ${item?.status === 'aguardando' ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500;">Aguardando</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: ${item?.status === 'pago' ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${item?.status === 'pago' ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.3s;">
+                <input type="radio" name="nota-status" value="pago" ${item?.status === 'pago' ? 'checked' : ''} style="display: none;">
+                <span style="font-size: 13px; color: ${item?.status === 'pago' ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500;">Pago</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Botões -->
+          <div style="display: flex; gap: 12px; margin-top: 28px;">
+            <button type="button" onclick="closeNovaNotaModal()" style="flex: 1; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 15px; font-weight: 500; cursor: pointer;">Cancelar</button>
+            <button type="submit" style="flex: 2; padding: 16px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              ${isEdit ? 'Salvar Alterações' : 'Cadastrar Entrada'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  
+  // Event listeners para os radio buttons de status
+  document.querySelectorAll('input[name="nota-status"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      document.querySelectorAll('input[name="nota-status"]').forEach(r => {
+        const label = r.parentElement;
+        if (r.checked) {
+          if (r.value === 'pendente') label.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+          else if (r.value === 'aguardando') label.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+          else if (r.value === 'pago') label.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+          label.style.border = 'none';
+          label.querySelector('span').style.color = '#fff';
+        } else {
+          label.style.background = 'rgba(255,255,255,0.05)';
+          label.style.border = '1px solid rgba(255,255,255,0.1)';
+          label.querySelector('span').style.color = 'rgba(255,255,255,0.6)';
+        }
+      });
+    });
+  });
+}
+
+function closeNovaNotaModal() {
+  const modal = document.getElementById('modal-nova-nota');
+  if (modal) modal.remove();
+}
+
+// Variáveis temporárias para anexos
+let tempNotaAnexo = null;
+let tempBoletoAnexo = null;
+
+function handleNotaFileSelect(input, tipo) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    if (tipo === 'nota') {
+      tempNotaAnexo = { name: file.name, data: e.target.result, type: file.type };
+      document.getElementById('nota-anexo-nota-name').textContent = '✓ ' + file.name;
+    } else {
+      tempBoletoAnexo = { name: file.name, data: e.target.result, type: file.type };
+      document.getElementById('nota-anexo-boleto-name').textContent = '✓ ' + file.name;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// Formatar moeda
+function formatCurrency(input) {
+  let value = input.value.replace(/\D/g, '');
+  value = (parseInt(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  input.value = value ? 'R$ ' + value : '';
+}
+
+// Parse valor
+function parseValor(str) {
+  if (!str) return 0;
+  return parseFloat(str.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+}
+
+// Smart fill - sugestões baseadas em entradas anteriores
+function smartFillNota(empresa) {
+  const similar = notasData.items.find(i => 
+    i.empresa && i.empresa.toLowerCase().includes(empresa.toLowerCase())
+  );
+  
+  if (similar && empresa.length > 3) {
+    // Pode sugerir dados anteriores
+    console.log('Fornecedor similar encontrado:', similar.empresa);
+  }
+}
+
+// Salvar nota
+function saveNota(event, editId) {
+  event.preventDefault();
+  
+  const empresa = document.getElementById('nota-empresa').value.trim();
+  const descricao = document.getElementById('nota-descricao').value.trim();
+  const responsavel = document.getElementById('nota-responsavel').value;
+  const setor = document.getElementById('nota-setor').value;
+  const valorNota = parseValor(document.getElementById('nota-valor-nota').value);
+  const valorBoleto = parseValor(document.getElementById('nota-valor-boleto').value);
+  const dataEmissao = document.getElementById('nota-data-emissao').value;
+  const dataVencimento = document.getElementById('nota-data-vencimento').value;
+  const status = document.querySelector('input[name="nota-status"]:checked')?.value || 'pendente';
+  
+  if (!empresa || !descricao) {
+    showNotification('Preencha a empresa e descrição', 'warning');
+    return;
+  }
+  
+  if (editId) {
+    // Editar existente
+    const idx = notasData.items.findIndex(i => i.id === editId);
+    if (idx > -1) {
+      notasData.items[idx] = {
+        ...notasData.items[idx],
+        empresa,
+        descricao,
+        responsavel,
+        setor,
+        valor_nota: valorNota,
+        valor_boleto: valorBoleto,
+        data_emissao: dataEmissao,
+        data_vencimento: dataVencimento,
+        status,
+        nota_anexo: tempNotaAnexo || notasData.items[idx].nota_anexo,
+        boleto_anexo: tempBoletoAnexo || notasData.items[idx].boleto_anexo,
+        updated_at: new Date().toISOString()
+      };
+    }
+  } else {
+    // Nova entrada
+    const newItem = {
+      id: 'nota_' + Date.now(),
+      empresa,
+      descricao,
+      responsavel,
+      setor,
+      valor_nota: valorNota,
+      valor_boleto: valorBoleto,
+      data_emissao: dataEmissao,
+      data_vencimento: dataVencimento,
+      status,
+      nota_anexo: tempNotaAnexo,
+      boleto_anexo: tempBoletoAnexo,
+      created_by: state.user?.id,
+      created_by_name: state.user?.name,
+      created_at: new Date().toISOString(),
+      tenant_id: state.user?.tenant_id
+    };
+    
+    notasData.items.unshift(newItem);
+  }
+  
+  // Limpar temporários
+  tempNotaAnexo = null;
+  tempBoletoAnexo = null;
+  
+  saveNotas();
+  renderNotas();
+  updateNotasStats();
+  closeNovaNotaModal();
+  
+  showNotification(editId ? 'Entrada atualizada!' : 'Nova entrada cadastrada!', 'success');
+}
+
+// Visualizar nota
+function viewNota(id) {
+  const item = notasData.items.find(i => i.id === id);
+  if (!item) return;
+  
+  const now = new Date();
+  const venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
+  const diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
+  
+  let statusColor = '#10b981';
+  let statusText = 'Pendente';
+  
+  if (item.status === 'pago') {
+    statusColor = '#22c55e';
+    statusText = 'Pago';
+  } else if (item.status === 'aguardando') {
+    statusColor = '#f59e0b';
+    statusText = 'Aguardando Pagamento';
+  } else if (diasVenc !== null && diasVenc < 0) {
+    statusColor = '#ef4444';
+    statusText = 'Vencido há ' + Math.abs(diasVenc) + ' dias';
+  } else if (diasVenc !== null && diasVenc <= 7) {
+    statusColor = '#fb923c';
+    statusText = 'Vence em ' + diasVenc + ' dias';
+  }
+  
+  const modalHtml = `
+    <div id="modal-view-nota" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+      <div style="background: linear-gradient(145deg, rgba(15, 20, 25, 0.98), rgba(10, 15, 20, 0.98)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 24px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;">
+        
+        <!-- Header -->
+        <div style="padding: 24px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px 0;">${escapeHtml(item.empresa)}</h2>
+              <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">${escapeHtml(item.setor || 'Setor não informado')}</p>
+            </div>
+            <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">×</button>
+          </div>
+          
+          <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: ${statusColor}20; border: 1px solid ${statusColor}40; border-radius: 20px;">
+            <div style="width: 8px; height: 8px; background: ${statusColor}; border-radius: 50%;"></div>
+            <span style="font-size: 13px; color: ${statusColor}; font-weight: 600;">${statusText}</span>
+          </div>
+        </div>
+        
+        <!-- Conteúdo -->
+        <div style="padding: 24px;">
+          <!-- Descrição -->
+          <div style="margin-bottom: 20px;">
+            <p style="font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.6;">${escapeHtml(item.descricao)}</p>
+          </div>
+          
+          <!-- Grid de Info -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+            ${item.responsavel ? `
+            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 14px;">
+              <p style="font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 0 0 4px 0;">Responsável</p>
+              <p style="font-size: 14px; color: #fff; font-weight: 500; margin: 0;">${escapeHtml(item.responsavel)}</p>
+            </div>` : ''}
+            
+            ${venc ? `
+            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 14px;">
+              <p style="font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 0 0 4px 0;">Vencimento</p>
+              <p style="font-size: 14px; color: ${statusColor}; font-weight: 500; margin: 0;">${venc.toLocaleDateString('pt-BR')}</p>
+            </div>` : ''}
+          </div>
+          
+          <!-- Valores -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+            ${item.valor_nota ? `
+            <div style="background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 14px; padding: 18px; text-align: center;">
+              <p style="font-size: 10px; color: #a78bfa; text-transform: uppercase; margin: 0 0 6px 0;">Valor Nota</p>
+              <p style="font-size: 22px; color: #a78bfa; font-weight: 700; margin: 0;">R$ ${parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+            </div>` : ''}
+            
+            ${item.valor_boleto ? `
+            <div style="background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); border-radius: 14px; padding: 18px; text-align: center;">
+              <p style="font-size: 10px; color: #22d3ee; text-transform: uppercase; margin: 0 0 6px 0;">Valor Boleto</p>
+              <p style="font-size: 22px; color: #22d3ee; font-weight: 700; margin: 0;">R$ ${parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+            </div>` : ''}
+          </div>
+          
+          <!-- Anexos -->
+          ${item.nota_anexo || item.boleto_anexo ? `
+          <div style="margin-bottom: 24px;">
+            <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px;">Anexos</p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              ${item.nota_anexo ? `
+              <a href="${item.nota_anexo.data}" download="${item.nota_anexo.name}" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; color: #a78bfa; text-decoration: none; font-size: 13px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Nota Fiscal
+              </a>` : ''}
+              
+              ${item.boleto_anexo ? `
+              <a href="${item.boleto_anexo.data}" download="${item.boleto_anexo.name}" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; color: #22d3ee; text-decoration: none; font-size: 13px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Boleto
+              </a>` : ''}
+            </div>
+          </div>` : ''}
+          
+          <!-- Footer Info -->
+          <div style="padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; color: rgba(255,255,255,0.4);">
+            <p style="margin: 0;">Cadastrado por ${escapeHtml(item.created_by_name || 'Sistema')} em ${new Date(item.created_at).toLocaleString('pt-BR')}</p>
+          </div>
+        </div>
+        
+        <!-- Ações -->
+        <div style="padding: 16px 24px 24px; display: flex; gap: 12px;">
+          <button onclick="closeViewNotaModal(); openNovaNotaModal('${item.id}')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+          </button>
+          <button onclick="deleteNota('${item.id}')" style="padding: 14px 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; color: #ef4444; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Excluir
+          </button>
+          <button onclick="markNotaAsPaid('${item.id}')" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; ${item.status === 'pago' ? 'opacity: 0.5; pointer-events: none;' : ''}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            ${item.status === 'pago' ? 'Já Pago' : 'Marcar como Pago'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeViewNotaModal() {
+  const modal = document.getElementById('modal-view-nota');
+  if (modal) modal.remove();
+}
+
+function markNotaAsPaid(id) {
+  const idx = notasData.items.findIndex(i => i.id === id);
+  if (idx > -1) {
+    notasData.items[idx].status = 'pago';
+    notasData.items[idx].data_pagamento = new Date().toISOString();
+    saveNotas();
+    renderNotas();
+    updateNotasStats();
+    closeViewNotaModal();
+    showNotification('Marcado como pago!', 'success');
+  }
+}
+
+function deleteNota(id) {
+  if (!confirm('Tem certeza que deseja excluir esta entrada?')) return;
+  
+  notasData.items = notasData.items.filter(i => i.id !== id);
+  saveNotas();
+  renderNotas();
+  updateNotasStats();
+  closeViewNotaModal();
+  showNotification('Entrada excluída', 'success');
+}
+
+// Inicializar quando entrar na view de relatórios
+const originalNavigateTo = window.navigateTo || function(){};
+window.navigateTo = function(view) {
+  if (typeof originalNavigateTo === 'function') {
+    originalNavigateTo(view);
+  }
+  
+  if (view === 'relatorios') {
+    setTimeout(() => {
+      initNotasTab();
+    }, 100);
+  }
+};
+
+// Também inicializar se já estiver na view
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    if (document.getElementById('relatorios-view') && !document.getElementById('relatorios-view').classList.contains('hidden')) {
+      initNotasTab();
+    }
+  }, 500);
+});
