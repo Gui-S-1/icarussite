@@ -3721,8 +3721,88 @@ function updateToolsStats() {
   if (elOverdue) elOverdue.textContent = overdue;
 }
 
-// Registrar devolução
-async function registerReturn(movementId) {
+// Modal de confirmação de devolução - Design Premium
+function showReturnConfirmation(movementId) {
+  const loan = almox2State.pendingLoans.find(l => l.id === movementId);
+  if (!loan) {
+    executeReturn(movementId);
+    return;
+  }
+  
+  const loanDate = new Date(loan.created_at);
+  const now = new Date();
+  const daysDiff = Math.floor((now - loanDate) / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(((now - loanDate) / (1000 * 60 * 60)) % 24);
+  
+  const modalHtml = `
+    <div id="modal-return-confirm" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-return-confirm')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(16,35,60,0.7));">
+      <div class="modal" style="max-width: 440px; background: linear-gradient(145deg, rgba(30,64,120,0.97), rgba(22,50,90,0.97)); border: 1px solid rgba(59,130,246,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 80px rgba(59,130,246,0.12), inset 0 1px 0 rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; animation: modalSlideIn 0.3s ease-out;">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(37,99,235,0.15)); margin: -24px -24px 24px -24px; padding: 24px; border-bottom: 1px solid rgba(59,130,246,0.2); text-align: center;">
+          <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(59,130,246,0.4);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2">
+              <polyline points="9 11 12 14 22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #fff;">Confirmar Devolução</h3>
+        </div>
+        
+        <!-- Info do Empréstimo -->
+        <div style="background: rgba(0,0,0,0.2); border-radius: 14px; padding: 18px; margin-bottom: 20px; border: 1px solid rgba(59,130,246,0.15);">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="width: 42px; height: 42px; background: linear-gradient(135deg, rgba(147,51,234,0.3), rgba(126,34,206,0.2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(147,51,234,0.4);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 16px; font-weight: 600; color: #fff;">${escapeHtml(loan.item_name)}</div>
+              <div style="font-size: 13px; color: rgba(255,255,255,0.6);">Qtd: ${loan.quantity}</div>
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; text-align: center;">
+              <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 4px;">Responsável</div>
+              <div style="font-size: 14px; font-weight: 600; color: #fff;">${escapeHtml(loan.person_name)}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; text-align: center;">
+              <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 4px;">Tempo de Uso</div>
+              <div style="font-size: 14px; font-weight: 600; color: ${daysDiff > 7 ? '#f87171' : '#4ade80'};">${daysDiff}d ${hours}h</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Botões -->
+        <div style="display: flex; gap: 12px;">
+          <button onclick="closeModal('modal-return-confirm')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: rgba(255,255,255,0.8); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.06)';">Cancelar</button>
+          <button onclick="executeReturn(${movementId})" style="flex: 1.2; padding: 14px 20px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(59,130,246,0.35); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(59,130,246,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(59,130,246,0.35)';">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-return-confirm');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Registrar devolução (agora chama o modal de confirmação)
+function registerReturn(movementId) {
+  showReturnConfirmation(movementId);
+}
+
+// Executar a devolução após confirmação
+async function executeReturn(movementId) {
+  closeModal('modal-return-confirm');
+  
   try {
     const response = await fetch(`${API_URL}/inventory/movements/${movementId}/return`, {
       method: 'POST',
