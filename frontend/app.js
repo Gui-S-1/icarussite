@@ -2974,7 +2974,7 @@ async function loadInventory() {
       }
     }
 
-    const response = await fetch(`${API_URL}/inventory`, {
+    const response = await fetch(`${API_URL}/api/inventory`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
 
@@ -3496,7 +3496,7 @@ async function loadAlmoxMovements() {
     const startStr = startDate.toISOString().split('T')[0];
     const endStr = now.toISOString().split('T')[0];
     
-    let url = `${API_URL}/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
+    let url = `${API_URL}/api/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
     if (type) url += `&movement_type=${type}`;
     if (pending) url += `&pending_return=true`;
     
@@ -3639,7 +3639,7 @@ function refreshMovements() {
 // Carregar empréstimos pendentes
 async function loadPendingLoans() {
   try {
-    const response = await fetch(`${API_URL}/inventory/loans/pending`, {
+    const response = await fetch(`${API_URL}/api/inventory/loans/pending`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -3820,7 +3820,7 @@ async function executeReturn(movementId) {
   closeModal('modal-return-confirm');
   
   try {
-    const response = await fetch(`${API_URL}/inventory/movements/${movementId}/return`, {
+    const response = await fetch(`${API_URL}/api/inventory/movements/${movementId}/return`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4001,7 +4001,7 @@ async function submitQuickWithdrawal(event) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/inventory/movements`, {
+    const response = await fetch(`${API_URL}/api/inventory/movements`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4149,7 +4149,7 @@ async function submitQuickEntry(event) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/inventory/movements`, {
+    const response = await fetch(`${API_URL}/api/inventory/movements`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4183,7 +4183,7 @@ async function submitQuickEntry(event) {
 // Carregar relatórios
 async function loadAlmoxReports() {
   try {
-    const response = await fetch(`${API_URL}/inventory/stats?period=${almox2State.reportPeriod}`, {
+    const response = await fetch(`${API_URL}/api/inventory/stats?period=${almox2State.reportPeriod}`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -5074,7 +5074,7 @@ async function createItemFromForm(event) {
   };
 
   try {
-    const response = await fetch(`${API_URL}/inventory`, {
+    const response = await fetch(`${API_URL}/api/inventory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -5113,7 +5113,7 @@ async function adjustStock(itemId, delta) {
   }
 
   try {
-    const response = await fetch(`${API_URL}/inventory/${itemId}`, {
+    const response = await fetch(`${API_URL}/api/inventory/${itemId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -5140,7 +5140,7 @@ async function deleteItem(itemId) {
   if (!confirm('Tem certeza que deseja excluir este item?')) return;
 
   try {
-    const response = await fetch(`${API_URL}/inventory/${itemId}`, {
+    const response = await fetch(`${API_URL}/api/inventory/${itemId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
@@ -14054,18 +14054,60 @@ function updateSemanaDate(semanaIndex, newDate) {
 }
 
 function addDiariaSemana() {
-  const lastSemana = diariasData.semanas[diariasData.semanas.length - 1];
-  const lastDate = new Date(lastSemana.startDate);
-  lastDate.setDate(lastDate.getDate() + 7);
+  // Abrir mini modal para escolher data (permite retroativa)
+  const today = new Date();
+  const defaultDate = today.toISOString().split('T')[0];
+  
+  const miniModal = `
+    <div id="modal-add-semana" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10001; display: flex; align-items: center; justify-content: center;">
+      <div style="background: linear-gradient(145deg, #1a1025, #150d20); border: 1px solid rgba(236,72,153,0.3); border-radius: 16px; padding: 24px; max-width: 350px; width: 90%;">
+        <h4 style="color: #fff; margin: 0 0 16px 0; font-size: 16px;">📅 Adicionar Semana</h4>
+        <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 0 0 16px 0;">Escolha a segunda-feira da semana (pode ser retroativa)</p>
+        <input type="date" id="nova-semana-date" value="${defaultDate}" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px; color: #fff; font-size: 14px; margin-bottom: 16px;">
+        <div style="display: flex; gap: 10px;">
+          <button onclick="document.getElementById('modal-add-semana').remove()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #888; cursor: pointer;">Cancelar</button>
+          <button onclick="confirmAddSemana()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #ec4899, #db2777); border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer;">Adicionar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', miniModal);
+}
+
+function confirmAddSemana() {
+  const dateInput = document.getElementById('nova-semana-date');
+  if (!dateInput) return;
+  
+  let selectedDate = new Date(dateInput.value + 'T12:00:00'); // Adiciona horário para evitar problemas de timezone
+  
+  // Ajustar para segunda-feira mais próxima (anterior)
+  const dayOfWeek = selectedDate.getDay();
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  selectedDate.setDate(selectedDate.getDate() - daysToMonday);
+  
+  const startDate = selectedDate.toISOString().split('T')[0];
+  
+  // Verificar se já existe uma semana com essa data
+  const exists = diariasData.semanas.some(s => s.startDate === startDate);
+  if (exists) {
+    showNotification('Já existe uma semana com essa data', 'warning');
+    document.getElementById('modal-add-semana').remove();
+    return;
+  }
   
   diariasData.semanas.push({
     id: Date.now(),
-    startDate: lastDate.toISOString().split('T')[0],
+    startDate: startDate,
     dias: { seg: false, ter: false, qua: false, qui: false, sex: false, sab: false }
   });
   
+  // Ordenar semanas por data
+  diariasData.semanas.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  
   saveDiariasData();
   refreshDiariasUI();
+  document.getElementById('modal-add-semana').remove();
+  showNotification('Semana adicionada', 'success');
 }
 
 function removeSemana(index) {

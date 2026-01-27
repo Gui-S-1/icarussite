@@ -1154,7 +1154,7 @@ app.delete('/orders/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/inventory', requireAuth, async (req, res) => {
+app.get('/api/inventory', requireAuth, async (req, res) => {
   try {
     // Buscar itens do inventário com contagem de "em uso" (empréstimos pendentes)
     const result = await pool.query(`
@@ -1178,7 +1178,7 @@ app.get('/inventory', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/inventory', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+app.post('/api/inventory', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
   const { sku, name, category, brand, quantity = 0, unit, min_stock = 0, max_stock, location, specs } = req.body || {};
   if (!name || !unit) return res.status(400).json({ ok: false, error: 'Nome e unidade são obrigatórios' });
   try {
@@ -1195,7 +1195,7 @@ app.post('/inventory', requireAuth, requireRoles(['almoxarifado']), async (req, 
   }
 });
 
-app.put('/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+app.put('/api/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
   const { quantity } = req.body || {};
   if (quantity === undefined) return res.status(400).json({ ok: false, error: 'Quantidade obrigatória' });
   try {
@@ -1208,7 +1208,7 @@ app.put('/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (re
   }
 });
 
-app.delete('/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+app.delete('/api/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
   try {
     await pool.query('DELETE FROM inventory_items WHERE id = $1 AND key_id = $2', [req.params.id, req.user.keyId]);
     const result = await pool.query('SELECT * FROM inventory_items WHERE key_id = $1 ORDER BY name', [req.user.keyId]);
