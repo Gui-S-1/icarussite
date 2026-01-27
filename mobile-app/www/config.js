@@ -1,34 +1,10 @@
 // Configuração do Icarus - Frontend
 
-// URLs de configuração
+// URLs de configuração - sem expor IP do servidor
 const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/api-config.json';
-const SERVER_IP = 'http://159.203.8.237:3000'; // IP direto do servidor
 
-// URL padrão (fallback)
+// URL padrão (fallback) - sempre via tunnel seguro
 let API_URL_DEFAULT = 'https://kong-dust-analysts-developers.trycloudflare.com';
-
-// Buscar URL do túnel diretamente do servidor via IP
-async function fetchTunnelUrlFromServer() {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const response = await fetch(SERVER_IP + '/tunnel-url', { 
-      signal: controller.signal,
-      cache: 'no-store'
-    });
-    clearTimeout(timeout);
-    if (response.ok) {
-      const data = await response.json();
-      if (data.ok && data.url) {
-        console.log('[Config] URL obtida do servidor:', data.url);
-        return data.url;
-      }
-    }
-  } catch (e) {
-    console.log('[Config] Erro ao buscar URL do servidor via IP');
-  }
-  return null;
-}
 
 // Buscar URL do GitHub (fallback)
 async function fetchNewApiUrl() {
@@ -76,13 +52,8 @@ async function testApiUrl(url) {
       if (!works) {
         console.log('[Config] URL do cache não responde, buscando nova...');
         
-        // Tentar via IP direto primeiro (mais confiável)
-        let newUrl = await fetchTunnelUrlFromServer();
-        
-        // Se não conseguir via IP, tentar GitHub
-        if (!newUrl) {
-          newUrl = await fetchNewApiUrl();
-        }
+        // Buscar nova URL do GitHub
+        const newUrl = await fetchNewApiUrl();
         
         if (newUrl && newUrl !== cached) {
           window.ICARUS_API_URL = newUrl;
@@ -99,14 +70,8 @@ async function testApiUrl(url) {
     return;
   }
   
-  // 2. Sem cache - buscar URL
-  // Tentar via IP direto primeiro
-  let newUrl = await fetchTunnelUrlFromServer();
-  
-  // Se não conseguir, tentar GitHub
-  if (!newUrl) {
-    newUrl = await fetchNewApiUrl();
-  }
+  // 2. Sem cache - buscar URL do GitHub
+  const newUrl = await fetchNewApiUrl();
   
   // Se ainda não tem, usar padrão
   if (newUrl) {

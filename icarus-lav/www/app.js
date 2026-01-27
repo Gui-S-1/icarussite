@@ -508,7 +508,7 @@ function navigateTo(view) {
   
   state.currentView = view; // Salvar view atual para polling
   
-  // Update active nav
+  // Update active nav (sidebar desktop)
   document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.remove('active');
     if (item.getAttribute('data-view') === view) {
@@ -516,6 +516,21 @@ function navigateTo(view) {
       console.log('Nav item ativado:', item);
     }
   });
+  
+  // Update mobile bottom nav
+  const mainMobileViews = ['dashboard', 'os', 'controle-agua', 'controle-diesel', 'lavanderia'];
+  document.querySelectorAll('.mobile-nav-item').forEach(item => {
+    item.classList.remove('active');
+    // Se é uma view principal, marcar diretamente
+    if (mainMobileViews.includes(view) && item.getAttribute('data-view') === view) {
+      item.classList.add('active');
+    }
+  });
+  // Se não é uma view principal, marcar "Mais" como ativo
+  if (!mainMobileViews.includes(view)) {
+    const moreItem = document.querySelector('.mobile-nav-item[data-view="mobile-more"]');
+    if (moreItem) moreItem.classList.add('active');
+  }
 
   // Update active view - ESCONDER TODAS primeiro
   document.querySelectorAll('.view').forEach(v => {
@@ -1832,47 +1847,76 @@ function showOSDetail(orderId) {
       ${['declie', 'eduardo', 'vanderlei', 'alissom'].map(username => {
         const user = state.users.find(u => u.username.toLowerCase() === username);
         const isChecked = user && assignedIds.includes(user.id);
-        return `<div class="checkbox-item"><input type="checkbox" id="detail-assign-${username}" value="${username}" ${isChecked ? 'checked' : ''}><label for="detail-assign-${username}">${username.charAt(0).toUpperCase() + username.slice(1)}</label></div>`;
+        const checkboxStyle = 'display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; cursor: pointer;';
+        return `<label style="${checkboxStyle}"><input type="checkbox" id="detail-assign-${username}" value="${username}" ${isChecked ? 'checked' : ''} style="accent-color: #a78bfa; width: 16px; height: 16px;"><span style="font-size: 13px; color: #fff;">${username.charAt(0).toUpperCase() + username.slice(1)}</span></label>`;
       }).join('')}
     `;
   } else {
     checkboxContainer.innerHTML = '';
   }
   
-  // Ações
+  // Ações com estilo moderno
   const actionsContainer = document.getElementById('detail-os-actions');
-  let actions = '<button type="button" class="btn-small btn-cancel" onclick="closeModal(\'modal-os-detail\')">Fechar</button>';
+  const btnBase = 'padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;';
+  const btnCancel = `${btnBase} background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);`;
+  const btnPrimary = `${btnBase} background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; color: #fff; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);`;
+  const btnSuccess = `${btnBase} background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);`;
+  const btnWarning = `${btnBase} background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: #fff; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);`;
+  const btnDanger = `${btnBase} background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;`;
+  
+  let actions = `<button type="button" style="${btnCancel}" onclick="closeModal('modal-os-detail')">Fechar</button>`;
   
   // Botão salvar - manutenção pode salvar mesmo em OS concluída
   if (canEditAssignments) {
-    actions += `<button type="button" class="btn-small btn-primary" onclick="updateOSAssignments('${order.id}')">Salvar Alterações</button>`;
+    actions += `<button type="button" style="${btnPrimary}" onclick="updateOSAssignments('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar
+    </button>`;
   }
   
   if (canEdit && order.status === 'pending') {
-    actions += `<button type="button" class="btn-small btn-primary" onclick="startOrder('${order.id}'); closeModal('modal-os-detail')">Iniciar</button>`;
+    actions += `<button type="button" style="${btnSuccess}" onclick="startOrder('${order.id}'); closeModal('modal-os-detail')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Iniciar
+    </button>`;
   }
   
   if (canEdit && order.status === 'in_progress') {
-    actions += `<button type="button" class="btn-small btn-warning" onclick="pauseOrder('${order.id}')">⏸ Pausar</button>`;
+    actions += `<button type="button" style="${btnWarning}" onclick="pauseOrder('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      Pausar
+    </button>`;
     // Somente manutenção pode concluir
     if (canManageAll) {
-      actions += `<button type="button" class="btn-small btn-primary" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+      actions += `<button type="button" style="${btnSuccess}" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Concluir
+      </button>`;
     }
   }
   
   // Se estiver pausada, mostrar botão de retomar
   if (canEdit && order.status === 'paused') {
-    actions += `<button type="button" class="btn-small btn-primary" onclick="resumeOrder('${order.id}')">▶ Retomar</button>`;
+    actions += `<button type="button" style="${btnPrimary}" onclick="resumeOrder('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Retomar
+    </button>`;
     // Somente manutenção pode concluir
     if (canManageAll) {
-      actions += `<button type="button" class="btn-small btn-success" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">Concluir</button>`;
+      actions += `<button type="button" style="${btnSuccess}" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Concluir
+      </button>`;
     }
   }
   
   // Botão excluir - criador pode excluir sua OS, manutenção pode excluir qualquer
   const canDelete = order.requested_by === state.user.id || state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all');
   if (canDelete) {
-    actions += `<button type="button" class="btn-small btn-danger" onclick="deleteOrder('${order.id}')">Excluir</button>`;
+    actions += `<button type="button" style="${btnDanger}" onclick="deleteOrder('${order.id}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      Excluir
+    </button>`;
   }
   
   actionsContainer.innerHTML = actions;
@@ -3210,6 +3254,1538 @@ function filterInventoryItems(items) {
 function filterAlmoxarifado() {
   renderInventoryTable();
 }
+
+// ========================================
+// ALMOXARIFADO V2 - SISTEMA COMPLETO
+// ========================================
+
+// Estado do módulo de almoxarifado V2
+const almox2State = {
+  currentTab: 'estoque',
+  movements: [],
+  pendingLoans: [],
+  reportPeriod: 'week',
+  movementStats: null,
+  autocompleteIndex: -1
+};
+
+// ========== AUTOCOMPLETE DE BUSCA ==========
+let almoxSearchTimeout = null;
+
+function handleAlmoxSearch(input) {
+  const query = input.value.trim().toLowerCase();
+  const container = document.getElementById('almox-autocomplete');
+  
+  // Limpar timeout anterior
+  if (almoxSearchTimeout) clearTimeout(almoxSearchTimeout);
+  
+  // Se query vazia, esconder autocomplete e filtrar
+  if (!query) {
+    container.classList.remove('active');
+    container.innerHTML = '';
+    almox2State.autocompleteIndex = -1;
+    filterAlmoxarifado();
+    return;
+  }
+  
+  // Debounce de 150ms para performance
+  almoxSearchTimeout = setTimeout(() => {
+    const items = state.inventory || [];
+    
+    // Filtrar itens que contém a query
+    const matches = items.filter(item => {
+      const name = (item.name || '').toLowerCase();
+      const sku = (item.sku || '').toLowerCase();
+      const brand = (item.brand || '').toLowerCase();
+      const category = (item.category || '').toLowerCase();
+      return name.includes(query) || sku.includes(query) || brand.includes(query) || category.includes(query);
+    }).slice(0, 8); // Máximo 8 sugestões
+    
+    if (matches.length === 0) {
+      container.innerHTML = `
+        <div class="almox2-autocomplete-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <p>Nenhum item encontrado para "${escapeHtml(query)}"</p>
+        </div>
+      `;
+      container.classList.add('active');
+      return;
+    }
+    
+    // Renderizar sugestões
+    container.innerHTML = matches.map((item, idx) => {
+      const status = getItemStockStatus(item);
+      const statusClass = status === 'Crítico' ? 'critico' : status === 'Baixo' ? 'baixo' : '';
+      
+      // Destacar termo buscado
+      const highlightedName = highlightMatch(item.name || '', query);
+      
+      return `
+        <div class="almox2-autocomplete-item ${idx === almox2State.autocompleteIndex ? 'selected' : ''}" 
+             onclick="selectAlmoxAutocomplete('${escapeHtml(item.name || '')}', ${item.id})"
+             data-idx="${idx}">
+          <div class="almox2-autocomplete-icon ${statusClass}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+          <div class="almox2-autocomplete-info">
+            <div class="almox2-autocomplete-name">${highlightedName}</div>
+            <div class="almox2-autocomplete-meta">
+              ${item.sku ? `<span>SKU: ${escapeHtml(item.sku)}</span>` : ''}
+              ${item.brand ? `<span>${escapeHtml(item.brand)}</span>` : ''}
+              ${item.category ? `<span>${escapeHtml(item.category)}</span>` : ''}
+            </div>
+          </div>
+          <div class="almox2-autocomplete-qty ${statusClass}">${item.quantity} ${item.unit || 'un'}</div>
+        </div>
+      `;
+    }).join('');
+    
+    container.classList.add('active');
+    almox2State.autocompleteIndex = -1;
+  }, 150);
+}
+
+// Destacar termo buscado
+function highlightMatch(text, query) {
+  if (!query) return escapeHtml(text);
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+}
+
+// Obter status do estoque
+function getItemStockStatus(item) {
+  const qty = item.quantity || 0;
+  const min = item.min_stock || 0;
+  if (qty === 0) return 'Crítico';
+  if (min > 0 && qty <= min) return 'Baixo';
+  return 'Normal';
+}
+
+// Selecionar item do autocomplete
+function selectAlmoxAutocomplete(name, itemId) {
+  const input = document.getElementById('almox-search-input');
+  const container = document.getElementById('almox-autocomplete');
+  
+  input.value = name;
+  container.classList.remove('active');
+  almox2State.autocompleteIndex = -1;
+  
+  // Filtrar para mostrar apenas esse item
+  filterAlmoxarifado();
+}
+
+// Navegação por teclado no autocomplete
+document.addEventListener('keydown', function(e) {
+  const container = document.getElementById('almox-autocomplete');
+  if (!container || !container.classList.contains('active')) return;
+  
+  const items = container.querySelectorAll('.almox2-autocomplete-item');
+  if (items.length === 0) return;
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    almox2State.autocompleteIndex = Math.min(almox2State.autocompleteIndex + 1, items.length - 1);
+    updateAutocompleteSelection(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    almox2State.autocompleteIndex = Math.max(almox2State.autocompleteIndex - 1, 0);
+    updateAutocompleteSelection(items);
+  } else if (e.key === 'Enter' && almox2State.autocompleteIndex >= 0) {
+    e.preventDefault();
+    items[almox2State.autocompleteIndex].click();
+  } else if (e.key === 'Escape') {
+    container.classList.remove('active');
+    almox2State.autocompleteIndex = -1;
+  }
+});
+
+function updateAutocompleteSelection(items) {
+  items.forEach((item, idx) => {
+    item.classList.toggle('selected', idx === almox2State.autocompleteIndex);
+  });
+  // Scroll para item selecionado
+  if (almox2State.autocompleteIndex >= 0 && items[almox2State.autocompleteIndex]) {
+    items[almox2State.autocompleteIndex].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+// Fechar autocomplete ao clicar fora
+document.addEventListener('click', function(e) {
+  const container = document.getElementById('almox-autocomplete');
+  const searchWrapper = e.target.closest('.almox2-search');
+  if (container && !searchWrapper) {
+    container.classList.remove('active');
+    almox2State.autocompleteIndex = -1;
+  }
+});
+
+// Troca de abas do almoxarifado
+function switchAlmoxTab(tab) {
+  almox2State.currentTab = tab;
+  
+  // Atualizar botões das abas
+  document.querySelectorAll('.almox2-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  
+  // Atualizar conteúdo das abas
+  document.querySelectorAll('.almox2-tab-content').forEach(content => {
+    content.classList.toggle('active', content.id === `almox2-tab-${tab}`);
+  });
+  
+  // Carregar dados específicos da aba
+  switch(tab) {
+    case 'estoque':
+      loadInventory();
+      break;
+    case 'movimentos':
+      loadAlmoxMovements();
+      break;
+    case 'ferramentas':
+      loadPendingLoans();
+      break;
+    case 'relatorios':
+      loadAlmoxReports();
+      break;
+  }
+}
+
+// Carregar movimentações
+async function loadAlmoxMovements() {
+  try {
+    const periodFilter = document.getElementById('almox2-mov-period');
+    const typeFilter = document.getElementById('almox2-mov-type');
+    const pendingCheck = document.getElementById('almox2-mov-pending');
+    
+    const period = periodFilter ? periodFilter.value : 'week';
+    const type = typeFilter ? typeFilter.value : '';
+    const pending = pendingCheck ? pendingCheck.checked : false;
+    
+    // Calcular datas baseado no período
+    const now = new Date();
+    let startDate = new Date();
+    if (period === 'day') {
+      startDate.setHours(0, 0, 0, 0);
+    } else if (period === 'week') {
+      startDate.setDate(now.getDate() - 7);
+    } else if (period === 'month') {
+      startDate.setMonth(now.getMonth() - 1);
+    }
+    
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = now.toISOString().split('T')[0];
+    
+    let url = `${API_URL}/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
+    if (type) url += `&movement_type=${type}`;
+    if (pending) url += `&pending_return=true`;
+    
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      almox2State.movements = data.movements || [];
+      renderAlmoxMovements();
+      
+      // Calcular stats localmente
+      const movements = almox2State.movements;
+      almox2State.movementStats = {
+        entradas: movements.filter(m => m.movement_type === 'entrada').length,
+        saidas: movements.filter(m => m.movement_type === 'saida').length,
+        devolucoes: movements.filter(m => m.movement_type === 'devolucao').length,
+        pendentes: movements.filter(m => m.usage_type === 'emprestimo' && !m.is_returned).length
+      };
+      updateMovementStats();
+    } else {
+      console.error('Erro do servidor:', data.error);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar movimentações:', error);
+    showNotification('Erro ao carregar movimentações', 'error');
+  }
+}
+
+// Renderizar movimentações
+function renderAlmoxMovements() {
+  const container = document.getElementById('almox2-movements-list');
+  if (!container) return;
+  
+  const searchInput = document.getElementById('almox2-mov-search');
+  const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+  
+  let movements = almox2State.movements;
+  if (searchTerm) {
+    movements = movements.filter(m => 
+      (m.item_name || '').toLowerCase().includes(searchTerm) ||
+      (m.person_name || '').toLowerCase().includes(searchTerm)
+    );
+  }
+  
+  if (!movements || movements.length === 0) {
+    container.innerHTML = `
+      <div class="almox2-empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <p>Nenhuma movimentação encontrada</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const typeIcons = {
+    entrada: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
+    saida: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
+    devolucao: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+    ajuste: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg>'
+  };
+  
+  const typeLabels = {
+    entrada: 'Entrada',
+    saida: 'Saída',
+    devolucao: 'Devolução',
+    ajuste: 'Ajuste'
+  };
+  
+  container.innerHTML = movements.map(mov => {
+    const isPositive = mov.movement_type === 'entrada' || mov.movement_type === 'devolucao';
+    const icon = typeIcons[mov.movement_type] || typeIcons.ajuste;
+    const isPending = mov.usage_type === 'emprestimo' && !mov.is_returned;
+    const dateStr = new Date(mov.created_at).toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    });
+    
+    return `
+      <div class="almox2-movement-item">
+        <div class="almox2-movement-icon ${mov.movement_type}">
+          ${icon}
+        </div>
+        <div class="almox2-movement-info">
+          <div class="almox2-movement-title">${escapeHtml(mov.item_name || 'Item')}</div>
+          <div class="almox2-movement-details">
+            <span>${typeLabels[mov.movement_type] || mov.movement_type}</span>
+            ${mov.person_name ? `<span>Por: ${escapeHtml(mov.person_name)}</span>` : ''}
+            ${mov.person_sector ? `<span>Setor: ${escapeHtml(mov.person_sector)}</span>` : ''}
+          </div>
+          <div class="almox2-movement-time">${dateStr}</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="almox2-movement-qty ${isPositive ? 'positive' : 'negative'}">
+            ${isPositive ? '+' : '-'}${Math.abs(mov.quantity)}
+          </div>
+          ${isPending ? '<span class="almox2-movement-pending">Pendente</span>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Atualizar estatísticas de movimentações
+function updateMovementStats() {
+  const stats = almox2State.movementStats || {};
+  
+  const elEntradas = document.getElementById('almox2-stat-entradas');
+  const elSaidas = document.getElementById('almox2-stat-saidas');
+  const elDevolucoes = document.getElementById('almox2-stat-devolucoes');
+  const elPendentes = document.getElementById('almox2-stat-pendentes');
+  const elBadge = document.getElementById('almox2-pending-count');
+  
+  if (elEntradas) elEntradas.textContent = stats.entradas || 0;
+  if (elSaidas) elSaidas.textContent = stats.saidas || 0;
+  if (elDevolucoes) elDevolucoes.textContent = stats.devolucoes || 0;
+  if (elPendentes) elPendentes.textContent = stats.pendentes || 0;
+  
+  if (elBadge) {
+    const pendentes = stats.pendentes || 0;
+    elBadge.textContent = pendentes;
+    elBadge.style.display = pendentes > 0 ? 'inline' : 'none';
+  }
+}
+
+// Filtrar movimentações
+function filterMovements() {
+  loadAlmoxMovements();
+}
+
+// Atualizar movimentações
+function refreshMovements() {
+  loadAlmoxMovements();
+  showNotification('Movimentações atualizadas', 'success');
+}
+
+// Carregar empréstimos pendentes
+async function loadPendingLoans() {
+  try {
+    const response = await fetch(`${API_URL}/inventory/loans/pending`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      almox2State.pendingLoans = data.loans || [];
+      renderPendingLoans();
+      updateToolsStats();
+    }
+  } catch (error) {
+    console.error('Erro ao carregar empréstimos:', error);
+    showNotification('Erro ao carregar empréstimos', 'error');
+  }
+}
+
+// Renderizar empréstimos pendentes
+function renderPendingLoans() {
+  const container = document.getElementById('almox2-loans-list');
+  if (!container) return;
+  
+  const loans = almox2State.pendingLoans;
+  
+  if (!loans || loans.length === 0) {
+    container.innerHTML = `
+      <div class="almox2-empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <p>Nenhum empréstimo pendente</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = loans.map(loan => {
+    const loanDate = new Date(loan.created_at);
+    const now = new Date();
+    const daysDiff = Math.floor((now - loanDate) / (1000 * 60 * 60 * 24));
+    const isOverdue = daysDiff > 7; // Mais de 7 dias é atrasado
+    
+    const timeStr = loanDate.toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    });
+    
+    return `
+      <div class="almox2-loan-item ${isOverdue ? 'overdue' : ''}">
+        <div class="almox2-loan-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+        </div>
+        <div class="almox2-loan-info">
+          <div class="almox2-loan-title">${escapeHtml(loan.item_name)}</div>
+          <div class="almox2-loan-person">${escapeHtml(loan.person_name)}</div>
+          <div class="almox2-loan-time">Retirado: ${timeStr} (${daysDiff} dias)</div>
+        </div>
+        <button class="almox2-loan-action" onclick="registerReturn(${loan.id})">
+          Devolver
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+// Atualizar estatísticas de ferramentas
+function updateToolsStats() {
+  const loans = almox2State.pendingLoans || [];
+  const now = new Date();
+  
+  let loaned = 0;
+  let overdue = 0;
+  
+  loans.forEach(loan => {
+    loaned++;
+    const loanDate = new Date(loan.created_at);
+    const daysDiff = Math.floor((now - loanDate) / (1000 * 60 * 60 * 24));
+    if (daysDiff > 7) overdue++;
+  });
+  
+  // Ferramentas disponíveis = total de ferramentas que são retornáveis
+  const totalTools = state.inventory.filter(i => 
+    i.category === 'ferramentas' || i.item_type === 'ferramenta'
+  ).length;
+  
+  const elTotal = document.getElementById('almox2-tools-total');
+  const elAvailable = document.getElementById('almox2-tools-available');
+  const elLoaned = document.getElementById('almox2-tools-loaned');
+  const elOverdue = document.getElementById('almox2-tools-overdue');
+  
+  if (elTotal) elTotal.textContent = totalTools;
+  if (elAvailable) elAvailable.textContent = totalTools - loaned;
+  if (elLoaned) elLoaned.textContent = loaned;
+  if (elOverdue) elOverdue.textContent = overdue;
+}
+
+// Modal de confirmação de devolução - Design Premium
+function showReturnConfirmation(movementId) {
+  const loan = almox2State.pendingLoans.find(l => l.id === movementId);
+  if (!loan) {
+    executeReturn(movementId);
+    return;
+  }
+  
+  const loanDate = new Date(loan.created_at);
+  const now = new Date();
+  const daysDiff = Math.floor((now - loanDate) / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(((now - loanDate) / (1000 * 60 * 60)) % 24);
+  
+  const modalHtml = `
+    <div id="modal-return-confirm" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-return-confirm')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(16,35,60,0.7));">
+      <div class="modal" style="max-width: 440px; background: linear-gradient(145deg, rgba(30,64,120,0.97), rgba(22,50,90,0.97)); border: 1px solid rgba(59,130,246,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 80px rgba(59,130,246,0.12), inset 0 1px 0 rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; animation: modalSlideIn 0.3s ease-out;">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(37,99,235,0.15)); margin: -24px -24px 24px -24px; padding: 24px; border-bottom: 1px solid rgba(59,130,246,0.2); text-align: center;">
+          <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(37,99,235,0.2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(59,130,246,0.4);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2">
+              <polyline points="9 11 12 14 22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #fff;">Confirmar Devolução</h3>
+        </div>
+        
+        <!-- Info do Empréstimo -->
+        <div style="background: rgba(0,0,0,0.2); border-radius: 14px; padding: 18px; margin-bottom: 20px; border: 1px solid rgba(59,130,246,0.15);">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+            <div style="width: 42px; height: 42px; background: linear-gradient(135deg, rgba(147,51,234,0.3), rgba(126,34,206,0.2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(147,51,234,0.4);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 16px; font-weight: 600; color: #fff;">${escapeHtml(loan.item_name)}</div>
+              <div style="font-size: 13px; color: rgba(255,255,255,0.6);">Qtd: ${loan.quantity}</div>
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; text-align: center;">
+              <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 4px;">Responsável</div>
+              <div style="font-size: 14px; font-weight: 600; color: #fff;">${escapeHtml(loan.person_name)}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; text-align: center;">
+              <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 4px;">Tempo de Uso</div>
+              <div style="font-size: 14px; font-weight: 600; color: ${daysDiff > 7 ? '#f87171' : '#4ade80'};">${daysDiff}d ${hours}h</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Botões -->
+        <div style="display: flex; gap: 12px;">
+          <button onclick="closeModal('modal-return-confirm')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: rgba(255,255,255,0.8); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.06)';">Cancelar</button>
+          <button onclick="executeReturn(${movementId})" style="flex: 1.2; padding: 14px 20px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(59,130,246,0.35); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(59,130,246,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(59,130,246,0.35)';">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-return-confirm');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Registrar devolução (agora chama o modal de confirmação)
+function registerReturn(movementId) {
+  showReturnConfirmation(movementId);
+}
+
+// Executar a devolução após confirmação
+async function executeReturn(movementId) {
+  closeModal('modal-return-confirm');
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/movements/${movementId}/return`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('Devolução registrada com sucesso!', 'success');
+      loadPendingLoans();
+      loadInventory();
+    } else {
+      showNotification('Erro ao registrar devolução: ' + (data.error || 'Erro'), 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao registrar devolução:', error);
+    showNotification('Erro ao registrar devolução', 'error');
+  }
+}
+
+// Modal de Retirada Rápida - Design Premium
+function showQuickWithdrawal() {
+  const items = state.inventory.filter(i => i.quantity > 0);
+  
+  const modalHtml = `
+    <div id="modal-quick-withdrawal" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-withdrawal')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(30,20,60,0.7));">
+      <div class="modal" style="max-width: 520px; background: linear-gradient(180deg, rgba(45,25,85,0.98) 0%, rgba(25,15,55,0.98) 100%); border: 1px solid rgba(168,85,247,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 80px rgba(168,85,247,0.12), inset 0 1px 0 rgba(255,255,255,0.05); border-radius: 20px; padding: 0; overflow: hidden;">
+        
+        <!-- Header Gradient -->
+        <div style="background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.1)); padding: 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 52px; height: 52px; background: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.2)); border-radius: 14px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(236,72,153,0.4); box-shadow: 0 8px 24px rgba(236,72,153,0.2);">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2">
+                <polyline points="17 1 21 5 17 9"/>
+                <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                <polyline points="7 23 3 19 7 15"/>
+                <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #fff;">Registrar Retirada</h3>
+              <p style="margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Informe os dados da saída de material</p>
+            </div>
+          </div>
+        </div>
+        
+        <form onsubmit="submitQuickWithdrawal(event)" style="padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;">
+          
+          <!-- Item Search Field -->
+          <div style="position: relative;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              Item do Estoque
+            </label>
+            <select name="item_id" id="withdrawal-item-select" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)'; this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)'; this.style.boxShadow='none';">
+              <option value="">Buscar ou selecionar item...</option>
+              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} — ${i.quantity} ${i.unit || 'un'} disponíveis</option>`).join('')}
+            </select>
+          </div>
+          
+          <!-- Quantity + Usage Type Row -->
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 14px;">
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                Quantidade
+              </label>
+              <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 16px; font-weight: 600; text-align: center;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)'; this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)'; this.style.boxShadow='none';">
+            </div>
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Tipo de Uso
+              </label>
+              <select name="usage_type" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
+                <option value="consumo">🔸 Consumo (não retorna)</option>
+                <option value="emprestimo">🔄 Empréstimo (deve retornar)</option>
+                <option value="manutencao">🔧 Manutenção</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Person Name -->
+          <div>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Quem está retirando?
+            </label>
+            <input type="text" name="person_name" placeholder="Digite o nome completo da pessoa" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(236,72,153,0.5)'; this.style.boxShadow='0 0 0 3px rgba(236,72,153,0.1)';" onblur="this.style.borderColor='rgba(236,72,153,0.2)'; this.style.boxShadow='none';">
+          </div>
+          
+          <!-- Sector -->
+          <div>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Setor <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
+            </label>
+            <input type="text" name="sector" placeholder="Ex: Manutenção, Aviário 1, Recria..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
+          </div>
+          
+          <!-- Notes -->
+          <div>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Observação <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
+            </label>
+            <textarea name="notes" rows="2" placeholder="Anotações adicionais sobre a retirada..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; resize: none;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';"></textarea>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 12px; margin-top: 8px;">
+            <button type="button" onclick="closeModal('modal-quick-withdrawal')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)';" onmouseout="this.style.background='rgba(255,255,255,0.03)';">Cancelar</button>
+            <button type="submit" style="flex: 1.2; padding: 14px; background: linear-gradient(135deg, #ec4899, #be185d); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(236,72,153,0.35); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(236,72,153,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(236,72,153,0.35)';">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+              Confirmar Retirada
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-quick-withdrawal');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Submeter retirada rápida
+async function submitQuickWithdrawal(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  const item = state.inventory.find(i => i.id == formData.get('item_id'));
+  const quantity = parseInt(formData.get('quantity'));
+  
+  if (!item) {
+    showNotification('Selecione um item', 'error');
+    return;
+  }
+  
+  if (quantity > item.quantity) {
+    showNotification('Quantidade maior que disponível', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/movements`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({
+        item_id: item.id,
+        movement_type: 'saida',
+        quantity: quantity,
+        usage_type: formData.get('usage_type'),
+        person_name: formData.get('person_name'),
+        person_sector: formData.get('sector') || null,
+        notes: formData.get('notes') || null
+      })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('Retirada registrada com sucesso!', 'success');
+      closeModal('modal-quick-withdrawal');
+      loadInventory();
+      if (almox2State.currentTab === 'movimentos') loadAlmoxMovements();
+      if (almox2State.currentTab === 'ferramentas') loadPendingLoans();
+    } else {
+      showNotification('Erro: ' + (data.error || 'Erro ao registrar'), 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao registrar retirada:', error);
+    showNotification('Erro ao registrar retirada', 'error');
+  }
+}
+
+// Modal de Entrada Rápida - Design Premium
+function showQuickEntry() {
+  const items = state.inventory;
+  
+  const modalHtml = `
+    <div id="modal-quick-entry" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-entry')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(16,40,26,0.7));">
+      <div class="modal" style="max-width: 520px; background: linear-gradient(145deg, rgba(21,94,55,0.97), rgba(16,70,40,0.97)); border: 1px solid rgba(34,197,94,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 80px rgba(34,197,94,0.12), inset 0 1px 0 rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; animation: modalSlideIn 0.3s ease-out;">
+        
+        <!-- Header Section Premium -->
+        <div style="background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); margin: -24px -24px 24px -24px; padding: 28px 24px; border-bottom: 1px solid rgba(34,197,94,0.2);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; background: linear-gradient(135deg, rgba(34,197,94,0.4), rgba(22,163,74,0.25)); border-radius: 14px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(34,197,94,0.5); box-shadow: 0 8px 24px rgba(34,197,94,0.2);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+                <path d="M12 5v14"/>
+                <path d="M5 12h14"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px;">Entrada de Material</h3>
+              <p style="margin: 6px 0 0; font-size: 13px; color: rgba(255,255,255,0.6);">Registre a entrada de novos materiais no estoque</p>
+            </div>
+          </div>
+        </div>
+        
+        <form onsubmit="submitQuickEntry(event)" style="display: flex; flex-direction: column; gap: 18px;">
+          
+          <!-- Select Item com Label Premium -->
+          <div>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              </svg>
+              Item do Estoque
+            </label>
+            <select name="item_id" required style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer; transition: all 0.2s ease;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';">
+              <option value="">Selecione o item...</option>
+              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (Atual: ${i.quantity} ${i.unit})</option>`).join('')}
+            </select>
+          </div>
+          
+          <!-- Grid: Quantidade e Referência -->
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 14px;">
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                Quantidade
+              </label>
+              <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 16px; font-weight: 600; text-align: center; transition: all 0.2s ease;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';">
+            </div>
+            
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Nota Fiscal
+              </label>
+              <input type="text" name="reference" placeholder="Ex: NF-12345" style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; transition: all 0.2s ease;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';">
+            </div>
+          </div>
+          
+          <!-- Observação -->
+          <div>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Observação (opcional)
+            </label>
+            <textarea name="notes" rows="2" placeholder="Anotações sobre a entrada..." style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; resize: none; transition: all 0.2s ease; line-height: 1.5;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';"></textarea>
+          </div>
+          
+          <!-- Botões Premium -->
+          <div style="display: flex; gap: 12px; margin-top: 10px; padding-top: 20px; border-top: 1px solid rgba(34,197,94,0.15);">
+            <button type="button" onclick="closeModal('modal-quick-entry')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: rgba(255,255,255,0.8); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.12)';">Cancelar</button>
+            <button type="submit" style="flex: 1.3; padding: 14px 20px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(34,197,94,0.35); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(34,197,94,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(34,197,94,0.35)';">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 5v14"/>
+                <path d="M5 12h14"/>
+              </svg>
+              Confirmar Entrada
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-quick-entry');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Submeter entrada rápida
+async function submitQuickEntry(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  const item = state.inventory.find(i => i.id == formData.get('item_id'));
+  const quantity = parseInt(formData.get('quantity'));
+  
+  if (!item) {
+    showNotification('Selecione um item', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/movements`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({
+        item_id: item.id,
+        movement_type: 'entrada',
+        quantity: quantity,
+        usage_type: 'outros',
+        reference: formData.get('reference') || null,
+        notes: formData.get('notes') || null
+      })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('Entrada registrada com sucesso!', 'success');
+      closeModal('modal-quick-entry');
+      loadInventory();
+      if (almox2State.currentTab === 'movimentos') loadAlmoxMovements();
+    } else {
+      showNotification('Erro: ' + (data.error || 'Erro ao registrar'), 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao registrar entrada:', error);
+    showNotification('Erro ao registrar entrada', 'error');
+  }
+}
+
+// Carregar relatórios
+async function loadAlmoxReports() {
+  try {
+    const response = await fetch(`${API_URL}/inventory/stats?period=${almox2State.reportPeriod}`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      renderAlmoxReports(data.stats);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar relatórios:', error);
+  }
+}
+
+// Definir período do relatório
+function setAlmoxReportPeriod(period) {
+  almox2State.reportPeriod = period;
+  
+  document.querySelectorAll('.almox2-period-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.period === period);
+  });
+  
+  loadAlmoxReports();
+}
+
+// Renderizar relatórios
+function renderAlmoxReports(stats) {
+  // Top itens
+  const topItemsContainer = document.getElementById('almox2-top-items');
+  if (topItemsContainer && stats.top_items) {
+    topItemsContainer.innerHTML = stats.top_items.slice(0, 5).map((item, idx) => `
+      <div class="almox2-top-item">
+        <div class="almox2-top-rank">${idx + 1}</div>
+        <div class="almox2-top-info">
+          <div class="almox2-top-name">${escapeHtml(item.name)}</div>
+          <div class="almox2-top-sub">${escapeHtml(item.category || 'Sem categoria')}</div>
+        </div>
+        <div class="almox2-top-value">${item.movement_count || 0}</div>
+      </div>
+    `).join('') || '<div class="almox2-empty-state"><p>Sem dados</p></div>';
+  }
+  
+  // Top setores
+  const topSectorsContainer = document.getElementById('almox2-top-sectors');
+  if (topSectorsContainer && stats.top_sectors) {
+    topSectorsContainer.innerHTML = stats.top_sectors.slice(0, 5).map((sector, idx) => `
+      <div class="almox2-top-item">
+        <div class="almox2-top-rank">${idx + 1}</div>
+        <div class="almox2-top-info">
+          <div class="almox2-top-name">${escapeHtml(sector.sector || 'Não informado')}</div>
+        </div>
+        <div class="almox2-top-value">${sector.count || 0}</div>
+      </div>
+    `).join('') || '<div class="almox2-empty-state"><p>Sem dados</p></div>';
+  }
+  
+  // Low stock
+  const lowStockContainer = document.getElementById('almox2-low-stock');
+  if (lowStockContainer) {
+    const lowItems = state.inventory.filter(i => i.quantity <= (i.min_stock || 0)).slice(0, 5);
+    lowStockContainer.innerHTML = lowItems.map(item => `
+      <div class="almox2-low-item">
+        <div class="almox2-low-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          </svg>
+        </div>
+        <div class="almox2-low-info">
+          <div class="almox2-low-name">${escapeHtml(item.name)}</div>
+        </div>
+        <div class="almox2-low-qty">${item.quantity}</div>
+      </div>
+    `).join('') || '<div class="almox2-empty-state" style="padding: 20px;"><p>Nenhum item em estoque baixo</p></div>';
+  }
+  
+  // Renderizar gráficos se Chart.js disponível
+  if (typeof Chart !== 'undefined') {
+    renderAlmoxCharts(stats);
+  }
+}
+
+// Renderizar gráficos
+function renderAlmoxCharts(stats) {
+  // Gráfico de movimentações
+  const movCtx = document.getElementById('almox2-movements-chart');
+  if (movCtx) {
+    const existingChart = Chart.getChart(movCtx);
+    if (existingChart) existingChart.destroy();
+    
+    new Chart(movCtx, {
+      type: 'bar',
+      data: {
+        labels: stats.chart_labels || ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        datasets: [
+          {
+            label: 'Entradas',
+            data: stats.entradas_data || [0,0,0,0,0,0,0],
+            backgroundColor: 'rgba(34, 197, 94, 0.6)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+          },
+          {
+            label: 'Saídas',
+            data: stats.saidas_data || [0,0,0,0,0,0,0],
+            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+            borderColor: 'rgb(239, 68, 68)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: 'rgba(255,255,255,0.7)' }
+          }
+        },
+        scales: {
+          x: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  }
+  
+  // Gráfico de categorias
+  const catCtx = document.getElementById('almox2-categories-chart');
+  if (catCtx) {
+    const existingChart = Chart.getChart(catCtx);
+    if (existingChart) existingChart.destroy();
+    
+    const catData = {};
+    state.inventory.forEach(item => {
+      const cat = item.category || 'outros';
+      catData[cat] = (catData[cat] || 0) + 1;
+    });
+    
+    const colors = {
+      ferramentas: '#60a5fa',
+      eletrica: '#fbbf24',
+      hidraulica: '#22d3ee',
+      rolamentos: '#9ca3af',
+      parafusos: '#c084fc',
+      lubrificantes: '#fb923c',
+      epis: '#4ade80',
+      outros: '#6b7280'
+    };
+    
+    new Chart(catCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(catData),
+        datasets: [{
+          data: Object.values(catData),
+          backgroundColor: Object.keys(catData).map(c => colors[c] || '#6b7280'),
+          borderColor: 'rgba(0,0,0,0.3)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { color: 'rgba(255,255,255,0.7)', padding: 12, font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+}
+
+// Modal de Relatório
+function showAlmoxReportModal() {
+  const lowStock = state.inventory.filter(i => i.quantity <= (i.min_stock || 0));
+  const total = state.inventory.length;
+  const categories = [...new Set(state.inventory.map(i => i.category))].length;
+  
+  const modalHtml = `
+    <div id="modal-almox-report" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-almox-report')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+      <div class="modal" style="max-width: 600px; background: linear-gradient(135deg, rgba(88,28,135,0.95), rgba(55,48,107,0.95)); border: 1px solid rgba(168,85,247,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="margin: 0; color: #fff;">Relatório do Almoxarifado</h3>
+          <button onclick="closeModal('modal-almox-report')" style="background: none; border: none; color: #fff; cursor: pointer;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div style="background: rgba(139,92,246,0.2); padding: 16px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #c4b5fd;">${total}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">TOTAL ITENS</div>
+          </div>
+          <div style="background: rgba(245,158,11,0.2); padding: 16px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #fbbf24;">${lowStock.length}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">ESTOQUE BAIXO</div>
+          </div>
+          <div style="background: rgba(99,102,241,0.2); padding: 16px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #818cf8;">${categories}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">CATEGORIAS</div>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <button onclick="closeModal('modal-almox-report')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer;">Fechar</button>
+          <button onclick="exportAlmoxReportHTML()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #a855f7, #8b5cf6); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600;">Baixar HTML</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-almox-report');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Exportar Relatório HTML Premium
+function exportAlmoxReportHTML() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR');
+  
+  const total = state.inventory.length;
+  const lowStock = state.inventory.filter(i => i.quantity <= (i.min_stock || 0));
+  const categories = [...new Set(state.inventory.map(i => i.category))];
+  const brands = [...new Set(state.inventory.filter(i => i.brand).map(i => i.brand))];
+  
+  // Agrupar por categoria
+  const byCategory = {};
+  state.inventory.forEach(item => {
+    const cat = item.category || 'outros';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(item);
+  });
+  
+  const categoryLabels = {
+    ferramentas: 'Ferramentas',
+    eletrica: 'Elétrica',
+    hidraulica: 'Hidráulica',
+    rolamentos: 'Rolamentos',
+    parafusos: 'Parafusos/Fixação',
+    lubrificantes: 'Lubrificantes',
+    epis: 'EPIs',
+    outros: 'Outros'
+  };
+  
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório Almoxarifado - ${dateStr}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @keyframes gradientFlow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #0f0a1e 0%, #1a1333 50%, #0d0b1a 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+      padding: 40px 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(139,92,246,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(236,72,153,0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .floating-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: float 6s ease-in-out infinite, pulse 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .orb-1 { width: 300px; height: 300px; background: rgba(139,92,246,0.2); top: 10%; left: 5%; animation-delay: 0s; }
+    .orb-2 { width: 250px; height: 250px; background: rgba(236,72,153,0.15); top: 60%; right: 10%; animation-delay: -2s; }
+    .orb-3 { width: 200px; height: 200px; background: rgba(99,102,241,0.15); bottom: 20%; left: 30%; animation-delay: -4s; }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      padding: 50px 40px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(88,28,135,0.1));
+      border-radius: 28px;
+      border: 1px solid rgba(168,85,247,0.25);
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #8b5cf6, #ec4899, #8b5cf6);
+      background-size: 200% 100%;
+      animation: gradientFlow 3s ease infinite;
+    }
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.2));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(168,85,247,0.4);
+      box-shadow: 0 8px 32px rgba(139,92,246,0.3);
+    }
+    .logo-container svg { width: 40px; height: 40px; color: #c4b5fd; }
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .subtitle { color: rgba(255,255,255,0.5); font-size: 16px; }
+    .date-badge {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: rgba(139,92,246,0.2);
+      border-radius: 30px;
+      font-size: 14px;
+      color: #c4b5fd;
+      border: 1px solid rgba(168,85,247,0.3);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(168,85,247,0.3);
+      box-shadow: 0 15px 40px rgba(139,92,246,0.15);
+    }
+    .stat-value {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a78bfa, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+    .stat-card.warning .stat-value { background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; }
+    .category-section {
+      margin-bottom: 30px;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(88,28,135,0.05));
+      border-radius: 14px 14px 0 0;
+      border: 1px solid rgba(168,85,247,0.2);
+      border-bottom: none;
+    }
+    .category-icon {
+      width: 38px; height: 38px;
+      background: rgba(139,92,246,0.2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: #a78bfa;
+    }
+    .category-name { font-size: 16px; font-weight: 600; color: #fff; }
+    .category-count { margin-left: auto; background: rgba(168,85,247,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #c4b5fd; }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0 0 14px 14px;
+      overflow: hidden;
+    }
+    .items-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.5);
+      background: rgba(139,92,246,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .items-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+    .items-table tr:last-child td { border-bottom: none; }
+    .items-table tr:hover td { background: rgba(139,92,246,0.05); }
+    .qty-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .qty-normal { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .qty-low { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .qty-critical { background: rgba(239,68,68,0.15); color: #f87171; }
+    .low-stock-section {
+      margin-top: 40px;
+      padding: 30px;
+      background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
+      border-radius: 18px;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .low-stock-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .low-stock-icon {
+      width: 44px; height: 44px;
+      background: rgba(239,68,68,0.2);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #f87171;
+    }
+    .low-stock-title { font-size: 18px; font-weight: 700; color: #fff; }
+    .footer {
+      margin-top: 50px;
+      text-align: center;
+      padding: 30px;
+      color: rgba(255,255,255,0.4);
+      font-size: 13px;
+    }
+    .footer strong { color: #a78bfa; }
+    @media print {
+      body { background: #fff; color: #1f2937; padding: 20px; }
+      .floating-orb, body::before { display: none; }
+      .stat-value, h1 { color: #7c3aed !important; -webkit-text-fill-color: unset !important; }
+      .header, .stat-card, .category-header { border-color: #e5e7eb; background: #f9fafb; }
+    }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-orb orb-1"></div>
+  <div class="floating-orb orb-2"></div>
+  <div class="floating-orb orb-3"></div>
+  
+  <div class="container">
+    <div class="header">
+      <div class="logo-container">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+      </div>
+      <h1>Relatório de Almoxarifado</h1>
+      <p class="subtitle">Controle Completo de Estoque e Materiais</p>
+      <div class="date-badge">Gerado em ${dateStr} às ${timeStr}</div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">${total}</div>
+        <div class="stat-label">Total de Itens</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="stat-value">${lowStock.length}</div>
+        <div class="stat-label">Estoque Baixo</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${categories.length}</div>
+        <div class="stat-label">Categorias</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${brands.length}</div>
+        <div class="stat-label">Marcas</div>
+      </div>
+    </div>
+    
+    ${Object.entries(byCategory).map(([cat, items]) => `
+    <div class="category-section">
+      <div class="category-header">
+        <div class="category-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+        </div>
+        <span class="category-name">${categoryLabels[cat] || cat}</span>
+        <span class="category-count">${items.length} itens</span>
+      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Nome</th>
+            <th>Marca</th>
+            <th>Quantidade</th>
+            <th>Unidade</th>
+            <th>Localização</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(item => {
+            const isCritical = item.quantity <= 0;
+            const isLow = item.quantity <= (item.min_stock || 0);
+            const qtyClass = isCritical ? 'qty-critical' : isLow ? 'qty-low' : 'qty-normal';
+            return `
+          <tr>
+            <td><code style="background: rgba(139,92,246,0.15); padding: 2px 8px; border-radius: 4px; color: #c4b5fd;">${item.sku || '-'}</code></td>
+            <td><strong>${item.name}</strong></td>
+            <td>${item.brand || '-'}</td>
+            <td><span class="qty-badge ${qtyClass}">${item.quantity}</span></td>
+            <td>${item.unit || 'un'}</td>
+            <td>${item.location || '-'}</td>
+          </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    `).join('')}
+    
+    ${lowStock.length > 0 ? `
+    <div class="low-stock-section">
+      <div class="low-stock-header">
+        <div class="low-stock-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <span class="low-stock-title">Atenção: Itens em Estoque Baixo (${lowStock.length})</span>
+      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Categoria</th>
+            <th>Quantidade Atual</th>
+            <th>Mínimo</th>
+            <th>Diferença</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lowStock.map(item => `
+          <tr>
+            <td><strong>${item.name}</strong></td>
+            <td>${categoryLabels[item.category] || item.category || '-'}</td>
+            <td><span class="qty-badge ${item.quantity <= 0 ? 'qty-critical' : 'qty-low'}">${item.quantity}</span></td>
+            <td>${item.min_stock || 0}</td>
+            <td style="color: #f87171; font-weight: 600;">-${(item.min_stock || 0) - item.quantity}</td>
+          </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+    
+    <div class="footer">
+      <p>Relatório gerado pelo sistema <strong>ICARUS</strong></p>
+      <p style="margin-top: 8px;">Sistema de Gestão Inteligente de Manutenção</p>
+      <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(168,85,247,0.05)); border-radius: 12px; border: 1px solid rgba(168,85,247,0.2); display: inline-block;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; background: rgba(212,175,55,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-weight: 700; color: #d4af37; font-size: 14px;">ICARUS SYSTEM</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Sistema Inteligente de Gestão</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 16px; font-size: 11px;">Desenvolvido por Guilherme Braga • © 2025</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  // Dados estruturados para PDF no servidor
+  const almoxarifadoReportData = {
+    title: 'Relatório Almoxarifado - Granja Vitta',
+    type: 'almoxarifado-report',
+    content: {
+      summary: {
+        totalItems: total,
+        lowStockCount: lowStock.length,
+        categoriesCount: categories.length,
+        brandsCount: brands.length
+      },
+      categories: Object.entries(byCategory).map(([cat, items]) => ({
+        name: categoryLabels[cat] || cat,
+        count: items.length,
+        items: items.map(i => ({
+          sku: i.sku || '-',
+          name: i.name,
+          brand: i.brand || '-',
+          quantity: i.quantity,
+          unit: i.unit || 'un',
+          location: i.location || '-'
+        }))
+      })),
+      lowStockItems: lowStock.map(i => ({
+        name: i.name,
+        category: categoryLabels[i.category] || i.category || '-',
+        quantity: i.quantity,
+        minStock: i.min_stock || 0
+      }))
+    }
+  };
+
+  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
+  showReportInPage(html, 'Relatório Almoxarifado', 'Relatório do Almoxarifado gerado!', almoxarifadoReportData);
+  closeModal('modal-almox-report');
+}
+
+// ========================================
+// FIM ALMOXARIFADO V2
+// ========================================
 
 function showItemDetail(itemId) {
   const item = state.inventory.find(i => i.id === itemId);
@@ -4632,7 +6208,9 @@ function renderChecklists() {
     // Verificar se automação está ativa
     const isAutoEnabled = cl.auto_complete === true;
     const autoFreqDays = cl.frequency_days || 1;
+    const autoTime = cl.auto_time || '11:00';
     const lastAutoRun = cl.last_auto_run ? new Date(cl.last_auto_run).toLocaleDateString('pt-BR') : null;
+    const freqLabel = autoFreqDays === 1 ? 'Diário' : autoFreqDays === 2 ? 'Dia S/N' : autoFreqDays === 7 ? 'Semanal' : `${autoFreqDays}d`;
     
     return `
     <div class="checklist-item-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; margin-bottom: 14px; transition: all 0.2s; ${isAutoEnabled ? 'border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);' : ''}">
@@ -4669,8 +6247,8 @@ function renderChecklists() {
           </span>
           ${isAutoEnabled ? `
             <span style="display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.1)); color: #a855f7; border-radius: 15px; font-size: 10px; font-weight: 600; text-transform: uppercase; border: 1px solid rgba(168, 85, 247, 0.3);">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
-              Auto • A cada ${autoFreqDays} dia${autoFreqDays > 1 ? 's' : ''}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${autoTime} • ${freqLabel}${cl.auto_create_os ? ' • +OS' : ''}
             </span>
           ` : ''}
         </div>
@@ -4679,9 +6257,9 @@ function renderChecklists() {
       ${cl.description ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 14px 0; padding-left: 58px;">${escapeHtml(cl.description)}</p>` : ''}
       
       ${isAutoEnabled && lastAutoRun ? `
-        <div style="margin: 0 0 14px 0; padding: 10px 14px; padding-left: 58px; display: inline-flex; align-items: center; gap: 8px; background: rgba(168, 85, 247, 0.08); border-radius: 8px; font-size: 12px; color: #c084fc; margin-left: 58px;">
+        <div style="margin: 0 0 14px 0; padding: 10px 14px; display: inline-flex; align-items: center; gap: 8px; background: rgba(168, 85, 247, 0.08); border-radius: 8px; font-size: 12px; color: #c084fc; margin-left: 58px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Última execução automática: ${lastAutoRun}
+          Última execução: ${lastAutoRun}
         </div>
       ` : ''}
       
@@ -4730,49 +6308,128 @@ function showChecklistAutomation(checklistId) {
   
   const isEnabled = checklist.auto_complete === true;
   const freqDays = checklist.frequency_days || 1;
+  const autoTime = checklist.auto_time || '11:00';
+  const autoCreateOS = checklist.auto_create_os || false;
+  const autoOsExecutor = checklist.auto_os_executor || '';
+  const autoOsTitle = checklist.auto_os_title || `Checklist: ${checklist.name}`;
+  
+  // Carregar técnicos para o select
+  const technicians = (state.users || []).filter(u => 
+    u.roles && (u.roles.includes('tecnico') || u.roles.includes('os_manage_all') || u.roles.includes('admin'))
+  );
+  
+  const techOptions = technicians.map(t => 
+    `<option value="${t.id}" ${autoOsExecutor === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`
+  ).join('');
   
   const modalHtml = `
-    <div id="modal-checklist-automation" class="modal-overlay active" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #0f0f14 0%, #1a1020 100%); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 20px; max-width: 420px; width: 100%; padding: 28px; animation: slideInMagenta 0.3s ease-out;">
-        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
-          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #a855f7, #7c3aed); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-          </div>
-          <div>
-            <h3 style="margin: 0; font-size: 18px; color: #fff; font-weight: 700;">Automação de Checklist</h3>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.6);">${escapeHtml(checklist.name)}</p>
-          </div>
-        </div>
+    <div id="modal-checklist-automation" class="modal-overlay active" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: linear-gradient(145deg, rgba(15, 15, 25, 0.98), rgba(20, 12, 35, 0.98)); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 24px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; animation: slideInMagenta 0.3s ease-out; box-shadow: 0 25px 80px rgba(168, 85, 247, 0.25), inset 0 1px 1px rgba(255,255,255,0.08);">
         
-        <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-          <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;">
-            <strong style="color: #c084fc;">Automação:</strong> Quando ativada, o checklist será marcado como concluído automaticamente na frequência definida (ex: dia sim, dia não).
-          </p>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px;">
-            <input type="checkbox" id="auto-enabled" ${isEnabled ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #a855f7;">
-            <div>
-              <span style="font-size: 14px; font-weight: 600; color: #fff;">Ativar execução automática</span>
-              <p style="margin: 4px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Marca automaticamente como feito</p>
+        <!-- Header -->
+        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.12) 0%, transparent 100%); border-bottom: 1px solid rgba(168, 85, 247, 0.15);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 54px; height: 54px; background: linear-gradient(135deg, #a855f7, #7c3aed); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
             </div>
-          </label>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 8px;">Frequência (em dias)</label>
-          <div style="display: flex; gap: 10px;">
-            <button type="button" onclick="setAutoFreq(1)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 1 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 1 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">Diário</button>
-            <button type="button" onclick="setAutoFreq(2)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 2 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 2 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">Dia sim/não</button>
-            <button type="button" onclick="setAutoFreq(3)" class="freq-btn" style="flex: 1; padding: 12px; background: ${freqDays === 3 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 3 ? 'transparent' : 'var(--border-color)'}; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;">A cada 3 dias</button>
+            <div style="flex: 1;">
+              <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">Automação de Checklist</h3>
+              <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">${escapeHtml(checklist.name)}</p>
+            </div>
+            <button onclick="closeChecklistAutomation()" style="background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 8px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <input type="hidden" id="auto-freq-days" value="${freqDays}">
         </div>
         
-        <div style="display: flex; gap: 12px;">
-          <button onclick="closeChecklistAutomation()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-secondary); font-size: 14px; cursor: pointer;">Cancelar</button>
-          <button onclick="saveChecklistAutomation('${checklistId}')" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);">Salvar</button>
+        <div style="padding: 24px 28px;">
+          <!-- Toggle Ativar -->
+          <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 14px; padding: 18px; margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <div>
+                  <span style="font-size: 15px; font-weight: 600; color: #fff;">Execução Automática</span>
+                  <p style="margin: 2px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Marca como concluído automaticamente</p>
+                </div>
+              </div>
+              <div style="position: relative; width: 52px; height: 28px;">
+                <input type="checkbox" id="auto-enabled" ${isEnabled ? 'checked' : ''} onchange="toggleAutoOptions()" style="opacity: 0; width: 0; height: 0;">
+                <span style="position: absolute; inset: 0; background: ${isEnabled ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)'}; border-radius: 14px; transition: 0.3s; cursor: pointer;" onclick="document.getElementById('auto-enabled').click()"></span>
+                <span style="position: absolute; left: ${isEnabled ? '26px' : '3px'}; top: 3px; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: 0.3s; cursor: pointer;" onclick="document.getElementById('auto-enabled').click()"></span>
+              </div>
+            </label>
+          </div>
+          
+          <!-- Opções de Automação -->
+          <div id="auto-options-container" style="display: ${isEnabled ? 'block' : 'none'};">
+            
+            <!-- Horário -->
+            <div style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Horário de Execução
+              </label>
+              <input type="time" id="auto-time" value="${autoTime}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: #fff; font-size: 15px; font-family: inherit;">
+            </div>
+            
+            <!-- Frequência -->
+            <div style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 10px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Frequência
+              </label>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                <button type="button" onclick="setAutoFreq(1)" class="freq-btn" data-freq="1" style="padding: 12px 8px; background: ${freqDays === 1 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 1 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Diário</button>
+                <button type="button" onclick="setAutoFreq(2)" class="freq-btn" data-freq="2" style="padding: 12px 8px; background: ${freqDays === 2 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 2 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Dia S/N</button>
+                <button type="button" onclick="setAutoFreq(3)" class="freq-btn" data-freq="3" style="padding: 12px 8px; background: ${freqDays === 3 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 3 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">3 dias</button>
+                <button type="button" onclick="setAutoFreq(7)" class="freq-btn" data-freq="7" style="padding: 12px 8px; background: ${freqDays === 7 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 7 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Semanal</button>
+              </div>
+              <input type="hidden" id="auto-freq-days" value="${freqDays}">
+            </div>
+            
+            <!-- Criar OS -->
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 14px; padding: 18px; margin-bottom: 18px;">
+              <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                  <div>
+                    <span style="font-size: 14px; font-weight: 600; color: #fff;">Criar OS Automática</span>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.5);">Cria e fecha a OS automaticamente</p>
+                  </div>
+                </div>
+                <input type="checkbox" id="auto-create-os" ${autoCreateOS ? 'checked' : ''} onchange="toggleAutoOSOptions()" style="width: 20px; height: 20px; accent-color: #10b981;">
+              </label>
+              
+              <div id="auto-os-options" style="display: ${autoCreateOS ? 'block' : 'none'};">
+                <div style="margin-bottom: 12px;">
+                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Título da OS</label>
+                  <input type="text" id="auto-os-title" value="${escapeHtml(autoOsTitle)}" placeholder="Título da OS" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 14px;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Responsável (quem executou)</label>
+                  <select id="auto-os-executor" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 14px;">
+                    <option value="">-- Selecione --</option>
+                    ${techOptions}
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Info -->
+            <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 14px; margin-bottom: 20px;">
+              <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <strong>Dia S/N:</strong> Executa dia 26, pula 27, executa 28, etc.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Botões -->
+          <div style="display: flex; gap: 12px;">
+            <button onclick="closeChecklistAutomation()" style="flex: 1; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; cursor: pointer;">Cancelar</button>
+            <button onclick="saveChecklistAutomation('${checklistId}')" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);">Salvar Configuração</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4781,19 +6438,47 @@ function showChecklistAutomation(checklistId) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+// Toggle opções de automação
+function toggleAutoOptions() {
+  const enabled = document.getElementById('auto-enabled').checked;
+  const container = document.getElementById('auto-options-container');
+  if (container) {
+    container.style.display = enabled ? 'block' : 'none';
+  }
+  
+  // Atualizar visual do toggle
+  const toggle = document.getElementById('auto-enabled');
+  const parent = toggle.parentElement;
+  const track = parent.querySelector('span:first-of-type');
+  const thumb = parent.querySelector('span:last-of-type');
+  if (track && thumb) {
+    track.style.background = enabled ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)';
+    thumb.style.left = enabled ? '26px' : '3px';
+  }
+}
+
+// Toggle opções de criar OS
+function toggleAutoOSOptions() {
+  const enabled = document.getElementById('auto-create-os').checked;
+  const container = document.getElementById('auto-os-options');
+  if (container) {
+    container.style.display = enabled ? 'block' : 'none';
+  }
+}
+
 // Definir frequência na modal
 function setAutoFreq(days) {
   document.getElementById('auto-freq-days').value = days;
   
   // Atualizar visual dos botões
-  document.querySelectorAll('.freq-btn').forEach((btn, i) => {
-    const btnDays = i + 1;
+  document.querySelectorAll('.freq-btn').forEach(btn => {
+    const btnDays = parseInt(btn.dataset.freq);
     if (btnDays === days) {
       btn.style.background = 'linear-gradient(135deg, #a855f7, #7c3aed)';
       btn.style.borderColor = 'transparent';
     } else {
       btn.style.background = 'rgba(255,255,255,0.05)';
-      btn.style.borderColor = 'var(--border-color)';
+      btn.style.borderColor = 'rgba(255,255,255,0.15)';
     }
   });
 }
@@ -4804,10 +6489,84 @@ function closeChecklistAutomation() {
   if (modal) modal.remove();
 }
 
+// ============================================
+// DROPDOWN DE SETOR/LOCAL PARA OS
+// ============================================
+
+function toggleSectorDropdown() {
+  const options = document.getElementById('os-sector-options');
+  const btn = document.getElementById('os-sector-btn');
+  if (options) {
+    const isOpen = options.style.display === 'block';
+    options.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+      btn.style.borderColor = 'rgba(212,175,55,0.5)';
+      btn.style.boxShadow = '0 0 20px rgba(212,175,55,0.2)';
+    } else {
+      btn.style.borderColor = 'rgba(255,255,255,0.1)';
+      btn.style.boxShadow = 'none';
+    }
+  }
+}
+
+function toggleSectorSub(group) {
+  const sub = document.getElementById('sub-' + group);
+  const icon = document.getElementById('icon-' + group);
+  if (sub) {
+    const isOpen = sub.style.display === 'block';
+    sub.style.display = isOpen ? 'none' : 'block';
+    if (icon) {
+      icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+  }
+}
+
+function selectSector(value) {
+  const input = document.getElementById('os-sector');
+  const text = document.getElementById('os-sector-text');
+  const btn = document.getElementById('os-sector-btn');
+  const options = document.getElementById('os-sector-options');
+  
+  if (input) input.value = value;
+  if (text) {
+    text.textContent = value;
+    text.style.color = '#fff';
+  }
+  if (btn) {
+    btn.style.borderColor = 'rgba(212,175,55,0.3)';
+    btn.style.boxShadow = 'none';
+  }
+  if (options) options.style.display = 'none';
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('os-sector-dropdown');
+  const options = document.getElementById('os-sector-options');
+  if (dropdown && options && !dropdown.contains(e.target)) {
+    options.style.display = 'none';
+    const btn = document.getElementById('os-sector-btn');
+    if (btn) {
+      btn.style.borderColor = 'rgba(255,255,255,0.1)';
+      btn.style.boxShadow = 'none';
+    }
+  }
+});
+
 // Salvar configuração de automação
 async function saveChecklistAutomation(checklistId) {
   const enabled = document.getElementById('auto-enabled').checked;
   const freqDays = parseInt(document.getElementById('auto-freq-days').value) || 1;
+  const autoTime = document.getElementById('auto-time')?.value || '11:00';
+  const autoCreateOS = document.getElementById('auto-create-os')?.checked || false;
+  const autoOsTitle = document.getElementById('auto-os-title')?.value || '';
+  const autoOsExecutor = document.getElementById('auto-os-executor')?.value || '';
+  
+  // Validar se escolheu responsável quando criar OS
+  if (enabled && autoCreateOS && !autoOsExecutor) {
+    showNotification('Selecione um responsável para a OS automática', 'warning');
+    return;
+  }
   
   try {
     const response = await fetch(`${API_URL}/checklists/${checklistId}/automation`, {
@@ -4818,7 +6577,11 @@ async function saveChecklistAutomation(checklistId) {
       },
       body: JSON.stringify({
         auto_complete: enabled,
-        frequency_days: freqDays
+        frequency_days: freqDays,
+        auto_time: autoTime,
+        auto_create_os: autoCreateOS,
+        auto_os_title: autoOsTitle,
+        auto_os_executor: autoOsExecutor
       })
     });
     
@@ -4826,9 +6589,9 @@ async function saveChecklistAutomation(checklistId) {
     
     if (data.ok) {
       closeChecklistAutomation();
-      await loadChecklists();
+      state.checklists = data.checklists || state.checklists;
       renderChecklists();
-      showNotification(enabled ? 'Automação ativada com sucesso!' : 'Automação desativada', 'success');
+      showNotification(enabled ? `Automação ativada para ${autoTime}!` : 'Automação desativada', 'success');
     } else {
       showNotification(data.error || 'Erro ao salvar automação', 'error');
     }
@@ -6602,8 +8365,17 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
     downloadReportAsPDF();
   };
   
+  // Botão Baixar HTML Interativo
+  const btnHTML = document.createElement('button');
+  btnHTML.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12l-2 2 2 2"/><path d="M14 12l2 2-2 2"/></svg><span>Baixar HTML</span>';
+  btnHTML.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
+  btnHTML.onclick = function() {
+    exportDashboardHTML();
+  };
+  
   actionsDiv.appendChild(btnPrint);
   actionsDiv.appendChild(btnDownload);
+  actionsDiv.appendChild(btnHTML);
   
   toolbar.appendChild(btnBack);
   toolbar.appendChild(actionsDiv);
@@ -9880,6 +11652,382 @@ function exportDashboardReport() {
   showReportInPage(htmlContent, 'Relatório Dashboard', 'Relatório do Dashboard gerado!', dashboardReportData);
 }
 
+// ========== DROPDOWN DE EXPORTAÇÃO ==========
+
+function toggleExportDropdown(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById('export-dropdown');
+  if (dropdown) {
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function closeExportDropdown() {
+  const dropdown = document.getElementById('export-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+  const container = document.querySelector('.export-dropdown-container');
+  if (container && !container.contains(e.target)) {
+    closeExportDropdown();
+  }
+});
+
+// ========== EXPORTAR DASHBOARD HTML INTERATIVO ==========
+
+function exportDashboardHTML() {
+  const orders = state.orders || [];
+  const checklists = state.checklists || [];
+  const filter = state.dashboardFilter || 'daily';
+  
+  // Usar o mesmo range do dashboard
+  const { startDate, endDate } = getDateRange();
+  let periodLabel = 'Hoje';
+  
+  if (state.dashboardMonth) {
+    const [year, month] = state.dashboardMonth.split('-');
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    periodLabel = monthNames[parseInt(month) - 1] + ' ' + year;
+  } else if (filter === 'weekly') {
+    periodLabel = 'Esta Semana';
+  } else if (filter === 'monthly') {
+    periodLabel = 'Este Mês';
+  }
+  
+  const filteredOrders = orders.filter(o => {
+    const created = new Date(o.created_at);
+    return created >= startDate && created <= endDate;
+  });
+  
+  // Status corretos do sistema
+  const pending = filteredOrders.filter(o => o.status === 'pending').length;
+  const inProgress = filteredOrders.filter(o => o.status === 'in_progress' || o.status === 'paused').length;
+  const completed = filteredOrders.filter(o => o.status === 'completed').length;
+  const total = filteredOrders.length;
+  const aproveitamento = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  // Agrupar por executor
+  const byExecutor = {};
+  filteredOrders.forEach(o => {
+    if (o.assigned_users && Array.isArray(o.assigned_users) && o.assigned_users.length > 0) {
+      o.assigned_users.forEach(user => {
+        const name = user.name || user.username || 'Não atribuído';
+        if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
+        byExecutor[name].total++;
+        if (o.status === 'completed') byExecutor[name].completed++;
+        if (o.worked_minutes) byExecutor[name].minutes += o.worked_minutes;
+      });
+    } else {
+      const name = 'Não atribuído';
+      if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
+      byExecutor[name].total++;
+      if (o.status === 'completed') byExecutor[name].completed++;
+    }
+  });
+  
+  // Agrupar por setor
+  const bySetor = {};
+  filteredOrders.forEach(o => {
+    const setor = o.sector || 'Não especificado';
+    if (!bySetor[setor]) bySetor[setor] = 0;
+    bySetor[setor]++;
+  });
+  
+  // Dados de checklists
+  const checklistStats = {
+    total: checklists.length,
+    automaticos: checklists.filter(c => c.auto_complete).length,
+    manuais: checklists.filter(c => !c.auto_complete).length,
+    lista: checklists.map(c => ({
+      name: c.name,
+      sector: c.sector || 'N/A',
+      items: (c.items || []).length,
+      auto: c.auto_complete ? 'Sim' : 'Não',
+      frequency: c.auto_complete ? (c.frequency_days === 1 ? 'Diário' : c.frequency_days === 2 ? 'Dia sim/não' : 'A cada ' + c.frequency_days + ' dias') : 'Manual'
+    }))
+  };
+  
+  const now = new Date();
+  const dataGeracao = now.toLocaleDateString('pt-BR');
+  const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  // Gerar HTML completo com CSS e JS embutidos
+  const htmlContent = '<!DOCTYPE html>' +
+'<html lang="pt-BR">' +
+'<head>' +
+  '<meta charset="UTF-8">' +
+  '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">' +
+  '<title>Dashboard ICARUS - ' + periodLabel + '</title>' +
+  '<style>' +
+    '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");' +
+    '*{margin:0;padding:0;box-sizing:border-box}' +
+    'html{font-size:16px}' +
+    'body{font-family:"Inter",system-ui,-apple-system,sans-serif;background:#050510;color:#fff;min-height:100vh;padding:20px;overflow-x:hidden}' +
+    'body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(139,92,246,0.02) 1px,transparent 1px),linear-gradient(rgba(139,92,246,0.02) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}' +
+    '.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}' +
+    '.orb-1{width:400px;height:400px;background:rgba(139,92,246,0.15);top:-100px;right:-100px}' +
+    '.orb-2{width:350px;height:350px;background:rgba(212,175,55,0.1);bottom:-100px;left:-100px}' +
+    '.container{max-width:1400px;margin:0 auto;position:relative;z-index:1}' +
+    '.header{text-align:center;padding:32px 24px;background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(212,175,55,0.05));border:1px solid rgba(139,92,246,0.2);border-radius:20px;margin-bottom:24px;position:relative;overflow:hidden}' +
+    '.header::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#d4af37,#8b5cf6)}' +
+    '.header-icon{display:inline-flex;align-items:center;justify-content:center;width:70px;height:70px;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(139,92,246,0.2));border:1px solid rgba(212,175,55,0.3);border-radius:18px;margin-bottom:16px}' +
+    '.header h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#d4af37,#f0d060);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}' +
+    '.header .subtitle{color:#94a3b8;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}' +
+    '.header .subtitle strong{color:#fff}' +
+    '.period-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);padding:10px 18px;border-radius:12px;font-size:13px;color:#a78bfa;margin-top:16px}' +
+    '.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}' +
+    '.stat-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px 20px;text-align:center;transition:transform 0.3s,border-color 0.3s}' +
+    '.stat-card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,0.3)}' +
+    '.stat-card.gold{border-color:rgba(212,175,55,0.3);background:linear-gradient(180deg,rgba(212,175,55,0.08) 0%,transparent 100%)}' +
+    '.stat-card .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}' +
+    '.stat-card.pending .stat-icon{background:rgba(251,146,60,0.15);color:#fb923c}' +
+    '.stat-card.progress .stat-icon{background:rgba(59,130,246,0.15);color:#3b82f6}' +
+    '.stat-card.completed .stat-icon{background:rgba(16,185,129,0.15);color:#10b981}' +
+    '.stat-card.total .stat-icon{background:rgba(139,92,246,0.15);color:#a78bfa}' +
+    '.stat-card.gold .stat-icon{background:rgba(212,175,55,0.15);color:#d4af37}' +
+    '.stat-card h3{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600}' +
+    '.stat-card .value{font-size:36px;font-weight:800}' +
+    '.stat-card.pending .value{color:#fb923c}' +
+    '.stat-card.progress .value{color:#3b82f6}' +
+    '.stat-card.completed .value{color:#10b981}' +
+    '.stat-card.total .value{color:#a78bfa}' +
+    '.stat-card.gold .value{color:#d4af37}' +
+    '.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}' +
+    '.chart-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px}' +
+    '.chart-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}' +
+    '.chart-header svg{color:#a78bfa}' +
+    '.chart-header h3{font-size:16px;font-weight:600}' +
+    '.chart-container{position:relative;height:280px}' +
+    '.table-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:24px}' +
+    '.table-header{display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid rgba(255,255,255,0.06)}' +
+    '.table-header svg{color:#a78bfa}' +
+    '.table-header h3{font-size:16px;font-weight:600}' +
+    '.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}' +
+    'table{width:100%;border-collapse:collapse;min-width:600px}' +
+    'th{background:rgba(139,92,246,0.1);color:#a78bfa;padding:14px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:600}' +
+    'td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:14px}' +
+    'tr:hover{background:rgba(139,92,246,0.03)}' +
+    '.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}' +
+    '.badge.sim{background:rgba(16,185,129,0.15);color:#10b981}' +
+    '.badge.nao{background:rgba(100,116,139,0.15);color:#94a3b8}' +
+    '.footer{text-align:center;padding:32px 20px}' +
+    '.icarus-brand{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 auto 20px;padding:20px 28px;background:linear-gradient(135deg,rgba(212,175,55,0.08),rgba(139,92,246,0.08));border:1px solid rgba(212,175,55,0.2);border-radius:16px;max-width:400px}' +
+    '.icarus-logo{display:flex;align-items:center;justify-content:center;width:52px;height:52px;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.1));border-radius:12px;border:1px solid rgba(212,175,55,0.3)}' +
+    '.icarus-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px}' +
+    '.icarus-title{font-size:15px;font-weight:700;color:#d4af37;letter-spacing:2px}' +
+    '.icarus-subtitle{font-size:10px;color:#64748b}' +
+    '.icarus-contact{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#22d3ee;margin-top:2px}' +
+    '.footer-text{color:#64748b;font-size:12px;margin-top:16px}' +
+    '.footer-brand{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;color:#64748b;font-size:12px}' +
+    '@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr}}' +
+    '@media(max-width:768px){body{padding:12px}.header{padding:24px 16px;border-radius:16px}.header h1{font-size:22px}.header-icon{width:56px;height:56px}.stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}.stat-card{padding:16px 14px;border-radius:14px}.stat-card .stat-icon{width:40px;height:40px;margin-bottom:12px}.stat-card h3{font-size:10px}.stat-card .value{font-size:28px}.charts-row{grid-template-columns:1fr;gap:14px}.chart-card{padding:16px;border-radius:14px}.chart-container{height:220px}.table-card{border-radius:14px}.table-header{padding:16px}.th{padding:12px 14px;font-size:10px}td{padding:12px 14px;font-size:13px}.footer{padding:24px 16px}.icarus-brand{flex-direction:column;text-align:center;padding:16px}.icarus-info{align-items:center}.footer-brand{flex-direction:column;gap:4px}}' +
+    '@media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr}.stat-card .value{font-size:24px}.stat-card:nth-child(5){grid-column:span 2}}' +
+  '</style>' +
+  '<script src="https://cdn.jsdelivr.net/npm/chart.js"></' + 'script>' +
+'</head>' +
+'<body>' +
+  '<div class="orb orb-1"></div>' +
+  '<div class="orb orb-2"></div>' +
+  '<div class="container">' +
+    '<div class="header">' +
+      '<div class="header-icon">' +
+        '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' +
+      '</div>' +
+      '<h1>Dashboard ICARUS</h1>' +
+      '<p class="subtitle"><strong>Granja Vitta</strong> <span style="color:#64748b">•</span> Sistema de Gestão</p>' +
+      '<div class="period-badge">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+        periodLabel + ' <span style="color:#64748b">|</span> Gerado em ' + dataGeracao + ' às ' + horaGeracao +
+      '</div>' +
+    '</div>' +
+    
+    '<div class="stats-grid">' +
+      '<div class="stat-card pending">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>' +
+        '<h3>Pendentes</h3>' +
+        '<div class="value">' + pending + '</div>' +
+      '</div>' +
+      '<div class="stat-card progress">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>' +
+        '<h3>Em Andamento</h3>' +
+        '<div class="value">' + inProgress + '</div>' +
+      '</div>' +
+      '<div class="stat-card completed">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
+        '<h3>Concluídas</h3>' +
+        '<div class="value">' + completed + '</div>' +
+      '</div>' +
+      '<div class="stat-card total">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>' +
+        '<h3>Total</h3>' +
+        '<div class="value">' + total + '</div>' +
+      '</div>' +
+      '<div class="stat-card gold">' +
+        '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>' +
+        '<h3>Aproveitamento</h3>' +
+        '<div class="value">' + aproveitamento + '%</div>' +
+      '</div>' +
+    '</div>' +
+    
+    '<div class="charts-row">' +
+      '<div class="chart-card">' +
+        '<div class="chart-header">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
+          '<h3>Desempenho por Executor</h3>' +
+        '</div>' +
+        '<div class="chart-container"><canvas id="executorChart"></canvas></div>' +
+      '</div>' +
+      '<div class="chart-card">' +
+        '<div class="chart-header">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>' +
+          '<h3>Ordens por Setor</h3>' +
+        '</div>' +
+        '<div class="chart-container"><canvas id="setorChart"></canvas></div>' +
+      '</div>' +
+    '</div>' +
+    
+    (checklistStats.lista.length > 0 ? 
+    '<div class="table-card">' +
+      '<div class="table-header">' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<h3>Checklists Cadastrados (' + checklistStats.total + ')</h3>' +
+      '</div>' +
+      '<div class="table-scroll">' +
+        '<table>' +
+          '<thead><tr><th>Nome</th><th>Setor</th><th>Itens</th><th>Automático</th><th>Frequência</th></tr></thead>' +
+          '<tbody>' +
+            checklistStats.lista.map(function(c) {
+              return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.sector + '</td><td style="text-align:center">' + c.items + '</td><td style="text-align:center"><span class="badge ' + (c.auto === 'Sim' ? 'sim' : 'nao') + '">' + c.auto + '</span></td><td style="text-align:center;color:#94a3b8">' + c.frequency + '</td></tr>';
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>' : '') +
+    
+    '<div class="table-card">' +
+      '<div class="table-header">' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' +
+        '<h3>Resumo por Executor</h3>' +
+      '</div>' +
+      '<div class="table-scroll">' +
+        '<table>' +
+          '<thead><tr><th>Executor</th><th>Total</th><th>Concluídas</th><th>Taxa</th></tr></thead>' +
+          '<tbody>' +
+            Object.entries(byExecutor).map(function(entry) {
+              const name = entry[0];
+              const data = entry[1];
+              const taxa = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0;
+              return '<tr><td><strong>' + name + '</strong></td><td style="text-align:center">' + data.total + '</td><td style="text-align:center;color:#10b981">' + data.completed + '</td><td style="text-align:center;color:#d4af37">' + taxa + '%</td></tr>';
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>' +
+    
+    '<div class="footer">' +
+      '<div class="icarus-brand">' +
+        '<div class="icarus-logo">' +
+          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+        '</div>' +
+        '<div class="icarus-info">' +
+          '<span class="icarus-title">ICARUS SYSTEM</span>' +
+          '<span class="icarus-subtitle">Sistema Inteligente de Gestão</span>' +
+          '<span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> (38) 99988-2730</span>' +
+        '</div>' +
+      '</div>' +
+      '<p class="footer-text">Snapshot interativo gerado offline • Funciona em qualquer dispositivo</p>' +
+      '<p class="footer-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> Desenvolvido por Guilherme Braga • © 2025-2026</p>' +
+    '</div>' +
+  '</div>' +
+  
+  '<script>' +
+    'const executorData = ' + JSON.stringify(byExecutor) + ';' +
+    'const setorData = ' + JSON.stringify(bySetor) + ';' +
+    
+    'document.addEventListener("DOMContentLoaded", function() {' +
+      // Gráfico de Executores
+      'new Chart(document.getElementById("executorChart"), {' +
+        'type: "bar",' +
+        'data: {' +
+          'labels: Object.keys(executorData),' +
+          'datasets: [{' +
+            'label: "Concluídas",' +
+            'data: Object.values(executorData).map(d => d.completed),' +
+            'backgroundColor: "rgba(16, 185, 129, 0.8)",' +
+            'borderColor: "#10b981",' +
+            'borderWidth: 0,' +
+            'borderRadius: 6,' +
+            'borderSkipped: false' +
+          '}, {' +
+            'label: "Total",' +
+            'data: Object.values(executorData).map(d => d.total),' +
+            'backgroundColor: "rgba(139, 92, 246, 0.6)",' +
+            'borderColor: "#8b5cf6",' +
+            'borderWidth: 0,' +
+            'borderRadius: 6,' +
+            'borderSkipped: false' +
+          '}]' +
+        '},' +
+        'options: {' +
+          'responsive: true,' +
+          'maintainAspectRatio: false,' +
+          'plugins: {' +
+            'legend: {' +
+              'labels: { color: "#94a3b8", padding: 16, font: { family: "Inter", size: 12 } }' +
+            '}' +
+          '},' +
+          'scales: {' +
+            'x: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.03)" } },' +
+            'y: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.03)" } }' +
+          '}' +
+        '}' +
+      '});' +
+      
+      // Gráfico de Setores
+      'const colors = ["#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#ec4899", "#14b8a6", "#f97316"];' +
+      'new Chart(document.getElementById("setorChart"), {' +
+        'type: "doughnut",' +
+        'data: {' +
+          'labels: Object.keys(setorData),' +
+          'datasets: [{' +
+            'data: Object.values(setorData),' +
+            'backgroundColor: colors.slice(0, Object.keys(setorData).length),' +
+            'borderWidth: 0,' +
+            'hoverOffset: 8' +
+          '}]' +
+        '},' +
+        'options: {' +
+          'responsive: true,' +
+          'maintainAspectRatio: false,' +
+          'plugins: {' +
+            'legend: {' +
+              'position: "right",' +
+              'labels: { color: "#94a3b8", padding: 12, font: { family: "Inter", size: 11 }, boxWidth: 16 }' +
+            '}' +
+          '}' +
+        '}' +
+      '});' +
+    '});' +
+  '</' + 'script>' +
+'</body>' +
+'</html>';
+
+  // Criar blob e baixar como arquivo HTML
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Dashboard_ICARUS_' + dataGeracao.replace(/\//g, '-') + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('HTML interativo baixado com sucesso!', 'success');
+}
+
 // ========== EXPORTAÇÃO ALMOXARIFADO ==========
 
 function exportAlmoxarifadoReport() {
@@ -10877,6 +13025,9 @@ async function loadRelatorios() {
     await loadReportsData();
     renderReports();
     
+    // Inicializar aba de Notas & Boletos se usuário tiver permissão
+    initNotasTab();
+    
   } catch (error) {
     console.error('Erro ao carregar relatórios:', error);
   }
@@ -11595,3 +13746,2442 @@ async function saveReport() {
 }
 
 // escapeHtml function moved to top of file for security
+
+// ============================================
+// SISTEMA DE DIÁRIAS - GUILHERME BRAGA
+// ============================================
+
+let diariasData = {
+  semanas: [],
+  valorDiaria: 110
+};
+
+function openDiariasModal() {
+  // Carregar dados do localStorage
+  const saved = localStorage.getItem('icarus_diarias_guilherme');
+  if (saved) {
+    try {
+      diariasData = JSON.parse(saved);
+    } catch(e) {}
+  }
+  
+  // Garantir que temos pelo menos a semana atual
+  if (!diariasData.semanas || diariasData.semanas.length === 0) {
+    diariasData.semanas = [createNewWeek()];
+  }
+  
+  const modalHtml = `
+    <div id="modal-diarias" class="modal-overlay active" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: linear-gradient(145deg, rgba(15, 10, 25, 0.98), rgba(20, 15, 35, 0.98)); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 24px; max-width: 700px; width: 100%; max-height: 90vh; overflow: hidden; box-shadow: 0 30px 100px rgba(236, 72, 153, 0.2), inset 0 1px 1px rgba(255,255,255,0.1);">
+        
+        <!-- Header com Estrela de Davi -->
+        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(236, 72, 153, 0.15) 0%, transparent 100%); border-bottom: 1px solid rgba(236, 72, 153, 0.2); display: flex; align-items: center; gap: 16px;">
+          <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);">
+            <!-- Estrela de Davi -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
+              <polygon points="12 2 15 9.5 22 9.5 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.5 9 9.5"/>
+              <polygon points="12 22 9 14.5 2 14.5 7.5 10 5.5 3 12 7 18.5 3 16.5 10 22 14.5 15 14.5"/>
+            </svg>
+          </div>
+          <div style="flex: 1;">
+            <h3 style="margin: 0; font-size: 22px; color: #fff; font-weight: 700;">Controle de Diárias</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Guilherme Braga • R$ ${diariasData.valorDiaria.toFixed(2)} por dia</p>
+          </div>
+          <button onclick="closeDiariasModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 36px; height: 36px; color: #888; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+        </div>
+        
+        <div style="padding: 24px 28px; max-height: calc(90vh - 200px); overflow-y: auto;">
+          
+          <!-- Semanas -->
+          <div id="diarias-semanas-container">
+            ${renderDiariasSemanas()}
+          </div>
+          
+          <!-- Adicionar Semana -->
+          <button onclick="addDiariaSemana()" style="width: 100%; padding: 14px; background: rgba(236, 72, 153, 0.1); border: 2px dashed rgba(236, 72, 153, 0.3); border-radius: 12px; color: #ec4899; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; transition: 0.3s;" onmouseover="this.style.background='rgba(236, 72, 153, 0.15)'" onmouseout="this.style.background='rgba(236, 72, 153, 0.1)'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adicionar Semana
+          </button>
+          
+          <!-- Resumo -->
+          <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.1)); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Total de Dias Trabalhados</p>
+                <p style="font-size: 28px; font-weight: 700; color: #22c55e; margin: 0;" id="diarias-total-dias">${calcTotalDias()}</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Valor Total</p>
+                <p style="font-size: 28px; font-weight: 700; color: #22c55e; margin: 0;" id="diarias-total-valor">R$ ${(calcTotalDias() * diariasData.valorDiaria).toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Footer Buttons -->
+        <div style="padding: 20px 28px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 12px; flex-wrap: wrap;">
+          <button onclick="closeDiariasModal()" style="flex: 1; min-width: 100px; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer;">Fechar</button>
+          <button onclick="exportDiariasHTML()" style="flex: 1; min-width: 140px; padding: 14px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            HTML
+          </button>
+          <button onclick="generateDiariasPDF()" style="flex: 2; min-width: 160px; padding: 14px; background: linear-gradient(135deg, #ec4899, #db2777); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeDiariasModal() {
+  const modal = document.getElementById('modal-diarias');
+  if (modal) modal.remove();
+}
+
+function createNewWeek() {
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - today.getDay() + 1);
+  
+  return {
+    id: Date.now(),
+    startDate: monday.toISOString().split('T')[0],
+    dias: {
+      seg: false,
+      ter: false,
+      qua: false,
+      qui: false,
+      sex: false,
+      sab: false
+    }
+  };
+}
+
+function renderDiariasSemanas() {
+  return diariasData.semanas.map((semana, index) => {
+    const startDate = new Date(semana.startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 5);
+    
+    const diasCount = Object.values(semana.dias).filter(v => v).length;
+    const valorSemana = diasCount * diariasData.valorDiaria;
+    
+    return `
+      <div class="diaria-semana-card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <p style="font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px 0;">Semana ${index + 1}</p>
+            <p style="font-size: 14px; color: #fff; margin: 0;">
+              <input type="date" value="${semana.startDate}" onchange="updateSemanaDate(${index}, this.value)" style="background: transparent; border: none; color: #ec4899; font-size: 14px; cursor: pointer;">
+            </p>
+          </div>
+          <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+            <div>
+              <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 0;">${diasCount} dias</p>
+              <p style="font-size: 16px; color: #22c55e; font-weight: 600; margin: 0;">R$ ${valorSemana.toFixed(2)}</p>
+            </div>
+            ${index > 0 ? `<button onclick="removeSemana(${index})" style="background: rgba(239, 68, 68, 0.1); border: none; border-radius: 8px; width: 32px; height: 32px; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>` : ''}
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
+          ${['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].map((dia, diaIndex) => {
+            const diaDate = new Date(startDate);
+            // Sábado é -2 dias a partir de segunda, os outros são 0,1,2,3,4
+            const dayOffset = dia === 'sab' ? -2 : diaIndex - 1;
+            diaDate.setDate(startDate.getDate() + dayOffset);
+            const isChecked = semana.dias[dia];
+            return `
+              <button onclick="toggleDia(${index}, '${dia}')" style="padding: 12px 8px; background: ${isChecked ? 'linear-gradient(135deg, #ec4899, #db2777)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isChecked ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.2s; ${isChecked ? 'box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);' : ''}">
+                <p style="font-size: 10px; color: ${isChecked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)'}; text-transform: uppercase; margin: 0 0 4px 0;">${dia}</p>
+                <p style="font-size: 12px; color: ${isChecked ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500; margin: 0;">${diaDate.getDate()}/${diaDate.getMonth() + 1}</p>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleDia(semanaIndex, dia) {
+  diariasData.semanas[semanaIndex].dias[dia] = !diariasData.semanas[semanaIndex].dias[dia];
+  saveDiariasData();
+  refreshDiariasUI();
+}
+
+function updateSemanaDate(semanaIndex, newDate) {
+  diariasData.semanas[semanaIndex].startDate = newDate;
+  saveDiariasData();
+  refreshDiariasUI();
+}
+
+function addDiariaSemana() {
+  const lastSemana = diariasData.semanas[diariasData.semanas.length - 1];
+  const lastDate = new Date(lastSemana.startDate);
+  lastDate.setDate(lastDate.getDate() + 7);
+  
+  diariasData.semanas.push({
+    id: Date.now(),
+    startDate: lastDate.toISOString().split('T')[0],
+    dias: { seg: false, ter: false, qua: false, qui: false, sex: false, sab: false }
+  });
+  
+  saveDiariasData();
+  refreshDiariasUI();
+}
+
+function removeSemana(index) {
+  if (diariasData.semanas.length > 1) {
+    diariasData.semanas.splice(index, 1);
+    saveDiariasData();
+    refreshDiariasUI();
+  }
+}
+
+function calcTotalDias() {
+  return diariasData.semanas.reduce((total, semana) => {
+    return total + Object.values(semana.dias).filter(v => v).length;
+  }, 0);
+}
+
+function saveDiariasData() {
+  localStorage.setItem('icarus_diarias_guilherme', JSON.stringify(diariasData));
+}
+
+function refreshDiariasUI() {
+  const container = document.getElementById('diarias-semanas-container');
+  if (container) {
+    container.innerHTML = renderDiariasSemanas();
+  }
+  
+  const totalDias = document.getElementById('diarias-total-dias');
+  const totalValor = document.getElementById('diarias-total-valor');
+  if (totalDias) totalDias.textContent = calcTotalDias();
+  if (totalValor) totalValor.textContent = 'R$ ' + (calcTotalDias() * diariasData.valorDiaria).toFixed(2);
+}
+
+function generateDiariasPDF() {
+  const totalDias = calcTotalDias();
+  const totalValor = totalDias * diariasData.valorDiaria;
+  const now = new Date();
+  const dataGeracao = now.toLocaleDateString('pt-BR');
+  const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  // Estrela de Davi SVG (hexagrama - dois triângulos sobrepostos)
+  const starOfDavidSVG = `<svg width="40" height="40" viewBox="0 0 100 100" fill="none">
+    <polygon points="50,5 95,75 5,75" fill="none" stroke="#ec4899" stroke-width="4"/>
+    <polygon points="50,95 5,25 95,25" fill="none" stroke="#ec4899" stroke-width="4"/>
+  </svg>`;
+  
+  const starOfDavidSmall = `<svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+    <polygon points="50,5 95,75 5,75" fill="none" stroke="#fff" stroke-width="5"/>
+    <polygon points="50,95 5,25 95,25" fill="none" stroke="#fff" stroke-width="5"/>
+  </svg>`;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Relatório de Diárias - Guilherme Braga</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page { size: A4; margin: 0; }
+        html, body { 
+          font-family: 'Segoe UI', system-ui, sans-serif;
+          background: #0a0a12;
+          color: #fff;
+          min-height: 100vh;
+          width: 100%;
+        }
+        .page {
+          padding: 40px;
+          min-height: 100vh;
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(145deg, #0a0a12 0%, #12081a 50%, #0a0a12 100%);
+        }
+        /* Decoração de fundo */
+        .bg-decoration {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(100px);
+          opacity: 0.25;
+          pointer-events: none;
+        }
+        .bg-1 { width: 350px; height: 350px; background: #ec4899; top: -120px; right: -120px; }
+        .bg-2 { width: 450px; height: 450px; background: #8b5cf6; bottom: -180px; left: -180px; }
+        .bg-3 { width: 200px; height: 200px; background: #22c55e; bottom: 20%; right: 10%; opacity: 0.15; }
+        
+        /* Header Premium */
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-bottom: 30px;
+          border-bottom: 1px solid rgba(236, 72, 153, 0.3);
+          margin-bottom: 30px;
+          position: relative;
+        }
+        .logo-section {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
+        .logo-icon {
+          width: 70px;
+          height: 70px;
+          background: linear-gradient(135deg, #ec4899, #db2777);
+          border-radius: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
+        }
+        .logo-text h1 {
+          font-size: 28px;
+          font-weight: 800;
+          color: #ec4899;
+          letter-spacing: -0.5px;
+        }
+        .logo-text p {
+          font-size: 12px;
+          color: rgba(255,255,255,0.5);
+          letter-spacing: 2px;
+          text-transform: uppercase;
+        }
+        .date-section {
+          text-align: right;
+        }
+        .date-section .date {
+          font-size: 24px;
+          font-weight: 700;
+          color: #fff;
+        }
+        .date-section .time {
+          font-size: 14px;
+          color: rgba(255,255,255,0.5);
+        }
+        
+        /* Info Card */
+        .info-card {
+          background: rgba(20, 15, 30, 0.8);
+          border: 1px solid rgba(236, 72, 153, 0.3);
+          border-radius: 20px;
+          padding: 30px;
+          margin-bottom: 30px;
+          position: relative;
+        }
+        .info-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #ec4899, #8b5cf6, #ec4899);
+          border-radius: 20px 20px 0 0;
+        }
+        .info-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 20px;
+        }
+        .star-icon {
+          width: 55px;
+          height: 55px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .info-header h2 {
+          font-size: 24px;
+          font-weight: 700;
+          color: #fff;
+        }
+        .info-header p {
+          font-size: 13px;
+          color: rgba(255,255,255,0.5);
+        }
+        
+        /* Tabela de Semanas */
+        .weeks-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0 8px;
+        }
+        .weeks-table th {
+          text-align: left;
+          padding: 12px 16px;
+          font-size: 11px;
+          color: rgba(255,255,255,0.4);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .weeks-table td {
+          padding: 16px;
+          background: rgba(255,255,255,0.03);
+          font-size: 14px;
+          color: #fff;
+        }
+        .weeks-table tr td:first-child { border-radius: 10px 0 0 10px; }
+        .weeks-table tr td:last-child { border-radius: 0 10px 10px 0; }
+        .day-badges {
+          display: flex;
+          gap: 6px;
+        }
+        .day-badge {
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+        .day-badge.active {
+          background: linear-gradient(135deg, #ec4899, #db2777);
+          color: #fff;
+        }
+        .day-badge.inactive {
+          background: rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.3);
+        }
+        .value { color: #22c55e; font-weight: 700; font-size: 16px; }
+        
+        /* Resumo Total */
+        .total-section {
+          background: rgba(34, 197, 94, 0.1);
+          border: 2px solid rgba(34, 197, 94, 0.4);
+          border-radius: 20px;
+          padding: 30px;
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .total-label {
+          font-size: 14px;
+          color: rgba(255,255,255,0.6);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .total-value {
+          font-size: 42px;
+          font-weight: 800;
+          color: #22c55e;
+        }
+        .total-dias {
+          font-size: 18px;
+          color: #22c55e;
+          opacity: 0.8;
+        }
+        
+        /* Footer */
+        .footer {
+          position: absolute;
+          bottom: 30px;
+          left: 40px;
+          right: 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 20px;
+          border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .footer-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .footer-left svg {
+          opacity: 0.6;
+        }
+        .footer-text {
+          font-size: 11px;
+          color: rgba(255,255,255,0.4);
+        }
+        .footer-phone {
+          font-size: 14px;
+          color: #ec4899;
+          font-weight: 600;
+          margin-top: 4px;
+        }
+        .footer-right {
+          text-align: right;
+        }
+        .footer-right p {
+          font-size: 11px;
+          color: rgba(255,255,255,0.4);
+        }
+        .footer-right .company {
+          font-size: 14px;
+          color: rgba(255,255,255,0.6);
+          font-weight: 500;
+        }
+        
+        @media print {
+          html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .page { background: #0a0a12 !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="page">
+        <div class="bg-decoration bg-1"></div>
+        <div class="bg-decoration bg-2"></div>
+        <div class="bg-decoration bg-3"></div>
+        
+        <div class="header">
+          <div class="logo-section">
+            <div class="logo-icon">
+              ${starOfDavidSmall}
+            </div>
+            <div class="logo-text">
+              <h1>ICARUS</h1>
+              <p>Sistema de Gestão</p>
+            </div>
+          </div>
+          <div class="date-section">
+            <p class="date">${dataGeracao}</p>
+            <p class="time">Gerado às ${horaGeracao}</p>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <div class="info-header">
+            <div class="star-icon">
+              ${starOfDavidSVG}
+            </div>
+            <div>
+              <h2>Guilherme Braga</h2>
+              <p>Relatório de Diárias • Valor: R$ ${diariasData.valorDiaria.toFixed(2)}/dia</p>
+            </div>
+          </div>
+          
+          <table class="weeks-table">
+            <thead>
+              <tr>
+                <th>Semana</th>
+                <th>Período</th>
+                <th>Dias Trabalhados</th>
+                <th style="text-align: right;">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${diariasData.semanas.map((semana, i) => {
+                const startDate = new Date(semana.startDate);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 5);
+                const diasCount = Object.values(semana.dias).filter(v => v).length;
+                const valorSemana = diasCount * diariasData.valorDiaria;
+                
+                return `
+                  <tr>
+                    <td><strong>Semana ${i + 1}</strong></td>
+                    <td>${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}</td>
+                    <td>
+                      <div class="day-badges">
+                        ${['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].map(dia => 
+                          `<span class="day-badge ${semana.dias[dia] ? 'active' : 'inactive'}">${dia.toUpperCase()}</span>`
+                        ).join('')}
+                      </div>
+                    </td>
+                    <td style="text-align: right;" class="value">R$ ${valorSemana.toFixed(2)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="total-section">
+          <div>
+            <p class="total-label">Total a Receber</p>
+            <p class="total-dias">${totalDias} dias trabalhados</p>
+          </div>
+          <p class="total-value">R$ ${totalValor.toFixed(2)}</p>
+        </div>
+        
+        <div class="footer">
+          <div class="footer-left">
+            <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+              <polygon points="50,5 95,75 5,75" fill="none" stroke="#ec4899" stroke-width="6"/>
+              <polygon points="50,95 5,25 95,25" fill="none" stroke="#ec4899" stroke-width="6"/>
+            </svg>
+            <div>
+              <p class="footer-text">Sistema ICARUS © 2025-2026</p>
+              <p class="footer-text">Desenvolvido por Guilherme Braga de Queiroz</p>
+              <p class="footer-phone">📞 (62) 98493-0056</p>
+            </div>
+          </div>
+          <div class="footer-right">
+            <p class="company">Granja Vitta</p>
+            <p>Gestão de Manutenção</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+}
+
+// Exportar Diárias como HTML interativo com animações
+function exportDiariasHTML() {
+  const totalDias = calcTotalDias();
+  const totalValor = totalDias * diariasData.valorDiaria;
+  const now = new Date();
+  const dataGeracao = now.toLocaleDateString('pt-BR');
+  const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  // Gerar HTML das semanas separadamente para evitar problemas com template literals aninhados
+  let semanasHTML = '';
+  diariasData.semanas.forEach((semana, index) => {
+    const startDate = new Date(semana.startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 5);
+    const diasCount = Object.values(semana.dias).filter(v => v).length;
+    const valorSemana = diasCount * diariasData.valorDiaria;
+    
+    let diasHTML = '';
+    ['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].forEach((dia, diaIndex) => {
+      const diaDate = new Date(startDate);
+      const dayOffset = dia === 'sab' ? -2 : diaIndex - 1;
+      diaDate.setDate(startDate.getDate() + dayOffset);
+      const isChecked = semana.dias[dia];
+      diasHTML += '<div class="day-card ' + (isChecked ? 'active' : 'inactive') + '">' +
+        '<div class="day-name">' + dia + '</div>' +
+        '<div class="day-date">' + diaDate.getDate() + '/' + (diaDate.getMonth() + 1) + '</div>' +
+      '</div>';
+    });
+    
+    semanasHTML += '<div class="week-card" style="animation-delay: ' + (index * 0.1) + 's;">' +
+      '<div class="week-header">' +
+        '<div class="week-number">' +
+          '<div class="num">' + (index + 1) + '</div>' +
+          '<div><div class="label">Semana</div>' +
+          '<div class="dates">' + startDate.toLocaleDateString('pt-BR') + ' - ' + endDate.toLocaleDateString('pt-BR') + '</div></div>' +
+        '</div>' +
+        '<div class="week-value">' +
+          '<div class="days">' + diasCount + ' dias</div>' +
+          '<div class="amount">R$ ' + valorSemana.toFixed(2) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="days-grid">' + diasHTML + '</div>' +
+    '</div>';
+  });
+  
+  // Gerar partículas
+  let particlesHTML = '';
+  for (let i = 0; i < 20; i++) {
+    particlesHTML += '<div class="particle" style="left: ' + (Math.random() * 100) + '%; animation-delay: ' + (Math.random() * 15) + 's; animation-duration: ' + (10 + Math.random() * 10) + 's;"></div>';
+  }
+  
+  const htmlContent = '<!DOCTYPE html>' +
+'<html lang="pt-BR">' +
+'<head>' +
+'  <meta charset="UTF-8">' +
+'  <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+'  <title>Diárias - Guilherme Braga | ICARUS</title>' +
+'  <style>' +
+'    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");' +
+'    * { margin: 0; padding: 0; box-sizing: border-box; }' +
+'    html, body { font-family: "Inter", sans-serif; background: linear-gradient(135deg, #1a0a14 0%, #2d1a2e 50%, #1a0a14 100%); min-height: 100vh; color: #fff; overflow-x: hidden; }' +
+'    .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }' +
+'    .particle { position: absolute; width: 4px; height: 4px; background: #ec4899; border-radius: 50%; opacity: 0.3; animation: float 15s infinite ease-in-out; }' +
+'    @keyframes float { 0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-100px) rotate(720deg); opacity: 0; } }' +
+'    .bg-glow { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.15; animation: pulse-glow 8s infinite ease-in-out alternate; }' +
+'    .bg-glow-1 { width: 500px; height: 500px; background: #ec4899; top: -200px; right: -200px; }' +
+'    .bg-glow-2 { width: 600px; height: 600px; background: #8b5cf6; bottom: -300px; left: -300px; animation-delay: 2s; }' +
+'    .bg-glow-3 { width: 300px; height: 300px; background: #22c55e; bottom: 20%; right: 10%; animation-delay: 4s; }' +
+'    @keyframes pulse-glow { 0% { transform: scale(1); opacity: 0.1; } 100% { transform: scale(1.3); opacity: 0.2; } }' +
+'    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }' +
+'    .header { background: linear-gradient(145deg, rgba(236, 72, 153, 0.15), transparent); border: 1px solid rgba(236, 72, 153, 0.4); border-radius: 24px; padding: 32px; margin-bottom: 32px; position: relative; overflow: hidden; animation: slideDown 0.8s ease-out; }' +
+'    @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }' +
+'    .header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #ec4899, #8b5cf6, #ec4899, transparent); animation: shimmer 3s infinite linear; }' +
+'    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }' +
+'    .logo-section { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }' +
+'    .logo-icon { width: 70px; height: 70px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(236, 72, 153, 0.5); animation: logoFloat 3s infinite ease-in-out; }' +
+'    @keyframes logoFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(5deg); } }' +
+'    .star-of-david { width: 36px; height: 36px; animation: rotateStar 20s infinite linear; }' +
+'    @keyframes rotateStar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }' +
+'    .logo-text h1 { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #ec4899, #f472b6, #ec4899); background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientShift 3s infinite ease-in-out; }' +
+'    @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }' +
+'    .logo-text p { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 2px; }' +
+'    .header-info { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }' +
+'    .user-badge { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; }' +
+'    .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }' +
+'    .date-badge { padding: 12px 20px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; text-align: right; }' +
+'    .date-badge .date { font-size: 18px; font-weight: 700; color: #a78bfa; }' +
+'    .date-badge .time { font-size: 12px; color: rgba(255,255,255,0.5); }' +
+'    .weeks-container { display: flex; flex-direction: column; gap: 16px; }' +
+'    .week-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 24px; animation: fadeInUp 0.6s ease-out backwards; transition: transform 0.3s, box-shadow 0.3s; }' +
+'    .week-card:hover { transform: translateY(-5px); box-shadow: 0 20px 60px rgba(236, 72, 153, 0.2); border-color: rgba(236, 72, 153, 0.3); }' +
+'    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }' +
+'    .week-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }' +
+'    .week-number { display: flex; align-items: center; gap: 12px; }' +
+'    .week-number .num { width: 36px; height: 36px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }' +
+'    .week-number .label { font-size: 13px; color: rgba(255,255,255,0.5); }' +
+'    .week-number .dates { font-size: 15px; font-weight: 600; }' +
+'    .week-value { text-align: right; }' +
+'    .week-value .days { font-size: 12px; color: rgba(255,255,255,0.5); }' +
+'    .week-value .amount { font-size: 24px; font-weight: 800; color: #22c55e; }' +
+'    .days-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }' +
+'    .day-card { padding: 16px 10px; border-radius: 14px; text-align: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }' +
+'    .day-card.active { background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 8px 30px rgba(236, 72, 153, 0.4); transform: scale(1.05); }' +
+'    .day-card.inactive { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); }' +
+'    .day-card.active::before { content: "✓"; position: absolute; top: 5px; right: 8px; font-size: 10px; opacity: 0.7; }' +
+'    .day-card:hover { transform: scale(1.08); }' +
+'    .day-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.6; }' +
+'    .day-date { font-size: 14px; font-weight: 600; }' +
+'    .day-card.active .day-name, .day-card.active .day-date { opacity: 1; }' +
+'    .total-card { margin-top: 32px; background: linear-gradient(145deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1)); border: 2px solid rgba(34, 197, 94, 0.4); border-radius: 24px; padding: 32px; display: flex; justify-content: space-between; align-items: center; animation: fadeInUp 0.8s ease-out 0.5s backwards; position: relative; overflow: hidden; }' +
+'    .total-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, transparent 30%, rgba(34, 197, 94, 0.1) 50%, transparent 70%); animation: shine 3s infinite; }' +
+'    @keyframes shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }' +
+'    .total-info { position: relative; z-index: 1; }' +
+'    .total-label { font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }' +
+'    .total-days { font-size: 20px; color: #22c55e; font-weight: 600; }' +
+'    .total-amount { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #22c55e, #4ade80); -webkit-background-clip: text; -webkit-text-fill-color: transparent; position: relative; z-index: 1; }' +
+'    .footer { margin-top: 48px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; animation: fadeInUp 0.8s ease-out 0.7s backwards; }' +
+'    .footer-logo { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }' +
+'    .footer-logo .icon { width: 44px; height: 44px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 12px; display: flex; align-items: center; justify-content: center; }' +
+'    .footer-logo h3 { font-size: 20px; color: #ec4899; letter-spacing: 2px; }' +
+'    .footer p { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }' +
+'    .footer .phone { font-size: 16px; color: #f472b6; font-weight: 600; margin: 16px 0; }' +
+'    .footer .dev { margin-top: 20px; padding: 16px; background: rgba(236, 72, 153, 0.1); border-radius: 12px; display: inline-block; }' +
+'    .footer .dev-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; }' +
+'    .footer .dev-name { font-size: 14px; color: #f472b6; font-weight: 600; margin-top: 4px; }' +
+'    .footer .copyright { margin-top: 16px; font-size: 11px; color: rgba(255,255,255,0.3); }' +
+'    @media (max-width: 600px) { .container { padding: 20px 12px; } .header { padding: 20px; } .days-grid { grid-template-columns: repeat(3, 1fr); } .total-card { flex-direction: column; text-align: center; gap: 16px; } .total-amount { font-size: 36px; } .header-info { justify-content: center; } }' +
+'  </style>' +
+'</head>' +
+'<body>' +
+'  <div class="bg-glow bg-glow-1"></div>' +
+'  <div class="bg-glow bg-glow-2"></div>' +
+'  <div class="bg-glow bg-glow-3"></div>' +
+'  <div class="particles">' + particlesHTML + '</div>' +
+'  <div class="container">' +
+'    <div class="header">' +
+'      <div class="logo-section">' +
+'        <div class="logo-icon">' +
+'          <svg class="star-of-david" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="4"><polygon points="50,5 95,75 5,75"/><polygon points="50,95 5,25 95,25"/></svg>' +
+'        </div>' +
+'        <div class="logo-text"><h1>ICARUS</h1><p>Controle de Diárias</p></div>' +
+'      </div>' +
+'      <div class="header-info">' +
+'        <div class="user-badge">' +
+'          <div class="user-avatar">GB</div>' +
+'          <div><div style="font-weight: 600;">Guilherme Braga</div><div style="font-size: 12px; color: rgba(255,255,255,0.5);">R$ ' + diariasData.valorDiaria.toFixed(2) + '/dia</div></div>' +
+'        </div>' +
+'        <div class="date-badge"><div class="date">' + dataGeracao + '</div><div class="time">Gerado às ' + horaGeracao + '</div></div>' +
+'      </div>' +
+'    </div>' +
+'    <div class="weeks-container">' + semanasHTML + '</div>' +
+'    <div class="total-card">' +
+'      <div class="total-info"><div class="total-label">Total a Receber</div><div class="total-days">' + totalDias + ' dias trabalhados</div></div>' +
+'      <div class="total-amount">R$ ' + totalValor.toFixed(2) + '</div>' +
+'    </div>' +
+'    <div class="footer">' +
+'      <div class="footer-logo">' +
+'        <div class="icon"><svg width="22" height="22" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="5"><polygon points="50,5 95,75 5,75"/><polygon points="50,95 5,25 95,25"/></svg></div>' +
+'        <h3>ICARUS</h3>' +
+'      </div>' +
+'      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>' +
+'      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>' +
+'      <div class="phone">📞 (62) 98493-0056</div>' +
+'      <div class="dev"><div class="dev-label">Desenvolvido por</div><div class="dev-name">Guilherme Braga de Queiroz</div></div>' +
+'      <div class="copyright">© ' + new Date().getFullYear() + ' Sistema ICARUS • Todos os direitos reservados</div>' +
+'    </div>' +
+'  </div>' +
+'</body>' +
+'</html>';
+
+  // Download do arquivo HTML
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Diarias_GuilhermeBraga_' + new Date().toISOString().split('T')[0] + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============================================
+// SISTEMA DE NOTAS & BOLETOS - GESTÃO FINANCEIRA
+// ============================================
+
+let notasData = {
+  items: [],
+  filter: 'all',
+  search: ''
+};
+
+// Verificar se usuário tem permissão para ver Notas & Boletos
+function canAccessNotas() {
+  const user = state.user;
+  if (!user) {
+    console.log('canAccessNotas - sem usuário');
+
+    return false;
+  }
+  
+  const username = (user.username || user.name || '').toLowerCase().trim();
+  const role = (user.role || '').toLowerCase().trim();
+  const roles = (user.roles || []).map(r => String(r).toLowerCase().trim());
+  
+  console.log('=== canAccessNotas DEBUG ===' );
+  console.log('username:', username);
+  console.log('role:', role);
+  console.log('roles:', roles);
+  console.log('user object:', user);
+  
+  // SIMPLIFICADO: Se role contém 'manut' ou é admin/owner, tem acesso
+  if (role.includes('manut') || role === 'admin' || role === 'owner') {
+    console.log('ACESSO PERMITIDO por role:', role);
+    return true;
+  }
+  
+  // Verificar no array de roles
+  for (const r of roles) {
+    if (r.includes('manut') || r === 'admin' || r === 'owner') {
+      console.log('ACESSO PERMITIDO por roles[]:', r);
+      return true;
+    }
+  }
+  
+  // Verificar por nome de usuário específico
+  if (username.includes('bruno') || username.includes('walter') || username.includes('manut')) {
+    console.log('ACESSO PERMITIDO por username:', username);
+    return true;
+  }
+  
+  console.log('ACESSO NEGADO');
+  return false;
+}
+
+// Inicializar aba de Notas & Boletos
+// Track current active tab to avoid resetting
+let currentRelatoriosTab = 'forum';
+
+function initNotasTab() {
+  const tabNotas = document.getElementById('tab-notas');
+  const tabForum = document.getElementById('tab-forum');
+  const forumContent = document.getElementById('forum-content');
+  const notasContent = document.getElementById('notas-content');
+  
+  if (tabNotas) {
+    const hasAccess = canAccessNotas();
+    tabNotas.style.display = hasAccess ? 'flex' : 'none';
+  }
+  
+  // Só resetar para Fórum se for a primeira vez (não se já estiver em notas)
+  if (tabForum && forumContent && notasContent && currentRelatoriosTab === 'forum') {
+    tabForum.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    tabForum.style.color = '#fff';
+    tabForum.style.border = 'none';
+    if (tabNotas) {
+      tabNotas.style.background = 'rgba(255,255,255,0.05)';
+      tabNotas.style.color = 'rgba(255,255,255,0.6)';
+      tabNotas.style.border = '1px solid rgba(255,255,255,0.1)';
+    }
+    forumContent.style.display = 'block';
+    notasContent.style.display = 'none';
+  }
+}
+
+// Alternar entre Fórum e Notas
+function switchRelatoriosTab(tab) {
+  currentRelatoriosTab = tab; // Salvar estado atual
+  
+  const tabForum = document.getElementById('tab-forum');
+  const tabNotas = document.getElementById('tab-notas');
+  const forumContent = document.getElementById('forum-content');
+  const notasContent = document.getElementById('notas-content');
+  
+  if (tab === 'forum') {
+    tabForum.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    tabForum.style.color = '#fff';
+    tabForum.style.border = 'none';
+    tabNotas.style.background = 'rgba(255,255,255,0.05)';
+    tabNotas.style.color = 'rgba(255,255,255,0.6)';
+    tabNotas.style.border = '1px solid rgba(255,255,255,0.1)';
+    forumContent.style.display = 'block';
+    notasContent.style.display = 'none';
+  } else {
+    tabNotas.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    tabNotas.style.color = '#fff';
+    tabNotas.style.border = 'none';
+    tabForum.style.background = 'rgba(255,255,255,0.05)';
+    tabForum.style.color = 'rgba(255,255,255,0.6)';
+    tabForum.style.border = '1px solid rgba(255,255,255,0.1)';
+    forumContent.style.display = 'none';
+    notasContent.style.display = 'block';
+    loadNotas();
+  }
+}
+
+// Carregar notas do localStorage ou API
+async function loadNotas() {
+  try {
+    // Tentar carregar do backend primeiro
+    const response = await fetch(`${API_BASE_URL}/notas`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      notasData.items = data.notas || [];
+    } else {
+      // Fallback para localStorage
+      const saved = localStorage.getItem('icarus_notas_' + state.user?.tenant_id);
+      if (saved) {
+        notasData.items = JSON.parse(saved);
+      }
+    }
+  } catch (e) {
+    // Fallback para localStorage
+    const saved = localStorage.getItem('icarus_notas_' + state.user?.tenant_id);
+    if (saved) {
+      notasData.items = JSON.parse(saved);
+    }
+  }
+  
+  renderNotas();
+  updateNotasStats();
+}
+
+// Salvar notas
+async function saveNotas() {
+  // Salvar localmente primeiro
+  localStorage.setItem('icarus_notas_' + state.user?.tenant_id, JSON.stringify(notasData.items));
+  
+  // Tentar sincronizar com o backend
+  try {
+    const response = await fetch(`${API_BASE_URL}/notas/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({ notas: notasData.items })
+    });
+    
+    if (response.ok) {
+      console.log('Notas sincronizadas com o servidor');
+    }
+  } catch (e) {
+    console.log('Notas salvas localmente (offline)');
+  }
+}
+
+// Atualizar estatísticas
+function updateNotasStats() {
+  const now = new Date();
+  const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  let totalPendente = 0;
+  let vence7dias = 0;
+  let vencidos = 0;
+  let esteMes = 0;
+  
+  notasData.items.forEach(item => {
+    if (item.status !== 'pago') {
+      totalPendente += parseFloat(item.valor_boleto || item.valor_nota || 0);
+      
+      if (item.data_vencimento) {
+        const venc = new Date(item.data_vencimento);
+        if (venc < now) {
+          vencidos++;
+        } else if (venc <= sevenDays) {
+          vence7dias++;
+        }
+      }
+    }
+    
+    const created = new Date(item.created_at);
+    if (created >= startOfMonth) {
+      esteMes++;
+    }
+  });
+  
+  document.getElementById('notas-total-pendente').textContent = 'R$ ' + totalPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  document.getElementById('notas-vence-7dias').textContent = vence7dias;
+  document.getElementById('notas-vencidos').textContent = vencidos;
+  document.getElementById('notas-este-mes').textContent = esteMes;
+  
+  // Badge de pendentes
+  const badge = document.getElementById('notas-pending-badge');
+  if (badge) {
+    const pendentes = notasData.items.filter(i => i.status === 'pendente' || i.status === 'aguardando').length;
+    badge.textContent = pendentes;
+    badge.style.display = pendentes > 0 ? 'inline' : 'none';
+  }
+}
+
+// Renderizar lista de notas
+function renderNotas() {
+  const container = document.getElementById('notas-list');
+  if (!container) return;
+  
+  let filtered = notasData.items;
+  
+  // Aplicar filtro
+  if (notasData.filter !== 'all') {
+    filtered = filtered.filter(i => i.status === notasData.filter);
+  }
+  
+  // Aplicar busca
+  if (notasData.search) {
+    const search = notasData.search.toLowerCase();
+    filtered = filtered.filter(i => 
+      (i.empresa || '').toLowerCase().includes(search) ||
+      (i.descricao || '').toLowerCase().includes(search) ||
+      (i.responsavel || '').toLowerCase().includes(search)
+    );
+  }
+  
+  // Ordenar por data de vencimento
+  filtered.sort((a, b) => {
+    if (!a.data_vencimento) return 1;
+    if (!b.data_vencimento) return -1;
+    return new Date(a.data_vencimento) - new Date(b.data_vencimento);
+  });
+  
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.4);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 16px; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p style="font-size: 16px; margin: 0 0 8px 0;">${notasData.filter === 'all' ? 'Nenhuma nota ou boleto cadastrado' : 'Nenhum item encontrado'}</p>
+        <p style="font-size: 13px; margin: 0;">Clique em "Nova Entrada" para adicionar</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = filtered.map(item => {
+    const now = new Date();
+    const venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
+    const diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
+    
+    let statusColor = '#10b981';
+    let statusText = 'Pendente';
+    let statusBg = 'rgba(16, 185, 129, 0.15)';
+    
+    if (item.status === 'pago') {
+      statusColor = '#22c55e';
+      statusText = 'Pago';
+      statusBg = 'rgba(34, 197, 94, 0.15)';
+    } else if (item.status === 'aguardando') {
+      statusColor = '#f59e0b';
+      statusText = 'Aguardando';
+      statusBg = 'rgba(245, 158, 11, 0.15)';
+    } else if (diasVenc !== null && diasVenc < 0) {
+      statusColor = '#ef4444';
+      statusText = 'Vencido';
+      statusBg = 'rgba(239, 68, 68, 0.15)';
+    } else if (diasVenc !== null && diasVenc <= 7) {
+      statusColor = '#fb923c';
+      statusText = 'Vence em ' + diasVenc + 'd';
+      statusBg = 'rgba(251, 146, 60, 0.15)';
+    }
+    
+    const valor = parseFloat(item.valor_boleto || item.valor_nota || 0);
+    const temNota = item.nota_anexo ? true : false;
+    const temBoleto = item.boleto_anexo ? true : false;
+    
+    return `
+      <div class="nota-card" onclick="viewNota('${item.id}')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; margin-bottom: 12px; cursor: pointer; transition: 0.3s; display: flex; gap: 16px; align-items: flex-start;" onmouseover="this.style.borderColor='rgba(16,185,129,0.3)';this.style.background='rgba(16,185,129,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)'">
+        
+        <!-- Ícone/Avatar da Empresa -->
+        <div style="width: 56px; height: 56px; background: linear-gradient(135deg, ${statusBg}, transparent); border: 1px solid ${statusColor}30; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="1.5">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="M7 15h0M2 9h20"/>
+          </svg>
+        </div>
+        
+        <!-- Info Principal -->
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(item.empresa || 'Empresa não informada')}</h3>
+            <span style="padding: 4px 10px; background: ${statusBg}; color: ${statusColor}; font-size: 11px; font-weight: 600; border-radius: 20px; white-space: nowrap;">${statusText}</span>
+          </div>
+          
+          <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0 0 10px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(item.descricao || 'Sem descrição')}</p>
+          
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: rgba(255,255,255,0.4);">
+            ${item.responsavel ? `<span style="display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escapeHtml(item.responsavel)}</span>` : ''}
+            ${venc ? `<span style="display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Venc: ${venc.toLocaleDateString('pt-BR')}</span>` : ''}
+            <span style="display: flex; align-items: center; gap: 6px;">
+              ${temNota ? '<span style="background: rgba(139,92,246,0.2); color: #a78bfa; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600;">NOTA</span>' : ''}
+              ${temBoleto ? '<span style="background: rgba(6,182,212,0.2); color: #22d3ee; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600;">BOLETO</span>' : ''}
+            </span>
+          </div>
+        </div>
+        
+        <!-- Valor -->
+        <div style="text-align: right; flex-shrink: 0;">
+          <p style="font-size: 20px; font-weight: 700; color: ${statusColor}; margin: 0;">R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;">${new Date(item.created_at).toLocaleDateString('pt-BR')}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Filtro de notas
+function setNotasFilter(filter, btn) {
+  notasData.filter = filter;
+  
+  // Atualizar visual dos botões
+  document.querySelectorAll('.notas-filter').forEach(b => {
+    b.style.background = 'rgba(255,255,255,0.05)';
+    b.style.color = 'rgba(255,255,255,0.6)';
+    b.style.border = '1px solid rgba(255,255,255,0.1)';
+  });
+  
+  btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+  btn.style.color = '#fff';
+  btn.style.border = 'none';
+  
+  renderNotas();
+}
+
+// Busca de notas
+function searchNotas(query) {
+  notasData.search = query;
+  renderNotas();
+}
+
+// Modal Nova Nota/Boleto
+function openNovaNotaModal(editId = null) {
+  const isEdit = editId !== null;
+  const item = isEdit ? notasData.items.find(i => i.id === editId) : null;
+  
+  const modalHtml = `
+    <div id="modal-nova-nota" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+      <div style="background: linear-gradient(145deg, rgba(15, 20, 25, 0.98), rgba(10, 15, 20, 0.98)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 24px; max-width: 700px; width: 100%; max-height: 95vh; overflow-y: auto; box-shadow: 0 30px 100px rgba(16, 185, 129, 0.15);">
+        
+        <!-- Header -->
+        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10;">
+          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
+          </div>
+          <div style="flex: 1;">
+            <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">${isEdit ? 'Editar' : 'Nova'} Entrada Financeira</h3>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Nota fiscal e/ou boleto de fornecedor</p>
+          </div>
+          <button onclick="closeNovaNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+        </div>
+        
+        <form id="form-nova-nota" onsubmit="saveNota(event, '${editId || ''}')" style="padding: 24px 28px;">
+          
+          <!-- Seção: Dados da Empresa -->
+          <div style="margin-bottom: 24px;">
+            <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Dados do Fornecedor
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Empresa / Fornecedor *</label>
+                <input type="text" id="nota-empresa" value="${item?.empresa || ''}" required placeholder="Ex: Auto Peças Silva, Eletro Center..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" oninput="smartFillNota(this.value)">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Responsável pelo Serviço</label>
+                <select id="nota-responsavel" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+                  <option value="">Selecione...</option>
+                  ${(state.users || []).map(u => `<option value="${u.name}" ${item?.responsavel === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+                  <option value="Terceiro">Terceiro (Externo)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Setor/Local</label>
+                <select id="nota-setor" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+                  <option value="">Selecione...</option>
+                  <option value="Sala de Ovos" ${item?.setor === 'Sala de Ovos' ? 'selected' : ''}>Sala de Ovos</option>
+                  <option value="Vertical 1" ${item?.setor === 'Vertical 1' ? 'selected' : ''}>Vertical 1</option>
+                  <option value="Vertical 2" ${item?.setor === 'Vertical 2' ? 'selected' : ''}>Vertical 2</option>
+                  <option value="Vertical 3" ${item?.setor === 'Vertical 3' ? 'selected' : ''}>Vertical 3</option>
+                  <option value="Galpão 1" ${item?.setor === 'Galpão 1' ? 'selected' : ''}>Galpão 1</option>
+                  <option value="Galpão 2" ${item?.setor === 'Galpão 2' ? 'selected' : ''}>Galpão 2</option>
+                  <option value="Galpão 3" ${item?.setor === 'Galpão 3' ? 'selected' : ''}>Galpão 3</option>
+                  <option value="Expedição" ${item?.setor === 'Expedição' ? 'selected' : ''}>Expedição</option>
+                  <option value="Cantina" ${item?.setor === 'Cantina' ? 'selected' : ''}>Cantina</option>
+                  <option value="Escritório" ${item?.setor === 'Escritório' ? 'selected' : ''}>Escritório</option>
+                  <option value="Oficina" ${item?.setor === 'Oficina' ? 'selected' : ''}>Oficina</option>
+                  <option value="Fábrica de Ração" ${item?.setor === 'Fábrica de Ração' ? 'selected' : ''}>Fábrica de Ração</option>
+                  <option value="Geral" ${item?.setor === 'Geral' ? 'selected' : ''}>Geral</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção: Descrição -->
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Descrição do Serviço/Produto *</label>
+            <textarea id="nota-descricao" required placeholder="Descreva o serviço prestado ou produtos adquiridos..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px; min-height: 80px; resize: vertical;">${item?.descricao || ''}</textarea>
+          </div>
+          
+          <!-- Seção: Valores -->
+          <div style="margin-bottom: 24px;">
+            <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Valores
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Valor da Nota Fiscal</label>
+                <input type="text" id="nota-valor-nota" value="${item?.valor_nota ? 'R$ ' + parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : ''}" placeholder="R$ 0,00" style="width: 100%; padding: 14px 16px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 12px; color: #a78bfa; font-size: 16px; font-weight: 600;" oninput="formatCurrency(this)">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Valor do Boleto</label>
+                <input type="text" id="nota-valor-boleto" value="${item?.valor_boleto ? 'R$ ' + parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : ''}" placeholder="R$ 0,00" style="width: 100%; padding: 14px 16px; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); border-radius: 12px; color: #22d3ee; font-size: 16px; font-weight: 600;" oninput="formatCurrency(this)">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Data de Emissão</label>
+                <input type="date" id="nota-data-emissao" value="${item?.data_emissao || new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+              </div>
+              
+              <div>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Data de Vencimento</label>
+                <input type="date" id="nota-data-vencimento" value="${item?.data_vencimento || ''}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção: Anexos -->
+          <div style="margin-bottom: 24px;">
+            <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Anexos (Nota Fiscal e/ou Boleto)
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <!-- Upload Nota Fiscal -->
+              <div>
+                <label style="display: block; width: 100%; padding: 24px; background: rgba(139,92,246,0.1); border: 2px dashed rgba(139,92,246,0.3); border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s;" onmouseover="this.style.borderColor='rgba(139,92,246,0.6)'" onmouseout="this.style.borderColor='rgba(139,92,246,0.3)'">
+                  <input type="file" id="nota-anexo-nota" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'nota')">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5" style="margin: 0 auto 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  <p style="font-size: 13px; color: #a78bfa; font-weight: 600; margin: 0;">Nota Fiscal</p>
+                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-nota-name">${item?.nota_anexo ? '✓ Arquivo anexado' : 'Clique para anexar'}</p>
+                </label>
+              </div>
+              
+              <!-- Upload Boleto -->
+              <div>
+                <label style="display: block; width: 100%; padding: 24px; background: rgba(6,182,212,0.1); border: 2px dashed rgba(6,182,212,0.3); border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s;" onmouseover="this.style.borderColor='rgba(6,182,212,0.6)'" onmouseout="this.style.borderColor='rgba(6,182,212,0.3)'">
+                  <input type="file" id="nota-anexo-boleto" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'boleto')">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.5" style="margin: 0 auto 8px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
+                  <p style="font-size: 13px; color: #22d3ee; font-weight: 600; margin: 0;">Boleto</p>
+                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-boleto-name">${item?.boleto_anexo ? '✓ Arquivo anexado' : 'Clique para anexar'}</p>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção: Status -->
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">Status do Pagamento</label>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: ${!item || item.status === 'pendente' ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${!item || item.status === 'pendente' ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.3s;">
+                <input type="radio" name="nota-status" value="pendente" ${!item || item.status === 'pendente' ? 'checked' : ''} style="display: none;">
+                <span style="font-size: 13px; color: ${!item || item.status === 'pendente' ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500;">Pendente</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: ${item?.status === 'aguardando' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${item?.status === 'aguardando' ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.3s;">
+                <input type="radio" name="nota-status" value="aguardando" ${item?.status === 'aguardando' ? 'checked' : ''} style="display: none;">
+                <span style="font-size: 13px; color: ${item?.status === 'aguardando' ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500;">Aguardando</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: ${item?.status === 'pago' ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${item?.status === 'pago' ? 'transparent' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: pointer; transition: 0.3s;">
+                <input type="radio" name="nota-status" value="pago" ${item?.status === 'pago' ? 'checked' : ''} style="display: none;">
+                <span style="font-size: 13px; color: ${item?.status === 'pago' ? '#fff' : 'rgba(255,255,255,0.6)'}; font-weight: 500;">Pago</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Botões -->
+          <div style="display: flex; gap: 12px; margin-top: 28px;">
+            <button type="button" onclick="closeNovaNotaModal()" style="flex: 1; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 15px; font-weight: 500; cursor: pointer;">Cancelar</button>
+            <button type="submit" style="flex: 2; padding: 16px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              ${isEdit ? 'Salvar Alterações' : 'Cadastrar Entrada'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  
+  // Event listeners para os radio buttons de status
+  document.querySelectorAll('input[name="nota-status"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      document.querySelectorAll('input[name="nota-status"]').forEach(r => {
+        const label = r.parentElement;
+        if (r.checked) {
+          if (r.value === 'pendente') label.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+          else if (r.value === 'aguardando') label.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+          else if (r.value === 'pago') label.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+          label.style.border = 'none';
+          label.querySelector('span').style.color = '#fff';
+        } else {
+          label.style.background = 'rgba(255,255,255,0.05)';
+          label.style.border = '1px solid rgba(255,255,255,0.1)';
+          label.querySelector('span').style.color = 'rgba(255,255,255,0.6)';
+        }
+      });
+    });
+  });
+}
+
+function closeNovaNotaModal() {
+  const modal = document.getElementById('modal-nova-nota');
+  if (modal) modal.remove();
+}
+
+// Variáveis temporárias para anexos
+let tempNotaAnexo = null;
+let tempBoletoAnexo = null;
+
+function handleNotaFileSelect(input, tipo) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    if (tipo === 'nota') {
+      tempNotaAnexo = { name: file.name, data: e.target.result, type: file.type };
+      document.getElementById('nota-anexo-nota-name').textContent = '✓ ' + file.name;
+    } else {
+      tempBoletoAnexo = { name: file.name, data: e.target.result, type: file.type };
+      document.getElementById('nota-anexo-boleto-name').textContent = '✓ ' + file.name;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// Formatar moeda
+function formatCurrency(input) {
+  let value = input.value.replace(/\D/g, '');
+  value = (parseInt(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  input.value = value ? 'R$ ' + value : '';
+}
+
+// Parse valor
+function parseValor(str) {
+  if (!str) return 0;
+  return parseFloat(str.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+}
+
+// Smart fill - sugestões baseadas em entradas anteriores
+function smartFillNota(empresa) {
+  const similar = notasData.items.find(i => 
+    i.empresa && i.empresa.toLowerCase().includes(empresa.toLowerCase())
+  );
+  
+  if (similar && empresa.length > 3) {
+    // Pode sugerir dados anteriores
+    console.log('Fornecedor similar encontrado:', similar.empresa);
+  }
+}
+
+// Salvar nota
+function saveNota(event, editId) {
+  event.preventDefault();
+  
+  const empresa = document.getElementById('nota-empresa').value.trim();
+  const descricao = document.getElementById('nota-descricao').value.trim();
+  const responsavel = document.getElementById('nota-responsavel').value;
+  const setor = document.getElementById('nota-setor').value;
+  const valorNota = parseValor(document.getElementById('nota-valor-nota').value);
+  const valorBoleto = parseValor(document.getElementById('nota-valor-boleto').value);
+  const dataEmissao = document.getElementById('nota-data-emissao').value;
+  const dataVencimento = document.getElementById('nota-data-vencimento').value;
+  const status = document.querySelector('input[name="nota-status"]:checked')?.value || 'pendente';
+  
+  if (!empresa || !descricao) {
+    showNotification('Preencha a empresa e descrição', 'warning');
+    return;
+  }
+  
+  if (editId) {
+    // Editar existente
+    const idx = notasData.items.findIndex(i => i.id === editId);
+    if (idx > -1) {
+      notasData.items[idx] = {
+        ...notasData.items[idx],
+        empresa,
+        descricao,
+        responsavel,
+        setor,
+        valor_nota: valorNota,
+        valor_boleto: valorBoleto,
+        data_emissao: dataEmissao,
+        data_vencimento: dataVencimento,
+        status,
+        nota_anexo: tempNotaAnexo || notasData.items[idx].nota_anexo,
+        boleto_anexo: tempBoletoAnexo || notasData.items[idx].boleto_anexo,
+        updated_at: new Date().toISOString()
+      };
+    }
+  } else {
+    // Nova entrada
+    const newItem = {
+      id: 'nota_' + Date.now(),
+      empresa,
+      descricao,
+      responsavel,
+      setor,
+      valor_nota: valorNota,
+      valor_boleto: valorBoleto,
+      data_emissao: dataEmissao,
+      data_vencimento: dataVencimento,
+      status,
+      nota_anexo: tempNotaAnexo,
+      boleto_anexo: tempBoletoAnexo,
+      created_by: state.user?.id,
+      created_by_name: state.user?.name,
+      created_at: new Date().toISOString(),
+      tenant_id: state.user?.tenant_id
+    };
+    
+    notasData.items.unshift(newItem);
+  }
+  
+  // Limpar temporários
+  tempNotaAnexo = null;
+  tempBoletoAnexo = null;
+  
+  saveNotas();
+  renderNotas();
+  updateNotasStats();
+  closeNovaNotaModal();
+  
+  showNotification(editId ? 'Entrada atualizada!' : 'Nova entrada cadastrada!', 'success');
+}
+
+// Visualizar nota
+function viewNota(id) {
+  const item = notasData.items.find(i => i.id === id);
+  if (!item) return;
+  
+  const now = new Date();
+  const venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
+  const diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
+  
+  let statusColor = '#10b981';
+  let statusText = 'Pendente';
+  
+  if (item.status === 'pago') {
+    statusColor = '#22c55e';
+    statusText = 'Pago';
+  } else if (item.status === 'aguardando') {
+    statusColor = '#f59e0b';
+    statusText = 'Aguardando Pagamento';
+  } else if (diasVenc !== null && diasVenc < 0) {
+    statusColor = '#ef4444';
+    statusText = 'Vencido há ' + Math.abs(diasVenc) + ' dias';
+  } else if (diasVenc !== null && diasVenc <= 7) {
+    statusColor = '#fb923c';
+    statusText = 'Vence em ' + diasVenc + ' dias';
+  }
+  
+  const modalHtml = `
+    <div id="modal-view-nota" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+      <div style="background: linear-gradient(145deg, rgba(15, 20, 25, 0.98), rgba(10, 15, 20, 0.98)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 24px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;">
+        
+        <!-- Header -->
+        <div style="padding: 24px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px 0;">${escapeHtml(item.empresa)}</h2>
+              <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">${escapeHtml(item.setor || 'Setor não informado')}</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button onclick="exportNotaHTML('${item.id}')" title="Exportar HTML" style="background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; width: 40px; height: 40px; color: #a78bfa; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              </button>
+              <button onclick="exportNotaPDF('${item.id}')" title="Exportar PDF" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; width: 40px; height: 40px; color: #ef4444; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h6"/></svg>
+              </button>
+              <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">×</button>
+            </div>
+          </div>
+          
+          <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: ${statusColor}20; border: 1px solid ${statusColor}40; border-radius: 20px;">
+            <div style="width: 8px; height: 8px; background: ${statusColor}; border-radius: 50%;"></div>
+            <span style="font-size: 13px; color: ${statusColor}; font-weight: 600;">${statusText}</span>
+          </div>
+        </div>
+        
+        <!-- Conteúdo -->
+        <div style="padding: 24px;">
+          <!-- Descrição -->
+          <div style="margin-bottom: 20px;">
+            <p style="font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.6;">${escapeHtml(item.descricao)}</p>
+          </div>
+          
+          <!-- Grid de Info -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+            ${item.responsavel ? `
+            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 14px;">
+              <p style="font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 0 0 4px 0;">Responsável</p>
+              <p style="font-size: 14px; color: #fff; font-weight: 500; margin: 0;">${escapeHtml(item.responsavel)}</p>
+            </div>` : ''}
+            
+            ${venc ? `
+            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 14px;">
+              <p style="font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 0 0 4px 0;">Vencimento</p>
+              <p style="font-size: 14px; color: ${statusColor}; font-weight: 500; margin: 0;">${venc.toLocaleDateString('pt-BR')}</p>
+            </div>` : ''}
+          </div>
+          
+          <!-- Valores -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+            ${item.valor_nota ? `
+            <div style="background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 14px; padding: 18px; text-align: center;">
+              <p style="font-size: 10px; color: #a78bfa; text-transform: uppercase; margin: 0 0 6px 0;">Valor Nota</p>
+              <p style="font-size: 22px; color: #a78bfa; font-weight: 700; margin: 0;">R$ ${parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+            </div>` : ''}
+            
+            ${item.valor_boleto ? `
+            <div style="background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); border-radius: 14px; padding: 18px; text-align: center;">
+              <p style="font-size: 10px; color: #22d3ee; text-transform: uppercase; margin: 0 0 6px 0;">Valor Boleto</p>
+              <p style="font-size: 22px; color: #22d3ee; font-weight: 700; margin: 0;">R$ ${parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+            </div>` : ''}
+          </div>
+          
+          <!-- Anexos -->
+          ${item.nota_anexo || item.boleto_anexo ? `
+          <div style="margin-bottom: 24px;">
+            <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px;">Anexos</p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              ${item.nota_anexo ? `
+              <a href="${item.nota_anexo.data}" download="${item.nota_anexo.name}" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; color: #a78bfa; text-decoration: none; font-size: 13px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Nota Fiscal
+              </a>` : ''}
+              
+              ${item.boleto_anexo ? `
+              <a href="${item.boleto_anexo.data}" download="${item.boleto_anexo.name}" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; color: #22d3ee; text-decoration: none; font-size: 13px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Boleto
+              </a>` : ''}
+            </div>
+          </div>` : ''}
+          
+          <!-- Footer Info -->
+          <div style="padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; color: rgba(255,255,255,0.4);">
+            <p style="margin: 0;">Cadastrado por ${escapeHtml(item.created_by_name || 'Sistema')} em ${new Date(item.created_at).toLocaleString('pt-BR')}</p>
+          </div>
+        </div>
+        
+        <!-- Ações -->
+        <div style="padding: 16px 24px 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button onclick="closeViewNotaModal(); openNovaNotaModal('${item.id}')" style="flex: 1; min-width: 120px; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+          </button>
+          <button onclick="deleteNota('${item.id}')" style="padding: 14px 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; color: #ef4444; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Excluir
+          </button>
+          <button onclick="markNotaAsPaid('${item.id}')" style="flex: 1; min-width: 140px; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; ${item.status === 'pago' ? 'opacity: 0.5; pointer-events: none;' : ''}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            ${item.status === 'pago' ? 'Já Pago' : 'Marcar como Pago'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeViewNotaModal() {
+  const modal = document.getElementById('modal-view-nota');
+  if (modal) modal.remove();
+}
+
+function markNotaAsPaid(id) {
+  const idx = notasData.items.findIndex(i => i.id === id);
+  if (idx > -1) {
+    notasData.items[idx].status = 'pago';
+    notasData.items[idx].data_pagamento = new Date().toISOString();
+    saveNotas();
+    renderNotas();
+    updateNotasStats();
+    closeViewNotaModal();
+    showNotification('Marcado como pago!', 'success');
+  }
+}
+
+function deleteNota(id) {
+  if (!confirm('Tem certeza que deseja excluir esta entrada?')) return;
+  
+  notasData.items = notasData.items.filter(i => i.id !== id);
+  saveNotas();
+  renderNotas();
+  updateNotasStats();
+  closeViewNotaModal();
+  showNotification('Entrada excluída', 'success');
+}
+
+// ============================================
+// EXPORTAÇÃO DE NOTAS - PDF E HTML PREMIUM
+// ============================================
+
+function generateNotaHTMLContent(item) {
+  var now = new Date();
+  var venc = item.data_vencimento ? new Date(item.data_vencimento) : null;
+  var diasVenc = venc ? Math.ceil((venc - now) / (1000 * 60 * 60 * 24)) : null;
+  
+  var statusColor = '#10b981';
+  var statusText = 'Pendente';
+  var statusBg = 'rgba(16, 185, 129, 0.15)';
+  
+  if (item.status === 'pago') {
+    statusColor = '#22c55e';
+    statusText = '✓ PAGO';
+    statusBg = 'rgba(34, 197, 94, 0.15)';
+  } else if (item.status === 'aguardando') {
+    statusColor = '#f59e0b';
+    statusText = 'AGUARDANDO';
+    statusBg = 'rgba(245, 158, 11, 0.15)';
+  } else if (diasVenc !== null && diasVenc < 0) {
+    statusColor = '#ef4444';
+    statusText = 'VENCIDO';
+    statusBg = 'rgba(239, 68, 68, 0.15)';
+  }
+  
+  var valor = parseFloat(item.valor_boleto || item.valor_nota || 0);
+  var valorFormatted = valor.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+  var valorNotaFormatted = item.valor_nota ? parseFloat(item.valor_nota).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
+  var valorBoletoFormatted = item.valor_boleto ? parseFloat(item.valor_boleto).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
+  var docId = item.id.slice(-8).toUpperCase();
+  var dataEmissao = new Date().toLocaleDateString('pt-BR');
+  var horaEmissao = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+  var anoAtual = new Date().getFullYear();
+  
+  var html = '<!DOCTYPE html>\n';
+  html += '<html lang="pt-BR">\n';
+  html += '<head>\n';
+  html += '  <meta charset="UTF-8">\n';
+  html += '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+  html += '  <title>Documento Financeiro - ' + escapeHtml(item.empresa) + ' | ICARUS</title>\n';
+  html += '  <style>\n';
+  html += '    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");\n';
+  html += '    \n';
+  html += '    * { margin: 0; padding: 0; box-sizing: border-box; }\n';
+  html += '    \n';
+  html += '    html, body {\n';
+  html += '      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;\n';
+  html += '      background: linear-gradient(135deg, #1a0a14 0%, #2d1a2e 50%, #1a0a14 100%);\n';
+  html += '      min-height: 100vh;\n';
+  html += '      color: #fff;\n';
+  html += '      overflow-x: hidden;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Animated Background */\n';
+  html += '    .bg-animation {\n';
+  html += '      position: fixed;\n';
+  html += '      top: 0;\n';
+  html += '      left: 0;\n';
+  html += '      width: 100%;\n';
+  html += '      height: 100%;\n';
+  html += '      pointer-events: none;\n';
+  html += '      z-index: 0;\n';
+  html += '      overflow: hidden;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow {\n';
+  html += '      position: absolute;\n';
+  html += '      border-radius: 50%;\n';
+  html += '      filter: blur(80px);\n';
+  html += '      opacity: 0.4;\n';
+  html += '      animation: floatGlow 8s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow-1 {\n';
+  html += '      width: 400px;\n';
+  html += '      height: 400px;\n';
+  html += '      background: radial-gradient(circle, #db2777 0%, transparent 70%);\n';
+  html += '      top: -100px;\n';
+  html += '      right: -100px;\n';
+  html += '      animation-delay: 0s;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow-2 {\n';
+  html += '      width: 300px;\n';
+  html += '      height: 300px;\n';
+  html += '      background: radial-gradient(circle, #ec4899 0%, transparent 70%);\n';
+  html += '      bottom: 10%;\n';
+  html += '      left: -50px;\n';
+  html += '      animation-delay: -4s;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .bg-glow-3 {\n';
+  html += '      width: 250px;\n';
+  html += '      height: 250px;\n';
+  html += '      background: radial-gradient(circle, #f472b6 0%, transparent 70%);\n';
+  html += '      top: 50%;\n';
+  html += '      right: 10%;\n';
+  html += '      animation-delay: -2s;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes floatGlow {\n';
+  html += '      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }\n';
+  html += '      25% { transform: translate(30px, -20px) scale(1.1); opacity: 0.5; }\n';
+  html += '      50% { transform: translate(-20px, 30px) scale(0.9); opacity: 0.3; }\n';
+  html += '      75% { transform: translate(20px, 20px) scale(1.05); opacity: 0.45; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Particles */\n';
+  html += '    .particles {\n';
+  html += '      position: fixed;\n';
+  html += '      top: 0;\n';
+  html += '      left: 0;\n';
+  html += '      width: 100%;\n';
+  html += '      height: 100%;\n';
+  html += '      pointer-events: none;\n';
+  html += '      z-index: 1;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .particle {\n';
+  html += '      position: absolute;\n';
+  html += '      width: 4px;\n';
+  html += '      height: 4px;\n';
+  html += '      background: #db2777;\n';
+  html += '      border-radius: 50%;\n';
+  html += '      animation: particleFloat 15s linear infinite;\n';
+  html += '      opacity: 0;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes particleFloat {\n';
+  html += '      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }\n';
+  html += '      10% { opacity: 0.6; }\n';
+  html += '      90% { opacity: 0.6; }\n';
+  html += '      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .container {\n';
+  html += '      max-width: 800px;\n';
+  html += '      margin: 0 auto;\n';
+  html += '      padding: 40px 20px;\n';
+  html += '      position: relative;\n';
+  html += '      z-index: 10;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Fade In Animation */\n';
+  html += '    @keyframes fadeInUp {\n';
+  html += '      from { opacity: 0; transform: translateY(30px); }\n';
+  html += '      to { opacity: 1; transform: translateY(0); }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Header Premium */\n';
+  html += '    .header {\n';
+  html += '      background: linear-gradient(145deg, rgba(219, 39, 119, 0.15), rgba(236, 72, 153, 0.05));\n';
+  html += '      border: 1px solid rgba(219, 39, 119, 0.4);\n';
+  html += '      border-radius: 24px;\n';
+  html += '      padding: 32px;\n';
+  html += '      margin-bottom: 32px;\n';
+  html += '      position: relative;\n';
+  html += '      overflow: hidden;\n';
+  html += '      animation: fadeInUp 0.6s ease-out;\n';
+  html += '      backdrop-filter: blur(20px);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .header::before {\n';
+  html += '      content: "";\n';
+  html += '      position: absolute;\n';
+  html += '      top: -50%;\n';
+  html += '      right: -20%;\n';
+  html += '      width: 300px;\n';
+  html += '      height: 300px;\n';
+  html += '      background: radial-gradient(circle, rgba(219, 39, 119, 0.3) 0%, transparent 70%);\n';
+  html += '      border-radius: 50%;\n';
+  html += '      animation: floatGlow 6s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Shimmer Effect */\n';
+  html += '    .header::after {\n';
+  html += '      content: "";\n';
+  html += '      position: absolute;\n';
+  html += '      top: 0;\n';
+  html += '      left: -100%;\n';
+  html += '      width: 100%;\n';
+  html += '      height: 100%;\n';
+  html += '      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);\n';
+  html += '      animation: shimmer 3s infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes shimmer {\n';
+  html += '      0% { left: -100%; }\n';
+  html += '      100% { left: 100%; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-section {\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 16px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      position: relative;\n';
+  html += '      z-index: 1;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-icon {\n';
+  html += '      width: 60px;\n';
+  html += '      height: 60px;\n';
+  html += '      background: linear-gradient(135deg, #db2777, #ec4899);\n';
+  html += '      border-radius: 16px;\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      box-shadow: 0 8px 32px rgba(219, 39, 119, 0.4);\n';
+  html += '      animation: pulse 2s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-icon svg { width: 32px; height: 32px; }\n';
+  html += '    \n';
+  html += '    .logo-text h1 {\n';
+  html += '      font-size: 28px;\n';
+  html += '      font-weight: 800;\n';
+  html += '      background: linear-gradient(135deg, #db2777, #f472b6);\n';
+  html += '      -webkit-background-clip: text;\n';
+  html += '      -webkit-text-fill-color: transparent;\n';
+  html += '      background-clip: text;\n';
+  html += '      letter-spacing: 3px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .logo-text p {\n';
+  html += '      font-size: 11px;\n';
+  html += '      color: rgba(255,255,255,0.5);\n';
+  html += '      letter-spacing: 2px;\n';
+  html += '      text-transform: uppercase;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .doc-info {\n';
+  html += '      display: flex;\n';
+  html += '      justify-content: space-between;\n';
+  html += '      align-items: center;\n';
+  html += '      flex-wrap: wrap;\n';
+  html += '      gap: 16px;\n';
+  html += '      position: relative;\n';
+  html += '      z-index: 1;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .doc-number {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .doc-date {\n';
+  html += '      font-size: 13px;\n';
+  html += '      color: rgba(255,255,255,0.6);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Status Badge */\n';
+  html += '    .status-badge {\n';
+  html += '      display: inline-flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 8px;\n';
+  html += '      padding: 12px 24px;\n';
+  html += '      background: ' + statusBg + ';\n';
+  html += '      border: 2px solid ' + statusColor + ';\n';
+  html += '      border-radius: 50px;\n';
+  html += '      font-size: 14px;\n';
+  html += '      font-weight: 700;\n';
+  html += '      color: ' + statusColor + ';\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .status-badge:hover {\n';
+  html += '      transform: scale(1.05);\n';
+  html += '      box-shadow: 0 0 20px ' + statusColor + '40;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .status-dot {\n';
+  html += '      width: 10px;\n';
+  html += '      height: 10px;\n';
+  html += '      background: ' + statusColor + ';\n';
+  html += '      border-radius: 50%;\n';
+  html += '      animation: pulse 2s infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    @keyframes pulse {\n';
+  html += '      0%, 100% { opacity: 1; transform: scale(1); }\n';
+  html += '      50% { opacity: 0.6; transform: scale(1.1); }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Main Card */\n';
+  html += '    .main-card {\n';
+  html += '      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));\n';
+  html += '      border: 1px solid rgba(255,255,255,0.1);\n';
+  html += '      border-radius: 24px;\n';
+  html += '      padding: 32px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      animation: fadeInUp 0.6s ease-out 0.2s both;\n';
+  html += '      backdrop-filter: blur(20px);\n';
+  html += '      position: relative;\n';
+  html += '      overflow: hidden;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .main-card:hover {\n';
+  html += '      border-color: rgba(219, 39, 119, 0.3);\n';
+  html += '      transform: translateY(-2px);\n';
+  html += '      box-shadow: 0 20px 60px rgba(219, 39, 119, 0.15);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .empresa-header {\n';
+  html += '      display: flex;\n';
+  html += '      justify-content: space-between;\n';
+  html += '      align-items: flex-start;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      padding-bottom: 24px;\n';
+  html += '      border-bottom: 1px solid rgba(255,255,255,0.1);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .empresa-info h2 {\n';
+  html += '      font-size: 24px;\n';
+  html += '      font-weight: 700;\n';
+  html += '      color: #fff;\n';
+  html += '      margin-bottom: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .empresa-info .setor {\n';
+  html += '      font-size: 14px;\n';
+  html += '      color: rgba(255,255,255,0.5);\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-destaque {\n';
+  html += '      text-align: right;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-destaque .label {\n';
+  html += '      font-size: 11px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 4px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-destaque .valor {\n';
+  html += '      font-size: 36px;\n';
+  html += '      font-weight: 800;\n';
+  html += '      background: linear-gradient(135deg, #10b981, #34d399);\n';
+  html += '      -webkit-background-clip: text;\n';
+  html += '      -webkit-text-fill-color: transparent;\n';
+  html += '      background-clip: text;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Descrição */\n';
+  html += '    .descricao {\n';
+  html += '      background: rgba(255,255,255,0.03);\n';
+  html += '      border-radius: 16px;\n';
+  html += '      padding: 20px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .descricao:hover {\n';
+  html += '      background: rgba(255,255,255,0.05);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .descricao h3 {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 12px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .descricao p {\n';
+  html += '      font-size: 15px;\n';
+  html += '      color: rgba(255,255,255,0.8);\n';
+  html += '      line-height: 1.7;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Info Grid */\n';
+  html += '    .info-grid {\n';
+  html += '      display: grid;\n';
+  html += '      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n';
+  html += '      gap: 16px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item {\n';
+  html += '      background: rgba(255,255,255,0.03);\n';
+  html += '      border-radius: 14px;\n';
+  html += '      padding: 18px;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '      border: 1px solid transparent;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item:hover {\n';
+  html += '      background: rgba(255,255,255,0.06);\n';
+  html += '      border-color: rgba(219, 39, 119, 0.2);\n';
+  html += '      transform: translateY(-2px);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item .label {\n';
+  html += '      font-size: 10px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 6px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .info-item .value {\n';
+  html += '      font-size: 16px;\n';
+  html += '      color: #fff;\n';
+  html += '      font-weight: 600;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Valores Cards */\n';
+  html += '    .valores-grid {\n';
+  html += '      display: grid;\n';
+  html += '      grid-template-columns: 1fr 1fr;\n';
+  html += '      gap: 16px;\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card {\n';
+  html += '      border-radius: 16px;\n';
+  html += '      padding: 24px;\n';
+  html += '      text-align: center;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card:hover {\n';
+  html += '      transform: translateY(-4px) scale(1.02);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota {\n';
+  html += '      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05));\n';
+  html += '      border: 1px solid rgba(139,92,246,0.4);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota:hover {\n';
+  html += '      box-shadow: 0 15px 40px rgba(139,92,246,0.25);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.boleto {\n';
+  html += '      background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05));\n';
+  html += '      border: 1px solid rgba(6,182,212,0.4);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.boleto:hover {\n';
+  html += '      box-shadow: 0 15px 40px rgba(6,182,212,0.25);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card .icon {\n';
+  html += '      width: 48px;\n';
+  html += '      height: 48px;\n';
+  html += '      border-radius: 12px;\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      margin: 0 auto 12px;\n';
+  html += '      transition: transform 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card:hover .icon {\n';
+  html += '      transform: scale(1.1) rotate(5deg);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota .icon { background: rgba(139,92,246,0.3); }\n';
+  html += '    .valor-card.boleto .icon { background: rgba(6,182,212,0.3); }\n';
+  html += '    \n';
+  html += '    .valor-card .tipo {\n';
+  html += '      font-size: 11px;\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota .tipo { color: #a78bfa; }\n';
+  html += '    .valor-card.boleto .tipo { color: #22d3ee; }\n';
+  html += '    \n';
+  html += '    .valor-card .amount {\n';
+  html += '      font-size: 28px;\n';
+  html += '      font-weight: 800;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .valor-card.nota .amount { color: #a78bfa; }\n';
+  html += '    .valor-card.boleto .amount { color: #22d3ee; }\n';
+  html += '    \n';
+  html += '    /* Anexos */\n';
+  html += '    .anexos-section {\n';
+  html += '      margin-bottom: 24px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexos-section h3 {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      text-transform: uppercase;\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '      margin-bottom: 16px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexos-grid {\n';
+  html += '      display: flex;\n';
+  html += '      gap: 12px;\n';
+  html += '      flex-wrap: wrap;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn {\n';
+  html += '      display: inline-flex;\n';
+  html += '      align-items: center;\n';
+  html += '      gap: 10px;\n';
+  html += '      padding: 14px 20px;\n';
+  html += '      border-radius: 12px;\n';
+  html += '      text-decoration: none;\n';
+  html += '      font-size: 14px;\n';
+  html += '      font-weight: 600;\n';
+  html += '      transition: all 0.3s ease;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn:hover {\n';
+  html += '      transform: translateY(-3px) scale(1.02);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.nota {\n';
+  html += '      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(139,92,246,0.1));\n';
+  html += '      border: 1px solid rgba(139,92,246,0.5);\n';
+  html += '      color: #a78bfa;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.nota:hover {\n';
+  html += '      box-shadow: 0 10px 30px rgba(139,92,246,0.3);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.boleto {\n';
+  html += '      background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(6,182,212,0.1));\n';
+  html += '      border: 1px solid rgba(6,182,212,0.5);\n';
+  html += '      color: #22d3ee;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .anexo-btn.boleto:hover {\n';
+  html += '      box-shadow: 0 10px 30px rgba(6,182,212,0.3);\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Footer */\n';
+  html += '    .footer {\n';
+  html += '      text-align: center;\n';
+  html += '      padding: 32px 20px;\n';
+  html += '      border-top: 1px solid rgba(255,255,255,0.1);\n';
+  html += '      animation: fadeInUp 0.6s ease-out 0.4s both;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer-logo {\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      gap: 12px;\n';
+  html += '      margin-bottom: 16px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer-logo .icon {\n';
+  html += '      width: 40px;\n';
+  html += '      height: 40px;\n';
+  html += '      background: linear-gradient(135deg, #db2777, #ec4899);\n';
+  html += '      border-radius: 10px;\n';
+  html += '      display: flex;\n';
+  html += '      align-items: center;\n';
+  html += '      justify-content: center;\n';
+  html += '      animation: pulse 2s ease-in-out infinite;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer-logo h3 {\n';
+  html += '      font-size: 18px;\n';
+  html += '      font-weight: 700;\n';
+  html += '      color: #db2777;\n';
+  html += '      letter-spacing: 2px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer p {\n';
+  html += '      font-size: 12px;\n';
+  html += '      color: rgba(255,255,255,0.4);\n';
+  html += '      margin-bottom: 8px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    .footer .tech {\n';
+  html += '      font-size: 10px;\n';
+  html += '      color: rgba(255,255,255,0.3);\n';
+  html += '      letter-spacing: 1px;\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Responsivo */\n';
+  html += '    @media (max-width: 600px) {\n';
+  html += '      .container { padding: 20px 12px; }\n';
+  html += '      .header { padding: 20px; }\n';
+  html += '      .main-card { padding: 20px; }\n';
+  html += '      .valores-grid { grid-template-columns: 1fr; }\n';
+  html += '      .empresa-header { flex-direction: column; gap: 20px; }\n';
+  html += '      .valor-destaque { text-align: left; }\n';
+  html += '      .valor-destaque .valor { font-size: 28px; }\n';
+  html += '    }\n';
+  html += '    \n';
+  html += '    /* Print */\n';
+  html += '    @media print {\n';
+  html += '      html, body { background: #fff !important; color: #000 !important; }\n';
+  html += '      .header, .main-card { border-color: #ddd !important; }\n';
+  html += '      .bg-animation, .particles { display: none !important; }\n';
+  html += '    }\n';
+  html += '  </style>\n';
+  html += '</head>\n';
+  html += '<body>\n';
+  html += '  <!-- Background Animation -->\n';
+  html += '  <div class="bg-animation">\n';
+  html += '    <div class="bg-glow bg-glow-1"></div>\n';
+  html += '    <div class="bg-glow bg-glow-2"></div>\n';
+  html += '    <div class="bg-glow bg-glow-3"></div>\n';
+  html += '  </div>\n';
+  html += '  \n';
+  html += '  <!-- Particles -->\n';
+  html += '  <div class="particles">\n';
+  for (var p = 0; p < 20; p++) {
+    var leftPos = Math.random() * 100;
+    var delay = Math.random() * 15;
+    var duration = 10 + Math.random() * 10;
+    var size = 2 + Math.random() * 4;
+    html += '    <div class="particle" style="left: ' + leftPos + '%; animation-delay: -' + delay + 's; animation-duration: ' + duration + 's; width: ' + size + 'px; height: ' + size + 'px;"></div>\n';
+  }
+  html += '  </div>\n';
+  html += '  \n';
+  html += '  <div class="container">\n';
+  html += '    <!-- Header -->\n';
+  html += '    <div class="header">\n';
+  html += '      <div class="logo-section">\n';
+  html += '        <div class="logo-icon">\n';
+  html += '          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">\n';
+  html += '            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>\n';
+  html += '            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>\n';
+  html += '          </svg>\n';
+  html += '        </div>\n';
+  html += '        <div class="logo-text">\n';
+  html += '          <h1>ICARUS</h1>\n';
+  html += '          <p>Sistema de Gestão Premium</p>\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  html += '      \n';
+  html += '      <div class="doc-info">\n';
+  html += '        <div>\n';
+  html += '          <div class="doc-number">Doc #' + docId + '</div>\n';
+  html += '          <div class="doc-date">Emitido em ' + dataEmissao + ' às ' + horaEmissao + '</div>\n';
+  html += '        </div>\n';
+  html += '        <div class="status-badge">\n';
+  html += '          <span class="status-dot"></span>\n';
+  html += '          ' + statusText + '\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  html += '    </div>\n';
+  html += '    \n';
+  html += '    <!-- Main Card -->\n';
+  html += '    <div class="main-card">\n';
+  html += '      <div class="empresa-header">\n';
+  html += '        <div class="empresa-info">\n';
+  html += '          <h2>' + escapeHtml(item.empresa) + '</h2>\n';
+  html += '          <div class="setor">\n';
+  html += '            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>\n';
+  html += '            ' + escapeHtml(item.setor || 'Setor não informado') + '\n';
+  html += '          </div>\n';
+  html += '        </div>\n';
+  html += '        <div class="valor-destaque">\n';
+  html += '          <div class="label">Valor Total</div>\n';
+  html += '          <div class="valor">R$ ' + valorFormatted + '</div>\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  html += '      \n';
+  html += '      <!-- Descrição -->\n';
+  html += '      <div class="descricao">\n';
+  html += '        <h3>Descrição do Serviço/Produto</h3>\n';
+  html += '        <p>' + escapeHtml(item.descricao) + '</p>\n';
+  html += '      </div>\n';
+  html += '      \n';
+  html += '      <!-- Info Grid -->\n';
+  html += '      <div class="info-grid">\n';
+  if (item.responsavel) {
+    html += '        <div class="info-item">\n';
+    html += '          <div class="label">Responsável</div>\n';
+    html += '          <div class="value">' + escapeHtml(item.responsavel) + '</div>\n';
+    html += '        </div>\n';
+  }
+  if (item.data_emissao) {
+    html += '        <div class="info-item">\n';
+    html += '          <div class="label">Data de Emissão</div>\n';
+    html += '          <div class="value">' + new Date(item.data_emissao).toLocaleDateString('pt-BR') + '</div>\n';
+    html += '        </div>\n';
+  }
+  if (venc) {
+    html += '        <div class="info-item">\n';
+    html += '          <div class="label">Data de Vencimento</div>\n';
+    html += '          <div class="value" style="color: ' + statusColor + '">' + venc.toLocaleDateString('pt-BR') + '</div>\n';
+    html += '        </div>\n';
+  }
+  html += '        <div class="info-item">\n';
+  html += '          <div class="label">Cadastrado por</div>\n';
+  html += '          <div class="value">' + escapeHtml(item.created_by_name || 'Sistema') + '</div>\n';
+  html += '        </div>\n';
+  html += '      </div>\n';
+  
+  // Valores
+  if (item.valor_nota || item.valor_boleto) {
+    html += '      <!-- Valores -->\n';
+    html += '      <div class="valores-grid">\n';
+    if (item.valor_nota) {
+      html += '        <div class="valor-card nota">\n';
+      html += '          <div class="icon">\n';
+      html += '            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>\n';
+      html += '          </div>\n';
+      html += '          <div class="tipo">Nota Fiscal</div>\n';
+      html += '          <div class="amount">R$ ' + valorNotaFormatted + '</div>\n';
+      html += '        </div>\n';
+    }
+    if (item.valor_boleto) {
+      html += '        <div class="valor-card boleto">\n';
+      html += '          <div class="icon">\n';
+      html += '            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>\n';
+      html += '          </div>\n';
+      html += '          <div class="tipo">Boleto</div>\n';
+      html += '          <div class="amount">R$ ' + valorBoletoFormatted + '</div>\n';
+      html += '        </div>\n';
+    }
+    html += '      </div>\n';
+  }
+  
+  // Anexos
+  if (item.nota_anexo || item.boleto_anexo) {
+    html += '      <!-- Anexos -->\n';
+    html += '      <div class="anexos-section">\n';
+    html += '        <h3>📎 Documentos Anexados</h3>\n';
+    html += '        <div class="anexos-grid">\n';
+    if (item.nota_anexo) {
+      html += '          <a href="' + item.nota_anexo.data + '" download="' + item.nota_anexo.name + '" class="anexo-btn nota">\n';
+      html += '            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>\n';
+      html += '            Baixar Nota Fiscal\n';
+      html += '          </a>\n';
+    }
+    if (item.boleto_anexo) {
+      html += '          <a href="' + item.boleto_anexo.data + '" download="' + item.boleto_anexo.name + '" class="anexo-btn boleto">\n';
+      html += '            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>\n';
+      html += '            Baixar Boleto\n';
+      html += '          </a>\n';
+    }
+    html += '        </div>\n';
+    html += '      </div>\n';
+  }
+  
+  html += '    </div>\n';
+  html += '    \n';
+  html += '    <!-- Footer -->\n';
+  html += '    <div class="footer">\n';
+  html += '      <div class="footer-logo">\n';
+  html += '        <div class="icon">\n';
+  html += '          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">\n';
+  html += '            <polygon points="12 2 14.5 9 22 9 16 13.5 18.5 21 12 16.5 5.5 21 8 13.5 2 9 9.5 9"/>\n';
+  html += '            <polygon points="12 22 9.5 15 2 15 8 10.5 5.5 3 12 7.5 18.5 3 16 10.5 22 15 14.5 15" opacity="0.5"/>\n';
+  html += '          </svg>\n';
+  html += '        </div>\n';
+  html += '        <h3>ICARUS</h3>\n';
+  html += '      </div>\n';
+  html += '      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>\n';
+  html += '      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>\n';
+  html += '      <p style="margin-top: 12px; color: rgba(255,255,255,0.6);">📞 (62) 98493-0056</p>\n';
+  html += '      <div class="tech" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">\n';
+  html += '        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Desenvolvido por</div>\n';
+  html += '        <div style="font-size: 13px; color: #f472b6; font-weight: 600;">Guilherme Braga de Queiroz</div>\n';
+  html += '        <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px;">© ' + anoAtual + ' Sistema ICARUS • Todos os direitos reservados</div>\n';
+  html += '      </div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n';
+  html += '</body>\n';
+  html += '</html>';
+  
+  return html;
+}
+
+// Exportar Nota como HTML
+function exportNotaHTML(id) {
+  const item = notasData.items.find(i => i.id === id);
+  if (!item) return;
+  
+  const htmlContent = generateNotaHTMLContent(item);
+  
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ICARUS_Nota_${item.empresa.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('HTML exportado com sucesso!', 'success');
+}
+
+// Exportar Nota como PDF
+function exportNotaPDF(id) {
+  const item = notasData.items.find(i => i.id === id);
+  if (!item) return;
+  
+  const htmlContent = generateNotaHTMLContent(item);
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+  
+  showNotification('Preparando PDF para impressão...', 'success');
+}
+
+// Inicializar quando entrar na view de relatórios
+const originalNavigateTo = window.navigateTo || function(){};
+window.navigateTo = function(view) {
+  if (typeof originalNavigateTo === 'function') {
+    originalNavigateTo(view);
+  }
+  
+  if (view === 'relatorios') {
+    setTimeout(() => {
+      initNotasTab();
+    }, 100);
+  }
+};
+
+// Também inicializar se já estiver na view
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    if (document.getElementById('relatorios-view') && !document.getElementById('relatorios-view').classList.contains('hidden')) {
+      initNotasTab();
+    }
+  }, 500);
+});
