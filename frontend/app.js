@@ -3265,8 +3265,164 @@ const almox2State = {
   movements: [],
   pendingLoans: [],
   reportPeriod: 'week',
-  movementStats: null
+  movementStats: null,
+  autocompleteIndex: -1
 };
+
+// ========== AUTOCOMPLETE DE BUSCA ==========
+let almoxSearchTimeout = null;
+
+function handleAlmoxSearch(input) {
+  const query = input.value.trim().toLowerCase();
+  const container = document.getElementById('almox-autocomplete');
+  
+  // Limpar timeout anterior
+  if (almoxSearchTimeout) clearTimeout(almoxSearchTimeout);
+  
+  // Se query vazia, esconder autocomplete e filtrar
+  if (!query) {
+    container.classList.remove('active');
+    container.innerHTML = '';
+    almox2State.autocompleteIndex = -1;
+    filterAlmoxarifado();
+    return;
+  }
+  
+  // Debounce de 150ms para performance
+  almoxSearchTimeout = setTimeout(() => {
+    const items = state.inventory || [];
+    
+    // Filtrar itens que contém a query
+    const matches = items.filter(item => {
+      const name = (item.name || '').toLowerCase();
+      const sku = (item.sku || '').toLowerCase();
+      const brand = (item.brand || '').toLowerCase();
+      const category = (item.category || '').toLowerCase();
+      return name.includes(query) || sku.includes(query) || brand.includes(query) || category.includes(query);
+    }).slice(0, 8); // Máximo 8 sugestões
+    
+    if (matches.length === 0) {
+      container.innerHTML = `
+        <div class="almox2-autocomplete-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <p>Nenhum item encontrado para "${escapeHtml(query)}"</p>
+        </div>
+      `;
+      container.classList.add('active');
+      return;
+    }
+    
+    // Renderizar sugestões
+    container.innerHTML = matches.map((item, idx) => {
+      const status = getItemStockStatus(item);
+      const statusClass = status === 'Crítico' ? 'critico' : status === 'Baixo' ? 'baixo' : '';
+      
+      // Destacar termo buscado
+      const highlightedName = highlightMatch(item.name || '', query);
+      
+      return `
+        <div class="almox2-autocomplete-item ${idx === almox2State.autocompleteIndex ? 'selected' : ''}" 
+             onclick="selectAlmoxAutocomplete('${escapeHtml(item.name || '')}', ${item.id})"
+             data-idx="${idx}">
+          <div class="almox2-autocomplete-icon ${statusClass}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+          <div class="almox2-autocomplete-info">
+            <div class="almox2-autocomplete-name">${highlightedName}</div>
+            <div class="almox2-autocomplete-meta">
+              ${item.sku ? `<span>SKU: ${escapeHtml(item.sku)}</span>` : ''}
+              ${item.brand ? `<span>${escapeHtml(item.brand)}</span>` : ''}
+              ${item.category ? `<span>${escapeHtml(item.category)}</span>` : ''}
+            </div>
+          </div>
+          <div class="almox2-autocomplete-qty ${statusClass}">${item.quantity} ${item.unit || 'un'}</div>
+        </div>
+      `;
+    }).join('');
+    
+    container.classList.add('active');
+    almox2State.autocompleteIndex = -1;
+  }, 150);
+}
+
+// Destacar termo buscado
+function highlightMatch(text, query) {
+  if (!query) return escapeHtml(text);
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+}
+
+// Obter status do estoque
+function getItemStockStatus(item) {
+  const qty = item.quantity || 0;
+  const min = item.min_stock || 0;
+  if (qty === 0) return 'Crítico';
+  if (min > 0 && qty <= min) return 'Baixo';
+  return 'Normal';
+}
+
+// Selecionar item do autocomplete
+function selectAlmoxAutocomplete(name, itemId) {
+  const input = document.getElementById('almox-search-input');
+  const container = document.getElementById('almox-autocomplete');
+  
+  input.value = name;
+  container.classList.remove('active');
+  almox2State.autocompleteIndex = -1;
+  
+  // Filtrar para mostrar apenas esse item
+  filterAlmoxarifado();
+}
+
+// Navegação por teclado no autocomplete
+document.addEventListener('keydown', function(e) {
+  const container = document.getElementById('almox-autocomplete');
+  if (!container || !container.classList.contains('active')) return;
+  
+  const items = container.querySelectorAll('.almox2-autocomplete-item');
+  if (items.length === 0) return;
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    almox2State.autocompleteIndex = Math.min(almox2State.autocompleteIndex + 1, items.length - 1);
+    updateAutocompleteSelection(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    almox2State.autocompleteIndex = Math.max(almox2State.autocompleteIndex - 1, 0);
+    updateAutocompleteSelection(items);
+  } else if (e.key === 'Enter' && almox2State.autocompleteIndex >= 0) {
+    e.preventDefault();
+    items[almox2State.autocompleteIndex].click();
+  } else if (e.key === 'Escape') {
+    container.classList.remove('active');
+    almox2State.autocompleteIndex = -1;
+  }
+});
+
+function updateAutocompleteSelection(items) {
+  items.forEach((item, idx) => {
+    item.classList.toggle('selected', idx === almox2State.autocompleteIndex);
+  });
+  // Scroll para item selecionado
+  if (almox2State.autocompleteIndex >= 0 && items[almox2State.autocompleteIndex]) {
+    items[almox2State.autocompleteIndex].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+// Fechar autocomplete ao clicar fora
+document.addEventListener('click', function(e) {
+  const container = document.getElementById('almox-autocomplete');
+  const searchWrapper = e.target.closest('.almox2-search');
+  if (container && !searchWrapper) {
+    container.classList.remove('active');
+    almox2State.autocompleteIndex = -1;
+  }
+});
 
 // Troca de abas do almoxarifado
 function switchAlmoxTab(tab) {
@@ -3310,9 +3466,23 @@ async function loadAlmoxMovements() {
     const type = typeFilter ? typeFilter.value : '';
     const pending = pendingCheck ? pendingCheck.checked : false;
     
-    let url = `${API_URL}/inventory/movements?period=${period}`;
-    if (type) url += `&type=${type}`;
-    if (pending) url += `&pending=true`;
+    // Calcular datas baseado no período
+    const now = new Date();
+    let startDate = new Date();
+    if (period === 'day') {
+      startDate.setHours(0, 0, 0, 0);
+    } else if (period === 'week') {
+      startDate.setDate(now.getDate() - 7);
+    } else if (period === 'month') {
+      startDate.setMonth(now.getMonth() - 1);
+    }
+    
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = now.toISOString().split('T')[0];
+    
+    let url = `${API_URL}/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
+    if (type) url += `&movement_type=${type}`;
+    if (pending) url += `&pending_return=true`;
     
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${state.token}` }
@@ -3321,9 +3491,19 @@ async function loadAlmoxMovements() {
     const data = await response.json();
     if (data.ok) {
       almox2State.movements = data.movements || [];
-      almox2State.movementStats = data.stats || null;
       renderAlmoxMovements();
+      
+      // Calcular stats localmente
+      const movements = almox2State.movements;
+      almox2State.movementStats = {
+        entradas: movements.filter(m => m.movement_type === 'entrada').length,
+        saidas: movements.filter(m => m.movement_type === 'saida').length,
+        devolucoes: movements.filter(m => m.movement_type === 'devolucao').length,
+        pendentes: movements.filter(m => m.usage_type === 'emprestimo' && !m.is_returned).length
+      };
       updateMovementStats();
+    } else {
+      console.error('Erro do servidor:', data.error);
     }
   } catch (error) {
     console.error('Erro ao carregar movimentações:', error);
@@ -4391,22 +4571,60 @@ function exportAlmoxReportHTML() {
     <div class="footer">
       <p>Relatório gerado pelo sistema <strong>ICARUS</strong></p>
       <p style="margin-top: 8px;">Sistema de Gestão Inteligente de Manutenção</p>
+      <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(168,85,247,0.05)); border-radius: 12px; border: 1px solid rgba(168,85,247,0.2); display: inline-block;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; background: rgba(212,175,55,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-weight: 700; color: #d4af37; font-size: 14px;">ICARUS SYSTEM</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Sistema Inteligente de Gestão</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 16px; font-size: 11px;">Desenvolvido por Guilherme Braga • © 2025</p>
     </div>
   </div>
 </body>
 </html>`;
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `almoxarifado-relatorio-${now.toISOString().split('T')[0]}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  
-  showNotification('Relatório HTML baixado com sucesso!', 'success');
+  // Dados estruturados para PDF no servidor
+  const almoxarifadoReportData = {
+    title: 'Relatório Almoxarifado - Granja Vitta',
+    type: 'almoxarifado-report',
+    content: {
+      summary: {
+        totalItems: total,
+        lowStockCount: lowStock.length,
+        categoriesCount: categories.length,
+        brandsCount: brands.length
+      },
+      categories: Object.entries(byCategory).map(([cat, items]) => ({
+        name: categoryLabels[cat] || cat,
+        count: items.length,
+        items: items.map(i => ({
+          sku: i.sku || '-',
+          name: i.name,
+          brand: i.brand || '-',
+          quantity: i.quantity,
+          unit: i.unit || 'un',
+          location: i.location || '-'
+        }))
+      })),
+      lowStockItems: lowStock.map(i => ({
+        name: i.name,
+        category: categoryLabels[i.category] || i.category || '-',
+        quantity: i.quantity,
+        minStock: i.min_stock || 0
+      }))
+    }
+  };
+
+  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
+  showReportInPage(html, 'Relatório Almoxarifado', 'Relatório do Almoxarifado gerado!', almoxarifadoReportData);
   closeModal('modal-almox-report');
 }
 
