@@ -2592,6 +2592,853 @@
       border-top: 1px solid rgba(255,255,255,0.04);
     }
 
+    /* ========== ALMOXARIFADO V2 - PREMIUM PURPLE GLASS BLUR ========== */
+    .almox2-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(168, 85, 247, 0.04));
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 16px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .almox2-header::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #a855f7, #8b5cf6);
+      border-radius: 4px 0 0 4px;
+    }
+    .almox2-header::after {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .almox2-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 1;
+    }
+    .almox2-icon-badge {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.15));
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c4b5fd;
+      box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+    }
+    .almox2-title {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+    .almox2-subtitle {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin: 4px 0 0;
+    }
+    .almox2-header-actions {
+      display: flex;
+      gap: 10px;
+      z-index: 1;
+    }
+    
+    /* Almox2 Buttons */
+    .almox2-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .almox2-btn svg { flex-shrink: 0; }
+    .almox2-btn-primary {
+      background: linear-gradient(135deg, #a855f7, #8b5cf6);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+    }
+    .almox2-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.45);
+    }
+    .almox2-btn-secondary {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.7);
+    }
+    .almox2-btn-secondary:hover {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: #c4b5fd;
+    }
+    .almox2-btn-accent {
+      background: linear-gradient(135deg, #ec4899, #be185d);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
+    }
+    .almox2-btn-accent:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(236, 72, 153, 0.4);
+    }
+    .almox2-btn-success {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+    }
+    .almox2-btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
+    }
+    .almox2-btn-small {
+      padding: 6px 12px;
+      font-size: 11px;
+      gap: 6px;
+    }
+    
+    /* Almox2 Tabs */
+    .almox2-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 6px;
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      margin-bottom: 16px;
+    }
+    .almox2-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .almox2-tab:hover {
+      background: rgba(139, 92, 246, 0.08);
+      color: rgba(255,255,255,0.8);
+    }
+    .almox2-tab.active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.15));
+      color: #c4b5fd;
+      box-shadow: 0 2px 12px rgba(139, 92, 246, 0.2);
+    }
+    .almox2-tab-badge {
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 8px;
+      min-width: 18px;
+      text-align: center;
+    }
+    
+    /* Tab Content */
+    .almox2-tab-content {
+      display: none;
+      animation: almox2FadeIn 0.3s ease;
+    }
+    .almox2-tab-content.active {
+      display: block;
+    }
+    @keyframes almox2FadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Stats Grid V2 */
+    .almox2-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .almox2-stats-grid.small { gap: 10px; }
+    @media (max-width: 900px) {
+      .almox2-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .almox2-stat-card {
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.25s ease;
+    }
+    .almox2-stat-card:hover {
+      border-color: rgba(139, 92, 246, 0.25);
+      background: rgba(139, 92, 246, 0.05);
+      transform: translateY(-2px);
+    }
+    .almox2-stat-card.warning {
+      border-color: rgba(245, 158, 11, 0.25);
+      background: rgba(245, 158, 11, 0.04);
+    }
+    .almox2-stat-card.success {
+      border-color: rgba(34, 197, 94, 0.25);
+      background: rgba(34, 197, 94, 0.04);
+    }
+    .almox2-stat-card.danger {
+      border-color: rgba(239, 68, 68, 0.25);
+      background: rgba(239, 68, 68, 0.04);
+    }
+    .almox2-stat-card.compact { padding: 12px 14px; gap: 12px; }
+    .almox2-stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .almox2-stat-card.compact .almox2-stat-icon { width: 38px; height: 38px; }
+    .almox2-stat-icon svg { width: 20px; height: 20px; }
+    .almox2-stat-icon.total { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .almox2-stat-icon.baixo { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .almox2-stat-icon.categorias { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .almox2-stat-icon.marcas { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+    .almox2-stat-icon.entrada { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .almox2-stat-icon.saida { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .almox2-stat-icon.devolucao { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .almox2-stat-icon.pendente { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .almox2-stat-icon.disponivel { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .almox2-stat-icon.emprestada { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .almox2-stat-icon.atrasada { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .almox2-stat-info { display: flex; flex-direction: column; gap: 2px; }
+    .almox2-stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+    .almox2-stat-card.compact .almox2-stat-value { font-size: 18px; }
+    .almox2-stat-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    
+    /* Filters V2 */
+    .almox2-filters {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .almox2-search {
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+    .almox2-search:focus-within {
+      border-color: rgba(139, 92, 246, 0.4);
+      background: rgba(139, 92, 246, 0.05);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+    .almox2-search svg { color: rgba(255,255,255,0.35); }
+    .almox2-search input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    .almox2-search input::placeholder { color: rgba(255,255,255,0.35); }
+    .almox2-filter-selects {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .almox2-filter-selects select {
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .almox2-filter-selects select option {
+      background: #1e1b2e;
+      color: #fff;
+    }
+    .almox2-filter-selects select:hover,
+    .almox2-filter-selects select:focus {
+      border-color: rgba(139, 92, 246, 0.4);
+      background: rgba(139, 92, 246, 0.05);
+      outline: none;
+    }
+    .almox2-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      transition: all 0.2s;
+    }
+    .almox2-checkbox:hover {
+      background: rgba(139, 92, 246, 0.08);
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+    .almox2-checkbox input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #a855f7;
+    }
+    
+    /* Quick Actions */
+    .almox2-quick-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    /* Cards V2 */
+    .almox2-card {
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .almox2-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .almox2-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .almox2-card-title svg { color: #a855f7; }
+    .almox2-card-title.warning svg { color: #f59e0b; }
+    .almox2-item-count {
+      font-size: 11px;
+      color: #a855f7;
+      padding: 5px 12px;
+      background: rgba(168, 85, 247, 0.12);
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    
+    /* Table V2 */
+    .almox2-table-wrapper {
+      overflow-x: auto;
+      padding: 0 4px 4px;
+    }
+    .almox2-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .almox2-table th {
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.45);
+      background: rgba(139, 92, 246, 0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .almox2-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .almox2-table tr:hover td {
+      background: rgba(139, 92, 246, 0.04);
+    }
+    .almox2-table .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .almox2-table .category-badge.ferramentas { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .almox2-table .category-badge.eletrica { background: rgba(250, 204, 21, 0.15); color: #fbbf24; }
+    .almox2-table .category-badge.hidraulica { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
+    .almox2-table .category-badge.rolamentos { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+    .almox2-table .category-badge.parafusos { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .almox2-table .category-badge.lubrificantes { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .almox2-table .category-badge.epis { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .almox2-table .category-badge.outros { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .almox2-table .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .almox2-table .status-badge.normal { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .almox2-table .status-badge.baixo { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .almox2-table .status-badge.critico { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    
+    /* Movements List */
+    .almox2-movements-list {
+      padding: 16px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .almox2-movement-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+    .almox2-movement-item:hover {
+      border-color: rgba(139, 92, 246, 0.25);
+      background: rgba(139, 92, 246, 0.04);
+    }
+    .almox2-movement-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .almox2-movement-icon.entrada { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .almox2-movement-icon.saida { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .almox2-movement-icon.devolucao { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .almox2-movement-icon.ajuste { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .almox2-movement-info { flex: 1; }
+    .almox2-movement-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .almox2-movement-details {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .almox2-movement-details span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .almox2-movement-qty {
+      font-size: 16px;
+      font-weight: 700;
+      text-align: right;
+    }
+    .almox2-movement-qty.positive { color: #4ade80; }
+    .almox2-movement-qty.negative { color: #f87171; }
+    .almox2-movement-time {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+    }
+    .almox2-movement-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    
+    /* Loans List */
+    .almox2-loans-list {
+      padding: 16px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .almox2-loan-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+    .almox2-loan-item:hover {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.04);
+    }
+    .almox2-loan-item.overdue {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.04);
+    }
+    .almox2-loan-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .almox2-loan-item.overdue .almox2-loan-icon {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+    .almox2-loan-info { flex: 1; }
+    .almox2-loan-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    .almox2-loan-person {
+      font-size: 13px;
+      color: #fbbf24;
+      margin-top: 2px;
+    }
+    .almox2-loan-time {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 4px;
+    }
+    .almox2-loan-action {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .almox2-loan-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+    }
+    
+    /* Reports Section */
+    .almox2-report-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .almox2-period-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+    }
+    .almox2-period-tab {
+      padding: 8px 18px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .almox2-period-tab:hover {
+      background: rgba(139, 92, 246, 0.08);
+      color: rgba(255,255,255,0.8);
+    }
+    .almox2-period-tab.active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.15));
+      color: #c4b5fd;
+    }
+    .almox2-report-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    /* Charts Grid */
+    .almox2-charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 900px) {
+      .almox2-charts-grid { grid-template-columns: 1fr; }
+    }
+    .almox2-chart-card {
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .almox2-chart-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .almox2-chart-header h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .almox2-chart {
+      padding: 20px;
+      height: 280px;
+    }
+    
+    /* Report Grid */
+    .almox2-report-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1100px) {
+      .almox2-report-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 700px) {
+      .almox2-report-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* Top Lists */
+    .almox2-top-list {
+      padding: 12px 16px;
+    }
+    .almox2-top-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .almox2-top-item:last-child { border-bottom: none; }
+    .almox2-top-rank {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1));
+      color: #c4b5fd;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .almox2-top-info { flex: 1; }
+    .almox2-top-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .almox2-top-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+    .almox2-top-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #a855f7;
+    }
+    
+    /* Low Stock List */
+    .almox2-low-stock-list {
+      padding: 12px 16px;
+    }
+    .almox2-low-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: rgba(239, 68, 68, 0.05);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .almox2-low-item:last-child { margin-bottom: 0; }
+    .almox2-low-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .almox2-low-info { flex: 1; }
+    .almox2-low-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .almox2-low-qty {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f87171;
+    }
+    
+    /* Empty State */
+    .almox2-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: rgba(255,255,255,0.3);
+    }
+    .almox2-empty-state svg {
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .almox2-empty-state p {
+      font-size: 14px;
+      margin: 0;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .almox2-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+      .almox2-header-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .almox2-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 4px;
+      }
+      .almox2-tab {
+        padding: 8px 14px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .almox2-tab span { display: none; }
+      .almox2-tab.active span { display: inline; }
+      .almox2-filters {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .almox2-search { min-width: 100%; }
+      .almox2-filter-selects {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .almox2-filter-selects select {
+        width: 100%;
+      }
+      .almox2-quick-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .almox2-quick-actions .almox2-btn {
+        justify-content: center;
+      }
+      .almox2-table {
+        display: none;
+      }
+      .almox2-period-tabs {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .almox2-report-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .almox2-report-actions {
+        justify-content: center;
+      }
+    }
+
     /* ========== PREVENTIVAS PREMIUM - TEMA CIANO/TEAL ========== */
     .preventivas-premium-header {
       display: flex;
@@ -9069,174 +9916,506 @@
           </div>
         </div>
 
-        <!-- Almoxarifado View -->
+        <!-- Almoxarifado View V2 - Premium Purple Glass -->
         <div id="almoxarifado-view" class="view">
-          <!-- Header Premium Laranja/Amber -->
-          <div class="almox-premium-header">
-            <div class="almox-header-left">
-              <div class="almox-icon-badge">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 7h-9"/>
-                  <path d="M14 17H5"/>
-                  <circle cx="17" cy="17" r="3"/>
-                  <circle cx="7" cy="7" r="3"/>
-                </svg>
-              </div>
-              <div>
-                <h2 class="almox-title">Almoxarifado</h2>
-                <p class="almox-subtitle">Controle de Estoque e Materiais • Granja Vitta</p>
-              </div>
-            </div>
-            <div class="almox-header-actions">
-              <button class="btn-almox-export" onclick="exportAlmoxarifadoReport()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Exportar
-              </button>
-              <button class="btn-almox-new" onclick="showCreateItem()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Novo Item
-              </button>
-            </div>
-          </div>
-
-          <!-- Stats Grid - Layout compacto e alinhado -->
-          <div class="almox-stats-grid">
-            <div class="almox-stat-card">
-              <div class="almox-stat-icon total">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <!-- Header Premium Roxo/Glass -->
+          <div class="almox2-header">
+            <div class="almox2-header-left">
+              <div class="almox2-icon-badge">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                   <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                   <line x1="12" y1="22.08" x2="12" y2="12"/>
                 </svg>
               </div>
-              <div class="almox-stat-info">
-                <div class="almox-stat-value" id="almox-total-items">0</div>
-                <div class="almox-stat-label">Total de Itens</div>
+              <div>
+                <h2 class="almox2-title">Almoxarifado</h2>
+                <p class="almox2-subtitle">Controle Avançado de Estoque</p>
               </div>
             </div>
-            <div class="almox-stat-card">
-              <div class="almox-stat-icon baixo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+            <div class="almox2-header-actions">
+              <button class="almox2-btn almox2-btn-secondary" onclick="showAlmoxReportModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
-              </div>
-              <div class="almox-stat-info">
-                <div class="almox-stat-value" id="almox-estoque-baixo">0</div>
-                <div class="almox-stat-label">Estoque Baixo</div>
-              </div>
-            </div>
-            <div class="almox-stat-card">
-              <div class="almox-stat-icon categorias">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="7" height="7"/>
-                  <rect x="14" y="3" width="7" height="7"/>
-                  <rect x="14" y="14" width="7" height="7"/>
-                  <rect x="3" y="14" width="7" height="7"/>
+                <span>Relatório</span>
+              </button>
+              <button class="almox2-btn almox2-btn-primary" onclick="showCreateItem()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
-              </div>
-              <div class="almox-stat-info">
-                <div class="almox-stat-value" id="almox-categorias">0</div>
-                <div class="almox-stat-label">Categorias</div>
-              </div>
-            </div>
-            <div class="almox-stat-card">
-              <div class="almox-stat-icon marcas">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                  <line x1="7" y1="7" x2="7.01" y2="7"/>
-                </svg>
-              </div>
-              <div class="almox-stat-info">
-                <div class="almox-stat-value" id="almox-marcas">0</div>
-                <div class="almox-stat-label">Marcas</div>
-              </div>
+                <span>Novo Item</span>
+              </button>
             </div>
           </div>
 
-          <!-- Alertas de Estoque Baixo -->
-          <div id="almoxarifado-alerts"></div>
-
-          <!-- Barra de Filtros Premium -->
-          <div class="almox-filters-bar">
-            <div class="almox-search">
+          <!-- Navigation Tabs -->
+          <div class="almox2-tabs">
+            <button class="almox2-tab active" data-tab="estoque" onclick="switchAlmoxTab('estoque')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
               </svg>
-              <input type="text" id="almox-search-input" placeholder="Buscar item, SKU, marca..." oninput="filterAlmoxarifado()">
+              <span>Estoque</span>
+            </button>
+            <button class="almox2-tab" data-tab="movimentos" onclick="switchAlmoxTab('movimentos')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+              </svg>
+              <span>Movimentações</span>
+              <span class="almox2-tab-badge" id="almox2-pending-count" style="display:none;">0</span>
+            </button>
+            <button class="almox2-tab" data-tab="ferramentas" onclick="switchAlmoxTab('ferramentas')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+              <span>Ferramentas</span>
+            </button>
+            <button class="almox2-tab" data-tab="relatorios" onclick="switchAlmoxTab('relatorios')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+              </svg>
+              <span>Relatórios</span>
+            </button>
+          </div>
+
+          <!-- Tab Content: Estoque -->
+          <div class="almox2-tab-content active" id="almox2-tab-estoque">
+            <!-- Stats Grid Premium Glass -->
+            <div class="almox2-stats-grid">
+              <div class="almox2-stat-card">
+                <div class="almox2-stat-icon total">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox-total-items">0</div>
+                  <div class="almox2-stat-label">Total Itens</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card warning">
+                <div class="almox2-stat-icon baixo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox-estoque-baixo">0</div>
+                  <div class="almox2-stat-label">Estoque Baixo</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card">
+                <div class="almox2-stat-icon categorias">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox-categorias">0</div>
+                  <div class="almox2-stat-label">Categorias</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card">
+                <div class="almox2-stat-icon marcas">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox-marcas">0</div>
+                  <div class="almox2-stat-label">Marcas</div>
+                </div>
+              </div>
             </div>
-            
-            <div class="almox-filter-group">
-              <label>Categoria:</label>
-              <select id="almox-filter-categoria" onchange="filterAlmoxarifado()" style="background: #1a1a2e; color: #fff;">
-                <option value="" style="background: #1a1a2e; color: #fff;">📋 Todas</option>
-                <option value="ferramentas" style="background: #1a1a2e; color: #fff;">🔧 Ferramentas</option>
-                <option value="eletrica" style="background: #1a1a2e; color: #fff;">⚡ Elétrica</option>
-                <option value="hidraulica" style="background: #1a1a2e; color: #fff;">💧 Hidráulica</option>
-                <option value="rolamentos" style="background: #1a1a2e; color: #fff;">⚙️ Rolamentos</option>
-                <option value="parafusos" style="background: #1a1a2e; color: #fff;">🔩 Parafusos/Fixação</option>
-                <option value="lubrificantes" style="background: #1a1a2e; color: #fff;">🛢️ Lubrificantes</option>
-                <option value="epis" style="background: #1a1a2e; color: #fff;">🦺 EPIs</option>
-                <option value="outros" style="background: #1a1a2e; color: #fff;">📦 Outros</option>
-              </select>
+
+            <!-- Alertas -->
+            <div id="almoxarifado-alerts"></div>
+
+            <!-- Search & Filters Bar -->
+            <div class="almox2-filters">
+              <div class="almox2-search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="almox-search-input" placeholder="Buscar item, SKU, marca..." oninput="filterAlmoxarifado()">
+              </div>
+              <div class="almox2-filter-selects">
+                <select id="almox-filter-categoria" onchange="filterAlmoxarifado()">
+                  <option value="">Todas Categorias</option>
+                  <option value="ferramentas">Ferramentas</option>
+                  <option value="eletrica">Elétrica</option>
+                  <option value="hidraulica">Hidráulica</option>
+                  <option value="rolamentos">Rolamentos</option>
+                  <option value="parafusos">Parafusos</option>
+                  <option value="lubrificantes">Lubrificantes</option>
+                  <option value="epis">EPIs</option>
+                  <option value="outros">Outros</option>
+                </select>
+                <select id="almox-filter-marca" onchange="filterAlmoxarifado()">
+                  <option value="">Todas Marcas</option>
+                </select>
+                <select id="almox-filter-status" onchange="filterAlmoxarifado()">
+                  <option value="">Todos Status</option>
+                  <option value="normal">Normal</option>
+                  <option value="baixo">Baixo</option>
+                  <option value="critico">Crítico</option>
+                </select>
+              </div>
             </div>
-            
-            <div class="almox-filter-group">
-              <label>Marca:</label>
-              <select id="almox-filter-marca" onchange="filterAlmoxarifado()" style="background: #1a1a2e; color: #fff;">
-                <option value="" style="background: #1a1a2e; color: #fff;">🏷️ Todas</option>
-              </select>
+
+            <!-- Quick Action Button for Withdrawal -->
+            <div class="almox2-quick-actions">
+              <button class="almox2-btn almox2-btn-accent" onclick="showQuickWithdrawal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="17 1 21 5 17 9"/>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                  <polyline points="7 23 3 19 7 15"/>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+                Registrar Retirada Rápida
+              </button>
+              <button class="almox2-btn almox2-btn-success" onclick="showQuickEntry()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Entrada de Material
+              </button>
             </div>
-            
-            <div class="almox-filter-group">
-              <label>Status:</label>
-              <select id="almox-filter-status" onchange="filterAlmoxarifado()" style="background: #1a1a2e; color: #fff;">
-                <option value="" style="background: #1a1a2e; color: #fff;">📊 Todos</option>
-                <option value="normal" style="background: #1a1a2e; color: #fff;">✅ Normal</option>
-                <option value="baixo" style="background: #1a1a2e; color: #fff;">⚠️ Baixo</option>
-                <option value="critico" style="background: #1a1a2e; color: #fff;">🔴 Crítico</option>
-              </select>
+
+            <!-- Inventory Table Card -->
+            <div class="almox2-card">
+              <div class="almox2-card-header">
+                <div class="almox2-card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                  </svg>
+                  <span>Inventário de Materiais</span>
+                </div>
+                <span class="almox2-item-count" id="almox-showing-count">0 itens</span>
+              </div>
+              <div class="almox2-table-wrapper">
+                <table id="almoxarifado-table" class="almox2-table">
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Nome</th>
+                      <th>Categoria</th>
+                      <th>Marca</th>
+                      <th>Qtd</th>
+                      <th>Un</th>
+                      <th>Local</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          <!-- Card Principal com Tabela -->
-          <div class="almox-main-card">
-            <div class="almox-card-header">
-              <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                </svg>
-                Inventário de Materiais
-              </h3>
-              <span class="almox-item-count" id="almox-showing-count">0 itens</span>
+          <!-- Tab Content: Movimentações -->
+          <div class="almox2-tab-content" id="almox2-tab-movimentos">
+            <!-- Movement Stats -->
+            <div class="almox2-stats-grid small">
+              <div class="almox2-stat-card compact">
+                <div class="almox2-stat-icon entrada">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <polyline points="19 12 12 19 5 12"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-stat-entradas">0</div>
+                  <div class="almox2-stat-label">Entradas</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card compact">
+                <div class="almox2-stat-icon saida">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="19" x2="12" y2="5"/>
+                    <polyline points="5 12 12 5 19 12"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-stat-saidas">0</div>
+                  <div class="almox2-stat-label">Saídas</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card compact">
+                <div class="almox2-stat-icon devolucao">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"/>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-stat-devolucoes">0</div>
+                  <div class="almox2-stat-label">Devoluções</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card compact warning">
+                <div class="almox2-stat-icon pendente">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-stat-pendentes">0</div>
+                  <div class="almox2-stat-label">Pendentes</div>
+                </div>
+              </div>
             </div>
-            <div class="table-container" style="padding: 0 20px 20px;">
-              <table id="almoxarifado-table" class="almox-table">
-                <thead>
-                  <tr>
-                    <th>SKU</th>
-                    <th>Nome</th>
-                    <th>Categoria</th>
-                    <th>Marca</th>
-                    <th>Quantidade</th>
-                    <th>Unidade</th>
-                    <th>Localização</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+
+            <!-- Movement Filters -->
+            <div class="almox2-filters">
+              <div class="almox2-search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="almox2-mov-search" placeholder="Buscar por pessoa, item..." oninput="filterMovements()">
+              </div>
+              <div class="almox2-filter-selects">
+                <select id="almox2-mov-type" onchange="filterMovements()">
+                  <option value="">Todos Tipos</option>
+                  <option value="entrada">Entrada</option>
+                  <option value="saida">Saída</option>
+                  <option value="devolucao">Devolução</option>
+                  <option value="ajuste">Ajuste</option>
+                </select>
+                <select id="almox2-mov-period" onchange="filterMovements()">
+                  <option value="day">Hoje</option>
+                  <option value="week" selected>Esta Semana</option>
+                  <option value="month">Este Mês</option>
+                  <option value="all">Todo Período</option>
+                </select>
+                <label class="almox2-checkbox">
+                  <input type="checkbox" id="almox2-mov-pending" onchange="filterMovements()">
+                  <span>Apenas pendentes</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Movements List -->
+            <div class="almox2-card">
+              <div class="almox2-card-header">
+                <div class="almox2-card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                  <span>Histórico de Movimentações</span>
+                </div>
+                <button class="almox2-btn almox2-btn-small" onclick="refreshMovements()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                  Atualizar
+                </button>
+              </div>
+              <div class="almox2-movements-list" id="almox2-movements-list">
+                <div class="almox2-empty-state">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                  <p>Nenhuma movimentação registrada</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Content: Ferramentas (Empréstimos) -->
+          <div class="almox2-tab-content" id="almox2-tab-ferramentas">
+            <div class="almox2-stats-grid small">
+              <div class="almox2-stat-card compact">
+                <div class="almox2-stat-icon total">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-tools-total">0</div>
+                  <div class="almox2-stat-label">Total Ferramentas</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card compact success">
+                <div class="almox2-stat-icon disponivel">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-tools-available">0</div>
+                  <div class="almox2-stat-label">Disponíveis</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card compact warning">
+                <div class="almox2-stat-icon emprestada">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-tools-loaned">0</div>
+                  <div class="almox2-stat-label">Emprestadas</div>
+                </div>
+              </div>
+              <div class="almox2-stat-card compact danger">
+                <div class="almox2-stat-icon atrasada">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                </div>
+                <div class="almox2-stat-info">
+                  <div class="almox2-stat-value" id="almox2-tools-overdue">0</div>
+                  <div class="almox2-stat-label">Atrasadas</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Loans Card -->
+            <div class="almox2-card">
+              <div class="almox2-card-header">
+                <div class="almox2-card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span>Empréstimos Pendentes</span>
+                </div>
+              </div>
+              <div class="almox2-loans-list" id="almox2-loans-list">
+                <div class="almox2-empty-state">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                  <p>Nenhum empréstimo pendente</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Content: Relatórios -->
+          <div class="almox2-tab-content" id="almox2-tab-relatorios">
+            <!-- Period Selector -->
+            <div class="almox2-report-controls">
+              <div class="almox2-period-tabs">
+                <button class="almox2-period-tab active" data-period="day" onclick="setAlmoxReportPeriod('day')">Diário</button>
+                <button class="almox2-period-tab" data-period="week" onclick="setAlmoxReportPeriod('week')">Semanal</button>
+                <button class="almox2-period-tab" data-period="month" onclick="setAlmoxReportPeriod('month')">Mensal</button>
+                <button class="almox2-period-tab" data-period="year" onclick="setAlmoxReportPeriod('year')">Anual</button>
+              </div>
+              <div class="almox2-report-actions">
+                <button class="almox2-btn almox2-btn-secondary" onclick="exportAlmoxReportHTML()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Exportar HTML
+                </button>
+              </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="almox2-charts-grid">
+              <!-- Movement Chart -->
+              <div class="almox2-chart-card">
+                <div class="almox2-chart-header">
+                  <h4>Movimentações por Período</h4>
+                </div>
+                <div class="almox2-chart" id="almox2-chart-movements">
+                  <canvas id="almox2-movements-chart"></canvas>
+                </div>
+              </div>
+
+              <!-- Category Distribution -->
+              <div class="almox2-chart-card">
+                <div class="almox2-chart-header">
+                  <h4>Distribuição por Categoria</h4>
+                </div>
+                <div class="almox2-chart" id="almox2-chart-categories">
+                  <canvas id="almox2-categories-chart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Items & Sectors -->
+            <div class="almox2-report-grid">
+              <!-- Top Items -->
+              <div class="almox2-card">
+                <div class="almox2-card-header">
+                  <div class="almox2-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 20V10"/>
+                      <path d="M18 20V4"/>
+                      <path d="M6 20v-4"/>
+                    </svg>
+                    <span>Itens Mais Movimentados</span>
+                  </div>
+                </div>
+                <div class="almox2-top-list" id="almox2-top-items">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+
+              <!-- Top Sectors -->
+              <div class="almox2-card">
+                <div class="almox2-card-header">
+                  <div class="almox2-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Setores com Mais Retiradas</span>
+                  </div>
+                </div>
+                <div class="almox2-top-list" id="almox2-top-sectors">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+
+              <!-- Low Stock Alert -->
+              <div class="almox2-card">
+                <div class="almox2-card-header">
+                  <div class="almox2-card-title warning">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span>Itens em Estoque Baixo</span>
+                  </div>
+                </div>
+                <div class="almox2-low-stock-list" id="almox2-low-stock">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
             </div>
           </div>
         </div>

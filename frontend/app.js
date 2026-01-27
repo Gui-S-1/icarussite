@@ -3255,6 +3255,1165 @@ function filterAlmoxarifado() {
   renderInventoryTable();
 }
 
+// ========================================
+// ALMOXARIFADO V2 - SISTEMA COMPLETO
+// ========================================
+
+// Estado do módulo de almoxarifado V2
+const almox2State = {
+  currentTab: 'estoque',
+  movements: [],
+  pendingLoans: [],
+  reportPeriod: 'week',
+  movementStats: null
+};
+
+// Troca de abas do almoxarifado
+function switchAlmoxTab(tab) {
+  almox2State.currentTab = tab;
+  
+  // Atualizar botões das abas
+  document.querySelectorAll('.almox2-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  
+  // Atualizar conteúdo das abas
+  document.querySelectorAll('.almox2-tab-content').forEach(content => {
+    content.classList.toggle('active', content.id === `almox2-tab-${tab}`);
+  });
+  
+  // Carregar dados específicos da aba
+  switch(tab) {
+    case 'estoque':
+      loadInventory();
+      break;
+    case 'movimentos':
+      loadAlmoxMovements();
+      break;
+    case 'ferramentas':
+      loadPendingLoans();
+      break;
+    case 'relatorios':
+      loadAlmoxReports();
+      break;
+  }
+}
+
+// Carregar movimentações
+async function loadAlmoxMovements() {
+  try {
+    const periodFilter = document.getElementById('almox2-mov-period');
+    const typeFilter = document.getElementById('almox2-mov-type');
+    const pendingCheck = document.getElementById('almox2-mov-pending');
+    
+    const period = periodFilter ? periodFilter.value : 'week';
+    const type = typeFilter ? typeFilter.value : '';
+    const pending = pendingCheck ? pendingCheck.checked : false;
+    
+    let url = `${API_URL}/inventory/movements?period=${period}`;
+    if (type) url += `&type=${type}`;
+    if (pending) url += `&pending=true`;
+    
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      almox2State.movements = data.movements || [];
+      almox2State.movementStats = data.stats || null;
+      renderAlmoxMovements();
+      updateMovementStats();
+    }
+  } catch (error) {
+    console.error('Erro ao carregar movimentações:', error);
+    showNotification('Erro ao carregar movimentações', 'error');
+  }
+}
+
+// Renderizar movimentações
+function renderAlmoxMovements() {
+  const container = document.getElementById('almox2-movements-list');
+  if (!container) return;
+  
+  const searchInput = document.getElementById('almox2-mov-search');
+  const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+  
+  let movements = almox2State.movements;
+  if (searchTerm) {
+    movements = movements.filter(m => 
+      (m.item_name || '').toLowerCase().includes(searchTerm) ||
+      (m.person_name || '').toLowerCase().includes(searchTerm)
+    );
+  }
+  
+  if (!movements || movements.length === 0) {
+    container.innerHTML = `
+      <div class="almox2-empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <p>Nenhuma movimentação encontrada</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const typeIcons = {
+    entrada: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
+    saida: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
+    devolucao: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+    ajuste: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg>'
+  };
+  
+  const typeLabels = {
+    entrada: 'Entrada',
+    saida: 'Saída',
+    devolucao: 'Devolução',
+    ajuste: 'Ajuste'
+  };
+  
+  container.innerHTML = movements.map(mov => {
+    const isPositive = mov.movement_type === 'entrada' || mov.movement_type === 'devolucao';
+    const icon = typeIcons[mov.movement_type] || typeIcons.ajuste;
+    const isPending = mov.usage_type === 'emprestimo' && !mov.is_returned;
+    const dateStr = new Date(mov.created_at).toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    });
+    
+    return `
+      <div class="almox2-movement-item">
+        <div class="almox2-movement-icon ${mov.movement_type}">
+          ${icon}
+        </div>
+        <div class="almox2-movement-info">
+          <div class="almox2-movement-title">${escapeHtml(mov.item_name || 'Item')}</div>
+          <div class="almox2-movement-details">
+            <span>${typeLabels[mov.movement_type] || mov.movement_type}</span>
+            ${mov.person_name ? `<span>Por: ${escapeHtml(mov.person_name)}</span>` : ''}
+            ${mov.person_sector ? `<span>Setor: ${escapeHtml(mov.person_sector)}</span>` : ''}
+          </div>
+          <div class="almox2-movement-time">${dateStr}</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="almox2-movement-qty ${isPositive ? 'positive' : 'negative'}">
+            ${isPositive ? '+' : '-'}${Math.abs(mov.quantity)}
+          </div>
+          ${isPending ? '<span class="almox2-movement-pending">Pendente</span>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Atualizar estatísticas de movimentações
+function updateMovementStats() {
+  const stats = almox2State.movementStats || {};
+  
+  const elEntradas = document.getElementById('almox2-stat-entradas');
+  const elSaidas = document.getElementById('almox2-stat-saidas');
+  const elDevolucoes = document.getElementById('almox2-stat-devolucoes');
+  const elPendentes = document.getElementById('almox2-stat-pendentes');
+  const elBadge = document.getElementById('almox2-pending-count');
+  
+  if (elEntradas) elEntradas.textContent = stats.entradas || 0;
+  if (elSaidas) elSaidas.textContent = stats.saidas || 0;
+  if (elDevolucoes) elDevolucoes.textContent = stats.devolucoes || 0;
+  if (elPendentes) elPendentes.textContent = stats.pendentes || 0;
+  
+  if (elBadge) {
+    const pendentes = stats.pendentes || 0;
+    elBadge.textContent = pendentes;
+    elBadge.style.display = pendentes > 0 ? 'inline' : 'none';
+  }
+}
+
+// Filtrar movimentações
+function filterMovements() {
+  loadAlmoxMovements();
+}
+
+// Atualizar movimentações
+function refreshMovements() {
+  loadAlmoxMovements();
+  showNotification('Movimentações atualizadas', 'success');
+}
+
+// Carregar empréstimos pendentes
+async function loadPendingLoans() {
+  try {
+    const response = await fetch(`${API_URL}/inventory/loans/pending`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      almox2State.pendingLoans = data.loans || [];
+      renderPendingLoans();
+      updateToolsStats();
+    }
+  } catch (error) {
+    console.error('Erro ao carregar empréstimos:', error);
+    showNotification('Erro ao carregar empréstimos', 'error');
+  }
+}
+
+// Renderizar empréstimos pendentes
+function renderPendingLoans() {
+  const container = document.getElementById('almox2-loans-list');
+  if (!container) return;
+  
+  const loans = almox2State.pendingLoans;
+  
+  if (!loans || loans.length === 0) {
+    container.innerHTML = `
+      <div class="almox2-empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <p>Nenhum empréstimo pendente</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = loans.map(loan => {
+    const loanDate = new Date(loan.created_at);
+    const now = new Date();
+    const daysDiff = Math.floor((now - loanDate) / (1000 * 60 * 60 * 24));
+    const isOverdue = daysDiff > 7; // Mais de 7 dias é atrasado
+    
+    const timeStr = loanDate.toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    });
+    
+    return `
+      <div class="almox2-loan-item ${isOverdue ? 'overdue' : ''}">
+        <div class="almox2-loan-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+        </div>
+        <div class="almox2-loan-info">
+          <div class="almox2-loan-title">${escapeHtml(loan.item_name)}</div>
+          <div class="almox2-loan-person">${escapeHtml(loan.person_name)}</div>
+          <div class="almox2-loan-time">Retirado: ${timeStr} (${daysDiff} dias)</div>
+        </div>
+        <button class="almox2-loan-action" onclick="registerReturn(${loan.id})">
+          Devolver
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+// Atualizar estatísticas de ferramentas
+function updateToolsStats() {
+  const loans = almox2State.pendingLoans || [];
+  const now = new Date();
+  
+  let loaned = 0;
+  let overdue = 0;
+  
+  loans.forEach(loan => {
+    loaned++;
+    const loanDate = new Date(loan.created_at);
+    const daysDiff = Math.floor((now - loanDate) / (1000 * 60 * 60 * 24));
+    if (daysDiff > 7) overdue++;
+  });
+  
+  // Ferramentas disponíveis = total de ferramentas que são retornáveis
+  const totalTools = state.inventory.filter(i => 
+    i.category === 'ferramentas' || i.item_type === 'ferramenta'
+  ).length;
+  
+  const elTotal = document.getElementById('almox2-tools-total');
+  const elAvailable = document.getElementById('almox2-tools-available');
+  const elLoaned = document.getElementById('almox2-tools-loaned');
+  const elOverdue = document.getElementById('almox2-tools-overdue');
+  
+  if (elTotal) elTotal.textContent = totalTools;
+  if (elAvailable) elAvailable.textContent = totalTools - loaned;
+  if (elLoaned) elLoaned.textContent = loaned;
+  if (elOverdue) elOverdue.textContent = overdue;
+}
+
+// Registrar devolução
+async function registerReturn(movementId) {
+  try {
+    const response = await fetch(`${API_URL}/inventory/movements/${movementId}/return`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('Devolução registrada com sucesso!', 'success');
+      loadPendingLoans();
+      loadInventory();
+    } else {
+      showNotification('Erro ao registrar devolução: ' + (data.error || 'Erro'), 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao registrar devolução:', error);
+    showNotification('Erro ao registrar devolução', 'error');
+  }
+}
+
+// Modal de Retirada Rápida
+function showQuickWithdrawal() {
+  const items = state.inventory.filter(i => i.quantity > 0);
+  
+  const modalHtml = `
+    <div id="modal-quick-withdrawal" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-withdrawal')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+      <div class="modal" style="max-width: 480px; background: linear-gradient(135deg, rgba(88,28,135,0.95), rgba(55,48,107,0.95)); border: 1px solid rgba(168,85,247,0.3); box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 60px rgba(168,85,247,0.15);">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(236,72,153,0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2">
+              <polyline points="17 1 21 5 17 9"/>
+              <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+              <polyline points="7 23 3 19 7 15"/>
+              <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+            </svg>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 18px; color: #fff;">Registrar Retirada</h3>
+            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Selecione o item e informe quem está retirando</p>
+          </div>
+        </div>
+        
+        <form onsubmit="submitQuickWithdrawal(event)" style="display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Item</label>
+            <select name="item_id" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+              <option value="">Selecione o item...</option>
+              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (Disp: ${i.quantity} ${i.unit})</option>`).join('')}
+            </select>
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Quantidade</label>
+            <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Quem está retirando?</label>
+            <input type="text" name="person_name" placeholder="Nome da pessoa" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Setor (opcional)</label>
+            <input type="text" name="sector" placeholder="Ex: Manutenção, Produção..." style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Tipo de uso</label>
+            <select name="usage_type" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+              <option value="consumo">Consumo (não retorna)</option>
+              <option value="emprestimo">Empréstimo (deve retornar)</option>
+              <option value="manutencao">Manutenção</option>
+            </select>
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Observação (opcional)</label>
+            <textarea name="notes" rows="2" placeholder="Anotações..." style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px; resize: none;"></textarea>
+          </div>
+          
+          <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <button type="button" onclick="closeModal('modal-quick-withdrawal')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Cancelar</button>
+            <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #ec4899, #be185d); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600; box-shadow: 0 4px 16px rgba(236,72,153,0.3);">Confirmar Retirada</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-quick-withdrawal');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Submeter retirada rápida
+async function submitQuickWithdrawal(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  const item = state.inventory.find(i => i.id == formData.get('item_id'));
+  const quantity = parseInt(formData.get('quantity'));
+  
+  if (!item) {
+    showNotification('Selecione um item', 'error');
+    return;
+  }
+  
+  if (quantity > item.quantity) {
+    showNotification('Quantidade maior que disponível', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/movements`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({
+        item_id: item.id,
+        movement_type: 'saida',
+        quantity: quantity,
+        usage_type: formData.get('usage_type'),
+        person_name: formData.get('person_name'),
+        person_sector: formData.get('sector') || null,
+        notes: formData.get('notes') || null
+      })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('Retirada registrada com sucesso!', 'success');
+      closeModal('modal-quick-withdrawal');
+      loadInventory();
+      if (almox2State.currentTab === 'movimentos') loadAlmoxMovements();
+      if (almox2State.currentTab === 'ferramentas') loadPendingLoans();
+    } else {
+      showNotification('Erro: ' + (data.error || 'Erro ao registrar'), 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao registrar retirada:', error);
+    showNotification('Erro ao registrar retirada', 'error');
+  }
+}
+
+// Modal de Entrada Rápida
+function showQuickEntry() {
+  const items = state.inventory;
+  
+  const modalHtml = `
+    <div id="modal-quick-entry" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-entry')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+      <div class="modal" style="max-width: 480px; background: linear-gradient(135deg, rgba(21,94,55,0.95), rgba(20,83,45,0.95)); border: 1px solid rgba(34,197,94,0.3); box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 60px rgba(34,197,94,0.15);">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(34,197,94,0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 18px; color: #fff;">Entrada de Material</h3>
+            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Registre a entrada de novos materiais no estoque</p>
+          </div>
+        </div>
+        
+        <form onsubmit="submitQuickEntry(event)" style="display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Item</label>
+            <select name="item_id" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+              <option value="">Selecione o item...</option>
+              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (Atual: ${i.quantity} ${i.unit})</option>`).join('')}
+            </select>
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Quantidade a adicionar</label>
+            <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Nota Fiscal / Referência (opcional)</label>
+            <input type="text" name="reference" placeholder="Ex: NF-12345" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Observação (opcional)</label>
+            <textarea name="notes" rows="2" placeholder="Anotações..." style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px; resize: none;"></textarea>
+          </div>
+          
+          <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <button type="button" onclick="closeModal('modal-quick-entry')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Cancelar</button>
+            <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600; box-shadow: 0 4px 16px rgba(34,197,94,0.3);">Confirmar Entrada</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-quick-entry');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Submeter entrada rápida
+async function submitQuickEntry(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  const item = state.inventory.find(i => i.id == formData.get('item_id'));
+  const quantity = parseInt(formData.get('quantity'));
+  
+  if (!item) {
+    showNotification('Selecione um item', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/movements`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({
+        item_id: item.id,
+        movement_type: 'entrada',
+        quantity: quantity,
+        usage_type: 'outros',
+        reference: formData.get('reference') || null,
+        notes: formData.get('notes') || null
+      })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification('Entrada registrada com sucesso!', 'success');
+      closeModal('modal-quick-entry');
+      loadInventory();
+      if (almox2State.currentTab === 'movimentos') loadAlmoxMovements();
+    } else {
+      showNotification('Erro: ' + (data.error || 'Erro ao registrar'), 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao registrar entrada:', error);
+    showNotification('Erro ao registrar entrada', 'error');
+  }
+}
+
+// Carregar relatórios
+async function loadAlmoxReports() {
+  try {
+    const response = await fetch(`${API_URL}/inventory/stats?period=${almox2State.reportPeriod}`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      renderAlmoxReports(data.stats);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar relatórios:', error);
+  }
+}
+
+// Definir período do relatório
+function setAlmoxReportPeriod(period) {
+  almox2State.reportPeriod = period;
+  
+  document.querySelectorAll('.almox2-period-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.period === period);
+  });
+  
+  loadAlmoxReports();
+}
+
+// Renderizar relatórios
+function renderAlmoxReports(stats) {
+  // Top itens
+  const topItemsContainer = document.getElementById('almox2-top-items');
+  if (topItemsContainer && stats.top_items) {
+    topItemsContainer.innerHTML = stats.top_items.slice(0, 5).map((item, idx) => `
+      <div class="almox2-top-item">
+        <div class="almox2-top-rank">${idx + 1}</div>
+        <div class="almox2-top-info">
+          <div class="almox2-top-name">${escapeHtml(item.name)}</div>
+          <div class="almox2-top-sub">${escapeHtml(item.category || 'Sem categoria')}</div>
+        </div>
+        <div class="almox2-top-value">${item.movement_count || 0}</div>
+      </div>
+    `).join('') || '<div class="almox2-empty-state"><p>Sem dados</p></div>';
+  }
+  
+  // Top setores
+  const topSectorsContainer = document.getElementById('almox2-top-sectors');
+  if (topSectorsContainer && stats.top_sectors) {
+    topSectorsContainer.innerHTML = stats.top_sectors.slice(0, 5).map((sector, idx) => `
+      <div class="almox2-top-item">
+        <div class="almox2-top-rank">${idx + 1}</div>
+        <div class="almox2-top-info">
+          <div class="almox2-top-name">${escapeHtml(sector.sector || 'Não informado')}</div>
+        </div>
+        <div class="almox2-top-value">${sector.count || 0}</div>
+      </div>
+    `).join('') || '<div class="almox2-empty-state"><p>Sem dados</p></div>';
+  }
+  
+  // Low stock
+  const lowStockContainer = document.getElementById('almox2-low-stock');
+  if (lowStockContainer) {
+    const lowItems = state.inventory.filter(i => i.quantity <= (i.min_stock || 0)).slice(0, 5);
+    lowStockContainer.innerHTML = lowItems.map(item => `
+      <div class="almox2-low-item">
+        <div class="almox2-low-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          </svg>
+        </div>
+        <div class="almox2-low-info">
+          <div class="almox2-low-name">${escapeHtml(item.name)}</div>
+        </div>
+        <div class="almox2-low-qty">${item.quantity}</div>
+      </div>
+    `).join('') || '<div class="almox2-empty-state" style="padding: 20px;"><p>Nenhum item em estoque baixo</p></div>';
+  }
+  
+  // Renderizar gráficos se Chart.js disponível
+  if (typeof Chart !== 'undefined') {
+    renderAlmoxCharts(stats);
+  }
+}
+
+// Renderizar gráficos
+function renderAlmoxCharts(stats) {
+  // Gráfico de movimentações
+  const movCtx = document.getElementById('almox2-movements-chart');
+  if (movCtx) {
+    const existingChart = Chart.getChart(movCtx);
+    if (existingChart) existingChart.destroy();
+    
+    new Chart(movCtx, {
+      type: 'bar',
+      data: {
+        labels: stats.chart_labels || ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        datasets: [
+          {
+            label: 'Entradas',
+            data: stats.entradas_data || [0,0,0,0,0,0,0],
+            backgroundColor: 'rgba(34, 197, 94, 0.6)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+          },
+          {
+            label: 'Saídas',
+            data: stats.saidas_data || [0,0,0,0,0,0,0],
+            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+            borderColor: 'rgb(239, 68, 68)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: 'rgba(255,255,255,0.7)' }
+          }
+        },
+        scales: {
+          x: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  }
+  
+  // Gráfico de categorias
+  const catCtx = document.getElementById('almox2-categories-chart');
+  if (catCtx) {
+    const existingChart = Chart.getChart(catCtx);
+    if (existingChart) existingChart.destroy();
+    
+    const catData = {};
+    state.inventory.forEach(item => {
+      const cat = item.category || 'outros';
+      catData[cat] = (catData[cat] || 0) + 1;
+    });
+    
+    const colors = {
+      ferramentas: '#60a5fa',
+      eletrica: '#fbbf24',
+      hidraulica: '#22d3ee',
+      rolamentos: '#9ca3af',
+      parafusos: '#c084fc',
+      lubrificantes: '#fb923c',
+      epis: '#4ade80',
+      outros: '#6b7280'
+    };
+    
+    new Chart(catCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(catData),
+        datasets: [{
+          data: Object.values(catData),
+          backgroundColor: Object.keys(catData).map(c => colors[c] || '#6b7280'),
+          borderColor: 'rgba(0,0,0,0.3)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { color: 'rgba(255,255,255,0.7)', padding: 12, font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+}
+
+// Modal de Relatório
+function showAlmoxReportModal() {
+  const lowStock = state.inventory.filter(i => i.quantity <= (i.min_stock || 0));
+  const total = state.inventory.length;
+  const categories = [...new Set(state.inventory.map(i => i.category))].length;
+  
+  const modalHtml = `
+    <div id="modal-almox-report" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-almox-report')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+      <div class="modal" style="max-width: 600px; background: linear-gradient(135deg, rgba(88,28,135,0.95), rgba(55,48,107,0.95)); border: 1px solid rgba(168,85,247,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="margin: 0; color: #fff;">Relatório do Almoxarifado</h3>
+          <button onclick="closeModal('modal-almox-report')" style="background: none; border: none; color: #fff; cursor: pointer;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div style="background: rgba(139,92,246,0.2); padding: 16px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #c4b5fd;">${total}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">TOTAL ITENS</div>
+          </div>
+          <div style="background: rgba(245,158,11,0.2); padding: 16px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #fbbf24;">${lowStock.length}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">ESTOQUE BAIXO</div>
+          </div>
+          <div style="background: rgba(99,102,241,0.2); padding: 16px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 700; color: #818cf8;">${categories}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">CATEGORIAS</div>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <button onclick="closeModal('modal-almox-report')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer;">Fechar</button>
+          <button onclick="exportAlmoxReportHTML()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #a855f7, #8b5cf6); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600;">Baixar HTML</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-almox-report');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Exportar Relatório HTML Premium
+function exportAlmoxReportHTML() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR');
+  
+  const total = state.inventory.length;
+  const lowStock = state.inventory.filter(i => i.quantity <= (i.min_stock || 0));
+  const categories = [...new Set(state.inventory.map(i => i.category))];
+  const brands = [...new Set(state.inventory.filter(i => i.brand).map(i => i.brand))];
+  
+  // Agrupar por categoria
+  const byCategory = {};
+  state.inventory.forEach(item => {
+    const cat = item.category || 'outros';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(item);
+  });
+  
+  const categoryLabels = {
+    ferramentas: 'Ferramentas',
+    eletrica: 'Elétrica',
+    hidraulica: 'Hidráulica',
+    rolamentos: 'Rolamentos',
+    parafusos: 'Parafusos/Fixação',
+    lubrificantes: 'Lubrificantes',
+    epis: 'EPIs',
+    outros: 'Outros'
+  };
+  
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório Almoxarifado - ${dateStr}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @keyframes gradientFlow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #0f0a1e 0%, #1a1333 50%, #0d0b1a 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+      padding: 40px 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(139,92,246,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(236,72,153,0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .floating-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: float 6s ease-in-out infinite, pulse 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .orb-1 { width: 300px; height: 300px; background: rgba(139,92,246,0.2); top: 10%; left: 5%; animation-delay: 0s; }
+    .orb-2 { width: 250px; height: 250px; background: rgba(236,72,153,0.15); top: 60%; right: 10%; animation-delay: -2s; }
+    .orb-3 { width: 200px; height: 200px; background: rgba(99,102,241,0.15); bottom: 20%; left: 30%; animation-delay: -4s; }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      padding: 50px 40px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(88,28,135,0.1));
+      border-radius: 28px;
+      border: 1px solid rgba(168,85,247,0.25);
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #8b5cf6, #ec4899, #8b5cf6);
+      background-size: 200% 100%;
+      animation: gradientFlow 3s ease infinite;
+    }
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.2));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(168,85,247,0.4);
+      box-shadow: 0 8px 32px rgba(139,92,246,0.3);
+    }
+    .logo-container svg { width: 40px; height: 40px; color: #c4b5fd; }
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .subtitle { color: rgba(255,255,255,0.5); font-size: 16px; }
+    .date-badge {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: rgba(139,92,246,0.2);
+      border-radius: 30px;
+      font-size: 14px;
+      color: #c4b5fd;
+      border: 1px solid rgba(168,85,247,0.3);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(168,85,247,0.3);
+      box-shadow: 0 15px 40px rgba(139,92,246,0.15);
+    }
+    .stat-value {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a78bfa, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+    .stat-card.warning .stat-value { background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; }
+    .category-section {
+      margin-bottom: 30px;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(88,28,135,0.05));
+      border-radius: 14px 14px 0 0;
+      border: 1px solid rgba(168,85,247,0.2);
+      border-bottom: none;
+    }
+    .category-icon {
+      width: 38px; height: 38px;
+      background: rgba(139,92,246,0.2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: #a78bfa;
+    }
+    .category-name { font-size: 16px; font-weight: 600; color: #fff; }
+    .category-count { margin-left: auto; background: rgba(168,85,247,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; color: #c4b5fd; }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0 0 14px 14px;
+      overflow: hidden;
+    }
+    .items-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.5);
+      background: rgba(139,92,246,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .items-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+    .items-table tr:last-child td { border-bottom: none; }
+    .items-table tr:hover td { background: rgba(139,92,246,0.05); }
+    .qty-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .qty-normal { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .qty-low { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .qty-critical { background: rgba(239,68,68,0.15); color: #f87171; }
+    .low-stock-section {
+      margin-top: 40px;
+      padding: 30px;
+      background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
+      border-radius: 18px;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .low-stock-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .low-stock-icon {
+      width: 44px; height: 44px;
+      background: rgba(239,68,68,0.2);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #f87171;
+    }
+    .low-stock-title { font-size: 18px; font-weight: 700; color: #fff; }
+    .footer {
+      margin-top: 50px;
+      text-align: center;
+      padding: 30px;
+      color: rgba(255,255,255,0.4);
+      font-size: 13px;
+    }
+    .footer strong { color: #a78bfa; }
+    @media print {
+      body { background: #fff; color: #1f2937; padding: 20px; }
+      .floating-orb, body::before { display: none; }
+      .stat-value, h1 { color: #7c3aed !important; -webkit-text-fill-color: unset !important; }
+      .header, .stat-card, .category-header { border-color: #e5e7eb; background: #f9fafb; }
+    }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-orb orb-1"></div>
+  <div class="floating-orb orb-2"></div>
+  <div class="floating-orb orb-3"></div>
+  
+  <div class="container">
+    <div class="header">
+      <div class="logo-container">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+      </div>
+      <h1>Relatório de Almoxarifado</h1>
+      <p class="subtitle">Controle Completo de Estoque e Materiais</p>
+      <div class="date-badge">Gerado em ${dateStr} às ${timeStr}</div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">${total}</div>
+        <div class="stat-label">Total de Itens</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="stat-value">${lowStock.length}</div>
+        <div class="stat-label">Estoque Baixo</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${categories.length}</div>
+        <div class="stat-label">Categorias</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${brands.length}</div>
+        <div class="stat-label">Marcas</div>
+      </div>
+    </div>
+    
+    ${Object.entries(byCategory).map(([cat, items]) => `
+    <div class="category-section">
+      <div class="category-header">
+        <div class="category-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+        </div>
+        <span class="category-name">${categoryLabels[cat] || cat}</span>
+        <span class="category-count">${items.length} itens</span>
+      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Nome</th>
+            <th>Marca</th>
+            <th>Quantidade</th>
+            <th>Unidade</th>
+            <th>Localização</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(item => {
+            const isCritical = item.quantity <= 0;
+            const isLow = item.quantity <= (item.min_stock || 0);
+            const qtyClass = isCritical ? 'qty-critical' : isLow ? 'qty-low' : 'qty-normal';
+            return `
+          <tr>
+            <td><code style="background: rgba(139,92,246,0.15); padding: 2px 8px; border-radius: 4px; color: #c4b5fd;">${item.sku || '-'}</code></td>
+            <td><strong>${item.name}</strong></td>
+            <td>${item.brand || '-'}</td>
+            <td><span class="qty-badge ${qtyClass}">${item.quantity}</span></td>
+            <td>${item.unit || 'un'}</td>
+            <td>${item.location || '-'}</td>
+          </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    `).join('')}
+    
+    ${lowStock.length > 0 ? `
+    <div class="low-stock-section">
+      <div class="low-stock-header">
+        <div class="low-stock-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <span class="low-stock-title">Atenção: Itens em Estoque Baixo (${lowStock.length})</span>
+      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Categoria</th>
+            <th>Quantidade Atual</th>
+            <th>Mínimo</th>
+            <th>Diferença</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lowStock.map(item => `
+          <tr>
+            <td><strong>${item.name}</strong></td>
+            <td>${categoryLabels[item.category] || item.category || '-'}</td>
+            <td><span class="qty-badge ${item.quantity <= 0 ? 'qty-critical' : 'qty-low'}">${item.quantity}</span></td>
+            <td>${item.min_stock || 0}</td>
+            <td style="color: #f87171; font-weight: 600;">-${(item.min_stock || 0) - item.quantity}</td>
+          </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+    
+    <div class="footer">
+      <p>Relatório gerado pelo sistema <strong>ICARUS</strong></p>
+      <p style="margin-top: 8px;">Sistema de Gestão Inteligente de Manutenção</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `almoxarifado-relatorio-${now.toISOString().split('T')[0]}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('Relatório HTML baixado com sucesso!', 'success');
+  closeModal('modal-almox-report');
+}
+
+// ========================================
+// FIM ALMOXARIFADO V2
+// ========================================
+
 function showItemDetail(itemId) {
   const item = state.inventory.find(i => i.id === itemId);
   if (!item) return;
