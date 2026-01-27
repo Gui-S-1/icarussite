@@ -1156,7 +1156,22 @@ app.delete('/orders/:id', requireAuth, async (req, res) => {
 
 app.get('/inventory', requireAuth, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM inventory_items WHERE key_id = $1 ORDER BY name', [req.user.keyId]);
+    // Buscar itens do inventário com contagem de "em uso" (empréstimos pendentes)
+    const result = await pool.query(`
+      SELECT i.*, 
+        COALESCE(
+          (SELECT SUM(m.quantity) 
+           FROM inventory_movements m 
+           WHERE m.item_id::text = i.id 
+             AND m.usage_type = 'emprestimo' 
+             AND m.is_returned = false
+             AND m.movement_type = 'saida'
+          ), 0
+        )::INTEGER as in_use_count
+      FROM inventory_items i 
+      WHERE i.key_id = $1 
+      ORDER BY i.name
+    `, [req.user.keyId]);
     return res.json({ ok: true, items: normalizeInventory(result.rows) });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
@@ -1489,6 +1504,30 @@ app.get('/api/inventory/stats', requireAuth, async (req, res) => {
     
     const lowStockResult = await pool.query(lowStockQuery, [keyId]);
     
+    // Empréstimos devolvidos vs pendentes
+    const loanStatusQuery = `
+      SELECT 
+        COUNT(*) FILTER (WHERE is_returned = true) as devolvidos,
+        COUNT(*) FILTER (WHERE is_returned = false) as pendentes,
+        COALESCE(SUM(quantity) FILTER (WHERE is_returned = true), 0) as qty_devolvidos,
+        COALESCE(SUM(quantity) FILTER (WHERE is_returned = false), 0) as qty_pendentes
+      FROM inventory_movements
+      WHERE key_id = $1 AND usage_type = 'emprestimo' ${dateFilter.replace('m.', '')}
+    `;
+    const loanStatusResult = await pool.query(loanStatusQuery, [keyId]);
+    
+    // Saídas por tipo de uso (consumo, empréstimo, manutenção)
+    const usageTypeQuery = `
+      SELECT 
+        usage_type,
+        COUNT(*) as count,
+        COALESCE(SUM(quantity), 0) as total_qty
+      FROM inventory_movements
+      WHERE key_id = $1 AND movement_type = 'saida' ${dateFilter.replace('m.', '')}
+      GROUP BY usage_type
+    `;
+    const usageTypeResult = await pool.query(usageTypeQuery, [keyId]);
+    
     return res.json({
       ok: true,
       stats: {
@@ -1496,7 +1535,9 @@ app.get('/api/inventory/stats', requireAuth, async (req, res) => {
         topItems: topItemsResult.rows,
         topSectors: topSectorsResult.rows,
         dailyMovements: dailyResult.rows,
-        lowStock: lowStockResult.rows
+        lowStock: lowStockResult.rows,
+        loanStatus: loanStatusResult.rows[0],
+        usageTypes: usageTypeResult.rows
       }
     });
   } catch (err) {

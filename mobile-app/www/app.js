@@ -3066,6 +3066,12 @@ function renderInventoryTable() {
     var statusClass = item.quantity <= 0 ? 'badge-high' : (item.quantity <= (item.min_stock || 0) ? 'badge-warning' : 'badge-low');
     var statusText = item.quantity <= 0 ? '🔴 Zerado' : (item.quantity <= (item.min_stock || 0) ? '⚠️ Baixo' : '✅ OK');
     
+    // Itens em uso (emprestados)
+    var inUse = item.in_use_count || 0;
+    var inUseBadge = inUse > 0 
+      ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px; margin-left:4px;" title="Itens emprestados aguardando devolução">🔄 ' + inUse + ' em uso</span>'
+      : '';
+    
     // Criar descrição informativa do item
     var descParts = [];
     if (item.brand) descParts.push(item.brand);
@@ -3087,9 +3093,12 @@ function renderInventoryTable() {
       '<td><div><strong>' + escapeHtml(item.name) + '</strong>' + descHtml + '</div></td>' +
       '<td><span class="category-badge ' + catClass + '">' + escapeHtml(categoryLabels[item.category] || item.category || '-') + '</span></td>' +
       '<td>' + escapeHtml(item.brand || '-') + '</td>' +
-      '<td><div style="display:flex; align-items:center; gap:6px;">' +
-        '<strong style="font-size: 16px;">' + escapeHtml(item.quantity) + '</strong>' +
-        '<span style="color: var(--text-secondary); font-size:11px;">min ' + (item.min_stock || 0) + (item.max_stock ? ' / max ' + item.max_stock : '') + '</span>' +
+      '<td><div style="display:flex; flex-direction:column; gap:2px;">' +
+        '<div style="display:flex; align-items:center; gap:6px;">' +
+          '<strong style="font-size: 16px;">' + escapeHtml(item.quantity) + '</strong>' +
+          '<span style="color: var(--text-secondary); font-size:11px;">min ' + (item.min_stock || 0) + (item.max_stock ? ' / max ' + item.max_stock : '') + '</span>' +
+        '</div>' +
+        inUseBadge +
       '</div></td>' +
       '<td>' + escapeHtml(item.unit) + '</td>' +
       '<td>' + locationHtml + '</td>' +
@@ -3133,6 +3142,7 @@ function renderInventoryMobile(items, categoryLabels) {
     var isLowStock = item.quantity <= (item.min_stock || 0);
     var isCritical = item.quantity <= 0;
     var catLabel = categoryLabels[item.category] || item.category || '-';
+    var inUse = item.in_use_count || 0;
     
     // Criar descrição/specs preview
     var specsPreview = item.specs 
@@ -3146,12 +3156,18 @@ function renderInventoryMobile(items, categoryLabels) {
         ? '<span style="font-size:10px; padding:2px 6px; background:rgba(245,158,11,0.2); color:#f59e0b; border-radius:4px;">ESTOQUE BAIXO</span>'
         : '<span style="font-size:10px; padding:2px 6px; background:rgba(16,185,129,0.2); color:#10b981; border-radius:4px;">OK</span>';
     
+    // Badge "em uso"
+    var inUseBadge = inUse > 0 
+      ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px;">🔄 ' + inUse + ' em uso</span>'
+      : '';
+    
     return '<div class="almox-mobile-item' + (isLowStock ? ' low-stock' : '') + '" onclick="showItemDetail(\'' + item.id + '\')" style="padding:12px;">' +
       '<div class="almox-mobile-item-header">' +
         '<div style="flex:1;">' +
-          '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">' +
+          '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">' +
             '<div class="almox-mobile-item-name">' + escapeHtml(item.name) + '</div>' +
             statusBadge +
+            inUseBadge +
           '</div>' +
           '<div class="almox-mobile-item-sku" style="display:flex; align-items:center; gap:8px;">' +
             '<code style="background:var(--bg-secondary); padding:2px 6px; border-radius:4px; font-size:10px;">SKU: ' + escapeHtml(item.sku || '-') + '</code>' +
@@ -3901,9 +3917,23 @@ function showQuickWithdrawal() {
           <div>
             <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              Setor <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
+              Setor / Destino
             </label>
-            <input type="text" name="sector" placeholder="Ex: Manutenção, Aviário 1, Recria..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
+            <select name="sector" id="withdrawal-sector-select" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';" onchange="toggleCustomSector(this)">
+              <option value="">Selecione o setor...</option>
+              <option value="Manutenção">🔧 Manutenção</option>
+              <option value="Aviário 1">🐔 Aviário 1</option>
+              <option value="Aviário 2">🐔 Aviário 2</option>
+              <option value="Aviário 3">🐔 Aviário 3</option>
+              <option value="Aviário 4">🐔 Aviário 4</option>
+              <option value="Recria">🐣 Recria</option>
+              <option value="Fábrica de Ração">🏭 Fábrica de Ração</option>
+              <option value="Escritório">📋 Escritório</option>
+              <option value="Almoxarifado">📦 Almoxarifado</option>
+              <option value="Externo">🚛 Externo</option>
+              <option value="__outro__">➕ Outro (digitar)</option>
+            </select>
+            <input type="text" name="sector_custom" id="withdrawal-sector-custom" placeholder="Digite o nome do setor..." style="display: none; width: 100%; padding: 14px 16px; margin-top: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
           </div>
           
           <!-- Notes -->
@@ -3933,11 +3963,29 @@ function showQuickWithdrawal() {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+// Toggle campo customizado de setor
+function toggleCustomSector(selectEl) {
+  const customInput = document.getElementById('withdrawal-sector-custom');
+  if (selectEl.value === '__outro__') {
+    customInput.style.display = 'block';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
 // Submeter retirada rápida
 async function submitQuickWithdrawal(event) {
   event.preventDefault();
   const form = event.target;
   const formData = new FormData(form);
+  
+  // Determinar setor (select ou customizado)
+  let sector = formData.get('sector');
+  if (sector === '__outro__') {
+    sector = formData.get('sector_custom');
+  }
   
   const item = state.inventory.find(i => i.id == formData.get('item_id'));
   const quantity = parseInt(formData.get('quantity'));
@@ -3965,7 +4013,7 @@ async function submitQuickWithdrawal(event) {
         quantity: quantity,
         usage_type: formData.get('usage_type'),
         person_name: formData.get('person_name'),
-        person_sector: formData.get('sector') || null,
+        person_sector: sector || null,
         notes: formData.get('notes') || null
       })
     });
@@ -4141,6 +4189,7 @@ async function loadAlmoxReports() {
     
     const data = await response.json();
     if (data.ok) {
+      almox2State.stats = data.stats;
       renderAlmoxReports(data.stats);
     }
   } catch (error) {
@@ -4161,31 +4210,31 @@ function setAlmoxReportPeriod(period) {
 
 // Renderizar relatórios
 function renderAlmoxReports(stats) {
-  // Top itens
+  // Top itens mais movimentados
   const topItemsContainer = document.getElementById('almox2-top-items');
-  if (topItemsContainer && stats.top_items) {
-    topItemsContainer.innerHTML = stats.top_items.slice(0, 5).map((item, idx) => `
+  if (topItemsContainer && stats.topItems) {
+    topItemsContainer.innerHTML = stats.topItems.slice(0, 5).map((item, idx) => `
       <div class="almox2-top-item">
         <div class="almox2-top-rank">${idx + 1}</div>
         <div class="almox2-top-info">
           <div class="almox2-top-name">${escapeHtml(item.name)}</div>
-          <div class="almox2-top-sub">${escapeHtml(item.category || 'Sem categoria')}</div>
+          <div class="almox2-top-sub">${escapeHtml(item.sku || 'Sem SKU')}</div>
         </div>
-        <div class="almox2-top-value">${item.movement_count || 0}</div>
+        <div class="almox2-top-value">${item.total_movimentos || 0}<span style="font-size:10px;color:rgba(255,255,255,0.5);margin-left:4px;">mov</span></div>
       </div>
     `).join('') || '<div class="almox2-empty-state"><p>Sem dados</p></div>';
   }
   
   // Top setores
   const topSectorsContainer = document.getElementById('almox2-top-sectors');
-  if (topSectorsContainer && stats.top_sectors) {
-    topSectorsContainer.innerHTML = stats.top_sectors.slice(0, 5).map((sector, idx) => `
+  if (topSectorsContainer && stats.topSectors) {
+    topSectorsContainer.innerHTML = stats.topSectors.slice(0, 5).map((sector, idx) => `
       <div class="almox2-top-item">
         <div class="almox2-top-rank">${idx + 1}</div>
         <div class="almox2-top-info">
-          <div class="almox2-top-name">${escapeHtml(sector.sector || 'Não informado')}</div>
+          <div class="almox2-top-name">${escapeHtml(sector.person_sector || 'Não informado')}</div>
         </div>
-        <div class="almox2-top-value">${sector.count || 0}</div>
+        <div class="almox2-top-value">${sector.total_retiradas || 0}</div>
       </div>
     `).join('') || '<div class="almox2-empty-state"><p>Sem dados</p></div>';
   }
@@ -4193,7 +4242,7 @@ function renderAlmoxReports(stats) {
   // Low stock
   const lowStockContainer = document.getElementById('almox2-low-stock');
   if (lowStockContainer) {
-    const lowItems = state.inventory.filter(i => i.quantity <= (i.min_stock || 0)).slice(0, 5);
+    const lowItems = stats.lowStock || state.inventory.filter(i => i.quantity <= (i.min_stock || 0)).slice(0, 5);
     lowStockContainer.innerHTML = lowItems.map(item => `
       <div class="almox2-low-item">
         <div class="almox2-low-icon">
@@ -4301,6 +4350,90 @@ function renderAlmoxCharts(stats) {
           legend: {
             position: 'right',
             labels: { color: 'rgba(255,255,255,0.7)', padding: 12, font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+  
+  // Gráfico de empréstimos: Devolvidos vs Pendentes
+  const loansCtx = document.getElementById('almox2-loans-chart');
+  if (loansCtx && stats.loanStatus) {
+    const existingChart = Chart.getChart(loansCtx);
+    if (existingChart) existingChart.destroy();
+    
+    const loanData = stats.loanStatus;
+    new Chart(loansCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Devolvidos', 'Pendentes'],
+        datasets: [{
+          data: [parseInt(loanData.devolvidos) || 0, parseInt(loanData.pendentes) || 0],
+          backgroundColor: ['rgba(34, 197, 94, 0.7)', 'rgba(251, 146, 60, 0.7)'],
+          borderColor: ['rgb(34, 197, 94)', 'rgb(251, 146, 60)'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: 'rgba(255,255,255,0.7)', padding: 12, font: { size: 11 } }
+          },
+          title: {
+            display: true,
+            text: 'Status dos Empréstimos',
+            color: 'rgba(255,255,255,0.8)',
+            font: { size: 13 }
+          }
+        }
+      }
+    });
+  }
+  
+  // Gráfico por Tipo de Uso (Consumo, Empréstimo, Manutenção)
+  const usageCtx = document.getElementById('almox2-usage-chart');
+  if (usageCtx && stats.usageTypes) {
+    const existingChart = Chart.getChart(usageCtx);
+    if (existingChart) existingChart.destroy();
+    
+    const usageLabels = {
+      consumo: 'Consumo',
+      emprestimo: 'Empréstimo',
+      manutencao: 'Manutenção'
+    };
+    const usageColors = {
+      consumo: 'rgba(239, 68, 68, 0.7)',
+      emprestimo: 'rgba(59, 130, 246, 0.7)',
+      manutencao: 'rgba(168, 85, 247, 0.7)'
+    };
+    
+    new Chart(usageCtx, {
+      type: 'pie',
+      data: {
+        labels: stats.usageTypes.map(u => usageLabels[u.usage_type] || u.usage_type || 'Outros'),
+        datasets: [{
+          data: stats.usageTypes.map(u => parseInt(u.count) || 0),
+          backgroundColor: stats.usageTypes.map(u => usageColors[u.usage_type] || 'rgba(107, 114, 128, 0.7)'),
+          borderColor: 'rgba(0,0,0,0.3)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: 'rgba(255,255,255,0.7)', padding: 12, font: { size: 11 } }
+          },
+          title: {
+            display: true,
+            text: 'Saídas por Tipo de Uso',
+            color: 'rgba(255,255,255,0.8)',
+            font: { size: 13 }
           }
         }
       }
