@@ -1,10 +1,34 @@
 // Configuração do Icarus - Frontend
 
-// URLs de configuração - sem expor IP do servidor
+// URLs de configuração
 const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/api-config.json';
+const SERVER_IP = 'http://159.203.8.237:3000'; // IP direto do servidor
 
 // URL padrão (fallback) - sempre via tunnel seguro
 let API_URL_DEFAULT = 'https://troops-minute-missed-alot.trycloudflare.com';
+
+// Buscar URL do túnel diretamente do servidor via IP
+async function fetchTunnelUrlFromServer() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(SERVER_IP + '/tunnel-url', { 
+      signal: controller.signal,
+      cache: 'no-store'
+    });
+    clearTimeout(timeout);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.ok && data.url) {
+        console.log('[Config] URL obtida do servidor:', data.url);
+        return data.url;
+      }
+    }
+  } catch (e) {
+    console.log('[Config] Erro ao buscar URL do servidor via IP');
+  }
+  return null;
+}
 
 // Buscar URL do GitHub (fallback)
 async function fetchNewApiUrl() {
@@ -40,27 +64,33 @@ async function testApiUrl(url) {
 
 // Carregar e validar URL
 (async function loadDynamicConfig() {
-  // 1. Tentar URL do cache primeiro
+  // 1. Primeiro tenta buscar a URL diretamente do servidor
+  const serverUrl = await fetchTunnelUrlFromServer();
+  if (serverUrl) {
+    window.ICARUS_API_URL = serverUrl;
+    localStorage.setItem('icarus_api_url', serverUrl);
+    localStorage.setItem('icarus_api_url_time', Date.now().toString());
+    console.log('[Config] URL do servidor aplicada:', serverUrl);
+    return;
+  }
+  
+  // 2. Se falhar, tenta URL do cache
   const cached = localStorage.getItem('icarus_api_url');
   if (cached) {
     window.ICARUS_API_URL = cached;
     console.log('[Config] Usando URL do cache:', cached);
     
-    // Testar em background - se falhar, busca nova automaticamente
+    // Testar em background - se falhar, busca nova do GitHub
     setTimeout(async () => {
       const works = await testApiUrl(cached);
       if (!works) {
         console.log('[Config] URL do cache não responde, buscando nova...');
-        
-        // Buscar nova URL do GitHub
         const newUrl = await fetchNewApiUrl();
-        
         if (newUrl && newUrl !== cached) {
           window.ICARUS_API_URL = newUrl;
           localStorage.setItem('icarus_api_url', newUrl);
           localStorage.setItem('icarus_api_url_time', Date.now().toString());
           console.log('[Config] Nova URL aplicada:', newUrl);
-          // Recarrega a página para aplicar
           if (document.readyState === 'complete') {
             location.reload();
           }
@@ -70,10 +100,8 @@ async function testApiUrl(url) {
     return;
   }
   
-  // 2. Sem cache - buscar URL do GitHub
+  // 3. Sem cache - buscar URL do GitHub
   const newUrl = await fetchNewApiUrl();
-  
-  // Se ainda não tem, usar padrão
   if (newUrl) {
     window.ICARUS_API_URL = newUrl;
     localStorage.setItem('icarus_api_url', newUrl);
