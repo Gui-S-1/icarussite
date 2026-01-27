@@ -4,7 +4,7 @@
 const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/api-config.json';
 
 // URL padrão (fallback) - sempre via tunnel seguro
-let API_URL_DEFAULT = 'https://kong-dust-analysts-developers.trycloudflare.com';
+let API_URL_DEFAULT = 'https://troops-minute-missed-alot.trycloudflare.com';
 
 // Buscar URL do GitHub (fallback)
 async function fetchNewApiUrl() {
