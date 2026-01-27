@@ -3746,69 +3746,102 @@ async function registerReturn(movementId) {
   }
 }
 
-// Modal de Retirada Rápida
+// Modal de Retirada Rápida - Design Premium
 function showQuickWithdrawal() {
   const items = state.inventory.filter(i => i.quantity > 0);
   
   const modalHtml = `
-    <div id="modal-quick-withdrawal" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-withdrawal')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
-      <div class="modal" style="max-width: 480px; background: linear-gradient(135deg, rgba(88,28,135,0.95), rgba(55,48,107,0.95)); border: 1px solid rgba(168,85,247,0.3); box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 60px rgba(168,85,247,0.15);">
-        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
-          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(236,72,153,0.4);">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2">
-              <polyline points="17 1 21 5 17 9"/>
-              <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-              <polyline points="7 23 3 19 7 15"/>
-              <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-            </svg>
-          </div>
-          <div>
-            <h3 style="margin: 0; font-size: 18px; color: #fff;">Registrar Retirada</h3>
-            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Selecione o item e informe quem está retirando</p>
+    <div id="modal-quick-withdrawal" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-withdrawal')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(30,20,60,0.7));">
+      <div class="modal" style="max-width: 520px; background: linear-gradient(180deg, rgba(45,25,85,0.98) 0%, rgba(25,15,55,0.98) 100%); border: 1px solid rgba(168,85,247,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 80px rgba(168,85,247,0.12), inset 0 1px 0 rgba(255,255,255,0.05); border-radius: 20px; padding: 0; overflow: hidden;">
+        
+        <!-- Header Gradient -->
+        <div style="background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.1)); padding: 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 52px; height: 52px; background: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.2)); border-radius: 14px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(236,72,153,0.4); box-shadow: 0 8px 24px rgba(236,72,153,0.2);">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2">
+                <polyline points="17 1 21 5 17 9"/>
+                <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                <polyline points="7 23 3 19 7 15"/>
+                <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #fff;">Registrar Retirada</h3>
+              <p style="margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Informe os dados da saída de material</p>
+            </div>
           </div>
         </div>
         
-        <form onsubmit="submitQuickWithdrawal(event)" style="display: flex; flex-direction: column; gap: 16px;">
-          <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Item</label>
-            <select name="item_id" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
-              <option value="">Selecione o item...</option>
-              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (Disp: ${i.quantity} ${i.unit})</option>`).join('')}
+        <form onsubmit="submitQuickWithdrawal(event)" style="padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;">
+          
+          <!-- Item Search Field -->
+          <div style="position: relative;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              Item do Estoque
+            </label>
+            <select name="item_id" id="withdrawal-item-select" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)'; this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)'; this.style.boxShadow='none';">
+              <option value="">Buscar ou selecionar item...</option>
+              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} — ${i.quantity} ${i.unit || 'un'} disponíveis</option>`).join('')}
             </select>
           </div>
           
-          <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Quantidade</label>
-            <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+          <!-- Quantity + Usage Type Row -->
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 14px;">
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                Quantidade
+              </label>
+              <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 16px; font-weight: 600; text-align: center;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)'; this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)'; this.style.boxShadow='none';">
+            </div>
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Tipo de Uso
+              </label>
+              <select name="usage_type" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
+                <option value="consumo">🔸 Consumo (não retorna)</option>
+                <option value="emprestimo">🔄 Empréstimo (deve retornar)</option>
+                <option value="manutencao">🔧 Manutenção</option>
+              </select>
+            </div>
           </div>
           
+          <!-- Person Name -->
           <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Quem está retirando?</label>
-            <input type="text" name="person_name" placeholder="Nome da pessoa" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Quem está retirando?
+            </label>
+            <input type="text" name="person_name" placeholder="Digite o nome completo da pessoa" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(236,72,153,0.5)'; this.style.boxShadow='0 0 0 3px rgba(236,72,153,0.1)';" onblur="this.style.borderColor='rgba(236,72,153,0.2)'; this.style.boxShadow='none';">
           </div>
           
+          <!-- Sector -->
           <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Setor (opcional)</label>
-            <input type="text" name="sector" placeholder="Ex: Manutenção, Produção..." style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Setor <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
+            </label>
+            <input type="text" name="sector" placeholder="Ex: Manutenção, Aviário 1, Recria..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
           </div>
           
+          <!-- Notes -->
           <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Tipo de uso</label>
-            <select name="usage_type" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
-              <option value="consumo">Consumo (não retorna)</option>
-              <option value="emprestimo">Empréstimo (deve retornar)</option>
-              <option value="manutencao">Manutenção</option>
-            </select>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Observação <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
+            </label>
+            <textarea name="notes" rows="2" placeholder="Anotações adicionais sobre a retirada..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; resize: none;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';"></textarea>
           </div>
           
-          <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Observação (opcional)</label>
-            <textarea name="notes" rows="2" placeholder="Anotações..." style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px; resize: none;"></textarea>
-          </div>
-          
-          <div style="display: flex; gap: 10px; margin-top: 8px;">
-            <button type="button" onclick="closeModal('modal-quick-withdrawal')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Cancelar</button>
-            <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #ec4899, #be185d); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600; box-shadow: 0 4px 16px rgba(236,72,153,0.3);">Confirmar Retirada</button>
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 12px; margin-top: 8px;">
+            <button type="button" onclick="closeModal('modal-quick-withdrawal')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)';" onmouseout="this.style.background='rgba(255,255,255,0.03)';">Cancelar</button>
+            <button type="submit" style="flex: 1.2; padding: 14px; background: linear-gradient(135deg, #ec4899, #be185d); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(236,72,153,0.35); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(236,72,153,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(236,72,153,0.35)';">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+              Confirmar Retirada
+            </button>
           </div>
         </form>
       </div>
@@ -3873,53 +3906,95 @@ async function submitQuickWithdrawal(event) {
   }
 }
 
-// Modal de Entrada Rápida
+// Modal de Entrada Rápida - Design Premium
 function showQuickEntry() {
   const items = state.inventory;
   
   const modalHtml = `
-    <div id="modal-quick-entry" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-entry')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
-      <div class="modal" style="max-width: 480px; background: linear-gradient(135deg, rgba(21,94,55,0.95), rgba(20,83,45,0.95)); border: 1px solid rgba(34,197,94,0.3); box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 60px rgba(34,197,94,0.15);">
-        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
-          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(34,197,94,0.4);">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </div>
-          <div>
-            <h3 style="margin: 0; font-size: 18px; color: #fff;">Entrada de Material</h3>
-            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Registre a entrada de novos materiais no estoque</p>
+    <div id="modal-quick-entry" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-entry')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(16,40,26,0.7));">
+      <div class="modal" style="max-width: 520px; background: linear-gradient(145deg, rgba(21,94,55,0.97), rgba(16,70,40,0.97)); border: 1px solid rgba(34,197,94,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 80px rgba(34,197,94,0.12), inset 0 1px 0 rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; animation: modalSlideIn 0.3s ease-out;">
+        
+        <!-- Header Section Premium -->
+        <div style="background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(22,163,74,0.15)); margin: -24px -24px 24px -24px; padding: 28px 24px; border-bottom: 1px solid rgba(34,197,94,0.2);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; background: linear-gradient(135deg, rgba(34,197,94,0.4), rgba(22,163,74,0.25)); border-radius: 14px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(34,197,94,0.5); box-shadow: 0 8px 24px rgba(34,197,94,0.2);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+                <path d="M12 5v14"/>
+                <path d="M5 12h14"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px;">Entrada de Material</h3>
+              <p style="margin: 6px 0 0; font-size: 13px; color: rgba(255,255,255,0.6);">Registre a entrada de novos materiais no estoque</p>
+            </div>
           </div>
         </div>
         
-        <form onsubmit="submitQuickEntry(event)" style="display: flex; flex-direction: column; gap: 16px;">
+        <form onsubmit="submitQuickEntry(event)" style="display: flex; flex-direction: column; gap: 18px;">
+          
+          <!-- Select Item com Label Premium -->
           <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Item</label>
-            <select name="item_id" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              </svg>
+              Item do Estoque
+            </label>
+            <select name="item_id" required style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer; transition: all 0.2s ease;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';">
               <option value="">Selecione o item...</option>
               ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (Atual: ${i.quantity} ${i.unit})</option>`).join('')}
             </select>
           </div>
           
-          <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Quantidade a adicionar</label>
-            <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+          <!-- Grid: Quantidade e Referência -->
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 14px;">
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                Quantidade
+              </label>
+              <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 16px; font-weight: 600; text-align: center; transition: all 0.2s ease;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';">
+            </div>
+            
+            <div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Nota Fiscal
+              </label>
+              <input type="text" name="reference" placeholder="Ex: NF-12345" style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; transition: all 0.2s ease;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';">
+            </div>
           </div>
           
+          <!-- Observação -->
           <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Nota Fiscal / Referência (opcional)</label>
-            <input type="text" name="reference" placeholder="Ex: NF-12345" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Observação (opcional)
+            </label>
+            <textarea name="notes" rows="2" placeholder="Anotações sobre a entrada..." style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; resize: none; transition: all 0.2s ease; line-height: 1.5;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';"></textarea>
           </div>
           
-          <div>
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Observação (opcional)</label>
-            <textarea name="notes" rows="2" placeholder="Anotações..." style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 14px; resize: none;"></textarea>
-          </div>
-          
-          <div style="display: flex; gap: 10px; margin-top: 8px;">
-            <button type="button" onclick="closeModal('modal-quick-entry')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Cancelar</button>
-            <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600; box-shadow: 0 4px 16px rgba(34,197,94,0.3);">Confirmar Entrada</button>
+          <!-- Botões Premium -->
+          <div style="display: flex; gap: 12px; margin-top: 10px; padding-top: 20px; border-top: 1px solid rgba(34,197,94,0.15);">
+            <button type="button" onclick="closeModal('modal-quick-entry')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: rgba(255,255,255,0.8); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.12)';">Cancelar</button>
+            <button type="submit" style="flex: 1.3; padding: 14px 20px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(34,197,94,0.35); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(34,197,94,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(34,197,94,0.35)';">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 5v14"/>
+                <path d="M5 12h14"/>
+              </svg>
+              Confirmar Entrada
+            </button>
           </div>
         </form>
       </div>
