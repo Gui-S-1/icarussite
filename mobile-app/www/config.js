@@ -1,4 +1,5 @@
 // Configuração do Icarus - Frontend
+// Versão 1.1.0 - Cache buster para URLs antigas
 
 // URLs de configuração
 const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/api-config.json';
@@ -6,6 +7,26 @@ const SERVER_IP = 'http://159.203.8.237:3000'; // IP direto do servidor
 
 // URL padrão (fallback) - sempre via tunnel seguro
 let API_URL_DEFAULT = 'https://troops-minute-missed-alot.trycloudflare.com';
+
+// Limpar cache de URLs antigas que não funcionam mais
+const OLD_URLS_TO_CLEAR = [
+  'kong-dust-analysts-developers.trycloudflare.com',
+  'kong-dust-analysts-developers'
+];
+
+(function clearOldUrlCache() {
+  const cached = localStorage.getItem('icarus_api_url');
+  if (cached) {
+    for (const oldUrl of OLD_URLS_TO_CLEAR) {
+      if (cached.includes(oldUrl)) {
+        console.log('[Config] Limpando URL antiga do cache:', cached);
+        localStorage.removeItem('icarus_api_url');
+        localStorage.removeItem('icarus_api_url_time');
+        break;
+      }
+    }
+  }
+})();
 
 // Buscar URL do túnel diretamente do servidor via IP
 async function fetchTunnelUrlFromServer() {
