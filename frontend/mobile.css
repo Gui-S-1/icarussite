@@ -3527,13 +3527,16 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     flex-direction: row !important;
     flex-wrap: wrap !important;
     gap: 8px !important;
+    width: 100% !important;
   }
   
   #notas-content > div:first-child > div:last-child button {
-    flex: 1 !important;
-    min-width: 140px !important;
+    flex: 1 1 auto !important;
+    min-width: 130px !important;
+    max-width: 200px !important;
     justify-content: center !important;
-    padding: 12px 16px !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
   }
   
   /* Stats cards das notas */
