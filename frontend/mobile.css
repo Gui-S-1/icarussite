@@ -3521,15 +3521,19 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
     font-size: 12px !important;
   }
   
-  /* Botões do header de notas */
+  /* Botões do header de notas - ficam lado a lado no mobile tambem */
   #notas-content > div:first-child > div:last-child {
-    flex-direction: column !important;
-    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
   }
   
   #notas-content > div:first-child > div:last-child button {
-    width: 100% !important;
+    flex: 1 !important;
+    min-width: 140px !important;
     justify-content: center !important;
+    padding: 12px 16px !important;
   }
   
   /* Stats cards das notas */
@@ -3542,7 +3546,7 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   #notas-content > div:nth-child(2) > div {
     padding: 14px !important;
   }
-  
+
   #notas-content > div:nth-child(2) > div p:first-child {
     font-size: 10px !important;
   }
