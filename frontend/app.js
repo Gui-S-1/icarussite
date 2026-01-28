@@ -1,4 +1,4 @@
-// Global State
+﻿// Global State
 const state = {
   token: null,
   user: null,
@@ -14,7 +14,7 @@ const state = {
   waterStats: null,
   currentView: 'dashboard',
   dashboardFilter: 'daily', // daily, weekly, monthly
-  dashboardMonth: null, // null = mês atual, ou 'YYYY-MM' para mês específico
+  dashboardMonth: null, // null = mÃªs atual, ou 'YYYY-MM' para mÃªs especÃ­fico
   dashboardRankings: [], // Rankings de produtividade (OS + Aditiva)
   lastOrderCount: 0,
   lastPreventiveCheck: new Date(),
@@ -22,7 +22,7 @@ const state = {
   dieselRecords: [],
   dieselStats: null,
   dieselPeriod: 'month',
-  dieselSelectedMonth: null, // null = período atual, ou 'YYYY-MM' para mês específico
+  dieselSelectedMonth: null, // null = perÃ­odo atual, ou 'YYYY-MM' para mÃªs especÃ­fico
   // Generator Control
   generatorRecords: [],
   generatorStats: null,
@@ -36,7 +36,7 @@ const state = {
   laundryEntries: [],
   laundryStats: null,
   laundryPeriod: 'month',
-  // Relatórios
+  // RelatÃ³rios
   reports: [],
   reportCategory: 'all',
   currentReport: null,
@@ -57,37 +57,37 @@ async function initPushNotifications() {
   try {
     // Verificar se estamos no Capacitor (app nativo)
     if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) {
-      console.log('Push Notifications: Não está em ambiente nativo');
+      console.log('Push Notifications: NÃ£o estÃ¡ em ambiente nativo');
       return;
     }
 
     const { PushNotifications } = Capacitor.Plugins;
     if (!PushNotifications) {
-      console.log('Push Notifications: Plugin não disponível');
+      console.log('Push Notifications: Plugin nÃ£o disponÃ­vel');
       return;
     }
 
-    // Verificar permissões
+    // Verificar permissÃµes
     let permStatus = await PushNotifications.checkPermissions();
     console.log('Push Permissions:', permStatus.receive);
     
     if (permStatus.receive === 'prompt') {
-      // Pedir permissão ao usuário
+      // Pedir permissÃ£o ao usuÃ¡rio
       permStatus = await PushNotifications.requestPermissions();
-      console.log('Push Permissions após request:', permStatus.receive);
+      console.log('Push Permissions apÃ³s request:', permStatus.receive);
     }
 
     if (permStatus.receive !== 'granted') {
-      console.log('Push Notifications: Permissão negada');
-      showNotification('Ative as notificações nas configurações do app', 'warning');
+      console.log('Push Notifications: PermissÃ£o negada');
+      showNotification('Ative as notificaÃ§Ãµes nas configuraÃ§Ãµes do app', 'warning');
       return;
     }
 
-    // Registrar para receber notificações
+    // Registrar para receber notificaÃ§Ãµes
     await PushNotifications.register();
     console.log('Push Notifications: Registrando...');
 
-    // Listener quando o token é recebido
+    // Listener quando o token Ã© recebido
     await PushNotifications.addListener('registration', async (token) => {
       console.log('Push Token recebido:', token.value);
       // Enviar token para o servidor
@@ -97,13 +97,13 @@ async function initPushNotifications() {
     // Listener de erro no registro
     await PushNotifications.addListener('registrationError', (error) => {
       console.error('Erro no registro push:', error);
-      showNotification('Erro ao registrar notificações: ' + (error.error || 'desconhecido'), 'error');
+      showNotification('Erro ao registrar notificaÃ§Ãµes: ' + (error.error || 'desconhecido'), 'error');
     });
 
-    // Listener quando notificação é recebida (app aberto)
+    // Listener quando notificaÃ§Ã£o Ã© recebida (app aberto)
     await PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Notificação recebida:', notification);
-      // Mostrar notificação in-app
+      console.log('NotificaÃ§Ã£o recebida:', notification);
+      // Mostrar notificaÃ§Ã£o in-app
       showNotification(notification.title + ': ' + notification.body, 'info');
       
       // Atualizar dados
@@ -112,9 +112,9 @@ async function initPushNotifications() {
       }
     });
 
-    // Listener quando usuário toca na notificação
+    // Listener quando usuÃ¡rio toca na notificaÃ§Ã£o
     await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      console.log('Ação na notificação:', action);
+      console.log('AÃ§Ã£o na notificaÃ§Ã£o:', action);
       const data = action.notification.data;
       
       // Navegar para a view correta
@@ -158,7 +158,7 @@ async function registerPushToken(token) {
     if (data.ok) {
       console.log('Token push registrado com sucesso no servidor');
       localStorage.setItem('push_token', token);
-      showNotification('Notificações ativadas!', 'success');
+      showNotification('NotificaÃ§Ãµes ativadas!', 'success');
     } else {
       console.error('Erro ao registrar token:', data.error);
     }
@@ -168,7 +168,7 @@ async function registerPushToken(token) {
 }
 
 // ========================================
-// APP UPDATE SYSTEM - Atualização In-App
+// APP UPDATE SYSTEM - AtualizaÃ§Ã£o In-App
 // ========================================
 
 async function checkAppVersion() {
@@ -181,12 +181,12 @@ async function checkAppVersion() {
     
     const data = await response.json();
     if (data.ok && data.version && data.version !== APP_VERSION) {
-      // Nova versão disponível
+      // Nova versÃ£o disponÃ­vel
       const isRequired = data.required || false;
-      showUpdateDialog(data.version, data.changelog || 'Melhorias e correções.', data.downloadUrl, isRequired);
+      showUpdateDialog(data.version, data.changelog || 'Melhorias e correÃ§Ãµes.', data.downloadUrl, isRequired);
     }
   } catch (error) {
-    console.log('Não foi possível verificar atualizações:', error);
+    console.log('NÃ£o foi possÃ­vel verificar atualizaÃ§Ãµes:', error);
   }
 }
 
@@ -202,25 +202,25 @@ function showUpdateDialog(version, changelog, downloadUrl, required) {
   dialog.innerHTML = `
     <div class="modal-content" style="max-width: 400px;">
       <div class="modal-header">
-        <h3>🚀 Nova Atualização Disponível!</h3>
-        ${!required ? '<button class="modal-close" onclick="closeUpdateDialog()">×</button>' : ''}
+        <h3>ðŸš€ Nova AtualizaÃ§Ã£o DisponÃ­vel!</h3>
+        ${!required ? '<button class="modal-close" onclick="closeUpdateDialog()">Ã—</button>' : ''}
       </div>
       <div class="modal-body">
         <div style="text-align: center; margin-bottom: 20px;">
-          <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
-          <h4 style="color: var(--gold); margin: 0;">Versão ${version}</h4>
+          <div style="font-size: 48px; margin-bottom: 10px;">ðŸ“±</div>
+          <h4 style="color: var(--gold); margin: 0;">VersÃ£o ${version}</h4>
           <p style="color: var(--text-secondary); margin: 5px 0;">Atual: ${APP_VERSION}</p>
         </div>
         <div style="background: var(--card-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-          <h5 style="margin: 0 0 10px; color: var(--gold);">O que há de novo:</h5>
+          <h5 style="margin: 0 0 10px; color: var(--gold);">O que hÃ¡ de novo:</h5>
           <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">${changelog}</p>
         </div>
-        ${required ? '<p style="color: var(--danger); text-align: center; font-size: 12px;">⚠️ Esta atualização é obrigatória para continuar usando o app.</p>' : ''}
+        ${required ? '<p style="color: var(--danger); text-align: center; font-size: 12px;">âš ï¸ Esta atualizaÃ§Ã£o Ã© obrigatÃ³ria para continuar usando o app.</p>' : ''}
       </div>
       <div class="modal-footer">
         ${!required ? '<button class="btn btn-secondary" onclick="closeUpdateDialog()">Depois</button>' : ''}
         <button class="btn btn-primary" onclick="downloadUpdate(\\'${downloadUrl}\\')">
-          <span>📥</span> Baixar Atualização
+          <span>ðŸ“¥</span> Baixar AtualizaÃ§Ã£o
         </button>
       </div>
     </div>
@@ -235,7 +235,7 @@ function closeUpdateDialog() {
 
 async function downloadUpdate(url) {
   if (!url) {
-    showNotification('URL de download não disponível', 'error');
+    showNotification('URL de download nÃ£o disponÃ­vel', 'error');
     return;
   }
   
@@ -252,10 +252,10 @@ async function downloadUpdate(url) {
       window.open(url, '_blank');
     }
     
-    showNotification('Download iniciado! Após baixar, instale o APK.', 'success');
+    showNotification('Download iniciado! ApÃ³s baixar, instale o APK.', 'success');
     closeUpdateDialog();
   } catch (error) {
-    console.error('Erro ao baixar atualização:', error);
+    console.error('Erro ao baixar atualizaÃ§Ã£o:', error);
     showNotification('Erro ao iniciar download', 'error');
   }
 }
@@ -265,7 +265,7 @@ async function downloadUpdate(url) {
 // ========================================
 
 async function forceAppUpdate() {
-  showNotification('🔄 Limpando cache e atualizando...', 'info');
+  showNotification('ðŸ”„ Limpando cache e atualizando...', 'info');
   
   try {
     // 1. Limpar caches do localStorage
@@ -292,15 +292,15 @@ async function forceAppUpdate() {
     }
     
     // 4. Mostrar mensagem de sucesso
-    showNotification('✅ Cache limpo! Recarregando...', 'success');
+    showNotification('âœ… Cache limpo! Recarregando...', 'success');
     
-    // 5. Recarregar a página com cache busting
+    // 5. Recarregar a pÃ¡gina com cache busting
     setTimeout(() => {
       window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
     }, 1000);
     
   } catch (error) {
-    console.error('Erro ao forçar atualização:', error);
+    console.error('Erro ao forÃ§ar atualizaÃ§Ã£o:', error);
     showNotification('Erro ao atualizar. Tentando recarregar...', 'warning');
     setTimeout(() => window.location.reload(true), 1000);
   }
@@ -333,20 +333,20 @@ async function refreshTokenInBackground() {
     if (response.ok) {
       const data = await response.json();
       if (data.ok) {
-        // Atualizar token e usuário com dados novos
+        // Atualizar token e usuÃ¡rio com dados novos
         state.token = data.token;
         state.user = data.user;
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        // Atualizar permissões com as novas roles
+        // Atualizar permissÃµes com as novas roles
         setupPermissions();
         setupMobileNavPermissions();
         console.log('Token renovado em background, roles atualizadas');
       }
     }
   } catch (error) {
-    console.log('Não foi possível renovar token em background:', error);
+    console.log('NÃ£o foi possÃ­vel renovar token em background:', error);
   }
 }
 
@@ -371,7 +371,7 @@ function loadFromCache(key) {
     const cached = localStorage.getItem(key);
     if (!cached) return null;
     const parsed = JSON.parse(cached);
-    // Cache válido por 24 horas
+    // Cache vÃ¡lido por 24 horas
     if (Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
       localStorage.removeItem(key);
       return null;
@@ -397,10 +397,10 @@ function clearOldCache() {
   });
 }
 
-// Detectar mudança online/offline
+// Detectar mudanÃ§a online/offline
 window.addEventListener('online', () => {
   state.isOnline = true;
-  showNotification('🌐 Conectado! Atualizando dados...', 'success');
+  showNotification('ðŸŒ Conectado! Atualizando dados...', 'success');
   // Recarregar dados quando voltar online
   if (state.token) {
     loadViewData(state.currentView);
@@ -409,7 +409,7 @@ window.addEventListener('online', () => {
 
 window.addEventListener('offline', () => {
   state.isOnline = false;
-  showNotification('📴 Modo offline - usando dados salvos', 'warning');
+  showNotification('ðŸ“´ Modo offline - usando dados salvos', 'warning');
 });
 
 // ========================================
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup navigation PRIMEIRO (antes de qualquer coisa)
   setupNavigation();
   
-  // Tentativa de retomar sessão salva (token + user)
+  // Tentativa de retomar sessÃ£o salva (token + user)
   const savedToken = localStorage.getItem('token');
   const savedUser = localStorage.getItem('user');
   const savedKey = localStorage.getItem('icarus_key');
@@ -471,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshTokenInBackground();
       return;
     } catch (e) {
-      console.warn('Falha ao restaurar sessão, limpando cache', e);
+      console.warn('Falha ao restaurar sessÃ£o, limpando cache', e);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     }
@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setupNavigation() {
   document.querySelectorAll('.nav-item').forEach(item => {
-    // Remove listeners antigos para evitar duplicação
+    // Remove listeners antigos para evitar duplicaÃ§Ã£o
     item.replaceWith(item.cloneNode(true));
   });
   
@@ -498,7 +498,7 @@ function setupNavigation() {
       }
     });
   });
-  console.log('Navegação configurada');
+  console.log('NavegaÃ§Ã£o configurada');
 }
 
 // Navigation
@@ -521,12 +521,12 @@ function navigateTo(view) {
   const mainMobileViews = ['dashboard', 'os', 'controle-agua', 'controle-diesel', 'lavanderia'];
   document.querySelectorAll('.mobile-nav-item').forEach(item => {
     item.classList.remove('active');
-    // Se é uma view principal, marcar diretamente
+    // Se Ã© uma view principal, marcar diretamente
     if (mainMobileViews.includes(view) && item.getAttribute('data-view') === view) {
       item.classList.add('active');
     }
   });
-  // Se não é uma view principal, marcar "Mais" como ativo
+  // Se nÃ£o Ã© uma view principal, marcar "Mais" como ativo
   if (!mainMobileViews.includes(view)) {
     const moreItem = document.querySelector('.mobile-nav-item[data-view="mobile-more"]');
     if (moreItem) moreItem.classList.add('active');
@@ -543,7 +543,7 @@ function navigateTo(view) {
     activeView.classList.add('active');
     console.log('View ativada com sucesso');
   } else {
-    console.error('View não encontrada para:', view);
+    console.error('View nÃ£o encontrada para:', view);
   }
 
   // SCROLL PARA O TOPO ao trocar de view - IMPORTANTE!
@@ -637,7 +637,7 @@ async function validateKey() {
       document.getElementById('login-form').classList.remove('hidden');
       errorDiv.classList.add('hidden');
     } else {
-      showError(data.error || 'Chave inválida');
+      showError(data.error || 'Chave invÃ¡lida');
     }
   } catch (error) {
     showError('Erro ao validar chave: ' + error.message);
@@ -699,7 +699,7 @@ async function login() {
         showAppWithWelcome();
       }
     } else {
-      showError(data.error || 'Login inválido');
+      showError(data.error || 'Login invÃ¡lido');
     }
   } catch (error) {
     showError('Erro ao fazer login: ' + error.message);
@@ -716,8 +716,8 @@ async function showAppWithWelcome() {
   const welcomeUserName = document.getElementById('welcome-user-name');
   const welcomeCompanyName = document.getElementById('welcome-company-name');
   
-  // Pegar nome do usuário e empresa
-  const userName = state.user?.name || 'Usuário';
+  // Pegar nome do usuÃ¡rio e empresa
+  const userName = state.user?.name || 'UsuÃ¡rio';
   const companyName = localStorage.getItem('icarus_company') || 'Granja Vitta';
   
   if (welcomeUserName) welcomeUserName.textContent = userName;
@@ -726,7 +726,7 @@ async function showAppWithWelcome() {
   // Mostrar tela de boas-vindas
   welcomeScreen.classList.remove('hidden');
   
-  // Aguardar animação (3.5 segundos) e depois mostrar o app
+  // Aguardar animaÃ§Ã£o (3.5 segundos) e depois mostrar o app
   setTimeout(() => {
     welcomeScreen.classList.add('hidden');
     showApp();
@@ -744,13 +744,13 @@ async function showApp() {
   document.getElementById('user-avatar').textContent = avatar;
   
   // If operator selected, show it in the name
-  // Busca operador específico por username
+  // Busca operador especÃ­fico por username
   const username = state.user?.username || localStorage.getItem('icarus_username') || 'default';
   const selectedOperator = localStorage.getItem(`selectedOperator_${username}`);
   const displayName = selectedOperator ? `${state.user.name} (${selectedOperator})` : state.user.name;
   document.getElementById('user-name').textContent = displayName;
 
-  // Setup permissions e navegação (IMPORTANTE: refazer para garantir que funciona)
+  // Setup permissions e navegaÃ§Ã£o (IMPORTANTE: refazer para garantir que funciona)
   setupPermissions();
   setupNavigation();
   
@@ -758,16 +758,16 @@ async function showApp() {
   setTimeout(() => initPushNotifications(), 1000);
 
   // Load initial data
-  await loadUsers(); // Carregar usuários primeiro
+  await loadUsers(); // Carregar usuÃ¡rios primeiro
   
-  // Determinar view inicial baseado no tipo de tenant e permissões
+  // Determinar view inicial baseado no tipo de tenant e permissÃµes
   const roles = state.user.roles || [];
   const tenantType = state.tenantType || state.user?.tenant_type || localStorage.getItem('icarus_tenant_type') || 'granja';
   const isLavanderia = tenantType === 'lavanderia';
   const canSeeDashboard = roles.includes('admin') || roles.includes('os_manage_all') || roles.includes('os_view_all');
   
   if (isLavanderia) {
-    // Lavanderias vão direto para o módulo de lavanderia
+    // Lavanderias vÃ£o direto para o mÃ³dulo de lavanderia
     navigateTo('lavanderia');
   } else if (canSeeDashboard) {
     navigateTo('dashboard');
@@ -782,10 +782,10 @@ async function showApp() {
     }
   }, 5000);
   
-  // Verificar atualizações do app
+  // Verificar atualizaÃ§Ãµes do app
   setTimeout(() => checkAppVersion(), 2000);
   
-  // Inicializar busca rápida (Ctrl+K)
+  // Inicializar busca rÃ¡pida (Ctrl+K)
   initQuickSearch();
 }
 
@@ -795,63 +795,63 @@ function setupPermissions() {
   const tenantType = state.tenantType || state.user?.tenant_type || localStorage.getItem('icarus_tenant_type') || 'granja';
   
   // ========== ISOLAMENTO POR TIPO DE EMPRESA ==========
-  // Se for lavanderia, só mostra módulos de lavanderia
+  // Se for lavanderia, sÃ³ mostra mÃ³dulos de lavanderia
   const isLavanderia = tenantType === 'lavanderia';
   
-  // ========== SISTEMA DE PERMISSÕES POR ABA ==========
-  // Cada aba tem uma role específica para VER e outra para EDITAR
+  // ========== SISTEMA DE PERMISSÃ•ES POR ABA ==========
+  // Cada aba tem uma role especÃ­fica para VER e outra para EDITAR
   // Role 'admin' tem acesso total a tudo
   
-  // Dashboard: dashboard (ver) - Lavanderia NÃO tem dashboard separado, só o módulo lavanderia
+  // Dashboard: dashboard (ver) - Lavanderia NÃƒO tem dashboard separado, sÃ³ o mÃ³dulo lavanderia
   const canSeeDashboard = !isLavanderia && (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
   
-  // Ordens de Serviço: os (ver/criar), os_manage_all (gerenciar todas)
-  // OS sempre visível para granja, oculto para lavanderia
+  // Ordens de ServiÃ§o: os (ver/criar), os_manage_all (gerenciar todas)
+  // OS sempre visÃ­vel para granja, oculto para lavanderia
   const canSeeOS = !isLavanderia;
   
-  // Almoxarifado: almoxarifado_view (ver), almoxarifado (editar) - só granja
-  // Manutenção (os_manage_all) pode VER o almoxarifado para consultar peças
+  // Almoxarifado: almoxarifado_view (ver), almoxarifado (editar) - sÃ³ granja
+  // ManutenÃ§Ã£o (os_manage_all) pode VER o almoxarifado para consultar peÃ§as
   const canSeeAlmox = !isLavanderia && (isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view') || roles.includes('os_manage_all') || roles.includes('tech'));
   const canEditAlmox = !isLavanderia && (isAdmin || roles.includes('almoxarifado'));
   
-  // Compras: compras_view (ver), compras (editar), compras_request (pode enviar pedidos) - só granja
+  // Compras: compras_view (ver), compras (editar), compras_request (pode enviar pedidos) - sÃ³ granja
   const canSeeCompras = !isLavanderia && (isAdmin || roles.includes('compras') || roles.includes('compras_view') || roles.includes('compras_request'));
   const canEditCompras = !isLavanderia && (isAdmin || roles.includes('compras'));
   const canRequestCompras = !isLavanderia && (isAdmin || roles.includes('compras') || roles.includes('compras_request'));
   
-  // Preventivas: preventivas_view (ver), preventivas (editar) - só granja
+  // Preventivas: preventivas_view (ver), preventivas (editar) - sÃ³ granja
   const canSeePrev = !isLavanderia && (isAdmin || roles.includes('preventivas') || roles.includes('preventivas_view'));
   const canEditPrev = !isLavanderia && (isAdmin || roles.includes('preventivas'));
   
-  // Checklists: checklist (ver), checklist_manage (editar) - só granja
+  // Checklists: checklist (ver), checklist_manage (editar) - sÃ³ granja
   const canSeeChecklists = !isLavanderia && (isAdmin || roles.includes('checklist') || roles.includes('checklist_manage') || roles.includes('os_manage_all'));
   const canEditChecklists = !isLavanderia && (isAdmin || roles.includes('checklist_manage') || roles.includes('os_manage_all'));
   
-  // Controle de Água: agua (ver), agua_manage (editar) - só granja
+  // Controle de Ãgua: agua (ver), agua_manage (editar) - sÃ³ granja
   const canSeeWater = !isLavanderia && (isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all'));
   const canEditWater = !isLavanderia && (isAdmin || roles.includes('agua_manage') || roles.includes('os_manage_all'));
   
-  // Controle de Diesel: diesel (ver), diesel_manage (editar) - só granja
+  // Controle de Diesel: diesel (ver), diesel_manage (editar) - sÃ³ granja
   const canSeeDiesel = !isLavanderia && (isAdmin || roles.includes('diesel') || roles.includes('diesel_manage') || roles.includes('os_manage_all'));
   const canEditDiesel = !isLavanderia && (isAdmin || roles.includes('diesel_manage') || roles.includes('os_manage_all'));
   
-  // Gerador: gerador (ver), gerador_manage (editar) - só granja
+  // Gerador: gerador (ver), gerador_manage (editar) - sÃ³ granja
   const canSeeGerador = !isLavanderia && (isAdmin || roles.includes('gerador') || roles.includes('gerador_manage') || roles.includes('os_manage_all'));
   const canEditGerador = !isLavanderia && (isAdmin || roles.includes('gerador_manage') || roles.includes('os_manage_all'));
 
-  // Aditiva: aditiva_view (ver), aditiva (editar - só manutenção) - só granja
+  // Aditiva: aditiva_view (ver), aditiva (editar - sÃ³ manutenÃ§Ã£o) - sÃ³ granja
   const canSeeAditiva = !isLavanderia && (isAdmin || roles.includes('aditiva') || roles.includes('aditiva_view') || roles.includes('os_manage_all'));
   const canEditAditiva = !isLavanderia && (isAdmin || roles.includes('aditiva') || roles.includes('os_manage_all'));
 
-  // Lavanderia: só para tenant de lavanderia OU quem tem role lavanderia
+  // Lavanderia: sÃ³ para tenant de lavanderia OU quem tem role lavanderia
   const canSeeLavanderia = isLavanderia || isAdmin || roles.includes('lavanderia');
   const canEditLavanderia = isLavanderia || isAdmin || roles.includes('lavanderia');
 
-  // Relatórios: relatorios (ver), relatorios_write (escrever - só manutenção) - só granja por enquanto
+  // RelatÃ³rios: relatorios (ver), relatorios_write (escrever - sÃ³ manutenÃ§Ã£o) - sÃ³ granja por enquanto
   const canSeeRelatorios = !isLavanderia && (isAdmin || roles.includes('relatorios') || roles.includes('relatorios_write') || roles.includes('os_manage_all'));
   const canWriteRelatorios = !isLavanderia && (isAdmin || roles.includes('relatorios_write') || roles.includes('os_manage_all'));
 
-  // Elementos de navegação
+  // Elementos de navegaÃ§Ã£o
   const navDashboard = document.querySelector('[data-view="dashboard"]');
   const navOS = document.querySelector('[data-view="os"]');
   const navAlmox = document.querySelector('[data-view="almoxarifado"]');
@@ -888,7 +888,7 @@ function setupPermissions() {
     document.body.classList.remove('lavanderia-mode');
   }
   
-  // Salvar tipo de tenant e permissões no state
+  // Salvar tipo de tenant e permissÃµes no state
   state.tenantType = tenantType;
   state.isLavanderiaMode = isLavanderia;
   state.canEditDiesel = canEditDiesel;
@@ -902,21 +902,21 @@ function setupPermissions() {
   state.canEditAditiva = canEditAditiva;
   state.canWriteRelatorios = canWriteRelatorios;
   
-  console.log('Permissões configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
+  console.log('PermissÃµes configuradas. Roles:', roles, 'Pode editar diesel:', canEditDiesel, 'Pode editar gerador:', canEditGerador);
   
-  // Atualizar navegação mobile baseado nas permissões
+  // Atualizar navegaÃ§Ã£o mobile baseado nas permissÃµes
   setupMobileNavPermissions();
 }
 
-// Configura visibilidade dos itens da navegação mobile baseado nas permissões
+// Configura visibilidade dos itens da navegaÃ§Ã£o mobile baseado nas permissÃµes
 function setupMobileNavPermissions() {
   const roles = state.user?.roles || [];
   const isAdmin = roles.includes('admin');
   const tenantType = state.tenantType || localStorage.getItem('icarus_tenant_type') || 'granja';
   const isLavanderia = tenantType === 'lavanderia';
   
-  // Mesmas regras de permissão do setupPermissions - considerando tenant_type
-  // Para lavanderia: não tem dashboard separado, só o módulo lavanderia
+  // Mesmas regras de permissÃ£o do setupPermissions - considerando tenant_type
+  // Para lavanderia: nÃ£o tem dashboard separado, sÃ³ o mÃ³dulo lavanderia
   const canSeeDashboard = !isLavanderia && (isAdmin || roles.includes('dashboard') || roles.includes('os_manage_all') || roles.includes('os_view_all'));
   const canSeeOS = !isLavanderia;
   const canSeeWater = !isLavanderia && (isAdmin || roles.includes('agua') || roles.includes('agua_manage') || roles.includes('os_manage_all'));
@@ -929,7 +929,7 @@ function setupMobileNavPermissions() {
   const canSeeLavanderia = isLavanderia || isAdmin || roles.includes('lavanderia');
   const canSeeMore = !isLavanderia; // Esconder "Mais" para lavanderia
   
-  // Itens da barra de navegação mobile principal
+  // Itens da barra de navegaÃ§Ã£o mobile principal
   const mobileNavDashboard = document.querySelector('.mobile-nav-item[data-view="dashboard"]');
   const mobileNavOS = document.querySelector('.mobile-nav-item[data-view="os"]');
   const mobileNavWater = document.querySelector('.mobile-nav-item[data-view="controle-agua"]');
@@ -959,7 +959,7 @@ function setupMobileNavPermissions() {
   const moreAlmoxarifado = document.querySelector('.mobile-more-item[onclick*="almoxarifado"]');
   const moreConfig = document.querySelector('.mobile-more-item[onclick*="configuracoes"]');
   
-  // Permissão para almoxarifado mobile
+  // PermissÃ£o para almoxarifado mobile
   const canSeeAlmoxMobile = !isLavanderia && (isAdmin || roles.includes('almoxarifado') || roles.includes('almoxarifado_view') || roles.includes('os_manage_all') || roles.includes('tech'));
   
   if (moreGerador) moreGerador.style.display = canSeeGerador ? '' : 'none';
@@ -993,7 +993,7 @@ function setDashboardFilter(filter) {
   const filterBtn = document.getElementById(`filter-${filter}-new`);
   if (filterBtn) filterBtn.classList.add('active');
   
-  // Se escolheu mês específico, força monthly
+  // Se escolheu mÃªs especÃ­fico, forÃ§a monthly
   if (state.dashboardMonth && filter !== 'monthly') {
     state.dashboardMonth = null;
     document.getElementById('filter-month').value = '';
@@ -1003,7 +1003,7 @@ function setDashboardFilter(filter) {
   const labels = {
     daily: { period: 'hoje', period2: 'do dia', productivity: '(Hoje)' },
     weekly: { period: 'semana', period2: 'da semana', productivity: '(Esta Semana)' },
-    monthly: { period: 'mês', period2: 'do mês', productivity: '(Este Mês)' }
+    monthly: { period: 'mÃªs', period2: 'do mÃªs', productivity: '(Este MÃªs)' }
   };
   
   const periodLabel = document.getElementById('stat-period-label');
@@ -1022,7 +1022,7 @@ function setDashboardMonth(monthValue) {
   state.dashboardMonth = monthValue || null;
   
   if (monthValue) {
-    // Força filtro mensal quando seleciona mês específico
+    // ForÃ§a filtro mensal quando seleciona mÃªs especÃ­fico
     state.dashboardFilter = 'monthly';
     const dEl = document.getElementById('filter-daily-new');
     const wEl = document.getElementById('filter-weekly-new');
@@ -1031,7 +1031,7 @@ function setDashboardMonth(monthValue) {
     if (wEl) wEl.classList.remove('active');
     if (mEl) mEl.classList.add('active');
     
-    // Atualiza label com nome do mês
+    // Atualiza label com nome do mÃªs
     const [year, month] = monthValue.split('-');
     const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const monthLabel = `${monthNames[parseInt(month) - 1]}/${year}`;
@@ -1051,10 +1051,10 @@ function initMonthSelector() {
   
   const now = new Date();
   const months = [];
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+  const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 
                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   
-  // Últimos 12 meses
+  // Ãšltimos 12 meses
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -1062,7 +1062,7 @@ function initMonthSelector() {
     months.push({ value, label });
   }
   
-  select.innerHTML = '<option value="">Mês Atual</option>' + 
+  select.innerHTML = '<option value="">MÃªs Atual</option>' + 
     months.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
 }
 
@@ -1070,7 +1070,7 @@ function getDateRange() {
   const now = new Date();
   let startDate, endDate;
   
-  // Se tem mês específico selecionado
+  // Se tem mÃªs especÃ­fico selecionado
   if (state.dashboardMonth) {
     const [year, month] = state.dashboardMonth.split('-').map(Number);
     startDate = new Date(year, month - 1, 1);
@@ -1084,7 +1084,7 @@ function getDateRange() {
       endDate = new Date(now.setHours(23, 59, 59, 999));
       break;
     case 'weekly':
-      // Segunda a Sábado
+      // Segunda a SÃ¡bado
       const dayOfWeek = now.getDay();
       const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Se domingo, voltar 6 dias
       startDate = new Date(now);
@@ -1092,7 +1092,7 @@ function getDateRange() {
       startDate.setHours(0, 0, 0, 0);
       
       endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 5); // Até sábado
+      endDate.setDate(startDate.getDate() + 5); // AtÃ© sÃ¡bado
       endDate.setHours(23, 59, 59, 999);
       break;
     case 'monthly':
@@ -1158,7 +1158,7 @@ function updateDashboardStats() {
   if (statTotal) statTotal.textContent = createdInPeriod;
 
   // Update period labels
-  const periodLabels = { daily: 'hoje', weekly: 'semana', monthly: 'mês' };
+  const periodLabels = { daily: 'hoje', weekly: 'semana', monthly: 'mÃªs' };
   const periodLabel = periodLabels[state.dashboardFilter] || 'hoje';
   const label1 = document.getElementById('stat-period-label');
   const label2 = document.getElementById('stat-period-label2');
@@ -1198,7 +1198,7 @@ async function loadChecklistDashboard() {
     }
   } catch (error) {
     console.error('Erro ao carregar checklist dashboard:', error);
-    // Fallback com dados mock se endpoint não existir
+    // Fallback com dados mock se endpoint nÃ£o existir
     renderChecklistDashboard({
       today_total: 0,
       today_auto: 0,
@@ -1263,7 +1263,7 @@ function renderChecklistTimeline(executions) {
   if (executions.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.4); font-size: 12px;">
-        Nenhuma execução hoje
+        Nenhuma execuÃ§Ã£o hoje
       </div>
     `;
     return;
@@ -1284,7 +1284,7 @@ function renderChecklistTimeline(executions) {
         </div>
         <div class="timeline-item-info">
           <div class="timeline-item-name">${escapeHtml(name)}</div>
-          <div class="timeline-item-time">${time} • ${isAuto ? 'Automático' : 'Manual'}</div>
+          <div class="timeline-item-time">${time} â€¢ ${isAuto ? 'AutomÃ¡tico' : 'Manual'}</div>
         </div>
       </div>
     `;
@@ -1292,7 +1292,7 @@ function renderChecklistTimeline(executions) {
 }
 
 function updateDashboardSummary(filteredOrders, completed, total) {
-  // Taxa de conclusão
+  // Taxa de conclusÃ£o
   const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
   const rateEl = document.getElementById('completion-rate');
   if (rateEl) rateEl.textContent = rate + '%';
@@ -1301,7 +1301,7 @@ function updateDashboardSummary(filteredOrders, completed, total) {
   const createdEl = document.getElementById('created-count');
   if (createdEl) createdEl.textContent = total;
 
-  // Técnico destaque (quem mais concluiu)
+  // TÃ©cnico destaque (quem mais concluiu)
   const completedOrders = filteredOrders.filter(o => o.status === 'completed');
   const techStats = {};
   completedOrders.forEach(order => {
@@ -1316,7 +1316,7 @@ function updateDashboardSummary(filteredOrders, completed, total) {
   const topTechEl = document.getElementById('top-tech');
   if (topTechEl) topTechEl.textContent = topTech ? `${topTech[0]} (${topTech[1]})` : '-';
 
-  // Tempo médio (placeholder - precisa de finished_at no backend)
+  // Tempo mÃ©dio (placeholder - precisa de finished_at no backend)
   const avgTimeEl = document.getElementById('avg-time');
   if (avgTimeEl) avgTimeEl.textContent = '-';
 }
@@ -1362,7 +1362,7 @@ function renderRecentActivity() {
           <div class="activity-title-neo">${title}</div>
           <div class="activity-meta-neo">
             <span>${user}</span>
-            <span>•</span>
+            <span>â€¢</span>
             <span>${time}</span>
           </div>
         </div>
@@ -1377,9 +1377,9 @@ function formatTimeAgo(dateStr) {
   const diff = Math.floor((now - date) / 1000);
   
   if (diff < 60) return 'agora';
-  if (diff < 3600) return Math.floor(diff / 60) + 'min atrás';
-  if (diff < 86400) return Math.floor(diff / 3600) + 'h atrás';
-  if (diff < 604800) return Math.floor(diff / 86400) + 'd atrás';
+  if (diff < 3600) return Math.floor(diff / 60) + 'min atrÃ¡s';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h atrÃ¡s';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd atrÃ¡s';
   return date.toLocaleDateString('pt-BR');
 }
 
@@ -1396,7 +1396,7 @@ async function loadDashboardStats() {
     }
   } catch (error) {
     console.error('Erro ao carregar stats:', error);
-    // Fallback para método antigo se endpoint não existir
+    // Fallback para mÃ©todo antigo se endpoint nÃ£o existir
     renderProductivityChartLegacy(state.orders);
   }
 }
@@ -1414,7 +1414,7 @@ function renderProductivityChart() {
           <line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
-        <p style="font-size: 14px; margin: 0;">Nenhuma tarefa concluída ainda</p>
+        <p style="font-size: 14px; margin: 0;">Nenhuma tarefa concluÃ­da ainda</p>
       </div>
     `;
     return;
@@ -1445,7 +1445,7 @@ function renderProductivityChart() {
             ${user.total_tasks}
           </span>
           <span title="OS">${user.os_completed} OS</span>
-          ${avgTime ? `<span title="Tempo médio">${avgTime}</span>` : ''}
+          ${avgTime ? `<span title="Tempo mÃ©dio">${avgTime}</span>` : ''}
         </div>
       </div>
     `;
@@ -1457,7 +1457,7 @@ function renderProductivityChart() {
 function renderProductivityChartLegacy(filteredOrders = state.orders) {
   const completedOrders = filteredOrders.filter(o => o.status === 'completed');
   
-  // Contar OS por usuário (assigned_users) - todos os usuários da equipe de manutenção
+  // Contar OS por usuÃ¡rio (assigned_users) - todos os usuÃ¡rios da equipe de manutenÃ§Ã£o
   const userStats = {};
   
   completedOrders.forEach(order => {
@@ -1465,7 +1465,7 @@ function renderProductivityChartLegacy(filteredOrders = state.orders) {
       order.assigned_users.forEach(user => {
         const username = user.username.toLowerCase();
         const displayName = user.name || username;
-        // Usar o nome para exibição mas username como chave
+        // Usar o nome para exibiÃ§Ã£o mas username como chave
         if (!userStats[username]) {
           userStats[username] = { count: 0, name: displayName };
         }
@@ -1491,7 +1491,7 @@ function renderProductivityChartLegacy(filteredOrders = state.orders) {
         <div class="productivity-total">${data.count}</div>
       </div>
     `;
-  }).join('') : '<p style="color: var(--text-secondary); padding: 20px;">Nenhuma OS concluída ainda</p>';
+  }).join('') : '<p style="color: var(--text-secondary); padding: 20px;">Nenhuma OS concluÃ­da ainda</p>';
   
   document.getElementById('productivity-chart').innerHTML = chartHtml;
 }
@@ -1584,7 +1584,7 @@ state.osStatusFilter = null;
 
 // Filtrar OS por status (clicando nos cards)
 function filterOSByStatus(status) {
-  // Se clicar no mesmo filtro que já está ativo, desativa
+  // Se clicar no mesmo filtro que jÃ¡ estÃ¡ ativo, desativa
   if (state.osStatusFilter === status) {
     state.osStatusFilter = null;
   } else {
@@ -1599,11 +1599,11 @@ function filterOSByStatus(status) {
     if (state.osStatusFilter) {
       indicator.style.display = 'flex';
       const filterLabels = {
-        'pending': '🕐 Pendentes',
-        'in_progress': '⚡ Em Andamento',
-        'paused': '⏸️ Pausadas',
-        'completed': '✅ Concluídas',
-        'urgent': '🚨 Urgentes'
+        'pending': 'ðŸ• Pendentes',
+        'in_progress': 'âš¡ Em Andamento',
+        'paused': 'â¸ï¸ Pausadas',
+        'completed': 'âœ… ConcluÃ­das',
+        'urgent': 'ðŸš¨ Urgentes'
       };
       filterText.textContent = `Filtro: ${filterLabels[state.osStatusFilter] || state.osStatusFilter}`;
     } else {
@@ -1648,7 +1648,7 @@ function renderOrdersTable() {
     // Filtro especial para urgentes - filtra por prioridade HIGH
     filteredOrders = state.orders.filter(o => o.priority === 'high' && o.status !== 'completed');
   } else if (state.osStatusFilter === 'completed') {
-    // Mostrar concluídas do mês
+    // Mostrar concluÃ­das do mÃªs
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     filteredOrders = state.orders.filter(o => {
@@ -1660,13 +1660,13 @@ function renderOrdersTable() {
     // Filtro por status normal
     filteredOrders = state.orders.filter(o => o.status === state.osStatusFilter);
   } else {
-    // Sem filtro - mostrar apenas ativas (comportamento padrão)
+    // Sem filtro - mostrar apenas ativas (comportamento padrÃ£o)
     filteredOrders = state.orders.filter(o => o.status !== 'completed');
   }
   
   if (filteredOrders.length === 0) {
     const emptyMessage = state.osStatusFilter 
-      ? `Nenhuma OS ${state.osStatusFilter === 'urgent' ? 'urgente' : state.osStatusFilter === 'completed' ? 'concluída no mês' : ''} encontrada`
+      ? `Nenhuma OS ${state.osStatusFilter === 'urgent' ? 'urgente' : state.osStatusFilter === 'completed' ? 'concluÃ­da no mÃªs' : ''} encontrada`
       : 'Nenhuma OS ativa no momento';
     tbody.innerHTML = `
       <tr>
@@ -1691,7 +1691,7 @@ function renderOrdersTable() {
       <tr onclick="showOSDetail('${sanitizeId(order.id)}')" style="cursor: pointer;">
         <td>
           <div><strong>${escapeHtml(order.title)}</strong></div>
-          <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(order.sector) || '-'} • Solicitante: ${solicitante}</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(order.sector) || '-'} â€¢ Solicitante: ${solicitante}</div>
         </td>
         <td><span class="badge ${sanitizeId(order.priority)}">${getPriorityText(order.priority)}</span></td>
         <td>${assigned}</td>
@@ -1710,7 +1710,7 @@ function showOSDetail(orderId) {
   document.getElementById('detail-os-title').textContent = order.title;
   document.getElementById('detail-os-sector').textContent = order.sector;
   document.getElementById('detail-os-created').textContent = formatDate(order.created_at);
-  document.getElementById('detail-os-description').textContent = order.description || 'Sem observações';
+  document.getElementById('detail-os-description').textContent = order.description || 'Sem observaÃ§Ãµes';
   
   // Solicitante
   const solicitanteEl = document.getElementById('detail-os-solicitante');
@@ -1726,7 +1726,7 @@ function showOSDetail(orderId) {
   priorityBadge.textContent = getPriorityText(order.priority);
   priorityBadge.className = `badge ${order.priority}`;
 
-  // Horários de início, fim e tempo total
+  // HorÃ¡rios de inÃ­cio, fim e tempo total
   const startedRow = document.getElementById('detail-os-started-row');
   const finishedRow = document.getElementById('detail-os-finished-row');
   const tempoRow = document.getElementById('detail-os-tempo-row');
@@ -1751,9 +1751,9 @@ function showOSDetail(orderId) {
     finishedRow.style.display = 'none';
   }
 
-  // Calcular tempo total - usar worked_minutes se disponível
+  // Calcular tempo total - usar worked_minutes se disponÃ­vel
   if (order.worked_minutes && order.worked_minutes > 0) {
-    // Usar worked_minutes do backend (já descontado o tempo de descanso)
+    // Usar worked_minutes do backend (jÃ¡ descontado o tempo de descanso)
     const totalMinutes = order.worked_minutes;
     const diffHours = Math.floor(totalMinutes / 60);
     const diffMinutes = totalMinutes % 60;
@@ -1770,7 +1770,7 @@ function showOSDetail(orderId) {
     tempoEl.style.color = '';
     tempoRow.style.display = '';
   } else if (startedAt && finishedAt) {
-    // Fallback: calcular diferença bruta
+    // Fallback: calcular diferenÃ§a bruta
     const diffMs = finishedAt - startedAt;
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -1799,28 +1799,28 @@ function showOSDetail(orderId) {
     tempoRow.style.display = 'none';
   }
 
-  // Nota de progresso/comentário
+  // Nota de progresso/comentÃ¡rio
   const noteField = document.getElementById('detail-os-note');
   if (noteField) {
     noteField.value = order.progress_note || order.description || '';
   }
   
-  // Mostrar usuários atribuídos
+  // Mostrar usuÃ¡rios atribuÃ­dos
   const assignedContainer = document.getElementById('detail-os-assigned');
   if (order.assigned_users && order.assigned_users.length > 0) {
     assignedContainer.innerHTML = order.assigned_users.map(u => 
       `<span class="user-chip">${escapeHtml(u.name || u.username)}</span>`
     ).join('');
   } else {
-    assignedContainer.innerHTML = '<span style="color: var(--text-secondary);">Nenhum técnico atribuído</span>';
+    assignedContainer.innerHTML = '<span style="color: var(--text-secondary);">Nenhum tÃ©cnico atribuÃ­do</span>';
   }
   
-  // Checkboxes para editar atribuições (se for o criador ou admin)
+  // Checkboxes para editar atribuiÃ§Ãµes (se for o criador ou admin)
   const canEdit = state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all') || order.requested_by === state.user.id;
   const canManageAll = state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all');
   const checkboxContainer = document.getElementById('detail-assign-checkboxes');
   
-  // Mostrar seção de datas retroativas (só para manutenção/admin e quando não concluída)
+  // Mostrar seÃ§Ã£o de datas retroativas (sÃ³ para manutenÃ§Ã£o/admin e quando nÃ£o concluÃ­da)
   const retroactiveDates = document.getElementById('detail-retroactive-dates');
   if (retroactiveDates) {
     if (canManageAll && order.status !== 'completed') {
@@ -1835,13 +1835,13 @@ function showOSDetail(orderId) {
     }
   }
   
-  // Checkboxes para editar atribuições
-  // APENAS Manutenção/admin pode editar técnicos (usuário comum não pode mais)
+  // Checkboxes para editar atribuiÃ§Ãµes
+  // APENAS ManutenÃ§Ã£o/admin pode editar tÃ©cnicos (usuÃ¡rio comum nÃ£o pode mais)
   const canEditAssignments = canManageAll;
   
   if (canEditAssignments) {
     const assignedIds = order.assigned_users ? order.assigned_users.map(u => u.id) : [];
-    const labelText = order.status === 'completed' ? 'Editar técnicos (OS concluída):' : 'Alterar atribuições:';
+    const labelText = order.status === 'completed' ? 'Editar tÃ©cnicos (OS concluÃ­da):' : 'Alterar atribuiÃ§Ãµes:';
     checkboxContainer.innerHTML = `
       <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">${labelText}</label>
       ${['declie', 'eduardo', 'vanderlei', 'alissom'].map(username => {
@@ -1855,7 +1855,7 @@ function showOSDetail(orderId) {
     checkboxContainer.innerHTML = '';
   }
   
-  // Ações com estilo moderno
+  // AÃ§Ãµes com estilo moderno
   const actionsContainer = document.getElementById('detail-os-actions');
   const btnBase = 'padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;';
   const btnCancel = `${btnBase} background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);`;
@@ -1866,7 +1866,7 @@ function showOSDetail(orderId) {
   
   let actions = `<button type="button" style="${btnCancel}" onclick="closeModal('modal-os-detail')">Fechar</button>`;
   
-  // Botão salvar - manutenção pode salvar mesmo em OS concluída
+  // BotÃ£o salvar - manutenÃ§Ã£o pode salvar mesmo em OS concluÃ­da
   if (canEditAssignments) {
     actions += `<button type="button" style="${btnPrimary}" onclick="updateOSAssignments('${order.id}')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -1886,7 +1886,7 @@ function showOSDetail(orderId) {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
       Pausar
     </button>`;
-    // Somente manutenção pode concluir
+    // Somente manutenÃ§Ã£o pode concluir
     if (canManageAll) {
       actions += `<button type="button" style="${btnSuccess}" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -1895,13 +1895,13 @@ function showOSDetail(orderId) {
     }
   }
   
-  // Se estiver pausada, mostrar botão de retomar
+  // Se estiver pausada, mostrar botÃ£o de retomar
   if (canEdit && order.status === 'paused') {
     actions += `<button type="button" style="${btnPrimary}" onclick="resumeOrder('${order.id}')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Retomar
     </button>`;
-    // Somente manutenção pode concluir
+    // Somente manutenÃ§Ã£o pode concluir
     if (canManageAll) {
       actions += `<button type="button" style="${btnSuccess}" onclick="completeOrder('${order.id}'); closeModal('modal-os-detail')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -1910,7 +1910,7 @@ function showOSDetail(orderId) {
     }
   }
   
-  // Botão excluir - criador pode excluir sua OS, manutenção pode excluir qualquer
+  // BotÃ£o excluir - criador pode excluir sua OS, manutenÃ§Ã£o pode excluir qualquer
   const canDelete = order.requested_by === state.user.id || state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all');
   if (canDelete) {
     actions += `<button type="button" style="${btnDanger}" onclick="deleteOrder('${order.id}')">
@@ -1928,7 +1928,7 @@ function showOSDetail(orderId) {
 }
 
 async function updateOSAssignments(orderId) {
-  // Pegar usuários selecionados
+  // Pegar usuÃ¡rios selecionados
   const assignedUsernames = [];
   ['declie', 'eduardo', 'vanderlei', 'alissom'].forEach(username => {
     if (document.getElementById(`detail-assign-${username}`)?.checked) {
@@ -1962,15 +1962,15 @@ async function updateOSAssignments(orderId) {
       data = await response.json();
     } catch (jsonErr) {
       const text = await response.text();
-      showNotification(`Resposta inválida do servidor: ${text.substring(0, 100)}`, 'error');
+      showNotification(`Resposta invÃ¡lida do servidor: ${text.substring(0, 100)}`, 'error');
       return;
     }
     if (data.ok) {
       await loadOrders();
       // await backupOrdersToTXT(); // Desabilitado temporariamente
       closeModal('modal-os-detail');
-      showNotification('✓ Salvo', 'success');
-      // Atualizar visualização dos técnicos atribuídos se necessário
+      showNotification('âœ“ Salvo', 'success');
+      // Atualizar visualizaÃ§Ã£o dos tÃ©cnicos atribuÃ­dos se necessÃ¡rio
       if (data.assigned_users) {
         const assignedContainer = document.getElementById('detail-os-assigned');
         assignedContainer.innerHTML = data.assigned_users.map(u => `<span class="user-chip">${escapeHtml(u.name || u.username)}</span>`).join('');
@@ -1993,7 +1993,7 @@ async function loadHistoryInOS() {
   const completedOrders = state.orders.filter(o => o.status === 'completed');
   
   if (completedOrders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Nenhuma OS concluída</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Nenhuma OS concluÃ­da</td></tr>';
     return;
   }
 
@@ -2001,10 +2001,10 @@ async function loadHistoryInOS() {
     const startedAt = o.started_at ? new Date(o.started_at) : null;
     const finishedAt = o.finished_at ? new Date(o.finished_at) : null;
     
-    // Calcular tempo total - usar worked_minutes se disponível (já com descanso descontado)
+    // Calcular tempo total - usar worked_minutes se disponÃ­vel (jÃ¡ com descanso descontado)
     let tempoTotal = '-';
     if (o.worked_minutes && o.worked_minutes > 0) {
-      // Usar worked_minutes do backend (já descontado o tempo de descanso)
+      // Usar worked_minutes do backend (jÃ¡ descontado o tempo de descanso)
       const totalMinutes = o.worked_minutes;
       const diffHours = Math.floor(totalMinutes / 60);
       const diffMinutes = totalMinutes % 60;
@@ -2017,7 +2017,7 @@ async function loadHistoryInOS() {
         tempoTotal = `${diffHours}h ${diffMinutes}min`;
       }
     } else if (startedAt && finishedAt) {
-      // Fallback: calcular diferença bruta (sem descanso descontado)
+      // Fallback: calcular diferenÃ§a bruta (sem descanso descontado)
       const diffMs = finishedAt - startedAt;
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -2067,7 +2067,7 @@ function toggleOSView(view) {
     btnAtivas.classList.remove('active');
     contentHistorico.classList.remove('hidden');
     contentAtivas.classList.add('hidden');
-    loadHistoryInOS(); // Carregar histórico ao mostrar
+    loadHistoryInOS(); // Carregar histÃ³rico ao mostrar
   }
 }
 
@@ -2104,7 +2104,7 @@ async function startOrder(orderId) {
   }
 }
 
-// Pausar OS (para almoço, fim do dia, etc)
+// Pausar OS (para almoÃ§o, fim do dia, etc)
 async function pauseOrder(orderId) {
   try {
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
@@ -2118,7 +2118,7 @@ async function pauseOrder(orderId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('⏸ OS pausada - tempo registrado!', 'info');
+      showNotification('â¸ OS pausada - tempo registrado!', 'info');
       closeModal('modal-os-detail');
       await loadOrders();
     } else {
@@ -2143,7 +2143,7 @@ async function resumeOrder(orderId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('▶ OS retomada!', 'success');
+      showNotification('â–¶ OS retomada!', 'success');
       closeModal('modal-os-detail');
       await loadOrders();
     } else {
@@ -2155,12 +2155,12 @@ async function resumeOrder(orderId) {
 }
 
 async function completeOrder(orderId) {
-  // Verificar se alguém foi atribuído à OS antes de concluir
+  // Verificar se alguÃ©m foi atribuÃ­do Ã  OS antes de concluir
   const order = state.orders.find(o => o.id === orderId);
   if (order) {
     const hasAssigned = order.assigned_users && order.assigned_users.length > 0;
     
-    // Verificar também os checkboxes no modal (caso esteja aberto)
+    // Verificar tambÃ©m os checkboxes no modal (caso esteja aberto)
     const assignedUsernames = [];
     ['declie', 'eduardo', 'vanderlei', 'alissom'].forEach(username => {
       const checkbox = document.getElementById(`detail-assign-${username}`);
@@ -2191,7 +2191,7 @@ async function completeOrder(orderId) {
           body: JSON.stringify({ assigned_user_ids: assignedUserIds })
         });
       } catch (e) {
-        console.error('Erro ao atribuir usuários:', e);
+        console.error('Erro ao atribuir usuÃ¡rios:', e);
       }
     }
   }
@@ -2205,12 +2205,12 @@ async function completeOrder(orderId) {
     const finishedAtCustom = finishedAtCustomInput?.value || null;
     const breakMinutes = breakMinutesInput?.value ? parseInt(breakMinutesInput.value) : 0;
     
-    // Converter datetime-local para ISO com timezone de Brasília (-03:00)
+    // Converter datetime-local para ISO com timezone de BrasÃ­lia (-03:00)
     // datetime-local retorna "2026-01-12T08:01" sem timezone
-    // Adicionamos :00-03:00 para indicar que é horário de Brasília
+    // Adicionamos :00-03:00 para indicar que Ã© horÃ¡rio de BrasÃ­lia
     const toISOLocal = (dtValue) => {
       if (!dtValue) return null;
-      // Adicionar segundos e timezone de Brasília
+      // Adicionar segundos e timezone de BrasÃ­lia
       return dtValue + ':00-03:00';
     };
     
@@ -2236,7 +2236,7 @@ async function completeOrder(orderId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('OS concluída com sucesso!', 'success');
+      showNotification('OS concluÃ­da com sucesso!', 'success');
       await loadOrders();
       closeModal('modal-os-detail');
     } else {
@@ -2247,20 +2247,20 @@ async function completeOrder(orderId) {
   }
 }
 
-// Função específica para fechar OS com datas retroativas
+// FunÃ§Ã£o especÃ­fica para fechar OS com datas retroativas
 async function closeOrderWithRetroactiveDates() {
   // Pegar o ID da OS do modal aberto
   const osIdEl = document.querySelector('#modal-os-detail [data-order-id]');
   const osTitle = document.getElementById('detail-os-title');
   
-  // Buscar a OS pelo título ou iterar orders
+  // Buscar a OS pelo tÃ­tulo ou iterar orders
   const order = state.orders.find(o => {
     const titleEl = document.getElementById('detail-os-title');
     return titleEl && o.title === titleEl.textContent;
   });
   
   if (!order) {
-    showNotification('Erro: OS não encontrada. Feche e abra novamente.', 'error');
+    showNotification('Erro: OS nÃ£o encontrada. Feche e abra novamente.', 'error');
     return;
   }
   
@@ -2277,21 +2277,21 @@ async function closeOrderWithRetroactiveDates() {
   
   // Validar que pelo menos uma data foi preenchida
   if (!startedAtCustom && !finishedAtCustom) {
-    showNotification('Preencha pelo menos a Data/Hora de Início ou Conclusão!', 'error');
+    showNotification('Preencha pelo menos a Data/Hora de InÃ­cio ou ConclusÃ£o!', 'error');
     return;
   }
   
-  // Validar que a data de fim é posterior ao início
+  // Validar que a data de fim Ã© posterior ao inÃ­cio
   if (startedAtCustom && finishedAtCustom) {
     const start = new Date(startedAtCustom);
     const end = new Date(finishedAtCustom);
     if (end <= start) {
-      showNotification('A data de conclusão deve ser posterior à data de início!', 'error');
+      showNotification('A data de conclusÃ£o deve ser posterior Ã  data de inÃ­cio!', 'error');
       return;
     }
   }
   
-  // Verificar se tem técnico atribuído
+  // Verificar se tem tÃ©cnico atribuÃ­do
   let hasAssigned = order.assigned_users && order.assigned_users.length > 0;
   const assignedUsernames = [];
   
@@ -2308,7 +2308,7 @@ async function closeOrderWithRetroactiveDates() {
   }
   
   try {
-    // Salvar atribuições primeiro
+    // Salvar atribuiÃ§Ãµes primeiro
     if (assignedUsernames.length > 0) {
       const assignedUserIds = state.users
         .filter(u => assignedUsernames.includes(u.username.toLowerCase()))
@@ -2327,12 +2327,12 @@ async function closeOrderWithRetroactiveDates() {
     // Converter datetime-local para ISO com timezone local
     // datetime-local retorna "2026-01-12T08:01" sem timezone
     // new Date() pode interpretar isso como UTC ou local dependendo do browser
-    // Vamos garantir que seja interpretado como horário local de Brasília (UTC-3)
+    // Vamos garantir que seja interpretado como horÃ¡rio local de BrasÃ­lia (UTC-3)
     const toISOWithTimezone = (dateTimeLocalValue) => {
       if (!dateTimeLocalValue) return null;
       // dateTimeLocalValue vem como "2026-01-12T08:01"
-      // Adicionar timezone de Brasília (-03:00) para garantir interpretação correta
-      // Isso faz o backend entender que 08:01 é horário de Brasília, não UTC
+      // Adicionar timezone de BrasÃ­lia (-03:00) para garantir interpretaÃ§Ã£o correta
+      // Isso faz o backend entender que 08:01 Ã© horÃ¡rio de BrasÃ­lia, nÃ£o UTC
       const withTimezone = dateTimeLocalValue + ':00-03:00';
       return withTimezone;
     };
@@ -2381,7 +2381,7 @@ async function deleteOrder(orderId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('OS excluída com sucesso!', 'success');
+      showNotification('OS excluÃ­da com sucesso!', 'success');
       closeModal('modal-os-detail');
       await loadOrders();
     } else {
@@ -2396,7 +2396,7 @@ function showCreateOS() {
   // Limpar form
   document.getElementById('form-create-os').reset();
   
-  // Mostrar seção de atribuição apenas para manutenção
+  // Mostrar seÃ§Ã£o de atribuiÃ§Ã£o apenas para manutenÃ§Ã£o
   const assignSection = document.getElementById('os-assign-section');
   if (assignSection) {
     const canAssign = state.user && state.user.roles && (
@@ -2421,11 +2421,11 @@ async function createOrderFromForm(event) {
   const description = document.getElementById('os-description').value.trim();
   
   if (!title) {
-    showNotification('Título é obrigatório!', 'error');
+    showNotification('TÃ­tulo Ã© obrigatÃ³rio!', 'error');
     return;
   }
   
-  // Pegar usuários selecionados
+  // Pegar usuÃ¡rios selecionados
   const assignedUsernames = [];
   ['declie', 'eduardo', 'vanderlei', 'alissom'].forEach(username => {
     if (document.getElementById(`assign-${username}`).checked) {
@@ -2433,10 +2433,10 @@ async function createOrderFromForm(event) {
     }
   });
   
-  // Buscar IDs dos usuários
+  // Buscar IDs dos usuÃ¡rios
   const assignedUserIds = [];
   if (assignedUsernames.length > 0) {
-    // Buscar users do state ou fazer requisição
+    // Buscar users do state ou fazer requisiÃ§Ã£o
     await loadUsers();
     state.users.forEach(user => {
       if (assignedUsernames.includes(user.username.toLowerCase())) {
@@ -2458,7 +2458,7 @@ async function createOrderFromForm(event) {
 }
 
 async function loadUsers() {
-  if (state.users.length > 0) return; // Já carregado
+  if (state.users.length > 0) return; // JÃ¡ carregado
   
   try {
     const response = await fetch(`${API_URL}/users`, {
@@ -2469,7 +2469,7 @@ async function loadUsers() {
       state.users = data.users;
     }
   } catch (error) {
-    console.error('Erro ao carregar usuários:', error);
+    console.error('Erro ao carregar usuÃ¡rios:', error);
   }
 }
 
@@ -2506,11 +2506,11 @@ async function backupOrdersToTXT() {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 60);
     
-    // Filtrar últimas 60 dias
+    // Filtrar Ãºltimas 60 dias
     const recentOrders = state.orders.filter(o => new Date(o.created_at) >= cutoff);
     const ordersToday = recentOrders.filter(o => o.created_at.startsWith(dateStr));
     
-    let content = `BACKUP ORDENS DE SERVIÇO - ${timestamp}\n`;
+    let content = `BACKUP ORDENS DE SERVIÃ‡O - ${timestamp}\n`;
     content += '='.repeat(100) + '\n\n';
     content += `TENANT: ${tenantName}\n`;
     content += `TOTAL DE OS (60d): ${recentOrders.length}\n`;
@@ -2518,20 +2518,20 @@ async function backupOrdersToTXT() {
     content += '='.repeat(100) + '\n\n';
     
     recentOrders.forEach(order => {
-      const statusLabels = { open: 'Aberta', in_progress: 'Em Andamento', completed: 'Concluída', cancelled: 'Cancelada' };
-      const priorityLabels = { high: 'Alta', medium: 'Média', low: 'Baixa' };
+      const statusLabels = { open: 'Aberta', in_progress: 'Em Andamento', completed: 'ConcluÃ­da', cancelled: 'Cancelada' };
+      const priorityLabels = { high: 'Alta', medium: 'MÃ©dia', low: 'Baixa' };
       
       content += `OS #${order.id}\n`;
-      content += `Título: ${order.title}\n`;
+      content += `TÃ­tulo: ${order.title}\n`;
       content += `Status: ${statusLabels[order.status] || order.status}\n`;
-      content += `Urgência: ${priorityLabels[order.priority] || order.priority}\n`;
+      content += `UrgÃªncia: ${priorityLabels[order.priority] || order.priority}\n`;
       content += `Local/Setor: ${order.sector || 'N/A'}\n`;
       content += `Solicitante: ${order.requested_by_name || 'N/A'}\n`;
-      content += `Comentário: ${order.progress_note || order.description || 'N/A'}\n`;
+      content += `ComentÃ¡rio: ${order.progress_note || order.description || 'N/A'}\n`;
       
       if (order.assigned_users && order.assigned_users.length > 0) {
         const techs = order.assigned_users.map(u => u.username).join(', ');
-        content += `Técnicos: ${techs}\n`;
+        content += `TÃ©cnicos: ${techs}\n`;
       }
       
       content += `Criada em: ${new Date(order.created_at).toLocaleString('pt-BR')}\n`;
@@ -2541,11 +2541,11 @@ async function backupOrdersToTXT() {
       }
       
       if (order.finished_at) {
-        content += `Concluída em: ${new Date(order.finished_at).toLocaleString('pt-BR')}\n`;
+        content += `ConcluÃ­da em: ${new Date(order.finished_at).toLocaleString('pt-BR')}\n`;
       }
       
       if (order.description) {
-        content += `Descrição: ${order.description}\n`;
+        content += `DescriÃ§Ã£o: ${order.description}\n`;
       }
       
       content += '-'.repeat(100) + '\n\n';
@@ -2579,7 +2579,7 @@ async function backupOrdersToTXT() {
 }
 
 // History
-// NOTA: loadInventory() real está mais abaixo no arquivo
+// NOTA: loadInventory() real estÃ¡ mais abaixo no arquivo
 
 function renderInventoryOld() {
   const view = document.getElementById('almoxarifado-view');
@@ -2593,7 +2593,7 @@ function renderInventoryOld() {
       </div>
       ${lowStock.length > 0 ? `
         <div style="background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <strong style="color: var(--danger);">◆ ${lowStock.length} itens com estoque baixo!</strong>
+          <strong style="color: var(--danger);">â—† ${lowStock.length} itens com estoque baixo!</strong>
         </div>
       ` : ''}
       <div class="table-container">
@@ -2604,7 +2604,7 @@ function renderInventoryOld() {
               <th>Nome</th>
               <th>Quantidade</th>
               <th>Unidade</th>
-              <th>Localização</th>
+              <th>LocalizaÃ§Ã£o</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -2633,9 +2633,9 @@ function renderInventoryOld() {
   view.innerHTML = html;
 }
 
-// NOTA: Funções loadPurchases() e loadPreventives() reais estão mais abaixo no arquivo
+// NOTA: FunÃ§Ãµes loadPurchases() e loadPreventives() reais estÃ£o mais abaixo no arquivo
 
-// Reports (Relatórios)
+// Reports (RelatÃ³rios)
 async function loadReports() {
   const completedOrders = state.orders.filter(o => o.status === 'completed');
   
@@ -2652,12 +2652,12 @@ async function loadReports() {
         if (userStats[username]) {
           userStats[username].count++;
           
-          // Calcular tempo - usar worked_minutes se disponível
+          // Calcular tempo - usar worked_minutes se disponÃ­vel
           if (order.worked_minutes && order.worked_minutes > 0) {
-            // worked_minutes já está em minutos, converter para ms
+            // worked_minutes jÃ¡ estÃ¡ em minutos, converter para ms
             userStats[username].totalTime += order.worked_minutes * 60 * 1000;
           } else if (order.started_at && order.finished_at) {
-            // Fallback: calcular diferença bruta
+            // Fallback: calcular diferenÃ§a bruta
             const duration = new Date(order.finished_at) - new Date(order.started_at);
             userStats[username].totalTime += duration;
           }
@@ -2687,9 +2687,9 @@ async function loadReports() {
   }).join('');
   
   document.getElementById('relatorio-productivity').innerHTML = productivityHtml || 
-    '<p style="color: var(--text-secondary); padding: 20px;">Nenhum dado disponível</p>';
+    '<p style="color: var(--text-secondary); padding: 20px;">Nenhum dado disponÃ­vel</p>';
   
-  // Tempo médio
+  // Tempo mÃ©dio
   const timeHtml = sorted.map(([username, stats]) => {
     const avgTime = stats.count > 0 ? (stats.totalTime / stats.count / (1000 * 60 * 60)).toFixed(1) : 0;
     return `
@@ -2706,9 +2706,9 @@ async function loadReports() {
   }).join('');
   
   document.getElementById('relatorio-time').innerHTML = timeHtml ||
-    '<p style="color: var(--text-secondary); padding: 20px;">Nenhum dado disponível</p>';
+    '<p style="color: var(--text-secondary); padding: 20px;">Nenhum dado disponÃ­vel</p>';
   
-  // Por urgência
+  // Por urgÃªncia
   const priorityStats = {
     high: completedOrders.filter(o => o.priority === 'high').length,
     medium: completedOrders.filter(o => o.priority === 'medium').length,
@@ -2729,7 +2729,7 @@ async function loadReports() {
       <div class="productivity-total">${priorityStats.high}</div>
     </div>
     <div class="productivity-bar">
-      <div class="productivity-name">Média</div>
+      <div class="productivity-name">MÃ©dia</div>
       <div class="productivity-bar-container">
         <div class="productivity-bar-fill" style="width: ${(priorityStats.medium / maxPriority) * 100}%; background: linear-gradient(90deg, var(--warning) 0%, #d97706 100%);">
           <span class="productivity-count">${priorityStats.medium}</span>
@@ -2749,7 +2749,7 @@ async function loadReports() {
   `;
   
   document.getElementById('relatorio-priority').innerHTML = priorityHtml ||
-    '<p style="color: var(--text-secondary); padding: 20px;">Nenhum dado disponível</p>';
+    '<p style="color: var(--text-secondary); padding: 20px;">Nenhum dado disponÃ­vel</p>';
 }
 
 // Notifications System
@@ -2805,7 +2805,7 @@ async function checkForUpdates() {
     }
 
   } catch (error) {
-    console.error('Erro ao verificar atualizações:', error);
+    console.error('Erro ao verificar atualizaÃ§Ãµes:', error);
   }
 }
 
@@ -2816,10 +2816,10 @@ function showNotification(message, type = 'info', duration = 5000, playSound = t
   const id = 'notif-' + Date.now();
   
   const typeIcons = {
-    success: '✓',
-    error: '✗',
-    warning: '⚠',
-    info: 'ℹ'
+    success: 'âœ“',
+    error: 'âœ—',
+    warning: 'âš ',
+    info: 'â„¹'
   };
   
   const typeColors = {
@@ -2829,10 +2829,10 @@ function showNotification(message, type = 'info', duration = 5000, playSound = t
     info: '#3b82f6'
   };
   
-  // Tocar som de notificação
+  // Tocar som de notificaÃ§Ã£o
   if (playSound && typeof Audio !== 'undefined') {
     try {
-      // Som de notificação estilo Discord (frequência curta)
+      // Som de notificaÃ§Ã£o estilo Discord (frequÃªncia curta)
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
@@ -2907,11 +2907,11 @@ function showNotification(message, type = 'info', duration = 5000, playSound = t
         transition: all 0.2s;
         color: rgba(255,255,255,0.5);
         font-size: 14px;
-      " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">×</span>
+      " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Ã—</span>
     </div>
   `;
   
-  // Adicionar ao início (notificações mais recentes em cima)
+  // Adicionar ao inÃ­cio (notificaÃ§Ãµes mais recentes em cima)
   container.insertBefore(notification, container.firstChild);
   
   // Auto remove after duration
@@ -2934,7 +2934,7 @@ function getStatusText(status) {
     'pending': 'Pendente',
     'in_progress': 'Em Andamento',
     'paused': 'Pausada',
-    'completed': 'Concluída'
+    'completed': 'ConcluÃ­da'
   };
   return map[status] || status;
 }
@@ -2942,7 +2942,7 @@ function getStatusText(status) {
 function getPriorityText(priority) {
   const map = {
     'low': 'Baixa',
-    'medium': 'Média',
+    'medium': 'MÃ©dia',
     'high': 'Alta'
   };
   return map[priority] || priority;
@@ -2991,7 +2991,7 @@ async function loadInventory() {
     if (cached) {
       state.inventory = cached;
       renderInventoryTable();
-      showNotification('Sem conexão - usando dados salvos', 'warning');
+      showNotification('Sem conexÃ£o - usando dados salvos', 'warning');
     } else {
       showNotification('Erro ao carregar almoxarifado', 'error');
     }
@@ -3002,7 +3002,7 @@ function renderInventoryTable() {
   const tbody = document.querySelector('#almoxarifado-table tbody');
   if (!tbody) return;
 
-  // Atualizar estatísticas
+  // Atualizar estatÃ­sticas
   updateAlmoxarifadoStats();
   
   // Atualizar lista de marcas no filtro
@@ -3015,24 +3015,24 @@ function renderInventoryTable() {
   }
 
   const categoryLabels = {
-    ferramentas: '🔧 Ferramentas',
-    eletrica: '⚡ Elétrica',
-    hidraulica: '💧 Hidráulica',
-    rolamentos: '⚙️ Rolamentos',
-    parafusos: '🔩 Parafusos',
-    lubrificantes: '🛢️ Lubrificantes',
-    epis: '🦺 EPIs',
-    outros: '📦 Outros',
+    ferramentas: 'ðŸ”§ Ferramentas',
+    eletrica: 'âš¡ ElÃ©trica',
+    hidraulica: 'ðŸ’§ HidrÃ¡ulica',
+    rolamentos: 'âš™ï¸ Rolamentos',
+    parafusos: 'ðŸ”© Parafusos',
+    lubrificantes: 'ðŸ›¢ï¸ Lubrificantes',
+    epis: 'ðŸ¦º EPIs',
+    outros: 'ðŸ“¦ Outros',
     // Categorias antigas para compatibilidade
-    eletrico: '⚡ Elétrico',
-    pneumatico: 'Pneumático',
-    hidraulico: '💧 Hidráulico',
-    mecanico: 'Mecânico',
-    rolamento: '⚙️ Rolamento',
-    ferramenta: '🔧 Ferramenta',
-    epi: '🦺 EPI',
+    eletrico: 'âš¡ ElÃ©trico',
+    pneumatico: 'PneumÃ¡tico',
+    hidraulico: 'ðŸ’§ HidrÃ¡ulico',
+    mecanico: 'MecÃ¢nico',
+    rolamento: 'âš™ï¸ Rolamento',
+    ferramenta: 'ðŸ”§ Ferramenta',
+    epi: 'ðŸ¦º EPI',
     limpeza: 'Limpeza',
-    outro: '📦 Outro'
+    outro: 'ðŸ“¦ Outro'
   };
 
   const categoryClasses = {
@@ -3064,15 +3064,15 @@ function renderInventoryTable() {
   tbody.innerHTML = itemsToShow.map(item => {
     var catClass = categoryClasses[item.category] || 'outros';
     var statusClass = item.quantity <= 0 ? 'badge-high' : (item.quantity <= (item.min_stock || 0) ? 'badge-warning' : 'badge-low');
-    var statusText = item.quantity <= 0 ? '🔴 Zerado' : (item.quantity <= (item.min_stock || 0) ? '⚠️ Baixo' : '✅ OK');
+    var statusText = item.quantity <= 0 ? 'ðŸ”´ Zerado' : (item.quantity <= (item.min_stock || 0) ? 'âš ï¸ Baixo' : 'âœ… OK');
     
     // Itens em uso (emprestados)
     var inUse = item.in_use_count || 0;
     var inUseBadge = inUse > 0 
-      ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px; margin-left:4px;" title="Itens emprestados aguardando devolução">🔄 ' + inUse + ' em uso</span>'
+      ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px; margin-left:4px;" title="Itens emprestados aguardando devoluÃ§Ã£o">ðŸ”„ ' + inUse + ' em uso</span>'
       : '';
     
-    // Criar descrição informativa do item
+    // Criar descriÃ§Ã£o informativa do item
     var descParts = [];
     if (item.brand) descParts.push(item.brand);
     if (item.specs) {
@@ -3080,13 +3080,13 @@ function renderInventoryTable() {
       descParts.push(specsPreview);
     }
     var descHtml = descParts.length > 0 
-      ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(descParts.join(' • ')) + '</div>'
-      : '<div style="font-size:11px; color:var(--text-muted); margin-top:2px; font-style:italic;">Sem descrição</div>';
+      ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(descParts.join(' â€¢ ')) + '</div>'
+      : '<div style="font-size:11px; color:var(--text-muted); margin-top:2px; font-style:italic;">Sem descriÃ§Ã£o</div>';
     
-    // Localização com ícone
+    // LocalizaÃ§Ã£o com Ã­cone
     var locationHtml = item.location 
-      ? '<span style="font-size: 12px; display:flex; align-items:center; gap:4px;"><span style="opacity:0.6;">📍</span>' + escapeHtml(item.location) + '</span>'
-      : '<span style="font-size: 11px; color:var(--text-muted); font-style:italic;">Não definido</span>';
+      ? '<span style="font-size: 12px; display:flex; align-items:center; gap:4px;"><span style="opacity:0.6;">ðŸ“</span>' + escapeHtml(item.location) + '</span>'
+      : '<span style="font-size: 11px; color:var(--text-muted); font-style:italic;">NÃ£o definido</span>';
     
     return '<tr onclick="showItemDetail(\'' + sanitizeId(item.id) + '\')" style="cursor: pointer;" title="Clique para ver detalhes">' +
       '<td><code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-size: 11px;">' + escapeHtml(item.sku || '-') + '</code></td>' +
@@ -3104,14 +3104,14 @@ function renderInventoryTable() {
       '<td>' + locationHtml + '</td>' +
       '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
       '<td onclick="event.stopPropagation()">' +
-        '<button class="btn-small" onclick="adjustStock(' + item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">−</button>' +
+        '<button class="btn-small" onclick="adjustStock(' + item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">âˆ’</button>' +
         '<button class="btn-small" onclick="adjustStock(' + item.id + ', 1)" title="Adicionar 1" style="padding: 4px 8px;">+</button>' +
-        '<button class="btn-small btn-danger" onclick="deleteItem(' + item.id + ')" style="padding: 4px 8px;" title="Excluir item">×</button>' +
+        '<button class="btn-small btn-danger" onclick="deleteItem(' + item.id + ')" style="padding: 4px 8px;" title="Excluir item">Ã—</button>' +
       '</td>' +
     '</tr>';
   }).join('');
   
-  // Renderizar versão mobile (cards)
+  // Renderizar versÃ£o mobile (cards)
   renderInventoryMobile(itemsToShow, categoryLabels);
 }
 
@@ -3119,14 +3119,14 @@ function renderInventoryTable() {
 function renderInventoryMobile(items, categoryLabels) {
   var mobileContainer = document.getElementById('almox-mobile-list');
   
-  // Criar container se não existir
+  // Criar container se nÃ£o existir
   if (!mobileContainer) {
     var tableContainer = document.querySelector('#almoxarifado-table');
     if (tableContainer && tableContainer.parentElement) {
       mobileContainer = document.createElement('div');
       mobileContainer.id = 'almox-mobile-list';
       mobileContainer.className = 'almox-mobile-list';
-      mobileContainer.style.display = 'none'; // Escondido por padrão (CSS mobile mostra)
+      mobileContainer.style.display = 'none'; // Escondido por padrÃ£o (CSS mobile mostra)
       tableContainer.parentElement.insertBefore(mobileContainer, tableContainer.nextSibling);
     } else {
       return;
@@ -3144,7 +3144,7 @@ function renderInventoryMobile(items, categoryLabels) {
     var catLabel = categoryLabels[item.category] || item.category || '-';
     var inUse = item.in_use_count || 0;
     
-    // Criar descrição/specs preview
+    // Criar descriÃ§Ã£o/specs preview
     var specsPreview = item.specs 
       ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:4px; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:6px; max-height:40px; overflow:hidden;">' + escapeHtml(item.specs.substring(0, 80) + (item.specs.length > 80 ? '...' : '')) + '</div>'
       : '';
@@ -3158,7 +3158,7 @@ function renderInventoryMobile(items, categoryLabels) {
     
     // Badge "em uso"
     var inUseBadge = inUse > 0 
-      ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px;">🔄 ' + inUse + ' em uso</span>'
+      ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px;">ðŸ”„ ' + inUse + ' em uso</span>'
       : '';
     
     return '<div class="almox-mobile-item' + (isLowStock ? ' low-stock' : '') + '" onclick="showItemDetail(\'' + item.id + '\')" style="padding:12px;">' +
@@ -3182,7 +3182,7 @@ function renderInventoryMobile(items, categoryLabels) {
       specsPreview +
       '<div class="almox-mobile-item-details" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">' +
         '<span style="font-size:11px; padding:3px 8px; background:rgba(6,182,212,0.1); border-radius:4px;">' + escapeHtml(catLabel) + '</span>' +
-        (item.location ? '<span style="font-size:11px; display:flex; align-items:center; gap:4px;"><span>📍</span>' + escapeHtml(item.location) + '</span>' : '<span style="font-size:11px; color:var(--text-muted); font-style:italic;">Sem local</span>') +
+        (item.location ? '<span style="font-size:11px; display:flex; align-items:center; gap:4px;"><span>ðŸ“</span>' + escapeHtml(item.location) + '</span>' : '<span style="font-size:11px; color:var(--text-muted); font-style:italic;">Sem local</span>') +
         '<span style="font-size:11px; color:var(--text-secondary);">Min: ' + (item.min_stock || 0) + (item.max_stock ? ' / Max: ' + item.max_stock : '') + '</span>' +
       '</div>' +
     '</div>';
@@ -3275,7 +3275,7 @@ function filterAlmoxarifado() {
 // ALMOXARIFADO V2 - SISTEMA COMPLETO
 // ========================================
 
-// Estado do módulo de almoxarifado V2
+// Estado do mÃ³dulo de almoxarifado V2
 const almox2State = {
   currentTab: 'estoque',
   movements: [],
@@ -3308,14 +3308,14 @@ function handleAlmoxSearch(input) {
   almoxSearchTimeout = setTimeout(() => {
     const items = state.inventory || [];
     
-    // Filtrar itens que contém a query
+    // Filtrar itens que contÃ©m a query
     const matches = items.filter(item => {
       const name = (item.name || '').toLowerCase();
       const sku = (item.sku || '').toLowerCase();
       const brand = (item.brand || '').toLowerCase();
       const category = (item.category || '').toLowerCase();
       return name.includes(query) || sku.includes(query) || brand.includes(query) || category.includes(query);
-    }).slice(0, 8); // Máximo 8 sugestões
+    }).slice(0, 8); // MÃ¡ximo 8 sugestÃµes
     
     if (matches.length === 0) {
       container.innerHTML = `
@@ -3331,10 +3331,10 @@ function handleAlmoxSearch(input) {
       return;
     }
     
-    // Renderizar sugestões
+    // Renderizar sugestÃµes
     container.innerHTML = matches.map((item, idx) => {
       const status = getItemStockStatus(item);
-      const statusClass = status === 'Crítico' ? 'critico' : status === 'Baixo' ? 'baixo' : '';
+      const statusClass = status === 'CrÃ­tico' ? 'critico' : status === 'Baixo' ? 'baixo' : '';
       
       // Destacar termo buscado
       const highlightedName = highlightMatch(item.name || '', query);
@@ -3377,7 +3377,7 @@ function highlightMatch(text, query) {
 function getItemStockStatus(item) {
   const qty = item.quantity || 0;
   const min = item.min_stock || 0;
-  if (qty === 0) return 'Crítico';
+  if (qty === 0) return 'CrÃ­tico';
   if (min > 0 && qty <= min) return 'Baixo';
   return 'Normal';
 }
@@ -3395,7 +3395,7 @@ function selectAlmoxAutocomplete(name, itemId) {
   filterAlmoxarifado();
 }
 
-// Navegação por teclado no autocomplete
+// NavegaÃ§Ã£o por teclado no autocomplete
 document.addEventListener('keydown', function(e) {
   const container = document.getElementById('almox-autocomplete');
   if (!container || !container.classList.contains('active')) return;
@@ -3444,17 +3444,17 @@ document.addEventListener('click', function(e) {
 function switchAlmoxTab(tab) {
   almox2State.currentTab = tab;
   
-  // Atualizar botões das abas
+  // Atualizar botÃµes das abas
   document.querySelectorAll('.almox2-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
   
-  // Atualizar conteúdo das abas
+  // Atualizar conteÃºdo das abas
   document.querySelectorAll('.almox2-tab-content').forEach(content => {
     content.classList.toggle('active', content.id === `almox2-tab-${tab}`);
   });
   
-  // Carregar dados específicos da aba
+  // Carregar dados especÃ­ficos da aba
   switch(tab) {
     case 'estoque':
       loadInventory();
@@ -3471,7 +3471,7 @@ function switchAlmoxTab(tab) {
   }
 }
 
-// Carregar movimentações
+// Carregar movimentaÃ§Ãµes
 async function loadAlmoxMovements() {
   try {
     const periodFilter = document.getElementById('almox2-mov-period');
@@ -3482,7 +3482,7 @@ async function loadAlmoxMovements() {
     const type = typeFilter ? typeFilter.value : '';
     const pending = pendingCheck ? pendingCheck.checked : false;
     
-    // Calcular datas baseado no período
+    // Calcular datas baseado no perÃ­odo
     const now = new Date();
     let startDate = new Date();
     if (period === 'day') {
@@ -3522,12 +3522,12 @@ async function loadAlmoxMovements() {
       console.error('Erro do servidor:', data.error);
     }
   } catch (error) {
-    console.error('Erro ao carregar movimentações:', error);
-    showNotification('Erro ao carregar movimentações', 'error');
+    console.error('Erro ao carregar movimentaÃ§Ãµes:', error);
+    showNotification('Erro ao carregar movimentaÃ§Ãµes', 'error');
   }
 }
 
-// Renderizar movimentações
+// Renderizar movimentaÃ§Ãµes
 function renderAlmoxMovements() {
   const container = document.getElementById('almox2-movements-list');
   if (!container) return;
@@ -3549,7 +3549,7 @@ function renderAlmoxMovements() {
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
         </svg>
-        <p>Nenhuma movimentação encontrada</p>
+        <p>Nenhuma movimentaÃ§Ã£o encontrada</p>
       </div>
     `;
     return;
@@ -3564,8 +3564,8 @@ function renderAlmoxMovements() {
   
   const typeLabels = {
     entrada: 'Entrada',
-    saida: 'Saída',
-    devolucao: 'Devolução',
+    saida: 'SaÃ­da',
+    devolucao: 'DevoluÃ§Ã£o',
     ajuste: 'Ajuste'
   };
   
@@ -3603,7 +3603,7 @@ function renderAlmoxMovements() {
   }).join('');
 }
 
-// Atualizar estatísticas de movimentações
+// Atualizar estatÃ­sticas de movimentaÃ§Ãµes
 function updateMovementStats() {
   const stats = almox2State.movementStats || {};
   
@@ -3625,18 +3625,18 @@ function updateMovementStats() {
   }
 }
 
-// Filtrar movimentações
+// Filtrar movimentaÃ§Ãµes
 function filterMovements() {
   loadAlmoxMovements();
 }
 
-// Atualizar movimentações
+// Atualizar movimentaÃ§Ãµes
 function refreshMovements() {
   loadAlmoxMovements();
-  showNotification('Movimentações atualizadas', 'success');
+  showNotification('MovimentaÃ§Ãµes atualizadas', 'success');
 }
 
-// Carregar empréstimos pendentes
+// Carregar emprÃ©stimos pendentes
 async function loadPendingLoans() {
   try {
     const response = await fetch(`${API_URL}/inventory/loans/pending`, {
@@ -3650,12 +3650,12 @@ async function loadPendingLoans() {
       updateToolsStats();
     }
   } catch (error) {
-    console.error('Erro ao carregar empréstimos:', error);
-    showNotification('Erro ao carregar empréstimos', 'error');
+    console.error('Erro ao carregar emprÃ©stimos:', error);
+    showNotification('Erro ao carregar emprÃ©stimos', 'error');
   }
 }
 
-// Renderizar empréstimos pendentes
+// Renderizar emprÃ©stimos pendentes
 function renderPendingLoans() {
   const container = document.getElementById('almox2-loans-list');
   if (!container) return;
@@ -3669,7 +3669,7 @@ function renderPendingLoans() {
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
-        <p>Nenhum empréstimo pendente</p>
+        <p>Nenhum emprÃ©stimo pendente</p>
       </div>
     `;
     return;
@@ -3679,7 +3679,7 @@ function renderPendingLoans() {
     const loanDate = new Date(loan.created_at);
     const now = new Date();
     const daysDiff = Math.floor((now - loanDate) / (1000 * 60 * 60 * 24));
-    const isOverdue = daysDiff > 7; // Mais de 7 dias é atrasado
+    const isOverdue = daysDiff > 7; // Mais de 7 dias Ã© atrasado
     
     const timeStr = loanDate.toLocaleString('pt-BR', {
       day: '2-digit', month: '2-digit', year: '2-digit',
@@ -3706,7 +3706,7 @@ function renderPendingLoans() {
   }).join('');
 }
 
-// Atualizar estatísticas de ferramentas
+// Atualizar estatÃ­sticas de ferramentas
 function updateToolsStats() {
   const loans = almox2State.pendingLoans || [];
   const now = new Date();
@@ -3721,7 +3721,7 @@ function updateToolsStats() {
     if (daysDiff > 7) overdue++;
   });
   
-  // Ferramentas disponíveis = total de ferramentas que são retornáveis
+  // Ferramentas disponÃ­veis = total de ferramentas que sÃ£o retornÃ¡veis
   const totalTools = state.inventory.filter(i => 
     i.category === 'ferramentas' || i.item_type === 'ferramenta'
   ).length;
@@ -3737,7 +3737,7 @@ function updateToolsStats() {
   if (elOverdue) elOverdue.textContent = overdue;
 }
 
-// Modal de confirmação de devolução - Design Premium
+// Modal de confirmaÃ§Ã£o de devoluÃ§Ã£o - Design Premium
 function showReturnConfirmation(movementId) {
   const loan = almox2State.pendingLoans.find(l => l.id === movementId);
   if (!loan) {
@@ -3762,10 +3762,10 @@ function showReturnConfirmation(movementId) {
               <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
             </svg>
           </div>
-          <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #fff;">Confirmar Devolução</h3>
+          <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #fff;">Confirmar DevoluÃ§Ã£o</h3>
         </div>
         
-        <!-- Info do Empréstimo -->
+        <!-- Info do EmprÃ©stimo -->
         <div style="background: rgba(0,0,0,0.2); border-radius: 14px; padding: 18px; margin-bottom: 20px; border: 1px solid rgba(59,130,246,0.15);">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
             <div style="width: 42px; height: 42px; background: linear-gradient(135deg, rgba(147,51,234,0.3), rgba(126,34,206,0.2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(147,51,234,0.4);">
@@ -3781,7 +3781,7 @@ function showReturnConfirmation(movementId) {
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; text-align: center;">
-              <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 4px;">Responsável</div>
+              <div style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 4px;">ResponsÃ¡vel</div>
               <div style="font-size: 14px; font-weight: 600; color: #fff;">${escapeHtml(loan.person_name)}</div>
             </div>
             <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; text-align: center;">
@@ -3791,7 +3791,7 @@ function showReturnConfirmation(movementId) {
           </div>
         </div>
         
-        <!-- Botões -->
+        <!-- BotÃµes -->
         <div style="display: flex; gap: 12px;">
           <button onclick="closeModal('modal-return-confirm')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: rgba(255,255,255,0.8); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.06)';">Cancelar</button>
           <button onclick="executeReturn(${movementId})" style="flex: 1.2; padding: 14px 20px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(59,130,246,0.35); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(59,130,246,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(59,130,246,0.35)';">
@@ -3810,12 +3810,12 @@ function showReturnConfirmation(movementId) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// Registrar devolução (agora chama o modal de confirmação)
+// Registrar devoluÃ§Ã£o (agora chama o modal de confirmaÃ§Ã£o)
 function registerReturn(movementId) {
   showReturnConfirmation(movementId);
 }
 
-// Executar a devolução após confirmação
+// Executar a devoluÃ§Ã£o apÃ³s confirmaÃ§Ã£o
 async function executeReturn(movementId) {
   closeModal('modal-return-confirm');
   
@@ -3830,19 +3830,19 @@ async function executeReturn(movementId) {
     
     const data = await response.json();
     if (data.ok) {
-      showNotification('Devolução registrada com sucesso!', 'success');
+      showNotification('DevoluÃ§Ã£o registrada com sucesso!', 'success');
       loadPendingLoans();
       loadInventory();
     } else {
-      showNotification('Erro ao registrar devolução: ' + (data.error || 'Erro'), 'error');
+      showNotification('Erro ao registrar devoluÃ§Ã£o: ' + (data.error || 'Erro'), 'error');
     }
   } catch (error) {
-    console.error('Erro ao registrar devolução:', error);
-    showNotification('Erro ao registrar devolução', 'error');
+    console.error('Erro ao registrar devoluÃ§Ã£o:', error);
+    showNotification('Erro ao registrar devoluÃ§Ã£o', 'error');
   }
 }
 
-// Modal de Retirada Rápida - Design Premium
+// Modal de Retirada RÃ¡pida - Design Premium
 function showQuickWithdrawal() {
   const items = state.inventory.filter(i => i.quantity > 0);
   
@@ -3863,7 +3863,7 @@ function showQuickWithdrawal() {
             </div>
             <div>
               <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #fff;">Registrar Retirada</h3>
-              <p style="margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Informe os dados da saída de material</p>
+              <p style="margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Informe os dados da saÃ­da de material</p>
             </div>
           </div>
         </div>
@@ -3878,7 +3878,7 @@ function showQuickWithdrawal() {
             </label>
             <select name="item_id" id="withdrawal-item-select" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)'; this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)'; this.style.boxShadow='none';">
               <option value="">Buscar ou selecionar item...</option>
-              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} — ${i.quantity} ${i.unit || 'un'} disponíveis</option>`).join('')}
+              ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} â€” ${i.quantity} ${i.unit || 'un'} disponÃ­veis</option>`).join('')}
             </select>
           </div>
           
@@ -3897,9 +3897,9 @@ function showQuickWithdrawal() {
                 Tipo de Uso
               </label>
               <select name="usage_type" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
-                <option value="consumo">🔸 Consumo (não retorna)</option>
-                <option value="emprestimo">🔄 Empréstimo (deve retornar)</option>
-                <option value="manutencao">🔧 Manutenção</option>
+                <option value="consumo">ðŸ”¸ Consumo (nÃ£o retorna)</option>
+                <option value="emprestimo">ðŸ”„ EmprÃ©stimo (deve retornar)</option>
+                <option value="manutencao">ðŸ”§ ManutenÃ§Ã£o</option>
               </select>
             </div>
           </div>
@@ -3908,7 +3908,7 @@ function showQuickWithdrawal() {
           <div>
             <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              Quem está retirando?
+              Quem estÃ¡ retirando?
             </label>
             <input type="text" name="person_name" placeholder="Digite o nome completo da pessoa" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(236,72,153,0.5)'; this.style.boxShadow='0 0 0 3px rgba(236,72,153,0.1)';" onblur="this.style.borderColor='rgba(236,72,153,0.2)'; this.style.boxShadow='none';">
           </div>
@@ -3921,17 +3921,17 @@ function showQuickWithdrawal() {
             </label>
             <select name="sector" id="withdrawal-sector-select" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';" onchange="toggleCustomSector(this)">
               <option value="">Selecione o setor...</option>
-              <option value="Manutenção">🔧 Manutenção</option>
-              <option value="Aviário 1">🐔 Aviário 1</option>
-              <option value="Aviário 2">🐔 Aviário 2</option>
-              <option value="Aviário 3">🐔 Aviário 3</option>
-              <option value="Aviário 4">🐔 Aviário 4</option>
-              <option value="Recria">🐣 Recria</option>
-              <option value="Fábrica de Ração">🏭 Fábrica de Ração</option>
-              <option value="Escritório">📋 Escritório</option>
-              <option value="Almoxarifado">📦 Almoxarifado</option>
-              <option value="Externo">🚛 Externo</option>
-              <option value="__outro__">➕ Outro (digitar)</option>
+              <option value="ManutenÃ§Ã£o">ðŸ”§ ManutenÃ§Ã£o</option>
+              <option value="AviÃ¡rio 1">ðŸ” AviÃ¡rio 1</option>
+              <option value="AviÃ¡rio 2">ðŸ” AviÃ¡rio 2</option>
+              <option value="AviÃ¡rio 3">ðŸ” AviÃ¡rio 3</option>
+              <option value="AviÃ¡rio 4">ðŸ” AviÃ¡rio 4</option>
+              <option value="Recria">ðŸ£ Recria</option>
+              <option value="FÃ¡brica de RaÃ§Ã£o">ðŸ­ FÃ¡brica de RaÃ§Ã£o</option>
+              <option value="EscritÃ³rio">ðŸ“‹ EscritÃ³rio</option>
+              <option value="Almoxarifado">ðŸ“¦ Almoxarifado</option>
+              <option value="Externo">ðŸš› Externo</option>
+              <option value="__outro__">âž• Outro (digitar)</option>
             </select>
             <input type="text" name="sector_custom" id="withdrawal-sector-custom" placeholder="Digite o nome do setor..." style="display: none; width: 100%; padding: 14px 16px; margin-top: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
           </div>
@@ -3940,9 +3940,9 @@ function showQuickWithdrawal() {
           <div>
             <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              Observação <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
+              ObservaÃ§Ã£o <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
             </label>
-            <textarea name="notes" rows="2" placeholder="Anotações adicionais sobre a retirada..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; resize: none;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';"></textarea>
+            <textarea name="notes" rows="2" placeholder="AnotaÃ§Ãµes adicionais sobre a retirada..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; resize: none;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';"></textarea>
           </div>
           
           <!-- Action Buttons -->
@@ -3975,7 +3975,7 @@ function toggleCustomSector(selectEl) {
   }
 }
 
-// Submeter retirada rápida
+// Submeter retirada rÃ¡pida
 async function submitQuickWithdrawal(event) {
   event.preventDefault();
   const form = event.target;
@@ -3996,7 +3996,7 @@ async function submitQuickWithdrawal(event) {
   }
   
   if (quantity > item.quantity) {
-    showNotification('Quantidade maior que disponível', 'error');
+    showNotification('Quantidade maior que disponÃ­vel', 'error');
     return;
   }
   
@@ -4034,7 +4034,7 @@ async function submitQuickWithdrawal(event) {
   }
 }
 
-// Modal de Entrada Rápida - Design Premium
+// Modal de Entrada RÃ¡pida - Design Premium
 function showQuickEntry() {
   const items = state.inventory;
   
@@ -4074,7 +4074,7 @@ function showQuickEntry() {
             </select>
           </div>
           
-          <!-- Grid: Quantidade e Referência -->
+          <!-- Grid: Quantidade e ReferÃªncia -->
           <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 14px;">
             <div>
               <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -4101,19 +4101,19 @@ function showQuickEntry() {
             </div>
           </div>
           
-          <!-- Observação -->
+          <!-- ObservaÃ§Ã£o -->
           <div>
             <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
-              Observação (opcional)
+              ObservaÃ§Ã£o (opcional)
             </label>
-            <textarea name="notes" rows="2" placeholder="Anotações sobre a entrada..." style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; resize: none; transition: all 0.2s ease; line-height: 1.5;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';"></textarea>
+            <textarea name="notes" rows="2" placeholder="AnotaÃ§Ãµes sobre a entrada..." style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; color: #fff; font-size: 14px; resize: none; transition: all 0.2s ease; line-height: 1.5;" onfocus="this.style.borderColor='rgba(34,197,94,0.6)'; this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.15)';" onblur="this.style.borderColor='rgba(34,197,94,0.25)'; this.style.boxShadow='none';"></textarea>
           </div>
           
-          <!-- Botões Premium -->
+          <!-- BotÃµes Premium -->
           <div style="display: flex; gap: 12px; margin-top: 10px; padding-top: 20px; border-top: 1px solid rgba(34,197,94,0.15);">
             <button type="button" onclick="closeModal('modal-quick-entry')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: rgba(255,255,255,0.8); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(255,255,255,0.12)';">Cancelar</button>
             <button type="submit" style="flex: 1.3; padding: 14px 20px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(34,197,94,0.35); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(34,197,94,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(34,197,94,0.35)';">
@@ -4134,7 +4134,7 @@ function showQuickEntry() {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// Submeter entrada rápida
+// Submeter entrada rÃ¡pida
 async function submitQuickEntry(event) {
   event.preventDefault();
   const form = event.target;
@@ -4180,7 +4180,7 @@ async function submitQuickEntry(event) {
   }
 }
 
-// Carregar relatórios
+// Carregar relatÃ³rios
 async function loadAlmoxReports() {
   try {
     const response = await fetch(`${API_URL}/inventory/stats?period=${almox2State.reportPeriod}`, {
@@ -4193,11 +4193,11 @@ async function loadAlmoxReports() {
       renderAlmoxReports(data.stats);
     }
   } catch (error) {
-    console.error('Erro ao carregar relatórios:', error);
+    console.error('Erro ao carregar relatÃ³rios:', error);
   }
 }
 
-// Definir período do relatório
+// Definir perÃ­odo do relatÃ³rio
 function setAlmoxReportPeriod(period) {
   almox2State.reportPeriod = period;
   
@@ -4208,7 +4208,7 @@ function setAlmoxReportPeriod(period) {
   loadAlmoxReports();
 }
 
-// Renderizar relatórios
+// Renderizar relatÃ³rios
 function renderAlmoxReports(stats) {
   // Top itens mais movimentados
   const topItemsContainer = document.getElementById('almox2-top-items');
@@ -4232,7 +4232,7 @@ function renderAlmoxReports(stats) {
       <div class="almox2-top-item">
         <div class="almox2-top-rank">${idx + 1}</div>
         <div class="almox2-top-info">
-          <div class="almox2-top-name">${escapeHtml(sector.person_sector || 'Não informado')}</div>
+          <div class="almox2-top-name">${escapeHtml(sector.person_sector || 'NÃ£o informado')}</div>
         </div>
         <div class="almox2-top-value">${sector.total_retiradas || 0}</div>
       </div>
@@ -4258,15 +4258,15 @@ function renderAlmoxReports(stats) {
     `).join('') || '<div class="almox2-empty-state" style="padding: 20px;"><p>Nenhum item em estoque baixo</p></div>';
   }
   
-  // Renderizar gráficos se Chart.js disponível
+  // Renderizar grÃ¡ficos se Chart.js disponÃ­vel
   if (typeof Chart !== 'undefined') {
     renderAlmoxCharts(stats);
   }
 }
 
-// Renderizar gráficos
+// Renderizar grÃ¡ficos
 function renderAlmoxCharts(stats) {
-  // Gráfico de movimentações
+  // GrÃ¡fico de movimentaÃ§Ãµes
   const movCtx = document.getElementById('almox2-movements-chart');
   if (movCtx) {
     const existingChart = Chart.getChart(movCtx);
@@ -4275,7 +4275,7 @@ function renderAlmoxCharts(stats) {
     new Chart(movCtx, {
       type: 'bar',
       data: {
-        labels: stats.chart_labels || ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        labels: stats.chart_labels || ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'],
         datasets: [
           {
             label: 'Entradas',
@@ -4285,7 +4285,7 @@ function renderAlmoxCharts(stats) {
             borderWidth: 1
           },
           {
-            label: 'Saídas',
+            label: 'SaÃ­das',
             data: stats.saidas_data || [0,0,0,0,0,0,0],
             backgroundColor: 'rgba(239, 68, 68, 0.6)',
             borderColor: 'rgb(239, 68, 68)',
@@ -4309,7 +4309,7 @@ function renderAlmoxCharts(stats) {
     });
   }
   
-  // Gráfico de categorias
+  // GrÃ¡fico de categorias
   const catCtx = document.getElementById('almox2-categories-chart');
   if (catCtx) {
     const existingChart = Chart.getChart(catCtx);
@@ -4356,7 +4356,7 @@ function renderAlmoxCharts(stats) {
     });
   }
   
-  // Gráfico de empréstimos: Devolvidos vs Pendentes
+  // GrÃ¡fico de emprÃ©stimos: Devolvidos vs Pendentes
   const loansCtx = document.getElementById('almox2-loans-chart');
   if (loansCtx && stats.loanStatus) {
     const existingChart = Chart.getChart(loansCtx);
@@ -4384,7 +4384,7 @@ function renderAlmoxCharts(stats) {
           },
           title: {
             display: true,
-            text: 'Status dos Empréstimos',
+            text: 'Status dos EmprÃ©stimos',
             color: 'rgba(255,255,255,0.8)',
             font: { size: 13 }
           }
@@ -4393,7 +4393,7 @@ function renderAlmoxCharts(stats) {
     });
   }
   
-  // Gráfico por Tipo de Uso (Consumo, Empréstimo, Manutenção)
+  // GrÃ¡fico por Tipo de Uso (Consumo, EmprÃ©stimo, ManutenÃ§Ã£o)
   const usageCtx = document.getElementById('almox2-usage-chart');
   if (usageCtx && stats.usageTypes) {
     const existingChart = Chart.getChart(usageCtx);
@@ -4401,8 +4401,8 @@ function renderAlmoxCharts(stats) {
     
     const usageLabels = {
       consumo: 'Consumo',
-      emprestimo: 'Empréstimo',
-      manutencao: 'Manutenção'
+      emprestimo: 'EmprÃ©stimo',
+      manutencao: 'ManutenÃ§Ã£o'
     };
     const usageColors = {
       consumo: 'rgba(239, 68, 68, 0.7)',
@@ -4431,7 +4431,7 @@ function renderAlmoxCharts(stats) {
           },
           title: {
             display: true,
-            text: 'Saídas por Tipo de Uso',
+            text: 'SaÃ­das por Tipo de Uso',
             color: 'rgba(255,255,255,0.8)',
             font: { size: 13 }
           }
@@ -4441,7 +4441,7 @@ function renderAlmoxCharts(stats) {
   }
 }
 
-// Modal de Relatório
+// Modal de RelatÃ³rio
 function showAlmoxReportModal() {
   const lowStock = state.inventory.filter(i => i.quantity <= (i.min_stock || 0));
   const total = state.inventory.length;
@@ -4451,7 +4451,7 @@ function showAlmoxReportModal() {
     <div id="modal-almox-report" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-almox-report')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
       <div class="modal" style="max-width: 600px; background: linear-gradient(135deg, rgba(88,28,135,0.95), rgba(55,48,107,0.95)); border: 1px solid rgba(168,85,247,0.3);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="margin: 0; color: #fff;">Relatório do Almoxarifado</h3>
+          <h3 style="margin: 0; color: #fff;">RelatÃ³rio do Almoxarifado</h3>
           <button onclick="closeModal('modal-almox-report')" style="background: none; border: none; color: #fff; cursor: pointer;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -4485,7 +4485,7 @@ function showAlmoxReportModal() {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// Exportar Relatório HTML Premium
+// Exportar RelatÃ³rio HTML Premium
 function exportAlmoxReportHTML() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('pt-BR');
@@ -4506,10 +4506,10 @@ function exportAlmoxReportHTML() {
   
   const categoryLabels = {
     ferramentas: 'Ferramentas',
-    eletrica: 'Elétrica',
-    hidraulica: 'Hidráulica',
+    eletrica: 'ElÃ©trica',
+    hidraulica: 'HidrÃ¡ulica',
     rolamentos: 'Rolamentos',
-    parafusos: 'Parafusos/Fixação',
+    parafusos: 'Parafusos/FixaÃ§Ã£o',
     lubrificantes: 'Lubrificantes',
     epis: 'EPIs',
     outros: 'Outros'
@@ -4520,7 +4520,7 @@ function exportAlmoxReportHTML() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Relatório Almoxarifado - ${dateStr}</title>
+  <title>RelatÃ³rio Almoxarifado - ${dateStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     @keyframes gradientFlow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
@@ -4753,9 +4753,9 @@ function exportAlmoxReportHTML() {
           <line x1="12" y1="22.08" x2="12" y2="12"/>
         </svg>
       </div>
-      <h1>Relatório de Almoxarifado</h1>
+      <h1>RelatÃ³rio de Almoxarifado</h1>
       <p class="subtitle">Controle Completo de Estoque e Materiais</p>
-      <div class="date-badge">Gerado em ${dateStr} às ${timeStr}</div>
+      <div class="date-badge">Gerado em ${dateStr} Ã s ${timeStr}</div>
     </div>
     
     <div class="stats-grid">
@@ -4796,7 +4796,7 @@ function exportAlmoxReportHTML() {
             <th>Marca</th>
             <th>Quantidade</th>
             <th>Unidade</th>
-            <th>Localização</th>
+            <th>LocalizaÃ§Ã£o</th>
           </tr>
         </thead>
         <tbody>
@@ -4829,7 +4829,7 @@ function exportAlmoxReportHTML() {
             <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
         </div>
-        <span class="low-stock-title">Atenção: Itens em Estoque Baixo (${lowStock.length})</span>
+        <span class="low-stock-title">AtenÃ§Ã£o: Itens em Estoque Baixo (${lowStock.length})</span>
       </div>
       <table class="items-table">
         <thead>
@@ -4837,8 +4837,8 @@ function exportAlmoxReportHTML() {
             <th>Item</th>
             <th>Categoria</th>
             <th>Quantidade Atual</th>
-            <th>Mínimo</th>
-            <th>Diferença</th>
+            <th>MÃ­nimo</th>
+            <th>DiferenÃ§a</th>
           </tr>
         </thead>
         <tbody>
@@ -4857,8 +4857,8 @@ function exportAlmoxReportHTML() {
     ` : ''}
     
     <div class="footer">
-      <p>Relatório gerado pelo sistema <strong>ICARUS</strong></p>
-      <p style="margin-top: 8px;">Sistema de Gestão Inteligente de Manutenção</p>
+      <p>RelatÃ³rio gerado pelo sistema <strong>ICARUS</strong></p>
+      <p style="margin-top: 8px;">Sistema de GestÃ£o Inteligente de ManutenÃ§Ã£o</p>
       <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(168,85,247,0.05)); border-radius: 12px; border: 1px solid rgba(168,85,247,0.2); display: inline-block;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="width: 40px; height: 40px; background: rgba(212,175,55,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
@@ -4869,11 +4869,11 @@ function exportAlmoxReportHTML() {
           </div>
           <div style="text-align: left;">
             <div style="font-weight: 700; color: #d4af37; font-size: 14px;">ICARUS SYSTEM</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Sistema Inteligente de Gestão</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Sistema Inteligente de GestÃ£o</div>
           </div>
         </div>
       </div>
-      <p style="margin-top: 16px; font-size: 11px;">Desenvolvido por Guilherme Braga • © 2025</p>
+      <p style="margin-top: 16px; font-size: 11px;">Desenvolvido por Guilherme Braga â€¢ Â© 2025</p>
     </div>
   </div>
 </body>
@@ -4881,7 +4881,7 @@ function exportAlmoxReportHTML() {
 
   // Dados estruturados para PDF no servidor
   const almoxarifadoReportData = {
-    title: 'Relatório Almoxarifado - Granja Vitta',
+    title: 'RelatÃ³rio Almoxarifado - Granja Vitta',
     type: 'almoxarifado-report',
     content: {
       summary: {
@@ -4911,8 +4911,8 @@ function exportAlmoxReportHTML() {
     }
   };
 
-  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(html, 'Relatório Almoxarifado', 'Relatório do Almoxarifado gerado!', almoxarifadoReportData);
+  // Renderizar diretamente na pÃ¡gina (funciona em APK, mobile e desktop)
+  showReportInPage(html, 'RelatÃ³rio Almoxarifado', 'RelatÃ³rio do Almoxarifado gerado!', almoxarifadoReportData);
   closeModal('modal-almox-report');
 }
 
@@ -4998,7 +4998,7 @@ function showItemDetail(itemId) {
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
-            ESPECIFICAÇÕES TÉCNICAS
+            ESPECIFICAÃ‡Ã•ES TÃ‰CNICAS
           </div>
           <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; font-size: 13px; color: #94a3b8; white-space: pre-wrap; max-height: 120px; overflow-y: auto;">${escapeHtml(item.specs)}</div>
         </div>
@@ -5006,14 +5006,14 @@ function showItemDetail(itemId) {
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
-            ESPECIFICAÇÕES TÉCNICAS
+            ESPECIFICAÃ‡Ã•ES TÃ‰CNICAS
           </div>
           <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 16px; text-align: center;">
             <div style="color: #64748b; font-size: 12px; margin-bottom: 8px;">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; margin-bottom: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
             </div>
-            <div style="font-size: 12px; color: #64748b;">Nenhuma especificação cadastrada</div>
-            <div style="font-size: 11px; color: #475569; margin-top: 4px;">Clique em "Editar Item" para adicionar detalhes técnicos</div>
+            <div style="font-size: 12px; color: #64748b;">Nenhuma especificaÃ§Ã£o cadastrada</div>
+            <div style="font-size: 11px; color: #475569; margin-top: 4px;">Clique em "Editar Item" para adicionar detalhes tÃ©cnicos</div>
           </div>
         </div>
         `}
@@ -5043,8 +5043,8 @@ function showEditItemModal(itemId) {
   if (!item) return;
   
   // Por enquanto, abre o modal de criar e preenche com os dados (simplificado)
-  // TODO: Criar modal de edição dedicado
-  showNotification('Função de edição em desenvolvimento', 'info');
+  // TODO: Criar modal de ediÃ§Ã£o dedicado
+  showNotification('FunÃ§Ã£o de ediÃ§Ã£o em desenvolvimento', 'info');
 }
 
 function closeModal(modalId) {
@@ -5104,11 +5104,11 @@ async function adjustStock(itemId, delta) {
 
   const newQuantity = item.quantity + delta;
   if (newQuantity < 0) {
-    showNotification('Quantidade não pode ser negativa', 'error');
+    showNotification('Quantidade nÃ£o pode ser negativa', 'error');
     return;
   }
   if (item.max_stock && newQuantity > item.max_stock) {
-    showNotification('Acima do estoque máximo definido', 'warning');
+    showNotification('Acima do estoque mÃ¡ximo definido', 'warning');
     return;
   }
 
@@ -5126,7 +5126,7 @@ async function adjustStock(itemId, delta) {
     if (data.ok) {
       await loadInventory();
       // await backupInventoryToTXT(); // Desabilitado temporariamente
-      showNotification(`✓ ${item.name} atualizado`, 'success');
+      showNotification(`âœ“ ${item.name} atualizado`, 'success');
     } else {
       showNotification('Erro ao atualizar estoque', 'error');
     }
@@ -5147,7 +5147,7 @@ async function deleteItem(itemId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('[ALMOXARIFADO] Item excluído', 'success');
+      showNotification('[ALMOXARIFADO] Item excluÃ­do', 'success');
       await loadInventory();
       // await backupInventoryToTXT(); // Desabilitado temporariamente
     } else {
@@ -5161,7 +5161,7 @@ async function deleteItem(itemId) {
 
 async function backupInventoryToTXT() {
   try {
-    // Gerar conteúdo TXT
+    // Gerar conteÃºdo TXT
     const timestamp = new Date().toLocaleString('pt-BR');
     const tenantName = (state.user && state.user.tenant) ? state.user.tenant.replace(/\s+/g, '_') : 'tenant';
     let content = `BACKUP ALMOXARIFADO - ${timestamp}\n`;
@@ -5171,12 +5171,12 @@ async function backupInventoryToTXT() {
       content += `SKU: ${item.sku || 'N/A'}\n`;
       content += `Nome: ${item.name}\n`;
       content += `Quantidade: ${item.quantity} ${item.unit}\n`;
-      content += `Estoque Mínimo: ${item.min_stock || 0}\n`;
-      content += `Estoque Máximo: ${item.max_stock || '-'}\n`;
+      content += `Estoque MÃ­nimo: ${item.min_stock || 0}\n`;
+      content += `Estoque MÃ¡ximo: ${item.max_stock || '-'}\n`;
       content += `Categoria: ${item.category || '-'}\n`;
       content += `Marca: ${item.brand || '-'}\n`;
-      content += `Localização: ${item.location || 'N/A'}\n`;
-      content += `Última Atualização: ${item.updated_at ? new Date(item.updated_at).toLocaleString('pt-BR') : '-'}\n`;
+      content += `LocalizaÃ§Ã£o: ${item.location || 'N/A'}\n`;
+      content += `Ãšltima AtualizaÃ§Ã£o: ${item.updated_at ? new Date(item.updated_at).toLocaleString('pt-BR') : '-'}\n`;
       content += '-'.repeat(80) + '\n\n';
     });
 
@@ -5208,16 +5208,16 @@ async function backupInventoryToTXT() {
 }
 
 // ========================================
-// ALMOXARIFADO V2 - EMPRÉSTIMO DE ITENS RETORNÁVEIS
+// ALMOXARIFADO V2 - EMPRÃ‰STIMO DE ITENS RETORNÃVEIS
 // ========================================
 
-// Modal de empréstimo de item retornável
+// Modal de emprÃ©stimo de item retornÃ¡vel
 function showLoanItemModal(itemId) {
   const item = state.inventory.find(i => i.id === itemId);
   if (!item) return;
   
   if (!item.is_returnable) {
-    showNotification('Este item não é retornável. Use saída normal.', 'warning');
+    showNotification('Este item nÃ£o Ã© retornÃ¡vel. Use saÃ­da normal.', 'warning');
     return;
   }
   
@@ -5233,7 +5233,7 @@ function showLoanItemModal(itemId) {
           </div>
           <div>
             <h3 style="margin: 0; font-size: 16px; color: #fff;">Emprestar Item</h3>
-            <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">${escapeHtml(item.name)} • Disponível: ${item.quantity} ${item.unit}</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">${escapeHtml(item.name)} â€¢ DisponÃ­vel: ${item.quantity} ${item.unit}</p>
           </div>
           <button onclick="closeModal('modal-loan-item')" style="margin-left: auto; background: none; border: none; color: #64748b; cursor: pointer;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -5242,7 +5242,7 @@ function showLoanItemModal(itemId) {
         
         <form onsubmit="submitLoanItem(event, '${item.id}')" style="display: flex; flex-direction: column; gap: 16px;">
           <div>
-            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Quem está pegando? *</label>
+            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Quem estÃ¡ pegando? *</label>
             <select id="loan-user" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
               <option value="">Selecione...</option>
               ${users.map(u => `<option value="${u.id}" data-name="${escapeHtml(u.name)}">${escapeHtml(u.name)}</option>`).join('')}
@@ -5261,7 +5261,7 @@ function showLoanItemModal(itemId) {
           </div>
           
           <div>
-            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Observação (opcional)</label>
+            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">ObservaÃ§Ã£o (opcional)</label>
             <input type="text" id="loan-notes" placeholder="Motivo, local de uso..." style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
           </div>
           
@@ -5286,7 +5286,7 @@ function showLoanItemModal(itemId) {
   });
 }
 
-// Enviar empréstimo
+// Enviar emprÃ©stimo
 async function submitLoanItem(event, itemId) {
   event.preventDefault();
   
@@ -5336,7 +5336,7 @@ async function submitLoanItem(event, itemId) {
   }
 }
 
-// Modal de empréstimos pendentes de um item
+// Modal de emprÃ©stimos pendentes de um item
 async function showItemLoans(itemId) {
   const item = state.inventory.find(i => i.id === itemId);
   if (!item) return;
@@ -5348,13 +5348,13 @@ async function showItemLoans(itemId) {
     
     const data = await response.json();
     if (!data.ok) {
-      showNotification('Erro ao carregar empréstimos', 'error');
+      showNotification('Erro ao carregar emprÃ©stimos', 'error');
       return;
     }
     
     const loans = data.loans || [];
     const pendingLoans = loans.filter(l => !l.returned_at);
-    const returnedLoans = loans.filter(l => l.returned_at).slice(0, 10); // Últimos 10
+    const returnedLoans = loans.filter(l => l.returned_at).slice(0, 10); // Ãšltimos 10
     
     const modalHtml = `
       <div id="modal-item-loans" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-item-loans')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
@@ -5365,8 +5365,8 @@ async function showItemLoans(itemId) {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             <div>
-              <h3 style="margin: 0; font-size: 16px; color: #fff;">Empréstimos: ${escapeHtml(item.name)}</h3>
-              <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">${pendingLoans.length} em uso • ${returnedLoans.length} devolvidos</p>
+              <h3 style="margin: 0; font-size: 16px; color: #fff;">EmprÃ©stimos: ${escapeHtml(item.name)}</h3>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">${pendingLoans.length} em uso â€¢ ${returnedLoans.length} devolvidos</p>
             </div>
             <button onclick="closeModal('modal-item-loans')" style="margin-left: auto; background: none; border: none; color: #64748b; cursor: pointer;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -5377,7 +5377,7 @@ async function showItemLoans(itemId) {
           <div style="margin-bottom: 20px;">
             <h4 style="font-size: 12px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0; display: flex; align-items: center; gap: 6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-              Pendentes de Devolução
+              Pendentes de DevoluÃ§Ã£o
             </h4>
             ${pendingLoans.map(loan => `
               <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
@@ -5386,7 +5386,7 @@ async function showItemLoans(itemId) {
                 </div>
                 <div style="flex: 1;">
                   <div style="font-weight: 600; color: #fff; font-size: 14px;">${escapeHtml(loan.borrowed_by_name || 'Desconhecido')}</div>
-                  <div style="font-size: 11px; color: #64748b;">Pegou em ${new Date(loan.borrowed_at).toLocaleDateString('pt-BR')} às ${new Date(loan.borrowed_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
+                  <div style="font-size: 11px; color: #64748b;">Pegou em ${new Date(loan.borrowed_at).toLocaleDateString('pt-BR')} Ã s ${new Date(loan.borrowed_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
                   ${loan.notes ? `<div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">${escapeHtml(loan.notes)}</div>` : ''}
                 </div>
                 <button onclick="returnLoanItem('${loan.id}')" style="padding: 8px 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
@@ -5399,7 +5399,7 @@ async function showItemLoans(itemId) {
           ` : `
           <div style="text-align: center; padding: 30px; color: #64748b;">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 10px; opacity: 0.5;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
-            <p style="margin: 0;">Nenhum empréstimo pendente</p>
+            <p style="margin: 0;">Nenhum emprÃ©stimo pendente</p>
           </div>
           `}
           
@@ -5407,7 +5407,7 @@ async function showItemLoans(itemId) {
           <div>
             <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0; display: flex; align-items: center; gap: 6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
-              Histórico de Devoluções
+              HistÃ³rico de DevoluÃ§Ãµes
             </h4>
             ${returnedLoans.map(loan => `
               <div style="background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.1); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
@@ -5436,14 +5436,14 @@ async function showItemLoans(itemId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
   } catch (error) {
-    console.error('Erro ao carregar empréstimos:', error);
-    showNotification('Erro ao carregar empréstimos', 'error');
+    console.error('Erro ao carregar emprÃ©stimos:', error);
+    showNotification('Erro ao carregar emprÃ©stimos', 'error');
   }
 }
 
 // Devolver item emprestado
 async function returnLoanItem(loanId) {
-  if (!confirm('Confirmar devolução deste item?')) return;
+  if (!confirm('Confirmar devoluÃ§Ã£o deste item?')) return;
   
   try {
     const response = await fetch(`${API_URL}/inventory/loans/${loanId}/return`, {
@@ -5469,7 +5469,7 @@ async function returnLoanItem(loanId) {
   }
 }
 
-// Marcar item como retornável/não-retornável
+// Marcar item como retornÃ¡vel/nÃ£o-retornÃ¡vel
 async function toggleItemReturnable(itemId, isReturnable) {
   try {
     const response = await fetch(`${API_URL}/inventory/${itemId}/returnable`, {
@@ -5483,7 +5483,7 @@ async function toggleItemReturnable(itemId, isReturnable) {
     
     const data = await response.json();
     if (data.ok) {
-      showNotification(isReturnable ? 'Item marcado como retornável' : 'Item marcado como não-retornável', 'success');
+      showNotification(isReturnable ? 'Item marcado como retornÃ¡vel' : 'Item marcado como nÃ£o-retornÃ¡vel', 'success');
       await loadInventory();
     } else {
       showNotification(data.error || 'Erro ao atualizar item', 'error');
@@ -5529,7 +5529,7 @@ async function loadPurchases() {
       state.purchases = cached;
       renderPurchasesTable();
       updateFinancialDashboard();
-      showNotification('Sem conexão - usando dados salvos', 'warning');
+      showNotification('Sem conexÃ£o - usando dados salvos', 'warning');
     } else {
       showNotification('Erro ao carregar compras', 'error');
     }
@@ -5541,16 +5541,16 @@ function updateFinancialDashboard() {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
   
-  // Filtrar compras do mês atual
+  // Filtrar compras do mÃªs atual
   const thisMonth = state.purchases.filter(p => {
     const date = new Date(p.created_at);
     return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
   });
   
-  // Total gasto no mês
+  // Total gasto no mÃªs
   const totalMes = thisMonth.reduce((sum, p) => sum + (p.total_cost || 0), 0);
   
-  // Requisições pendentes (análise)
+  // RequisiÃ§Ãµes pendentes (anÃ¡lise)
   const pendentes = state.purchases.filter(p => p.status === 'analise').length;
   
   // Pedidos em andamento (pedido + chegando)
@@ -5558,7 +5558,7 @@ function updateFinancialDashboard() {
     .filter(p => p.status === 'pedido' || p.status === 'chegando')
     .reduce((sum, p) => sum + (p.total_cost || 0), 0);
   
-  // Economia vs orçamento (exemplo: orçamento mensal de R$ 10.000)
+  // Economia vs orÃ§amento (exemplo: orÃ§amento mensal de R$ 10.000)
   const orcamento = 10000;
   const economia = ((orcamento - totalMes) / orcamento * 100).toFixed(0);
   
@@ -5572,14 +5572,14 @@ function renderPurchasesTable() {
   if (!tbody) return;
 
   if (state.purchases.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">Nenhuma requisição cadastrada</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">Nenhuma requisiÃ§Ã£o cadastrada</td></tr>';
     return;
   }
 
   const statusLabels = {
-    analise: 'Em Análise',
+    analise: 'Em AnÃ¡lise',
     pedido: 'Pedido Feito',
-    chegando: 'Em Trânsito',
+    chegando: 'Em TrÃ¢nsito',
     chegou: 'Entregue'
   };
 
@@ -5595,7 +5595,7 @@ function renderPurchasesTable() {
     const totalCost = purchase.total_cost || 0;
     // Criar thumbnail da foto se existir
     const photoHtml = purchase.photo_url 
-      ? `<img src="${purchase.photo_url}" class="purchase-photo-thumb" onclick="event.stopPropagation(); showPurchasePhoto('${purchase.id}')" title="Clique para ampliar" alt="Foto da peça">`
+      ? `<img src="${purchase.photo_url}" class="purchase-photo-thumb" onclick="event.stopPropagation(); showPurchasePhoto('${purchase.id}')" title="Clique para ampliar" alt="Foto da peÃ§a">`
       : '<span style="color: var(--text-secondary); font-size: 11px;">Sem foto</span>';
     return `
     <tr onclick="showPurchaseDetails('${purchase.id}')" style="cursor: pointer;" title="Clique para ver detalhes">
@@ -5622,7 +5622,7 @@ function renderPurchasesTable() {
         <div style="display: flex; flex-direction: column; gap: 6px;">
         ${purchase.status !== 'chegou' && (state.user.username === 'joacir' || state.user.roles.includes('admin') || state.user.roles.includes('compras')) ? `
           <button class="btn-small" onclick="showAdvancePurchaseModal('${purchase.id}')">
-            Avançar
+            AvanÃ§ar
           </button>
         ` : ''}
         ${purchase.requested_by === state.user.id || state.user.roles.includes('admin') ? `
@@ -5647,20 +5647,20 @@ function showAdvancePurchaseModal(purchaseId) {
   
   const statusFlow = {
     analise: { next: 'pedido', label: 'Pedido Feito' },
-    pedido: { next: 'chegando', label: 'Em Trânsito' },
+    pedido: { next: 'chegando', label: 'Em TrÃ¢nsito' },
     chegando: { next: 'chegou', label: 'Entregue' }
   };
   
   const nextStatus = statusFlow[purchase.status];
   if (!nextStatus) return;
   
-  // Criar modal dinâmico
+  // Criar modal dinÃ¢mico
   const modalHtml = `
     <div id="modal-advance-purchase" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-advance-purchase')">
       <div class="modal">
         <div class="modal-header">
-          <h3 class="modal-title">Avançar para: ${nextStatus.label}</h3>
-          <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-advance-purchase')">×</span>
+          <h3 class="modal-title">AvanÃ§ar para: ${nextStatus.label}</h3>
+          <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-advance-purchase')">Ã—</span>
         </div>
         
         <div style="padding: 15px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 15px;">
@@ -5672,7 +5672,7 @@ function showAdvancePurchaseModal(purchaseId) {
           ${purchase.status === 'analise' && (!purchase.unit_price || !purchase.supplier) ? `
             <div class="form-row">
               <div class="form-group">
-                <label>Preço Unitário (R$)</label>
+                <label>PreÃ§o UnitÃ¡rio (R$)</label>
                 <input type="number" name="unit_price" step="0.01" min="0" value="${purchase.unit_price || ''}" placeholder="0.00">
               </div>
               <div class="form-group">
@@ -5683,13 +5683,13 @@ function showAdvancePurchaseModal(purchaseId) {
           ` : ''}
           
           <div class="form-group">
-            <label>Observações (opcional)</label>
-            <textarea name="notes" placeholder="Adicione informações relevantes..."></textarea>
+            <label>ObservaÃ§Ãµes (opcional)</label>
+            <textarea name="notes" placeholder="Adicione informaÃ§Ãµes relevantes..."></textarea>
           </div>
           
           <div class="modal-actions">
             <button type="button" class="btn-small btn-cancel" onclick="closeModal('modal-advance-purchase')">Cancelar</button>
-            <button type="submit" class="btn-small btn-primary">Confirmar Avanço</button>
+            <button type="submit" class="btn-small btn-primary">Confirmar AvanÃ§o</button>
           </div>
         </form>
       </div>
@@ -5719,7 +5719,7 @@ function previewPurchasePhoto(input) {
   }
 }
 
-// Função para comprimir imagem antes de enviar
+// FunÃ§Ã£o para comprimir imagem antes de enviar
 function compressImage(file, maxWidth = 800, quality = 0.7) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -5770,12 +5770,12 @@ async function createPurchaseFromForm(event) {
   const unitPrice = parseFloat(formData.get('price')) || null;
   const totalCost = unitPrice ? quantity * unitPrice : null;
   
-  // Converter foto para base64 se existir (com compressão automática)
+  // Converter foto para base64 se existir (com compressÃ£o automÃ¡tica)
   let photoUrl = null;
   const photoInput = document.getElementById('purchase-photo');
   if (photoInput && photoInput.files && photoInput.files[0]) {
     const file = photoInput.files[0];
-    // Comprimir imagem automaticamente (máx 800px, qualidade 70%)
+    // Comprimir imagem automaticamente (mÃ¡x 800px, qualidade 70%)
     photoUrl = await compressImage(file, 800, 0.7);
   }
   
@@ -5802,16 +5802,16 @@ async function createPurchaseFromForm(event) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('[COMPRAS] Requisição criada com sucesso', 'success');
+      showNotification('[COMPRAS] RequisiÃ§Ã£o criada com sucesso', 'success');
       closeModal('modal-create-purchase');
       clearPurchasePhoto();
       await loadPurchases();
     } else {
-      showNotification('Erro ao criar requisição: ' + (data.error || 'Erro desconhecido'), 'error');
+      showNotification('Erro ao criar requisiÃ§Ã£o: ' + (data.error || 'Erro desconhecido'), 'error');
     }
   } catch (error) {
-    console.error('Erro ao criar requisição:', error);
-    showNotification('Erro ao criar requisição', 'error');
+    console.error('Erro ao criar requisiÃ§Ã£o:', error);
+    showNotification('Erro ao criar requisiÃ§Ã£o', 'error');
   }
 }
 
@@ -5859,7 +5859,7 @@ async function advancePurchaseWithDetails(event, purchaseId) {
     if (data.ok) {
       const statusLabels = {
         pedido: 'Pedido Feito',
-        chegando: 'Em Trânsito',
+        chegando: 'Em TrÃ¢nsito',
         chegou: 'Entregue'
       };
       showNotification(`Status atualizado: ${statusLabels[nextStatus]}`, 'success');
@@ -5869,12 +5869,12 @@ async function advancePurchaseWithDetails(event, purchaseId) {
       showNotification('Erro ao atualizar: ' + (data.error || 'Erro desconhecido'), 'error');
     }
   } catch (error) {
-    console.error('Erro ao avançar:', error);
-    showNotification('Erro ao avançar status', 'error');
+    console.error('Erro ao avanÃ§ar:', error);
+    showNotification('Erro ao avanÃ§ar status', 'error');
   }
 }
 
-// Função para mostrar foto ampliada
+// FunÃ§Ã£o para mostrar foto ampliada
 function showPurchasePhoto(purchaseId) {
   const purchase = state.purchases.find(p => p.id === purchaseId);
   if (!purchase || !purchase.photo_url) return;
@@ -5883,15 +5883,15 @@ function showPurchasePhoto(purchaseId) {
     <div id="modal-photo-viewer" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-photo-viewer')" style="z-index: 10001;">
       <div class="photo-viewer-modal">
         <div class="photo-viewer-header">
-          <h3>📷 ${escapeHtml(purchase.item_name)}</h3>
-          <span style="cursor: pointer; font-size: 28px; color: #fff;" onclick="closeModal('modal-photo-viewer')">×</span>
+          <h3>ðŸ“· ${escapeHtml(purchase.item_name)}</h3>
+          <span style="cursor: pointer; font-size: 28px; color: #fff;" onclick="closeModal('modal-photo-viewer')">Ã—</span>
         </div>
         <div class="photo-viewer-content">
-          <img src="${purchase.photo_url}" alt="Foto da peça" class="photo-viewer-img">
+          <img src="${purchase.photo_url}" alt="Foto da peÃ§a" class="photo-viewer-img">
         </div>
         <div class="photo-viewer-footer">
           <span>${purchase.quantity} ${purchase.unit}</span>
-          ${purchase.notes ? `<span style="color: var(--text-secondary);">• ${escapeHtml(purchase.notes)}</span>` : ''}
+          ${purchase.notes ? `<span style="color: var(--text-secondary);">â€¢ ${escapeHtml(purchase.notes)}</span>` : ''}
         </div>
       </div>
     </div>
@@ -5904,7 +5904,7 @@ function showPurchasePhoto(purchaseId) {
 }
 
 async function deletePurchase(purchaseId) {
-  if (!confirm('Tem certeza que deseja excluir esta requisição?')) return;
+  if (!confirm('Tem certeza que deseja excluir esta requisiÃ§Ã£o?')) return;
 
   try {
     const response = await fetch(`${API_URL}/purchases/${purchaseId}`, {
@@ -5914,14 +5914,14 @@ async function deletePurchase(purchaseId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('[COMPRAS] Requisição excluída', 'success');
+      showNotification('[COMPRAS] RequisiÃ§Ã£o excluÃ­da', 'success');
       await loadPurchases();
     } else {
-      showNotification('Erro ao excluir requisição', 'error');
+      showNotification('Erro ao excluir requisiÃ§Ã£o', 'error');
     }
   } catch (error) {
-    console.error('Erro ao excluir requisição:', error);
-    showNotification('Erro ao excluir requisição', 'error');
+    console.error('Erro ao excluir requisiÃ§Ã£o:', error);
+    showNotification('Erro ao excluir requisiÃ§Ã£o', 'error');
   }
 }
 
@@ -6000,7 +6000,7 @@ async function loadPreventives() {
       state.preventives = cached;
       renderPreventivesTable();
       updatePreventiveDashboard();
-      showNotification('Sem conexão - usando dados salvos', 'warning');
+      showNotification('Sem conexÃ£o - usando dados salvos', 'warning');
     } else {
       showNotification('Erro ao carregar preventivas', 'error');
     }
@@ -6017,11 +6017,11 @@ function renderPreventivesTable() {
   }
 
   const typeLabels = {
-    lubrificacao: 'Lubrificação',
-    inspecao: 'Inspeção',
+    lubrificacao: 'LubrificaÃ§Ã£o',
+    inspecao: 'InspeÃ§Ã£o',
     limpeza: 'Limpeza',
-    calibracao: 'Calibração',
-    troca_peca: 'Troca de Peça',
+    calibracao: 'CalibraÃ§Ã£o',
+    troca_peca: 'Troca de PeÃ§a',
     teste: 'Teste',
     outro: 'Outro'
   };
@@ -6036,7 +6036,7 @@ function renderPreventivesTable() {
     anual: 'Anual'
   };
 
-  // Ordenar: vencidas primeiro, depois por data mais próxima
+  // Ordenar: vencidas primeiro, depois por data mais prÃ³xima
   const sortedPreventives = [...state.preventives].sort((a, b) => {
     const dateA = new Date(a.next_date);
     const dateB = new Date(b.next_date);
@@ -6054,7 +6054,7 @@ function renderPreventivesTable() {
     return dateA - dateB;
   });
 
-  // Verificar alertas de vencimento próximo
+  // Verificar alertas de vencimento prÃ³ximo
   checkPreventiveAlerts(sortedPreventives);
 
   tbody.innerHTML = sortedPreventives.map(prev => {
@@ -6077,7 +6077,7 @@ function renderPreventivesTable() {
       rowClass = 'row-today';
     } else if (daysUntil === 1) {
       statusClass = 'badge-medium';
-      statusText = 'VENCE AMANHÃ!';
+      statusText = 'VENCE AMANHÃƒ!';
       rowClass = 'row-warning';
     } else if (daysUntil <= 7) {
       statusClass = 'badge-medium';
@@ -6093,7 +6093,7 @@ function renderPreventivesTable() {
       <td>${prev.last_date ? new Date(prev.last_date).toLocaleDateString('pt-BR') : '-'}</td>
       <td><span class="badge ${statusClass}">${statusText}</span></td>
       <td>
-        <button class="btn-small btn-success" onclick="markPreventiveDone(${prev.id})">✓ Feito</button>
+        <button class="btn-small btn-success" onclick="markPreventiveDone(${prev.id})">âœ“ Feito</button>
         <button class="btn-small btn-danger" onclick="deletePreventive(${prev.id})">Excluir</button>
       </td>
     </tr>
@@ -6117,23 +6117,23 @@ function checkPreventiveAlerts(preventives) {
     if (daysUntil < 0) {
       alerts.push({
         type: 'danger',
-        icon: '🚨',
+        icon: 'ðŸš¨',
         title: 'Preventiva VENCIDA',
-        text: `${prev.equipment_name} está ${Math.abs(daysUntil)} dia(s) atrasada!`
+        text: `${prev.equipment_name} estÃ¡ ${Math.abs(daysUntil)} dia(s) atrasada!`
       });
     } else if (daysUntil === 0) {
       alerts.push({
         type: 'warning',
-        icon: '⚠️',
+        icon: 'âš ï¸',
         title: 'Vence HOJE',
         text: `${prev.equipment_name} vence hoje!`
       });
     } else if (daysUntil === 1) {
       alerts.push({
         type: 'info',
-        icon: '📢',
-        title: 'Vence AMANHÃ',
-        text: `${prev.equipment_name} vence amanhã!`
+        icon: 'ðŸ“¢',
+        title: 'Vence AMANHÃƒ',
+        text: `${prev.equipment_name} vence amanhÃ£!`
       });
     }
   });
@@ -6156,7 +6156,7 @@ function checkPreventiveAlerts(preventives) {
 
 // Marcar preventiva como feita (reinicia a data)
 async function markPreventiveDone(id) {
-  if (!confirm('Marcar esta preventiva como concluída? A próxima data será recalculada automaticamente.')) return;
+  if (!confirm('Marcar esta preventiva como concluÃ­da? A prÃ³xima data serÃ¡ recalculada automaticamente.')) return;
   
   try {
     const response = await fetch(`${API_URL}/preventives/${id}/complete`, {
@@ -6169,13 +6169,13 @@ async function markPreventiveDone(id) {
     
     const data = await response.json();
     if (data.ok) {
-      showNotification('Preventiva concluída! Próxima data atualizada.', 'success');
+      showNotification('Preventiva concluÃ­da! PrÃ³xima data atualizada.', 'success');
       await loadPreventives();
     } else {
       showNotification('Erro ao concluir: ' + data.error, 'error');
     }
   } catch (error) {
-    showNotification('Erro de conexão', 'error');
+    showNotification('Erro de conexÃ£o', 'error');
   }
 }
 
@@ -6260,7 +6260,7 @@ async function completePreventive(preventiveId) {
   const prev = state.preventives.find(p => p.id === preventiveId);
   if (!prev) return;
 
-  if (!confirm(`Marcar "${prev.equipment_name}" como concluída?`)) return;
+  if (!confirm(`Marcar "${prev.equipment_name}" como concluÃ­da?`)) return;
 
   try {
     const response = await fetch(`${API_URL}/preventives/${preventiveId}/complete`, {
@@ -6273,7 +6273,7 @@ async function completePreventive(preventiveId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('[PREVENTIVA] Concluída! Próxima data agendada.', 'success');
+      showNotification('[PREVENTIVA] ConcluÃ­da! PrÃ³xima data agendada.', 'success');
       await loadPreventives();
     } else {
       showNotification('Erro ao concluir preventiva', 'error');
@@ -6295,7 +6295,7 @@ async function deletePreventive(preventiveId) {
 
     const data = await response.json();
     if (data.ok) {
-      showNotification('[PREVENTIVA] Excluída', 'success');
+      showNotification('[PREVENTIVA] ExcluÃ­da', 'success');
       await loadPreventives();
     } else {
       showNotification('Erro ao excluir preventiva', 'error');
@@ -6306,9 +6306,9 @@ async function deletePreventive(preventiveId) {
   }
 }
 
-// Configurações Module
+// ConfiguraÃ§Ãµes Module
 function loadConfigurations() {
-  // Carregar dados do usuário
+  // Carregar dados do usuÃ¡rio
   if (state.user) {
     document.getElementById('config-username').value = state.user.username || '';
   }
@@ -6319,7 +6319,7 @@ function loadConfigurations() {
     document.getElementById('config-key').value = savedKey;
   }
   
-  // Carregar preferências
+  // Carregar preferÃªncias
   const rememberMe = localStorage.getItem('icarus_remember_me') === 'true';
   document.getElementById('config-remember-me').checked = rememberMe;
   
@@ -6343,7 +6343,7 @@ function loadConfigurations() {
       localStorage.setItem('icarus_key', document.getElementById('config-key').value);
       localStorage.setItem('icarus_username', state.user.username);
     } else {
-      // Limpar credenciais salvas (mas manter a sessão atual)
+      // Limpar credenciais salvas (mas manter a sessÃ£o atual)
       localStorage.removeItem('icarus_key');
       localStorage.removeItem('icarus_username');
     }
@@ -6367,14 +6367,14 @@ async function verifyWhatsApp() {
   const phone = document.getElementById('config-whatsapp-phone').value.trim();
   
   if (!phone) {
-    alert('Por favor, insira seu número de WhatsApp');
+    alert('Por favor, insira seu nÃºmero de WhatsApp');
     return;
   }
   
-  // Validar formato básico
+  // Validar formato bÃ¡sico
   const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length < 10 || cleaned.length > 11) {
-    alert('Número inválido. Use o formato: (XX) XXXXX-XXXX');
+    alert('NÃºmero invÃ¡lido. Use o formato: (XX) XXXXX-XXXX');
     return;
   }
   
@@ -6391,7 +6391,7 @@ async function verifyWhatsApp() {
     const data = await response.json();
     if (data.ok) {
       localStorage.setItem('icarus_whatsapp_phone', phone);
-      showNotification('[WHATSAPP] Verificado! Você receberá notificações.', 'success');
+      showNotification('[WHATSAPP] Verificado! VocÃª receberÃ¡ notificaÃ§Ãµes.', 'success');
     } else {
       showNotification('Erro ao verificar WhatsApp: ' + (data.error || 'Tente novamente'), 'error');
     }
@@ -6402,14 +6402,14 @@ async function verifyWhatsApp() {
 }
 
 function openWhatsAppSupport() {
-  // Seu número de WhatsApp para suporte
-  const supportPhone = '5511999999999'; // ALTERAR PARA SEU NÚMERO
-  const message = encodeURIComponent('Olá! Preciso de ajuda com o sistema Icarus.');
+  // Seu nÃºmero de WhatsApp para suporte
+  const supportPhone = '5511999999999'; // ALTERAR PARA SEU NÃšMERO
+  const message = encodeURIComponent('OlÃ¡! Preciso de ajuda com o sistema Icarus.');
   window.open(`https://wa.me/${supportPhone}?text=${message}`, '_blank');
 }
 
 function openDocumentation() {
-  alert('Documentação em desenvolvimento!\n\nEm breve teremos um guia completo do sistema.');
+  alert('DocumentaÃ§Ã£o em desenvolvimento!\n\nEm breve teremos um guia completo do sistema.');
 }
 
 function reportBug() {
@@ -6420,7 +6420,7 @@ function reportBug() {
   console.log('Bug Report:', description, 'User:', state.user.username);
 }
 
-// Busca rápida global (Ctrl+K)
+// Busca rÃ¡pida global (Ctrl+K)
 function initQuickSearch() {
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -6436,10 +6436,10 @@ function showQuickSearch() {
   modal.innerHTML = `
     <div class="modal" style="max-width: 600px;">
       <div class="modal-header">
-        <h3 class="modal-title">🔍 Busca Rápida</h3>
-        <span style="cursor: pointer; font-size: 24px;" onclick="this.closest('.modal-overlay').remove()">×</span>
+        <h3 class="modal-title">ðŸ” Busca RÃ¡pida</h3>
+        <span style="cursor: pointer; font-size: 24px;" onclick="this.closest('.modal-overlay').remove()">Ã—</span>
       </div>
-      <input type="text" id="quick-search-input" placeholder="Digite para buscar OS, peças, compras..." 
+      <input type="text" id="quick-search-input" placeholder="Digite para buscar OS, peÃ§as, compras..." 
         style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 15px;">
       <div id="quick-search-results" style="max-height: 400px; overflow-y: auto;"></div>
     </div>
@@ -6465,10 +6465,10 @@ function showQuickSearch() {
       }
     });
     
-    // Buscar peças
+    // Buscar peÃ§as
     state.inventory.forEach(i => {
       if (i.name.toLowerCase().includes(query) || (i.sku && i.sku.toLowerCase().includes(query))) {
-        results.push({ type: 'Peça', title: i.name, id: i.sku, action: () => { modal.remove(); navigateTo('almoxarifado'); } });
+        results.push({ type: 'PeÃ§a', title: i.name, id: i.sku, action: () => { modal.remove(); navigateTo('almoxarifado'); } });
       }
     });
     
@@ -6486,7 +6486,7 @@ function showQuickSearch() {
         <div onclick="(${r.action.toString()})()" style="padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;" 
           onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
           <span style="color: var(--accent-gold); font-weight: bold;">[${escapeHtml(r.type)}]</span> ${escapeHtml(r.title)}
-          ${r.id ? `<span style="color: var(--text-secondary); font-size: 12px;"> • ${escapeHtml(r.id)}</span>` : ''}
+          ${r.id ? `<span style="color: var(--text-secondary); font-size: 12px;"> â€¢ ${escapeHtml(r.id)}</span>` : ''}
         </div>
       `).join('');
     }
@@ -6606,14 +6606,14 @@ function renderChecklists() {
           <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
         </svg>
         <p style="margin: 0 0 8px 0; font-size: 16px;">Nenhum checklist cadastrado</p>
-        <p style="margin: 0; font-size: 13px;">Clique em "Novo Checklist" para começar</p>
+        <p style="margin: 0; font-size: 13px;">Clique em "Novo Checklist" para comeÃ§ar</p>
       </div>
     `;
     return;
   }
   
   const frequencyLabels = {
-    diario: 'Diário',
+    diario: 'DiÃ¡rio',
     semanal: 'Semanal',
     mensal: 'Mensal'
   };
@@ -6625,12 +6625,12 @@ function renderChecklists() {
   };
   
   container.innerHTML = state.checklists.map(cl => {
-    // Verificar se automação está ativa
+    // Verificar se automaÃ§Ã£o estÃ¡ ativa
     const isAutoEnabled = cl.auto_complete === true;
     const autoFreqDays = cl.frequency_days || 1;
     const autoTime = cl.auto_time || '11:00';
     const lastAutoRun = cl.last_auto_run ? new Date(cl.last_auto_run).toLocaleDateString('pt-BR') : null;
-    const freqLabel = autoFreqDays === 1 ? 'Diário' : autoFreqDays === 2 ? 'Dia S/N' : autoFreqDays === 7 ? 'Semanal' : `${autoFreqDays}d`;
+    const freqLabel = autoFreqDays === 1 ? 'DiÃ¡rio' : autoFreqDays === 2 ? 'Dia S/N' : autoFreqDays === 7 ? 'Semanal' : `${autoFreqDays}d`;
     
     return `
     <div class="checklist-item-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; margin-bottom: 14px; transition: all 0.2s; ${isAutoEnabled ? 'border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);' : ''}">
@@ -6655,7 +6655,7 @@ function renderChecklists() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 ${escapeHtml(cl.sector) || 'Sem setor'}
               </span>
-              <span style="opacity: 0.5;">•</span>
+              <span style="opacity: 0.5;">â€¢</span>
               <span>${cl.items?.length || 0} itens</span>
             </p>
           </div>
@@ -6668,7 +6668,7 @@ function renderChecklists() {
           ${isAutoEnabled ? `
             <span style="display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.1)); color: #a855f7; border-radius: 15px; font-size: 10px; font-weight: 600; text-transform: uppercase; border: 1px solid rgba(168, 85, 247, 0.3);">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              ${autoTime} • ${freqLabel}${cl.auto_create_os ? ' • +OS' : ''}
+              ${autoTime} â€¢ ${freqLabel}${cl.auto_create_os ? ' â€¢ +OS' : ''}
             </span>
           ` : ''}
         </div>
@@ -6679,7 +6679,7 @@ function renderChecklists() {
       ${isAutoEnabled && lastAutoRun ? `
         <div style="margin: 0 0 14px 0; padding: 10px 14px; display: inline-flex; align-items: center; gap: 8px; background: rgba(168, 85, 247, 0.08); border-radius: 8px; font-size: 12px; color: #c084fc; margin-left: 58px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Última execução: ${lastAutoRun}
+          Ãšltima execuÃ§Ã£o: ${lastAutoRun}
         </div>
       ` : ''}
       
@@ -6700,12 +6700,12 @@ function renderChecklists() {
         </button>
         <button class="btn-checklist-secondary" onclick="viewChecklistHistory('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Histórico
+          HistÃ³rico
         </button>
         ${canEdit ? `
           <button class="btn-checklist-auto" onclick="showChecklistAutomation('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: ${isAutoEnabled ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(168, 85, 247, 0.1)'}; border: 1px solid ${isAutoEnabled ? 'transparent' : 'rgba(168, 85, 247, 0.3)'}; border-radius: 8px; color: ${isAutoEnabled ? '#fff' : '#a855f7'}; font-size: 13px; cursor: pointer; font-weight: ${isAutoEnabled ? '600' : '400'}; ${isAutoEnabled ? 'box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);' : ''}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
-            ${isAutoEnabled ? 'Automático' : 'Automatizar'}
+            ${isAutoEnabled ? 'AutomÃ¡tico' : 'Automatizar'}
           </button>
           <button class="btn-checklist-secondary" onclick="editChecklist('${sanitizeId(cl.id)}')" style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -6721,7 +6721,7 @@ function renderChecklists() {
   `}).join('');
 }
 
-// Mostrar modal de automação de checklist
+// Mostrar modal de automaÃ§Ã£o de checklist
 function showChecklistAutomation(checklistId) {
   const checklist = state.checklists.find(c => c.id === checklistId);
   if (!checklist) return;
@@ -6733,7 +6733,7 @@ function showChecklistAutomation(checklistId) {
   const autoOsExecutor = checklist.auto_os_executor || '';
   const autoOsTitle = checklist.auto_os_title || `Checklist: ${checklist.name}`;
   
-  // Carregar técnicos para o select
+  // Carregar tÃ©cnicos para o select
   const technicians = (state.users || []).filter(u => 
     u.roles && (u.roles.includes('tecnico') || u.roles.includes('os_manage_all') || u.roles.includes('admin'))
   );
@@ -6753,7 +6753,7 @@ function showChecklistAutomation(checklistId) {
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
             </div>
             <div style="flex: 1;">
-              <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">Automação de Checklist</h3>
+              <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">AutomaÃ§Ã£o de Checklist</h3>
               <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">${escapeHtml(checklist.name)}</p>
             </div>
             <button onclick="closeChecklistAutomation()" style="background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 8px;">
@@ -6769,8 +6769,8 @@ function showChecklistAutomation(checklistId) {
               <div style="display: flex; align-items: center; gap: 12px;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                 <div>
-                  <span style="font-size: 15px; font-weight: 600; color: #fff;">Execução Automática</span>
-                  <p style="margin: 2px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Marca como concluído automaticamente</p>
+                  <span style="font-size: 15px; font-weight: 600; color: #fff;">ExecuÃ§Ã£o AutomÃ¡tica</span>
+                  <p style="margin: 2px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Marca como concluÃ­do automaticamente</p>
                 </div>
               </div>
               <div style="position: relative; width: 52px; height: 28px;">
@@ -6781,26 +6781,26 @@ function showChecklistAutomation(checklistId) {
             </label>
           </div>
           
-          <!-- Opções de Automação -->
+          <!-- OpÃ§Ãµes de AutomaÃ§Ã£o -->
           <div id="auto-options-container" style="display: ${isEnabled ? 'block' : 'none'};">
             
-            <!-- Horário -->
+            <!-- HorÃ¡rio -->
             <div style="margin-bottom: 18px;">
               <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Horário de Execução
+                HorÃ¡rio de ExecuÃ§Ã£o
               </label>
               <input type="time" id="auto-time" value="${autoTime}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: #fff; font-size: 15px; font-family: inherit;">
             </div>
             
-            <!-- Frequência -->
+            <!-- FrequÃªncia -->
             <div style="margin-bottom: 18px;">
               <label style="display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 10px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Frequência
+                FrequÃªncia
               </label>
               <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                <button type="button" onclick="setAutoFreq(1)" class="freq-btn" data-freq="1" style="padding: 12px 8px; background: ${freqDays === 1 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 1 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Diário</button>
+                <button type="button" onclick="setAutoFreq(1)" class="freq-btn" data-freq="1" style="padding: 12px 8px; background: ${freqDays === 1 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 1 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">DiÃ¡rio</button>
                 <button type="button" onclick="setAutoFreq(2)" class="freq-btn" data-freq="2" style="padding: 12px 8px; background: ${freqDays === 2 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 2 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Dia S/N</button>
                 <button type="button" onclick="setAutoFreq(3)" class="freq-btn" data-freq="3" style="padding: 12px 8px; background: ${freqDays === 3 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 3 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">3 dias</button>
                 <button type="button" onclick="setAutoFreq(7)" class="freq-btn" data-freq="7" style="padding: 12px 8px; background: ${freqDays === 7 ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.05)'}; border: 1px solid ${freqDays === 7 ? 'transparent' : 'rgba(255,255,255,0.15)'}; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;">Semanal</button>
@@ -6814,7 +6814,7 @@ function showChecklistAutomation(checklistId) {
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
                   <div>
-                    <span style="font-size: 14px; font-weight: 600; color: #fff;">Criar OS Automática</span>
+                    <span style="font-size: 14px; font-weight: 600; color: #fff;">Criar OS AutomÃ¡tica</span>
                     <p style="margin: 2px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.5);">Cria e fecha a OS automaticamente</p>
                   </div>
                 </div>
@@ -6823,11 +6823,11 @@ function showChecklistAutomation(checklistId) {
               
               <div id="auto-os-options" style="display: ${autoCreateOS ? 'block' : 'none'};">
                 <div style="margin-bottom: 12px;">
-                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Título da OS</label>
-                  <input type="text" id="auto-os-title" value="${escapeHtml(autoOsTitle)}" placeholder="Título da OS" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 14px;">
+                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">TÃ­tulo da OS</label>
+                  <input type="text" id="auto-os-title" value="${escapeHtml(autoOsTitle)}" placeholder="TÃ­tulo da OS" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 14px;">
                 </div>
                 <div>
-                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Responsável (quem executou)</label>
+                  <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">ResponsÃ¡vel (quem executou)</label>
                   <select id="auto-os-executor" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; font-size: 14px;">
                     <option value="">-- Selecione --</option>
                     ${techOptions}
@@ -6845,10 +6845,10 @@ function showChecklistAutomation(checklistId) {
             </div>
           </div>
           
-          <!-- Botões -->
+          <!-- BotÃµes -->
           <div style="display: flex; gap: 12px;">
             <button onclick="closeChecklistAutomation()" style="flex: 1; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; cursor: pointer;">Cancelar</button>
-            <button onclick="saveChecklistAutomation('${checklistId}')" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);">Salvar Configuração</button>
+            <button onclick="saveChecklistAutomation('${checklistId}')" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);">Salvar ConfiguraÃ§Ã£o</button>
           </div>
         </div>
       </div>
@@ -6858,7 +6858,7 @@ function showChecklistAutomation(checklistId) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// Toggle opções de automação
+// Toggle opÃ§Ãµes de automaÃ§Ã£o
 function toggleAutoOptions() {
   const enabled = document.getElementById('auto-enabled').checked;
   const container = document.getElementById('auto-options-container');
@@ -6877,7 +6877,7 @@ function toggleAutoOptions() {
   }
 }
 
-// Toggle opções de criar OS
+// Toggle opÃ§Ãµes de criar OS
 function toggleAutoOSOptions() {
   const enabled = document.getElementById('auto-create-os').checked;
   const container = document.getElementById('auto-os-options');
@@ -6886,11 +6886,11 @@ function toggleAutoOSOptions() {
   }
 }
 
-// Definir frequência na modal
+// Definir frequÃªncia na modal
 function setAutoFreq(days) {
   document.getElementById('auto-freq-days').value = days;
   
-  // Atualizar visual dos botões
+  // Atualizar visual dos botÃµes
   document.querySelectorAll('.freq-btn').forEach(btn => {
     const btnDays = parseInt(btn.dataset.freq);
     if (btnDays === days) {
@@ -6903,7 +6903,7 @@ function setAutoFreq(days) {
   });
 }
 
-// Fechar modal de automação
+// Fechar modal de automaÃ§Ã£o
 function closeChecklistAutomation() {
   const modal = document.getElementById('modal-checklist-automation');
   if (modal) modal.remove();
@@ -6973,7 +6973,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Salvar configuração de automação
+// Salvar configuraÃ§Ã£o de automaÃ§Ã£o
 async function saveChecklistAutomation(checklistId) {
   const enabled = document.getElementById('auto-enabled').checked;
   const freqDays = parseInt(document.getElementById('auto-freq-days').value) || 1;
@@ -6982,9 +6982,9 @@ async function saveChecklistAutomation(checklistId) {
   const autoOsTitle = document.getElementById('auto-os-title')?.value || '';
   const autoOsExecutor = document.getElementById('auto-os-executor')?.value || '';
   
-  // Validar se escolheu responsável quando criar OS
+  // Validar se escolheu responsÃ¡vel quando criar OS
   if (enabled && autoCreateOS && !autoOsExecutor) {
-    showNotification('Selecione um responsável para a OS automática', 'warning');
+    showNotification('Selecione um responsÃ¡vel para a OS automÃ¡tica', 'warning');
     return;
   }
   
@@ -7011,13 +7011,13 @@ async function saveChecklistAutomation(checklistId) {
       closeChecklistAutomation();
       state.checklists = data.checklists || state.checklists;
       renderChecklists();
-      showNotification(enabled ? `Automação ativada para ${autoTime}!` : 'Automação desativada', 'success');
+      showNotification(enabled ? `AutomaÃ§Ã£o ativada para ${autoTime}!` : 'AutomaÃ§Ã£o desativada', 'success');
     } else {
-      showNotification(data.error || 'Erro ao salvar automação', 'error');
+      showNotification(data.error || 'Erro ao salvar automaÃ§Ã£o', 'error');
     }
   } catch (error) {
-    console.error('Erro ao salvar automação:', error);
-    showNotification('Erro ao salvar automação', 'error');
+    console.error('Erro ao salvar automaÃ§Ã£o:', error);
+    showNotification('Erro ao salvar automaÃ§Ã£o', 'error');
   }
 }
 
@@ -7029,7 +7029,7 @@ function showCreateChecklist() {
   modal.classList.add('active');
 }
 
-// Toggle para mostrar opções de frequência automática
+// Toggle para mostrar opÃ§Ãµes de frequÃªncia automÃ¡tica
 function toggleChecklistAutoOptions() {
   const checkbox = document.getElementById('checklist-auto-complete');
   const options = document.getElementById('checklist-auto-options');
@@ -7060,7 +7060,7 @@ async function createChecklistFromForm(event) {
   const description = document.getElementById('checklist-description').value.trim();
   const itemsText = document.getElementById('checklist-items').value.trim();
   
-  // Automação
+  // AutomaÃ§Ã£o
   const autoComplete = document.getElementById('checklist-auto-complete');
   const auto_complete = autoComplete ? autoComplete.checked : false;
   
@@ -7139,7 +7139,7 @@ function openExecuteChecklist(checklistId) {
     </div>
   `).join('');
   
-  // Mostrar opção de criar OS apenas para manutenção
+  // Mostrar opÃ§Ã£o de criar OS apenas para manutenÃ§Ã£o
   const createOSSection = document.getElementById('chk-create-os-section');
   const createOSCheck = document.getElementById('chk-create-os-check');
   const executorSelect = document.getElementById('chk-os-executor-select');
@@ -7194,7 +7194,7 @@ function updateChecklistProgress() {
   });
 }
 
-// Toggle seção de executor quando marca criar OS
+// Toggle seÃ§Ã£o de executor quando marca criar OS
 function toggleChecklistOSExecutor() {
   const checkbox = document.getElementById('chk-create-os-check');
   const executorSection = document.getElementById('chk-os-executor-select');
@@ -7207,7 +7207,7 @@ function toggleChecklistOSExecutor() {
   }
 }
 
-// Carregar lista de técnicos para o select
+// Carregar lista de tÃ©cnicos para o select
 async function loadChecklistOSExecutors() {
   const select = document.getElementById('chk-os-executor');
   if (!select) return;
@@ -7223,11 +7223,11 @@ async function loadChecklistOSExecutors() {
         u.roles && (u.roles.includes('tecnico') || u.roles.includes('os_manage_all') || u.roles.includes('admin'))
       );
       
-      select.innerHTML = '<option value="">-- Selecione o técnico --</option>' +
+      select.innerHTML = '<option value="">-- Selecione o tÃ©cnico --</option>' +
         technicians.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
     }
   } catch (error) {
-    console.error('Erro ao carregar técnicos:', error);
+    console.error('Erro ao carregar tÃ©cnicos:', error);
   }
 }
 
@@ -7250,7 +7250,7 @@ async function submitChecklistExecution() {
   const executorId = createOS ? document.getElementById('chk-os-executor')?.value : null;
   
   if (createOS && !executorId) {
-    showNotification('Selecione um técnico para a OS', 'warning');
+    showNotification('Selecione um tÃ©cnico para a OS', 'warning');
     return;
   }
   
@@ -7266,7 +7266,7 @@ async function submitChecklistExecution() {
     
     const data = await response.json();
     if (data.ok) {
-      // Se marcou para criar OS, criar a OS também
+      // Se marcou para criar OS, criar a OS tambÃ©m
       if (createOS && executorId) {
         await createOSFromChecklist(checklistId, executorId, notes);
       }
@@ -7286,14 +7286,14 @@ async function createOSFromChecklist(checklistId, executorId, notes) {
   const checklist = state.checklists.find(c => c.id === checklistId);
   if (!checklist) return;
   
-  // Montar descrição com os itens do checklist
+  // Montar descriÃ§Ã£o com os itens do checklist
   const itemsDesc = (checklist.items || []).map((item, i) => `${i + 1}. ${item.description}`).join('\n');
-  const description = `Originado do Checklist: ${checklist.name}\n\nItens:\n${itemsDesc}${notes ? '\n\nObservações: ' + notes : ''}`;
+  const description = `Originado do Checklist: ${checklist.name}\n\nItens:\n${itemsDesc}${notes ? '\n\nObservaÃ§Ãµes: ' + notes : ''}`;
   
   const orderData = {
     title: `Checklist: ${checklist.name}`,
     description: description,
-    sector: checklist.sector || 'Manutenção',
+    sector: checklist.sector || 'ManutenÃ§Ã£o',
     priority: 'medium',
     assigned_to: executorId
   };
@@ -7310,7 +7310,7 @@ async function createOSFromChecklist(checklistId, executorId, notes) {
     
     const data = await response.json();
     if (data.ok) {
-      showNotification('Ordem de Serviço criada!', 'success');
+      showNotification('Ordem de ServiÃ§o criada!', 'success');
       await loadOrders(); // Atualizar lista de OS
     } else {
       showNotification('Erro ao criar OS: ' + (data.error || ''), 'error');
@@ -7340,7 +7340,7 @@ async function viewChecklistHistory(checklistId) {
       const container = document.getElementById('checklist-executions-list');
       
       if (executions.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-secondary); padding: 20px; text-align: center;">Nenhuma execução registrada</p>';
+        container.innerHTML = '<p style="color: var(--text-secondary); padding: 20px; text-align: center;">Nenhuma execuÃ§Ã£o registrada</p>';
       } else {
         container.innerHTML = executions.map(exec => {
           const checkedCount = (exec.items || []).filter(i => i.checked).length;
@@ -7349,13 +7349,13 @@ async function viewChecklistHistory(checklistId) {
           return `
             <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; margin-bottom: 8px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong>${escapeHtml(exec.executed_by_name) || 'Usuário'}</strong>
+                <strong>${escapeHtml(exec.executed_by_name) || 'UsuÃ¡rio'}</strong>
                 <span style="font-size: 12px; color: var(--text-secondary);">${formatDate(exec.executed_at)}</span>
               </div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 ${(exec.items || []).map(item => `
                   <span style="font-size: 11px; padding: 3px 6px; background: ${item.checked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${item.checked ? 'var(--success)' : 'var(--danger)'}; border-radius: 4px;">
-                    ${item.checked ? '✓' : '✗'} ${escapeHtml(item.description)}
+                    ${item.checked ? 'âœ“' : 'âœ—'} ${escapeHtml(item.description)}
                   </span>
                 `).join('')}
               </div>
@@ -7369,7 +7369,7 @@ async function viewChecklistHistory(checklistId) {
       }
     }
   } catch (error) {
-    showNotification('Erro ao carregar histórico: ' + error.message, 'error');
+    showNotification('Erro ao carregar histÃ³rico: ' + error.message, 'error');
   }
 }
 
@@ -7391,7 +7391,7 @@ async function deleteChecklist(checklistId) {
     if (data.ok) {
       state.checklists = data.checklists || [];
       renderChecklists();
-      showNotification('Checklist excluído!', 'success');
+      showNotification('Checklist excluÃ­do!', 'success');
     } else {
       showNotification(data.error || 'Erro ao excluir', 'error');
     }
@@ -7460,22 +7460,22 @@ async function updateChecklistFromForm(event, checklistId) {
   }
 }
 
-// ========== CONTROLE DE ÁGUA - GRANJA VITTA ==========
+// ========== CONTROLE DE ÃGUA - GRANJA VITTA ==========
 
-// Estado do controle de água
+// Estado do controle de Ã¡gua
 state.waterReadings = [];
 state.waterPeriod = 'day';
 state.waterStats = null;
 state.waterChartType = 'consumo'; // 'consumo' ou 'temperatura'
 
-// Buscar temperatura atual da internet (Granja Vitta - Aparecida de Goiânia)
+// Buscar temperatura atual da internet (Granja Vitta - Aparecida de GoiÃ¢nia)
 async function fetchCurrentTemperature() {
   try {
-    // Coordenadas da Granja Vitta - Aparecida de Goiânia, GO
+    // Coordenadas da Granja Vitta - Aparecida de GoiÃ¢nia, GO
     const lat = -16.8225;
     const lon = -49.2433;
     
-    // API Open-Meteo (gratuita, sem chave necessária)
+    // API Open-Meteo (gratuita, sem chave necessÃ¡ria)
     const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
     const data = await response.json();
     
@@ -7484,20 +7484,20 @@ async function fetchCurrentTemperature() {
       const tempInput = document.getElementById('water-temperature');
       if (tempInput && !tempInput.value) {
         tempInput.value = temp.toFixed(1);
-        tempInput.placeholder = `${temp.toFixed(1)}°C (atual)`;
+        tempInput.placeholder = `${temp.toFixed(1)}Â°C (atual)`;
       }
       return temp;
     }
   } catch (error) {
-    console.log('Não foi possível obter temperatura automática:', error);
+    console.log('NÃ£o foi possÃ­vel obter temperatura automÃ¡tica:', error);
   }
   return null;
 }
 
-// Carregar controle de água
+// Carregar controle de Ã¡gua
 async function loadWaterControl() {
   try {
-    // Verificar permissão - Bruno e JoseWalter só visualizam
+    // Verificar permissÃ£o - Bruno e JoseWalter sÃ³ visualizam
     const inputSection = document.querySelector('.water-input-section');
     const username = state.user?.username?.toLowerCase() || '';
     const canEdit = !['bruno', 'josewalter'].includes(username);
@@ -7517,15 +7517,15 @@ async function loadWaterControl() {
       const dateInput = document.getElementById('water-reading-date');
       if (dateInput && !dateInput.value) dateInput.value = today;
       
-      // Buscar temperatura automática da internet
+      // Buscar temperatura automÃ¡tica da internet
       fetchCurrentTemperature();
       
-      // Atualizar horário atual
+      // Atualizar horÃ¡rio atual
       updateCurrentTime();
       setInterval(updateCurrentTime, 60000);
     }
     
-    // Carregar dados EM PARALELO (mais rápido)
+    // Carregar dados EM PARALELO (mais rÃ¡pido)
     await Promise.all([
       loadWaterReadings(),
       loadWaterStats()
@@ -7538,11 +7538,11 @@ async function loadWaterControl() {
     checkWaterAlerts();
     
   } catch (error) {
-    console.error('Erro ao carregar controle de água:', error);
+    console.error('Erro ao carregar controle de Ã¡gua:', error);
   }
 }
 
-// Atualizar horário atual
+// Atualizar horÃ¡rio atual
 function updateCurrentTime() {
   const timeEl = document.getElementById('current-time');
   if (timeEl) {
@@ -7551,7 +7551,7 @@ function updateCurrentTime() {
   }
 }
 
-// Carregar leituras de água
+// Carregar leituras de Ã¡gua
 async function loadWaterReadings() {
   try {
     // Se offline, carregar do cache
@@ -7582,7 +7582,7 @@ async function loadWaterReadings() {
   }
 }
 
-// Carregar estatísticas de água
+// Carregar estatÃ­sticas de Ã¡gua
 async function loadWaterStats() {
   try {
     const response = await fetch(`${API_URL}/water-readings/stats?period=${state.waterPeriod}`, {
@@ -7594,14 +7594,14 @@ async function loadWaterStats() {
       state.waterStats = data.stats;
     }
   } catch (error) {
-    console.error('Erro ao carregar estatísticas:', error);
+    console.error('Erro ao carregar estatÃ­sticas:', error);
   }
 }
 
-// Estado da visualização
+// Estado da visualizaÃ§Ã£o
 state.waterViewType = 'trabalho'; // 'trabalho' ou '24h'
 
-// Definir tipo de visualização
+// Definir tipo de visualizaÃ§Ã£o
 function setWaterViewType(type) {
   state.waterViewType = type;
   
@@ -7616,11 +7616,11 @@ function setWaterViewType(type) {
   renderWaterHistory();
 }
 
-// Definir período do filtro
+// Definir perÃ­odo do filtro
 async function setWaterPeriod(period) {
   state.waterPeriod = period;
   
-  // Atualizar botões
+  // Atualizar botÃµes
   document.querySelectorAll('.water-filter-btn').forEach(btn => btn.classList.remove('active'));
   const activeBtn = document.getElementById(`water-filter-${period}`);
   if (activeBtn) activeBtn.classList.add('active');
@@ -7631,12 +7631,12 @@ async function setWaterPeriod(period) {
   renderWaterChart();
 }
 
-// Renderizar estatísticas
+// Renderizar estatÃ­sticas
 function renderWaterStats() {
   const stats = state.waterStats;
   const readings = state.waterReadings;
   
-  // Função para formatar data corretamente
+  // FunÃ§Ã£o para formatar data corretamente
   function getDateKey(dateStr) {
     const parts = dateStr.split('T')[0].split('-');
     return parts.join('-'); // YYYY-MM-DD
@@ -7656,7 +7656,7 @@ function renderWaterStats() {
   ['aviarios', 'recria'].forEach(tank => {
     const tankReadings = sortedReadings.filter(r => r.tank_name === tank);
     
-    // SEMPRE usar data de HOJE para exibição principal
+    // SEMPRE usar data de HOJE para exibiÃ§Ã£o principal
     const leitura7hHoje = tankReadings.find(r => r.reading_time === '07:00' && getDateKey(r.reading_date) === todayKey);
     const leitura16hHoje = tankReadings.find(r => r.reading_time === '16:00' && getDateKey(r.reading_date) === todayKey);
     
@@ -7668,7 +7668,7 @@ function renderWaterStats() {
       if (leitura7hHoje) {
         el7h.textContent = Math.round(leitura7hHoje.reading_value).toLocaleString('pt-BR');
       } else {
-        // Sempre mostra Pendente para hoje se não tem leitura
+        // Sempre mostra Pendente para hoje se nÃ£o tem leitura
         el7h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
       }
     }
@@ -7676,12 +7676,12 @@ function renderWaterStats() {
       if (leitura16hHoje) {
         el16h.textContent = Math.round(leitura16hHoje.reading_value).toLocaleString('pt-BR');
       } else {
-        // Sempre mostra Pendente para hoje se não tem leitura
+        // Sempre mostra Pendente para hoje se nÃ£o tem leitura
         el16h.innerHTML = '<span style="color: #eab308;">Pendente</span>';
       }
     }
     
-    // Calcular consumo do período de trabalho (7h-16h = 9 horas) - só se ambos existem HOJE
+    // Calcular consumo do perÃ­odo de trabalho (7h-16h = 9 horas) - sÃ³ se ambos existem HOJE
     let consumoTrabalho = '--';
     let ltHoraTrabalho = '--';
     if (leitura7hHoje && leitura16hHoje) {
@@ -7697,7 +7697,7 @@ function renderWaterStats() {
     if (elConsumoTrab) elConsumoTrab.textContent = consumoTrabalho;
     if (elLtHoraTrab) elLtHoraTrab.textContent = ltHoraTrabalho;
     
-    // Calcular consumo 24h do ÚLTIMO DIA COMPLETO (ontem)
+    // Calcular consumo 24h do ÃšLTIMO DIA COMPLETO (ontem)
     // Consumo de ontem = Leitura 7h HOJE - Leitura 7h ONTEM
     let consumo24h = '--';
     let ltHora24h = '--';
@@ -7725,14 +7725,14 @@ function renderWaterStats() {
     if (elLtHora24h) elLtHora24h.textContent = ltHora24h;
   });
   
-  // Filtrar leituras pelo período selecionado
+  // Filtrar leituras pelo perÃ­odo selecionado
   const period = state.waterPeriod || 'day';
   let periodStartDate = new Date(today);
   
   if (period === 'day') {
     periodStartDate.setHours(0, 0, 0, 0);
   } else if (period === 'week') {
-    // Início da semana (segunda-feira)
+    // InÃ­cio da semana (segunda-feira)
     const dayOfWeek = periodStartDate.getDay();
     const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     periodStartDate.setDate(periodStartDate.getDate() + diff);
@@ -7743,7 +7743,7 @@ function renderWaterStats() {
   
   const periodStartKey = periodStartDate.getFullYear() + '-' + String(periodStartDate.getMonth() + 1).padStart(2, '0') + '-' + String(periodStartDate.getDate()).padStart(2, '0');
   
-  // Comparativo - usar leituras do período selecionado
+  // Comparativo - usar leituras do perÃ­odo selecionado
   const aviariosReadings = sortedReadings.filter(r => r.tank_name === 'aviarios' && getDateKey(r.reading_date) >= periodStartKey);
   const recriaReadings = sortedReadings.filter(r => r.tank_name === 'recria' && getDateKey(r.reading_date) >= periodStartKey);
   
@@ -7761,7 +7761,7 @@ function renderWaterStats() {
     if (diff >= 0) { 
       aviariosTotal += diff; 
       aviariosDays++;
-      // Verificar se é o pico
+      // Verificar se Ã© o pico
       if (diff > picoAviarios.valor) {
         picoAviarios.valor = diff;
         const parts = getDateKey(aviarios7h[i].reading_date).split('-');
@@ -7774,7 +7774,7 @@ function renderWaterStats() {
     if (diff >= 0) { 
       recriaTotal += diff; 
       recriaDays++;
-      // Verificar se é o pico
+      // Verificar se Ã© o pico
       if (diff > picoRecria.valor) {
         picoRecria.valor = diff;
         const parts = getDateKey(recria7h[i].reading_date).split('-');
@@ -7783,17 +7783,17 @@ function renderWaterStats() {
     }
   }
   
-  // Atualizar card de Total das Caixas no Período
+  // Atualizar card de Total das Caixas no PerÃ­odo
   const totalGeral = aviariosTotal + recriaTotal;
   const totalDias = Math.max(aviariosDays, recriaDays, 1);
   const mediaDiaria = totalGeral / totalDias;
   
-  // Label do período
+  // Label do perÃ­odo
   const elPeriodoLabel = document.getElementById('total-periodo-label');
   if (elPeriodoLabel) {
     if (period === 'day') elPeriodoLabel.textContent = 'Hoje';
     else if (period === 'week') elPeriodoLabel.textContent = 'Esta Semana';
-    else if (period === 'month') elPeriodoLabel.textContent = 'Este Mês';
+    else if (period === 'month') elPeriodoLabel.textContent = 'Este MÃªs';
   }
   
   const elTotalAviarios = document.getElementById('total-aviarios-valor');
@@ -7806,7 +7806,7 @@ function renderWaterStats() {
   if (elTotalGeral) elTotalGeral.textContent = totalGeral > 0 ? totalGeral.toFixed(0) : '--';
   if (elMediaDiaria) elMediaDiaria.textContent = mediaDiaria > 0 ? mediaDiaria.toFixed(1) : '--';
   
-  // Mini charts - gerar a partir das leituras filtradas pelo período
+  // Mini charts - gerar a partir das leituras filtradas pelo perÃ­odo
   renderMiniChartFromReadings('aviarios', aviarios7h, period);
   renderMiniChartFromReadings('recria', recria7h, period);
 }
@@ -7821,7 +7821,7 @@ function renderMiniChartFromReadings(tank, readings7h, period) {
     return;
   }
   
-  // Calcular consumos diários
+  // Calcular consumos diÃ¡rios
   const consumptions = [];
   for (let i = 1; i < readings7h.length; i++) {
     const diff = readings7h[i].reading_value - readings7h[i-1].reading_value;
@@ -7835,7 +7835,7 @@ function renderMiniChartFromReadings(tank, readings7h, period) {
     return;
   }
   
-  // Filtrar pelo período
+  // Filtrar pelo perÃ­odo
   let numBars = 1;
   if (period === 'week') numBars = 7;
   else if (period === 'month') numBars = 30;
@@ -7845,13 +7845,13 @@ function renderMiniChartFromReadings(tank, readings7h, period) {
   
   container.innerHTML = filteredConsumptions.map(c => {
     const height = (c.consumption / maxConsumption) * 100;
-    return '<div class="tank-chart-bar" style="height: ' + Math.max(height, 5) + '%;" title="' + c.consumption.toFixed(2) + ' m³"></div>';
+    return '<div class="tank-chart-bar" style="height: ' + Math.max(height, 5) + '%;" title="' + c.consumption.toFixed(2) + ' mÂ³"></div>';
   }).join('');
 }
 
-// Renderizar gráfico principal
+// Renderizar grÃ¡fico principal
 function renderWaterChart() {
-  // Se estiver no modo temperatura, renderizar o gráfico de temperatura
+  // Se estiver no modo temperatura, renderizar o grÃ¡fico de temperatura
   if (state.waterChartType === 'temperatura') {
     renderTemperatureChart();
     return;
@@ -7863,16 +7863,16 @@ function renderWaterChart() {
   var readings = state.waterReadings || [];
   
   if (readings.length < 2) {
-    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Registre leituras para ver o gráfico</p>';
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Registre leituras para ver o grÃ¡fico</p>';
     return;
   }
   
-  // Função para formatar data
+  // FunÃ§Ã£o para formatar data
   function getDateKey(dateStr) {
     return dateStr.split('T')[0];
   }
   
-  // Função para calcular o dia anterior
+  // FunÃ§Ã£o para calcular o dia anterior
   function getPreviousDay(dateKey) {
     var parts = dateKey.split('-');
     var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
@@ -7880,9 +7880,9 @@ function renderWaterChart() {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   
-  // Calcular consumo diário a partir das leituras 7h
-  // O consumo do DIA X é a diferença: Leitura 7h do dia (X+1) - Leitura 7h do dia X
-  // Então atribuímos o consumo ao DIA ANTERIOR da leitura nova
+  // Calcular consumo diÃ¡rio a partir das leituras 7h
+  // O consumo do DIA X Ã© a diferenÃ§a: Leitura 7h do dia (X+1) - Leitura 7h do dia X
+  // EntÃ£o atribuÃ­mos o consumo ao DIA ANTERIOR da leitura nova
   function calcularConsumos(tank) {
     var tankReadings = readings
       .filter(function(r) { return r.tank_name === tank && r.reading_time === '07:00'; })
@@ -7892,7 +7892,7 @@ function renderWaterChart() {
     for (var i = 1; i < tankReadings.length; i++) {
       var diff = tankReadings[i].reading_value - tankReadings[i-1].reading_value;
       if (diff >= 0) {
-        // Consumo é atribuído ao dia ANTERIOR (dia X, não dia X+1)
+        // Consumo Ã© atribuÃ­do ao dia ANTERIOR (dia X, nÃ£o dia X+1)
         var consumptionDate = getDateKey(tankReadings[i-1].reading_date);
         consumos[consumptionDate] = diff;
       }
@@ -7911,7 +7911,7 @@ function renderWaterChart() {
   var dates = Array.from(allDates).sort().slice(-14);
   
   if (dates.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Registre leituras de pelo menos 2 dias para ver o gráfico</p>';
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Registre leituras de pelo menos 2 dias para ver o grÃ¡fico</p>';
     return;
   }
   
@@ -7933,19 +7933,19 @@ function renderWaterChart() {
     
     return '<div class="chart-bar-group">' +
       '<div class="chart-bars">' +
-        '<div class="chart-bar aviarios" style="height: ' + Math.max(aviariosHeight, 4) + 'px;" title="Aviários: ' + aviariosValue.toFixed(2) + ' m³"></div>' +
-        '<div class="chart-bar recria" style="height: ' + Math.max(recriaHeight, 4) + 'px;" title="Recria: ' + recriaValue.toFixed(2) + ' m³"></div>' +
+        '<div class="chart-bar aviarios" style="height: ' + Math.max(aviariosHeight, 4) + 'px;" title="AviÃ¡rios: ' + aviariosValue.toFixed(2) + ' mÂ³"></div>' +
+        '<div class="chart-bar recria" style="height: ' + Math.max(recriaHeight, 4) + 'px;" title="Recria: ' + recriaValue.toFixed(2) + ' mÂ³"></div>' +
       '</div>' +
       '<span class="chart-bar-label">' + dateLabel + '</span>' +
     '</div>';
   }).join('');
 }
 
-// Alternar tipo de gráfico de água (consumo/temperatura)
+// Alternar tipo de grÃ¡fico de Ã¡gua (consumo/temperatura)
 function setWaterChartType(type) {
   state.waterChartType = type;
   
-  // Atualizar botões ativos
+  // Atualizar botÃµes ativos
   document.querySelectorAll('.water-chart-toggle-btn').forEach(btn => {
     btn.classList.remove('active');
   });
@@ -7956,13 +7956,13 @@ function setWaterChartType(type) {
   const legend = document.querySelector('.water-chart-card .chart-legend');
   if (legend) {
     if (type === 'temperatura') {
-      legend.innerHTML = '<span class="legend-item temperatura"><span class="legend-dot" style="background: #f59e0b;"></span> Temperatura °C</span>';
+      legend.innerHTML = '<span class="legend-item temperatura"><span class="legend-dot" style="background: #f59e0b;"></span> Temperatura Â°C</span>';
     } else {
-      legend.innerHTML = '<span class="legend-item aviarios"><span class="legend-dot"></span> Aviários</span><span class="legend-item recria"><span class="legend-dot"></span> Recria</span>';
+      legend.innerHTML = '<span class="legend-item aviarios"><span class="legend-dot"></span> AviÃ¡rios</span><span class="legend-item recria"><span class="legend-dot"></span> Recria</span>';
     }
   }
   
-  // Re-renderizar gráfico
+  // Re-renderizar grÃ¡fico
   if (type === 'temperatura') {
     renderTemperatureChart();
   } else {
@@ -7970,14 +7970,14 @@ function setWaterChartType(type) {
   }
 }
 
-// Renderizar gráfico de temperatura - Mostra Mínima (7h) e Máxima (16h) do dia
+// Renderizar grÃ¡fico de temperatura - Mostra MÃ­nima (7h) e MÃ¡xima (16h) do dia
 function renderTemperatureChart() {
   var container = document.getElementById('water-consumption-chart');
   if (!container) return;
   
   var readings = state.waterReadings || [];
   
-  // Filtrar leituras que têm temperatura
+  // Filtrar leituras que tÃªm temperatura
   var tempReadings = readings.filter(function(r) { 
     return r.temperature !== null && r.temperature !== undefined; 
   });
@@ -7987,12 +7987,12 @@ function renderTemperatureChart() {
     return;
   }
   
-  // Função para formatar data
+  // FunÃ§Ã£o para formatar data
   function getDateKey(dateStr) {
     return dateStr.split('T')[0];
   }
   
-  // Agrupar por data - pegar temperatura das 7h (mínima) e 16h (máxima)
+  // Agrupar por data - pegar temperatura das 7h (mÃ­nima) e 16h (mÃ¡xima)
   var tempByDate = {};
   tempReadings.forEach(function(r) {
     var dateKey = getDateKey(r.reading_date);
@@ -8028,7 +8028,7 @@ function renderTemperatureChart() {
   var maxTemp = Math.ceil(Math.max.apply(null, allTemps) + 1);
   var tempRange = maxTemp - minTemp || 10;
   
-  // Dimensões do gráfico SVG
+  // DimensÃµes do grÃ¡fico SVG
   var svgWidth = Math.max(dates.length * 55, 400);
   var svgHeight = 200;
   var paddingLeft = 35;
@@ -8038,12 +8038,12 @@ function renderTemperatureChart() {
   var chartWidth = svgWidth - paddingLeft - paddingRight;
   var chartHeight = svgHeight - paddingTop - paddingBottom;
   
-  // Função para calcular posição Y
+  // FunÃ§Ã£o para calcular posiÃ§Ã£o Y
   function getY(temp) {
     return paddingTop + chartHeight - ((temp - minTemp) / tempRange * chartHeight);
   }
   
-  // Função para calcular posição X
+  // FunÃ§Ã£o para calcular posiÃ§Ã£o X
   function getX(index) {
     return paddingLeft + (index + 0.5) * (chartWidth / dates.length);
   }
@@ -8056,7 +8056,7 @@ function renderTemperatureChart() {
     var tempVal = minTemp + (tempRange * i / numGridLines);
     var y = getY(tempVal);
     gridLines += '<line x1="' + paddingLeft + '" y1="' + y + '" x2="' + (svgWidth - paddingRight) + '" y2="' + y + '" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>';
-    yLabels += '<text x="' + (paddingLeft - 5) + '" y="' + (y + 3) + '" text-anchor="end" fill="#64748b" font-size="9">' + tempVal.toFixed(0) + '°</text>';
+    yLabels += '<text x="' + (paddingLeft - 5) + '" y="' + (y + 3) + '" text-anchor="end" fill="#64748b" font-size="9">' + tempVal.toFixed(0) + 'Â°</text>';
   }
   
   // Criar path das linhas e pontos
@@ -8076,7 +8076,7 @@ function renderTemperatureChart() {
     // Label do eixo X
     xLabels += '<text x="' + x + '" y="' + (svgHeight - 8) + '" text-anchor="middle" fill="#64748b" font-size="9">' + dateLabel + '</text>';
     
-    // Ponto e linha da 7h (mínima - azul)
+    // Ponto e linha da 7h (mÃ­nima - azul)
     if (data.temp7h !== null) {
       var y7 = getY(data.temp7h);
       if (path7h === '') {
@@ -8085,10 +8085,10 @@ function renderTemperatureChart() {
         path7h += ' L' + x + ',' + y7;
       }
       points7h += '<circle cx="' + x + '" cy="' + y7 + '" r="5" fill="#3b82f6" stroke="#fff" stroke-width="2"/>';
-      labels += '<text x="' + x + '" y="' + (y7 + 16) + '" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="600">' + data.temp7h.toFixed(1) + '°</text>';
+      labels += '<text x="' + x + '" y="' + (y7 + 16) + '" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="600">' + data.temp7h.toFixed(1) + 'Â°</text>';
     }
     
-    // Ponto e linha da 16h (máxima - vermelho)
+    // Ponto e linha da 16h (mÃ¡xima - vermelho)
     if (data.temp16h !== null) {
       var y16 = getY(data.temp16h);
       if (path16h === '') {
@@ -8097,7 +8097,7 @@ function renderTemperatureChart() {
         path16h += ' L' + x + ',' + y16;
       }
       points16h += '<circle cx="' + x + '" cy="' + y16 + '" r="5" fill="#ef4444" stroke="#fff" stroke-width="2"/>';
-      labels += '<text x="' + x + '" y="' + (y16 - 8) + '" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">' + data.temp16h.toFixed(1) + '°</text>';
+      labels += '<text x="' + x + '" y="' + (y16 - 8) + '" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">' + data.temp16h.toFixed(1) + 'Â°</text>';
     }
   });
   
@@ -8125,18 +8125,18 @@ function renderTemperatureChart() {
     '<div style="display:flex;justify-content:center;gap:24px;padding:8px 0;">' +
       '<div style="display:flex;align-items:center;gap:6px;">' +
         '<div style="width:10px;height:10px;background:#3b82f6;border-radius:50%;"></div>' +
-        '<span style="font-size:11px;color:var(--text-secondary);">7h (Mínima)</span>' +
+        '<span style="font-size:11px;color:var(--text-secondary);">7h (MÃ­nima)</span>' +
       '</div>' +
       '<div style="display:flex;align-items:center;gap:6px;">' +
         '<div style="width:10px;height:10px;background:#ef4444;border-radius:50%;"></div>' +
-        '<span style="font-size:11px;color:var(--text-secondary);">16h (Máxima)</span>' +
+        '<span style="font-size:11px;color:var(--text-secondary);">16h (MÃ¡xima)</span>' +
       '</div>' +
     '</div>' +
     '<div style="overflow-x:auto;padding:0 5px;">' + svg + '</div>' +
   '</div>';
 }
 
-// Renderizar histórico
+// Renderizar histÃ³rico
 function renderWaterHistory() {
   const tbody = document.getElementById('water-history-tbody');
   if (!tbody) return;
@@ -8161,7 +8161,7 @@ function renderWaterHistory() {
     return;
   }
   
-  // Função para formatar data corretamente (evitar timezone issues)
+  // FunÃ§Ã£o para formatar data corretamente (evitar timezone issues)
   function formatDate(dateStr) {
     const parts = dateStr.split('T')[0].split('-');
     const year = parseInt(parts[0]);
@@ -8174,7 +8174,7 @@ function renderWaterHistory() {
     return { formatted, dayOfWeek, dateObj: date, dateKey: dateStr.split('T')[0] };
   }
   
-  // Função para calcular o dia anterior
+  // FunÃ§Ã£o para calcular o dia anterior
   function getPreviousDay(dateKey) {
     const parts = dateKey.split('-');
     const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
@@ -8182,7 +8182,7 @@ function renderWaterHistory() {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   
-  // Função para calcular o dia seguinte
+  // FunÃ§Ã£o para calcular o dia seguinte
   function getNextDay(dateKey) {
     const parts = dateKey.split('-');
     const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
@@ -8190,7 +8190,7 @@ function renderWaterHistory() {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   
-  // Ordenar por data DESC, horário DESC
+  // Ordenar por data DESC, horÃ¡rio DESC
   const sorted = [...filteredReadings].sort((a, b) => {
     const dateA = a.reading_date.split('T')[0];
     const dateB = b.reading_date.split('T')[0];
@@ -8201,7 +8201,7 @@ function renderWaterHistory() {
   // Filtrar leituras baseado no tipo de consumo selecionado
   // Se 24h: mostrar apenas leituras das 7h
   // Se 9h: mostrar apenas leituras das 16h
-  // Se 'all' ou não definido: mostrar todas
+  // Se 'all' ou nÃ£o definido: mostrar todas
   let displayReadings = sorted;
   if (filterConsumption === '24h') {
     displayReadings = sorted.filter(r => r.reading_time === '07:00');
@@ -8211,10 +8211,10 @@ function renderWaterHistory() {
   
   // Calcular consumo 24h para cada leitura das 7h
   // Consumo 24h do dia X = Leitura 7h do dia (X+1) - Leitura 7h do dia X
-  // Ou seja, só podemos mostrar consumo 24h se tivermos a leitura do dia SEGUINTE
+  // Ou seja, sÃ³ podemos mostrar consumo 24h se tivermos a leitura do dia SEGUINTE
   const today = new Date().toISOString().split('T')[0];
   
-  // Criar mapa de datas únicas para cores alternadas
+  // Criar mapa de datas Ãºnicas para cores alternadas
   const uniqueDates = [...new Set(displayReadings.map(r => r.reading_date.split('T')[0]))];
   const dateColorMap = {};
   uniqueDates.forEach((date, index) => {
@@ -8224,14 +8224,14 @@ function renderWaterHistory() {
   tbody.innerHTML = displayReadings.slice(0, 50).map((reading) => {
     const { formatted: date, dayOfWeek, dateKey } = formatDate(reading.reading_date);
     const tankClass = reading.tank_name;
-    const tankLabel = reading.tank_name === 'aviarios' ? 'Aviários' : 'Recria';
+    const tankLabel = reading.tank_name === 'aviarios' ? 'AviÃ¡rios' : 'Recria';
     const dayClass = dateColorMap[dateKey] || 'day-even';
     
     // Calcular consumo baseado no filtro selecionado
     let consumption = '--';
     
     if (filterConsumption === '24h') {
-      // Consumo 24h: só para leituras das 7h
+      // Consumo 24h: sÃ³ para leituras das 7h
       // Consumo do DIA = Leitura 7h do dia SEGUINTE - Leitura 7h deste dia
       if (reading.reading_time === '07:00' && dateKey !== today) {
         const nextDay = getNextDay(dateKey);
@@ -8243,12 +8243,12 @@ function renderWaterHistory() {
         if (nextReading) {
           const diff = nextReading.reading_value - reading.reading_value;
           consumption = diff >= 0 
-            ? '<span class="consumption-positive">' + diff.toFixed(0) + ' m³</span>'
-            : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
+            ? '<span class="consumption-positive">' + diff.toFixed(0) + ' mÂ³</span>'
+            : '<span class="consumption-negative">' + diff.toFixed(0) + ' mÂ³</span>';
         }
       }
     } else if (filterConsumption === '9h') {
-      // Consumo 9h (7h às 16h): só para leituras das 16h
+      // Consumo 9h (7h Ã s 16h): sÃ³ para leituras das 16h
       // Consumo 9h = Leitura 16h - Leitura 7h do MESMO dia
       if (reading.reading_time === '16:00') {
         const reading7h = sorted.find(r => 
@@ -8259,16 +8259,16 @@ function renderWaterHistory() {
         if (reading7h) {
           const diff = reading.reading_value - reading7h.reading_value;
           consumption = diff >= 0 
-            ? '<span class="consumption-positive">' + diff.toFixed(0) + ' m³</span>'
-            : '<span class="consumption-negative">' + diff.toFixed(0) + ' m³</span>';
+            ? '<span class="consumption-positive">' + diff.toFixed(0) + ' mÂ³</span>'
+            : '<span class="consumption-negative">' + diff.toFixed(0) + ' mÂ³</span>';
         }
       }
     }
     
-    // Botão de delete (só para admin ou quem tem permissão)
+    // BotÃ£o de delete (sÃ³ para admin ou quem tem permissÃ£o)
     const canDelete = state.user && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all'));
     const deleteBtn = canDelete 
-      ? '<button class="delete-reading-btn" onclick="deleteWaterReading(\'' + reading.id + '\')" title="Excluir leitura">×</button>'
+      ? '<button class="delete-reading-btn" onclick="deleteWaterReading(\'' + reading.id + '\')" title="Excluir leitura">Ã—</button>'
       : '';
     
     return '<tr class="' + dayClass + '">' +
@@ -8278,19 +8278,19 @@ function renderWaterHistory() {
       '<td><span class="tank-badge ' + tankClass + '">' + tankLabel + '</span></td>' +
       '<td><strong>' + reading.reading_value.toFixed(0) + '</strong></td>' +
       '<td>' + consumption + '</td>' +
-      '<td>' + (reading.temperature !== null ? reading.temperature + '°C' : '-') + '</td>' +
+      '<td>' + (reading.temperature !== null ? reading.temperature + 'Â°C' : '-') + '</td>' +
       '<td>' + (reading.notes || '-') + '</td>' +
       '<td class="delete-cell">' + deleteBtn + '</td>' +
       '</tr>';
   }).join('');
 }
 
-// Filtrar histórico
+// Filtrar histÃ³rico
 function filterWaterHistory() {
   renderWaterHistory();
 }
 
-// Excluir leitura de água
+// Excluir leitura de Ã¡gua
 async function deleteWaterReading(id) {
   if (!confirm('Tem certeza que deseja excluir esta leitura?')) return;
   
@@ -8308,7 +8308,7 @@ async function deleteWaterReading(id) {
       state.waterReadings = data.readings;
       renderWaterHistory();
       renderWaterChart();
-      showNotification('Leitura excluída com sucesso!', 'success');
+      showNotification('Leitura excluÃ­da com sucesso!', 'success');
     } else {
       showNotification(data.error || 'Erro ao excluir leitura', 'error');
     }
@@ -8329,7 +8329,7 @@ function checkWaterAlerts() {
     return;
   }
   
-  // Verificar consumo anormal (mais que 2x a média)
+  // Verificar consumo anormal (mais que 2x a mÃ©dia)
   const alerts = [];
   
   ['aviarios', 'recria'].forEach(tank => {
@@ -8342,8 +8342,8 @@ function checkWaterAlerts() {
     
     if (lastConsumption > avg * 1.5) {
       alerts.push({
-        tank: tank === 'aviarios' ? 'Aviários' : 'Recria',
-        message: `Consumo ${((lastConsumption / avg - 1) * 100).toFixed(0)}% acima da média!`,
+        tank: tank === 'aviarios' ? 'AviÃ¡rios' : 'Recria',
+        message: `Consumo ${((lastConsumption / avg - 1) * 100).toFixed(0)}% acima da mÃ©dia!`,
         value: lastConsumption.toFixed(2)
       });
     }
@@ -8356,16 +8356,16 @@ function checkWaterAlerts() {
   
   container.innerHTML = alerts.map(alert => `
     <div class="water-alert">
-      <span class="water-alert-icon">🚨</span>
+      <span class="water-alert-icon">ðŸš¨</span>
       <div class="water-alert-text">
         <div class="water-alert-title">Consumo acima do normal - ${alert.tank}</div>
-        <div class="water-alert-desc">${alert.message} (${alert.value} m³)</div>
+        <div class="water-alert-desc">${alert.message} (${alert.value} mÂ³)</div>
       </div>
     </div>
   `).join('');
 }
 
-// Salvar leitura de água
+// Salvar leitura de Ã¡gua
 async function saveWaterReading() {
   const date = document.getElementById('water-reading-date').value;
   const time = document.getElementById('water-reading-time').value;
@@ -8375,7 +8375,7 @@ async function saveWaterReading() {
   const notes = document.getElementById('water-reading-notes').value;
   
   if (!date || !time) {
-    showNotification('Preencha a data e horário', 'error');
+    showNotification('Preencha a data e horÃ¡rio', 'error');
     return;
   }
   
@@ -8387,7 +8387,7 @@ async function saveWaterReading() {
   const temperature = temperatureValue ? parseFloat(temperatureValue) : null;
   
   try {
-    // Salvar leitura de Aviários
+    // Salvar leitura de AviÃ¡rios
     if (aviariosValue) {
       await fetch(`${API_URL}/water-readings`, {
         method: 'POST',
@@ -8451,10 +8451,10 @@ async function saveWaterReading() {
   }
 }
 
-// Estado para relatório de água
-state.waterReportMonth = null; // null = mês atual
+// Estado para relatÃ³rio de Ã¡gua
+state.waterReportMonth = null; // null = mÃªs atual
 
-// Exportar relatório PDF - DESIGN PREMIUM
+// Exportar relatÃ³rio PDF - DESIGN PREMIUM
 function exportWaterReportPDF(selectedMonth) {
   const readings = state.waterReadings || [];
   
@@ -8463,7 +8463,7 @@ function exportWaterReportPDF(selectedMonth) {
     return;
   }
   
-  // Determinar mês a filtrar
+  // Determinar mÃªs a filtrar
   const now = new Date();
   let filterYear, filterMonth, monthLabel;
   
@@ -8471,16 +8471,16 @@ function exportWaterReportPDF(selectedMonth) {
     const parts = selectedMonth.split('-');
     filterYear = parseInt(parts[0]);
     filterMonth = parseInt(parts[1]) - 1;
-    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     monthLabel = monthNames[filterMonth] + ' ' + filterYear;
   } else {
     filterYear = now.getFullYear();
     filterMonth = now.getMonth();
-    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     monthLabel = monthNames[filterMonth] + ' ' + filterYear;
   }
   
-  // Função para formatar data
+  // FunÃ§Ã£o para formatar data
   function formatDatePDF(dateStr) {
     const parts = dateStr.split('T')[0].split('-');
     const year = parseInt(parts[0]);
@@ -8492,7 +8492,7 @@ function exportWaterReportPDF(selectedMonth) {
     return { formatted, dayOfWeek, dateObj: date, year, month, day };
   }
   
-  // Filtrar leituras do mês selecionado (dia 1 até hoje ou fim do mês)
+  // Filtrar leituras do mÃªs selecionado (dia 1 atÃ© hoje ou fim do mÃªs)
   const filteredReadings = readings.filter(r => {
     const info = formatDatePDF(r.reading_date);
     return info.year === filterYear && info.month === filterMonth;
@@ -8508,20 +8508,20 @@ function exportWaterReportPDF(selectedMonth) {
     formatDatePDF(a.reading_date).dateObj - formatDatePDF(b.reading_date).dateObj
   );
   
-  // Período
+  // PerÃ­odo
   const firstDate = formatDatePDF(sortedReadings[0].reading_date);
   const lastDate = formatDatePDF(sortedReadings[sortedReadings.length - 1].reading_date);
   const periodStr = firstDate.formatted + ' a ' + lastDate.formatted;
   
-  // CÁLCULO 24H: Consumo do Dia X = Leitura 7h do Dia X+1 - Leitura 7h do Dia X
+  // CÃLCULO 24H: Consumo do Dia X = Leitura 7h do Dia X+1 - Leitura 7h do Dia X
   // Isso mede o consumo REAL de 24 horas
   function calculateConsumption(tank) {
-    // Filtrar leituras do tanque específico
+    // Filtrar leituras do tanque especÃ­fico
     const tankReadings = sortedReadings.filter(r => r.tank_name === tank);
     
     if (tankReadings.length === 0) return { total: 0, avg: 0, days: 0, dailyData: {} };
     
-    // Pegar apenas leituras das 7h (ou a primeira do dia se não tiver 7h)
+    // Pegar apenas leituras das 7h (ou a primeira do dia se nÃ£o tiver 7h)
     const morningReadings = {};
     tankReadings.forEach(r => {
       const dayKey = formatDatePDF(r.reading_date).formatted;
@@ -8536,10 +8536,10 @@ function exportWaterReportPDF(selectedMonth) {
       if (!morningReadings[dayKey]) {
         morningReadings[dayKey] = { reading: r, dateObj: dateObj, isMorning: isMorning, time: timeMinutes };
       } else if (isMorning && !morningReadings[dayKey].isMorning) {
-        // Substituir por leitura da manhã
+        // Substituir por leitura da manhÃ£
         morningReadings[dayKey] = { reading: r, dateObj: dateObj, isMorning: isMorning, time: timeMinutes };
       } else if (isMorning && morningReadings[dayKey].isMorning) {
-        // Ambas são manhã, pegar a mais próxima das 7h
+        // Ambas sÃ£o manhÃ£, pegar a mais prÃ³xima das 7h
         const current7hDiff = Math.abs(morningReadings[dayKey].time - 420); // 420 = 7:00
         const new7hDiff = Math.abs(timeMinutes - 420);
         if (new7hDiff < current7hDiff) {
@@ -8571,7 +8571,7 @@ function exportWaterReportPDF(selectedMonth) {
         dailyConsumption[currentDay] = consumption;
         total += consumption;
       } else {
-        dailyConsumption[currentDay] = 0; // Pode ser reset do hidrômetro ou erro
+        dailyConsumption[currentDay] = 0; // Pode ser reset do hidrÃ´metro ou erro
       }
     }
     
@@ -8588,7 +8588,7 @@ function exportWaterReportPDF(selectedMonth) {
   const recriaCalc = calculateConsumption('recria');
   const totalConsumo = aviariosCalc.total + recriaCalc.total;
   
-  // Gerar opções de meses disponíveis
+  // Gerar opÃ§Ãµes de meses disponÃ­veis
   const availableMonths = [];
   const uniqueMonths = new Set();
   readings.forEach(r => {
@@ -8597,7 +8597,7 @@ function exportWaterReportPDF(selectedMonth) {
     uniqueMonths.add(key);
   });
   
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   [...uniqueMonths].sort().reverse().forEach(key => {
     const [y, m] = key.split('-');
     availableMonths.push({
@@ -8616,7 +8616,7 @@ function exportWaterReportPDF(selectedMonth) {
       '<td>' + info.formatted + '</td>' +
       '<td style="color:#64748b;font-size:11px;">' + info.dayOfWeek + '</td>' +
       '<td>' + r.reading_time + '</td>' +
-      '<td class="tank-' + r.tank_name + '">' + (r.tank_name === 'aviarios' ? 'Aviários' : 'Recria') + '</td>' +
+      '<td class="tank-' + r.tank_name + '">' + (r.tank_name === 'aviarios' ? 'AviÃ¡rios' : 'Recria') + '</td>' +
       '<td><strong>' + r.reading_value.toFixed(3) + '</strong></td>' +
       '<td>' + (r.recorded_by_name || '-') + '</td>' +
       '<td>' + (r.notes || '-') + '</td>' +
@@ -8625,7 +8625,7 @@ function exportWaterReportPDF(selectedMonth) {
 
   const htmlContent = '<!DOCTYPE html>' +
   '<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-  '<title>Relatório de Água - Granja Vitta</title>' +
+  '<title>RelatÃ³rio de Ãgua - Granja Vitta</title>' +
   '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">' +
   '<style>' +
   '*{margin:0;padding:0;box-sizing:border-box}' +
@@ -8673,33 +8673,33 @@ function exportWaterReportPDF(selectedMonth) {
   '<div class="container">' +
   '<div class="header">' +
   '<div class="header-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div>' +
-  '<h1>CONTROLE DE ÁGUA</h1>' +
-  '<p class="subtitle"><strong>Granja Vitta</strong> — Sistema Icarus</p>' +
+  '<h1>CONTROLE DE ÃGUA</h1>' +
+  '<p class="subtitle"><strong>Granja Vitta</strong> â€” Sistema Icarus</p>' +
   '<div class="period"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + periodStr + '</div>' +
   '</div>' +
   '<div class="stats-grid">' +
-  '<div class="stat-card primary"><h3>Aviários (Média)</h3><div class="value cyan">' + aviariosCalc.avg.toFixed(2) + '</div><div class="unit">m³/dia</div></div>' +
-  '<div class="stat-card primary"><h3>Recria (Média)</h3><div class="value green">' + recriaCalc.avg.toFixed(2) + '</div><div class="unit">m³/dia</div></div>' +
-  '<div class="stat-card"><h3>Total Aviários</h3><div class="value">' + aviariosCalc.total.toFixed(2) + '</div><div class="unit">m³ período</div></div>' +
-  '<div class="stat-card"><h3>Total Recria</h3><div class="value">' + recriaCalc.total.toFixed(2) + '</div><div class="unit">m³ período</div></div>' +
-  '<div class="total-card"><h3>CONSUMO TOTAL DO MÊS</h3><div class="value">' + totalConsumo.toFixed(2) + ' m³</div><div class="unit">' + sortedReadings.length + ' leituras registradas</div></div>' +
+  '<div class="stat-card primary"><h3>AviÃ¡rios (MÃ©dia)</h3><div class="value cyan">' + aviariosCalc.avg.toFixed(2) + '</div><div class="unit">mÂ³/dia</div></div>' +
+  '<div class="stat-card primary"><h3>Recria (MÃ©dia)</h3><div class="value green">' + recriaCalc.avg.toFixed(2) + '</div><div class="unit">mÂ³/dia</div></div>' +
+  '<div class="stat-card"><h3>Total AviÃ¡rios</h3><div class="value">' + aviariosCalc.total.toFixed(2) + '</div><div class="unit">mÂ³ perÃ­odo</div></div>' +
+  '<div class="stat-card"><h3>Total Recria</h3><div class="value">' + recriaCalc.total.toFixed(2) + '</div><div class="unit">mÂ³ perÃ­odo</div></div>' +
+  '<div class="total-card"><h3>CONSUMO TOTAL DO MÃŠS</h3><div class="value">' + totalConsumo.toFixed(2) + ' mÂ³</div><div class="unit">' + sortedReadings.length + ' leituras registradas</div></div>' +
   '</div>' +
   '<div class="table-card">' +
-  '<div class="table-header"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><h3>Histórico de Leituras</h3></div>' +
-  '<div class="table-scroll"><table><thead><tr><th>Data</th><th>Dia</th><th>Horário</th><th>Caixa</th><th>Leitura</th><th>Registrado por</th><th>Obs</th></tr></thead><tbody>' + tableRows + '</tbody></table></div>' +
+  '<div class="table-header"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><h3>HistÃ³rico de Leituras</h3></div>' +
+  '<div class="table-scroll"><table><thead><tr><th>Data</th><th>Dia</th><th>HorÃ¡rio</th><th>Caixa</th><th>Leitura</th><th>Registrado por</th><th>Obs</th></tr></thead><tbody>' + tableRows + '</tbody></table></div>' +
   '</div>' +
   '<div class="footer">' +
   '<div class="icarus-brand">' +
   '<div class="icarus-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
-  '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de Gestão</span><span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>+55 62 98493-0056</span></div>' +
+  '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de GestÃ£o</span><span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>+55 62 98493-0056</span></div>' +
   '</div>' +
-  '<p class="footer-text">Desenvolvido por Guilherme Braga © 2025</p>' +
+  '<p class="footer-text">Desenvolvido por Guilherme Braga Â© 2025</p>' +
   '</div>' +
   '</div></body></html>';
 
   // Dados estruturados para PDF no servidor
   const waterReportData = {
-    title: 'Relatório de Água - Granja Vitta',
+    title: 'RelatÃ³rio de Ãgua - Granja Vitta',
     type: 'water-report',
     content: {
       period: periodStr,
@@ -8717,8 +8717,8 @@ function exportWaterReportPDF(selectedMonth) {
           date: info.formatted,
           dayOfWeek: info.dayOfWeek,
           time: r.reading_time,
-          tank: r.tank_name === 'aviarios' ? 'Aviários' : 'Recria',
-          value: r.reading_value.toFixed(3) + ' m³',
+          tank: r.tank_name === 'aviarios' ? 'AviÃ¡rios' : 'Recria',
+          value: r.reading_value.toFixed(3) + ' mÂ³',
           recordedBy: r.recorded_by_name || '-',
           notes: r.notes || '-'
         };
@@ -8726,11 +8726,11 @@ function exportWaterReportPDF(selectedMonth) {
     }
   };
 
-  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(htmlContent, 'Relatório de Água', 'Relatório de Água gerado!', waterReportData);
+  // Renderizar diretamente na pÃ¡gina (funciona em APK, mobile e desktop)
+  showReportInPage(htmlContent, 'RelatÃ³rio de Ãgua', 'RelatÃ³rio de Ãgua gerado!', waterReportData);
 }
 
-// Função utilitária para mostrar relatórios na página atual (100% compatível com APK/WebView)
+// FunÃ§Ã£o utilitÃ¡ria para mostrar relatÃ³rios na pÃ¡gina atual (100% compatÃ­vel com APK/WebView)
 // Armazena o HTML para uso posterior no download
 var currentReportHtml = '';
 var currentReportTitle = '';
@@ -8740,7 +8740,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   // Salvar HTML para download posterior
   currentReportHtml = htmlContent;
   currentReportTitle = reportTitle;
-  // Salvar dados estruturados para geração de PDF no servidor
+  // Salvar dados estruturados para geraÃ§Ã£o de PDF no servidor
   currentReportData = reportData || null;
   
   // Remover overlay anterior se existir
@@ -8756,17 +8756,17 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   const toolbar = document.createElement('div');
   toolbar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(135deg,#111118,#1a1a28);border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;gap:8px;flex-wrap:wrap';
   
-  // Botão Voltar
+  // BotÃ£o Voltar
   const btnBack = document.createElement('button');
   btnBack.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span>Voltar</span>';
   btnBack.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s';
   btnBack.onclick = function() { overlay.remove(); };
   
-  // Container dos botões de ação
+  // Container dos botÃµes de aÃ§Ã£o
   const actionsDiv = document.createElement('div');
   actionsDiv.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
   
-  // Botão Imprimir
+  // BotÃ£o Imprimir
   const btnPrint = document.createElement('button');
   btnPrint.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg><span>Imprimir</span>';
   btnPrint.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
@@ -8777,7 +8777,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
     }
   };
   
-  // Botão Salvar PDF (usa print com opção salvar)
+  // BotÃ£o Salvar PDF (usa print com opÃ§Ã£o salvar)
   const btnDownload = document.createElement('button');
   btnDownload.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Salvar PDF</span>';
   btnDownload.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
@@ -8785,7 +8785,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
     downloadReportAsPDF();
   };
   
-  // Botão Baixar HTML Interativo
+  // BotÃ£o Baixar HTML Interativo
   const btnHTML = document.createElement('button');
   btnHTML.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12l-2 2 2 2"/><path d="M14 12l2 2-2 2"/></svg><span>Baixar HTML</span>';
   btnHTML.style.cssText = 'display:flex;align-items:center;gap:6px;padding:10px 14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s';
@@ -8800,7 +8800,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   toolbar.appendChild(btnBack);
   toolbar.appendChild(actionsDiv);
   
-  // Container do conteúdo com scroll
+  // Container do conteÃºdo com scroll
   const contentContainer = document.createElement('div');
   contentContainer.style.cssText = 'flex:1;overflow:auto;-webkit-overflow-scrolling:touch';
   
@@ -8814,7 +8814,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   overlay.appendChild(contentContainer);
   document.body.appendChild(overlay);
   
-  // Escrever conteúdo no iframe
+  // Escrever conteÃºdo no iframe
   setTimeout(function() {
     try {
       const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -8829,7 +8829,7 @@ function showReportInPage(htmlContent, reportTitle, successMessage, reportData) 
   if (successMessage) showNotification(successMessage, 'success');
 }
 
-// Função para baixar PDF - Navega diretamente para endpoint que retorna PDF real
+// FunÃ§Ã£o para baixar PDF - Navega diretamente para endpoint que retorna PDF real
 async function downloadReportAsPDF() {
   // Mostrar loading
   showNotification('Gerando PDF...', 'info');
@@ -8837,7 +8837,7 @@ async function downloadReportAsPDF() {
   // Pegar URL da API (config.js define window.ICARUS_API_URL)
   var API_URL = window.ICARUS_API_URL || 'https://kong-dust-analysts-developers.trycloudflare.com';
   
-  // Garantir que a URL não termina com /
+  // Garantir que a URL nÃ£o termina com /
   if (API_URL.endsWith('/')) {
     API_URL = API_URL.slice(0, -1);
   }
@@ -8845,7 +8845,7 @@ async function downloadReportAsPDF() {
   console.log('[PDF] API_URL:', API_URL);
   console.log('[PDF] currentReportTitle:', currentReportTitle);
   
-  // Detectar tipo de relatório pelo título atual
+  // Detectar tipo de relatÃ³rio pelo tÃ­tulo atual
   var pdfEndpoint = null;
   var params = '';
   
@@ -8853,7 +8853,7 @@ async function downloadReportAsPDF() {
     var period = state.dashboardFilter || 'monthly';
     pdfEndpoint = '/api/pdf/dashboard-report';
     params = '?period=' + period;
-  } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('água')) {
+  } else if (currentReportTitle && currentReportTitle.toLowerCase().includes('Ã¡gua')) {
     var month = state.waterReportMonth || (new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'));
     pdfEndpoint = '/api/pdf/water-report';
     params = '?month=' + month;
@@ -8870,7 +8870,7 @@ async function downloadReportAsPDF() {
     params = '?period=monthly';
   }
   
-  // Se temos endpoint específico
+  // Se temos endpoint especÃ­fico
   if (pdfEndpoint) {
     try {
       var fullUrl = API_URL + pdfEndpoint + params + '&token=' + encodeURIComponent(state.token);
@@ -8891,7 +8891,7 @@ async function downloadReportAsPDF() {
       if (isCapacitor) {
         console.log('[PDF] Capacitor detectado - abrindo no navegador do sistema');
         
-        // Método 1: Usar Capacitor Browser plugin (recomendado)
+        // MÃ©todo 1: Usar Capacitor Browser plugin (recomendado)
         try {
           if (window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
             console.log('[PDF] Tentando Browser plugin...');
@@ -8900,41 +8900,41 @@ async function downloadReportAsPDF() {
               windowName: '_system',
               toolbarColor: '#0f172a'
             });
-            showNotification('📄 PDF aberto no navegador!', 'success');
+            showNotification('ðŸ“„ PDF aberto no navegador!', 'success');
             return;
           }
         } catch (browserErr) {
           console.log('[PDF] Browser plugin erro:', browserErr);
         }
         
-        // Método 2: Usar App.openUrl (Capacitor App plugin)
+        // MÃ©todo 2: Usar App.openUrl (Capacitor App plugin)
         try {
           if (window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
             console.log('[PDF] Tentando App.openUrl...');
             await window.Capacitor.Plugins.App.openUrl({ url: fullUrl });
-            showNotification('📄 PDF aberto!', 'success');
+            showNotification('ðŸ“„ PDF aberto!', 'success');
             return;
           }
         } catch (appErr) {
           console.log('[PDF] App.openUrl erro:', appErr);
         }
         
-        // Método 3: Usar Cordova InAppBrowser (se disponível)
+        // MÃ©todo 3: Usar Cordova InAppBrowser (se disponÃ­vel)
         try {
           if (window.cordova && window.cordova.InAppBrowser) {
             console.log('[PDF] Tentando InAppBrowser...');
             window.cordova.InAppBrowser.open(fullUrl, '_system', 'location=yes');
-            showNotification('📄 PDF aberto!', 'success');
+            showNotification('ðŸ“„ PDF aberto!', 'success');
             return;
           }
         } catch (cordovaErr) {
           console.log('[PDF] InAppBrowser erro:', cordovaErr);
         }
         
-        // Método 4: Fallback window.open com _system
+        // MÃ©todo 4: Fallback window.open com _system
         console.log('[PDF] Fallback: window.open _system');
         window.open(fullUrl, '_system');
-        showNotification('📄 Abrindo PDF...', 'success');
+        showNotification('ðŸ“„ Abrindo PDF...', 'success');
         return;
       }
       
@@ -8951,8 +8951,8 @@ async function downloadReportAsPDF() {
     console.log('[PDF] Nenhum endpoint detectado para:', currentReportTitle);
   }
   
-  // Fallback para relatórios sem endpoint específico: usar print
-  showNotification('Abrindo impressão... Selecione "Salvar como PDF"', 'info');
+  // Fallback para relatÃ³rios sem endpoint especÃ­fico: usar print
+  showNotification('Abrindo impressÃ£o... Selecione "Salvar como PDF"', 'info');
   var iframe = document.getElementById('report-iframe');
   if (iframe && iframe.contentWindow) {
     try {
@@ -8971,12 +8971,12 @@ async function downloadReportAsPDF() {
   }
 }
 
-// Função para compartilhar
+// FunÃ§Ã£o para compartilhar
 async function shareReportAsPDF() {
   downloadReportAsPDF();
 }
 
-// Função auxiliar para carregar scripts dinamicamente
+// FunÃ§Ã£o auxiliar para carregar scripts dinamicamente
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector('script[src="' + src + '"]');
@@ -8992,7 +8992,7 @@ function loadScript(src) {
   });
 }
 
-// Exportar relatório Excel (CSV) - Formato oficial Granja Vitta
+// Exportar relatÃ³rio Excel (CSV) - Formato oficial Granja Vitta
 function exportWaterReportExcel() {
   var readings = state.waterReadings;
   
@@ -9001,7 +9001,7 @@ function exportWaterReportExcel() {
     return;
   }
   
-  // Função para formatar data corretamente no padrão DD/MM/YYYY
+  // FunÃ§Ã£o para formatar data corretamente no padrÃ£o DD/MM/YYYY
   function formatDateExcel(dateStr) {
     if (!dateStr) return { formatted: '', dayOfWeek: '', key: '' };
     var parts = dateStr.split('T')[0].split('-');
@@ -9012,7 +9012,7 @@ function exportWaterReportExcel() {
     var date = new Date(year, month, day, 12, 0, 0);
     
     // Dia da semana por extenso
-    var diasSemana = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+    var diasSemana = ['DOMINGO', 'SEGUNDA', 'TERÃ‡A', 'QUARTA', 'QUINTA', 'SEXTA', 'SÃBADO'];
     var dayOfWeek = diasSemana[date.getDay()];
     
     // Data no formato DD/MM/YYYY
@@ -9058,11 +9058,11 @@ function exportWaterReportExcel() {
     var formattedDate = data.dateFormatted;
     var dayOfWeek = data.dayOfWeek;
     
-    // Próximo dia para calcular consumo 24h
+    // PrÃ³ximo dia para calcular consumo 24h
     var nextDate = dates[idx + 1];
     var nextData = nextDate ? dailyData[nextDate] : null;
     
-    // RECRIA - Período de trabalho (7AM-4PM)
+    // RECRIA - PerÃ­odo de trabalho (7AM-4PM)
     if (data.recria.am !== undefined && data.recria.pm !== undefined) {
       var consumoM3 = Math.max(0, data.recria.pm - data.recria.am);
       var consumoLitros = Math.round(consumoM3 * 1000);
@@ -9071,7 +9071,7 @@ function exportWaterReportExcel() {
       rows.push([formattedDate, dayOfWeek, 'RECRIA', '7AM - 4PM', entradaRange, ltPorHora, consumoLitros, 'TRABALHO']);
     }
     
-    // AVIARIOS - Período de trabalho (7AM-4PM)
+    // AVIARIOS - PerÃ­odo de trabalho (7AM-4PM)
     if (data.aviarios.am !== undefined && data.aviarios.pm !== undefined) {
       var consumoM3 = Math.max(0, data.aviarios.pm - data.aviarios.am);
       var consumoLitros = Math.round(consumoM3 * 1000);
@@ -9099,12 +9099,12 @@ function exportWaterReportExcel() {
     }
   });
   
-  // Criar CSV com cabeçalhos claros
+  // Criar CSV com cabeÃ§alhos claros
   var headers = ['DATA', 'DIA/SEMANA', 'CAIXA', 'HORAS', 'ENTRADA (M3)', 'LT POR HORA', 'LT TOTAL', 'PERIODO'];
   
   var csvContent = headers.join(';') + '\n';
   rows.forEach(function(row) {
-    // Formatar a data como texto puro para o Excel não interpretar errado
+    // Formatar a data como texto puro para o Excel nÃ£o interpretar errado
     // Prefixar com = para for\u00e7ar texto no Excel
     var formattedRow = row.map(function(cell, idx) {
       if (idx === 0 && cell) {
@@ -9132,13 +9132,13 @@ function exportWaterReportExcel() {
   
   showNotification('Planilha exportada com sucesso! ' + rows.length + ' registros.', 'success');
   
-  // Também gerar relatório HTML interativo
+  // TambÃ©m gerar relatÃ³rio HTML interativo
   generateInteractiveReport(rows, dailyData, dates);
 }
 
-// Gerar relatório HTML interativo e tecnológico
+// Gerar relatÃ³rio HTML interativo e tecnolÃ³gico
 function generateInteractiveReport(rows, dailyData, dates) {
-  // Calcular totais para os gráficos
+  // Calcular totais para os grÃ¡ficos
   let totalRecria = 0, totalAviarios = 0;
   let totalRecriaTrabalho = 0, totalAviariosTrabalho = 0;
   const chartDataTrabalho = [];
@@ -9163,7 +9163,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
     // Trabalho AVIARIOS
     if (data.aviarios?.am !== undefined && data.aviarios?.pm !== undefined) {
       const consumo = (data.aviarios.pm - data.aviarios.am) * 1000;
-      chartDataTrabalho.push({ date: formattedDate, tank: 'Aviários', value: consumo });
+      chartDataTrabalho.push({ date: formattedDate, tank: 'AviÃ¡rios', value: consumo });
       totalAviariosTrabalho += consumo;
       dayTotalTrabalho += consumo;
     }
@@ -9178,7 +9178,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
     // 24h AVIARIOS
     if (data.aviarios?.am !== undefined && nextData?.aviarios?.am !== undefined) {
       const consumo = (nextData.aviarios.am - data.aviarios.am) * 1000;
-      chartData24h.push({ date: formattedDate, tank: 'Aviários', value: consumo });
+      chartData24h.push({ date: formattedDate, tank: 'AviÃ¡rios', value: consumo });
       totalAviarios += consumo;
       dayTotal24h += consumo;
     }
@@ -9191,11 +9191,11 @@ function generateInteractiveReport(rows, dailyData, dates) {
   // Top 5 maiores gastos
   const topGastos = [...dailyTotals].sort((a, b) => b.total - a.total).slice(0, 5);
   
-  // Dados para gráfico de linha (tendência)
+  // Dados para grÃ¡fico de linha (tendÃªncia)
   const uniqueDatesTrabalho = [...new Set(chartDataTrabalho.map(d => d.date))];
   const uniqueDates24h = [...new Set(chartData24h.map(d => d.date))];
   
-  // Média móvel (tendência)
+  // MÃ©dia mÃ³vel (tendÃªncia)
   const avgRecria = totalRecria / Math.max(uniqueDates24h.length, 1);
   const avgAviarios = totalAviarios / Math.max(uniqueDates24h.length, 1);
 
@@ -9205,7 +9205,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Relatório de Controle de Água - Granja Vitta</title>
+  <title>RelatÃ³rio de Controle de Ãgua - Granja Vitta</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -9369,51 +9369,51 @@ function generateInteractiveReport(rows, dailyData, dates) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>💧 Controle de Água</h1>
-      <p><strong>Granja Vitta</strong> • Sistema Icarus • Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+      <h1>ðŸ’§ Controle de Ãgua</h1>
+      <p><strong>Granja Vitta</strong> â€¢ Sistema Icarus â€¢ Gerado em ${new Date().toLocaleString('pt-BR')}</p>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card gold">
-        <h3>🏆 Total Geral</h3>
+        <h3>ðŸ† Total Geral</h3>
         <div class="value">${((totalRecria + totalAviarios) / 1000).toFixed(1)}</div>
-        <div class="unit">m³ consumidos (24h)</div>
+        <div class="unit">mÂ³ consumidos (24h)</div>
       </div>
       <div class="stat-card">
-        <h3>💚 Recria (24h)</h3>
+        <h3>ðŸ’š Recria (24h)</h3>
         <div class="value">${(totalRecria / 1000).toFixed(1)}</div>
-        <div class="unit">m³ consumidos</div>
+        <div class="unit">mÂ³ consumidos</div>
       </div>
       <div class="stat-card">
-        <h3>💙 Aviários (24h)</h3>
+        <h3>ðŸ’™ AviÃ¡rios (24h)</h3>
         <div class="value">${(totalAviarios / 1000).toFixed(1)}</div>
-        <div class="unit">m³ consumidos</div>
+        <div class="unit">mÂ³ consumidos</div>
       </div>
       <div class="stat-card gold">
-        <h3>📊 Média Diária</h3>
+        <h3>ðŸ“Š MÃ©dia DiÃ¡ria</h3>
         <div class="value">${Math.round((avgRecria + avgAviarios)).toLocaleString('pt-BR')}</div>
         <div class="unit">litros/dia (total)</div>
       </div>
     </div>
 
     <div class="tabs">
-      <div class="tab active" onclick="showTab('trabalho')">⏰ Período Trabalho (7h-16h)</div>
-      <div class="tab" onclick="showTab('diario')">📊 Consumo 24 Horas</div>
+      <div class="tab active" onclick="showTab('trabalho')">â° PerÃ­odo Trabalho (7h-16h)</div>
+      <div class="tab" onclick="showTab('diario')">ðŸ“Š Consumo 24 Horas</div>
     </div>
 
     <div class="charts-grid">
       <div class="chart-container">
-        <div class="chart-title">📈 Evolução do Consumo</div>
+        <div class="chart-title">ðŸ“ˆ EvoluÃ§Ã£o do Consumo</div>
         <canvas id="waterChart" height="120"></canvas>
       </div>
       <div class="chart-container">
-        <div class="chart-title">🏅 Top 5 Maiores Gastos (24h)</div>
+        <div class="chart-title">ðŸ… Top 5 Maiores Gastos (24h)</div>
         <ul class="ranking-list">
           ${topGastos.map((item, idx) => `
             <li class="ranking-item">
               <span class="ranking-position">${idx + 1}</span>
               <span class="ranking-date">${item.date}</span>
-              <span class="ranking-value">${(item.total / 1000).toFixed(2)} m³</span>
+              <span class="ranking-value">${(item.total / 1000).toFixed(2)} mÂ³</span>
             </li>
           `).join('')}
           ${topGastos.length === 0 ? '<li class="ranking-item"><span style="color:#666">Sem dados suficientes</span></li>' : ''}
@@ -9422,13 +9422,13 @@ function generateInteractiveReport(rows, dailyData, dates) {
     </div>
 
     <div class="chart-container" style="margin-bottom: 30px;">
-      <div class="chart-title">🎯 Consumo por Caixa (Período Selecionado)</div>
+      <div class="chart-title">ðŸŽ¯ Consumo por Caixa (PerÃ­odo Selecionado)</div>
       <canvas id="tankChart" height="80"></canvas>
     </div>
 
     <div class="table-container">
       <div class="table-header">
-        <h3>📋 Histórico Detalhado de Leituras</h3>
+        <h3>ðŸ“‹ HistÃ³rico Detalhado de Leituras</h3>
       </div>
       <table>
         <thead>
@@ -9436,8 +9436,8 @@ function generateInteractiveReport(rows, dailyData, dates) {
             <th>Data</th>
             <th>Dia</th>
             <th>Caixa</th>
-            <th>Período</th>
-            <th>Entrada (m³)</th>
+            <th>PerÃ­odo</th>
+            <th>Entrada (mÂ³)</th>
             <th>L/Hora</th>
             <th>Total (L)</th>
             <th>Tipo</th>
@@ -9461,14 +9461,14 @@ function generateInteractiveReport(rows, dailyData, dates) {
     </div>
 
     <div class="footer">
-      <button onclick="window.print()" class="print-btn">🖨️ Imprimir / Salvar PDF</button>
-      <p>Relatório gerado automaticamente pelo Sistema Icarus • Granja Vitta</p>
-      <p>Desenvolvido por Guilherme Braga • © 2025</p>
+      <button onclick="window.print()" class="print-btn">ðŸ–¨ï¸ Imprimir / Salvar PDF</button>
+      <p>RelatÃ³rio gerado automaticamente pelo Sistema Icarus â€¢ Granja Vitta</p>
+      <p>Desenvolvido por Guilherme Braga â€¢ Â© 2025</p>
     </div>
   </div>
 
   <script>
-    // Preparar dados para gráficos
+    // Preparar dados para grÃ¡ficos
     const trabalhoData = ${JSON.stringify(chartDataTrabalho)};
     const data24h = ${JSON.stringify(chartData24h)};
     const avgRecria = ${avgRecria.toFixed(0)};
@@ -9480,7 +9480,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
       data.forEach(d => {
         if (!grouped[d.date]) grouped[d.date] = { recria: 0, aviarios: 0 };
         if (d.tank === 'Recria') grouped[d.date].recria = d.value;
-        if (d.tank === 'Aviários') grouped[d.date].aviarios = d.value;
+        if (d.tank === 'AviÃ¡rios') grouped[d.date].aviarios = d.value;
       });
       return grouped;
     }
@@ -9488,7 +9488,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
     let currentData = groupByDate(trabalhoData);
     let labels = Object.keys(currentData);
     
-    // Gráfico principal de evolução
+    // GrÃ¡fico principal de evoluÃ§Ã£o
     const ctx = document.getElementById('waterChart').getContext('2d');
     let chart = new Chart(ctx, {
       type: 'line',
@@ -9506,7 +9506,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
             pointHoverRadius: 10
           },
           {
-            label: 'Aviários (L)',
+            label: 'AviÃ¡rios (L)',
             data: labels.map(l => currentData[l]?.aviarios || 0),
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -9528,7 +9528,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
       }
     });
     
-    // Gráfico de barras horizontais por caixa
+    // GrÃ¡fico de barras horizontais por caixa
     const tankCtx = document.getElementById('tankChart').getContext('2d');
     const totalRecriaChart = Object.values(currentData).reduce((a, b) => a + (b.recria || 0), 0);
     const totalAviariosChart = Object.values(currentData).reduce((a, b) => a + (b.aviarios || 0), 0);
@@ -9536,7 +9536,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
     let tankChart = new Chart(tankCtx, {
       type: 'bar',
       data: {
-        labels: ['Recria', 'Aviários'],
+        labels: ['Recria', 'AviÃ¡rios'],
         datasets: [{
           data: [totalRecriaChart, totalAviariosChart],
           backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)'],
@@ -9569,7 +9569,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
       chart.data.datasets[1].data = labels.map(l => currentData[l]?.aviarios || 0);
       chart.update();
       
-      // Atualizar gráfico de barras
+      // Atualizar grÃ¡fico de barras
       const totalRecria = labels.reduce((a, l) => a + (currentData[l]?.recria || 0), 0);
       const totalAviarios = labels.reduce((a, l) => a + (currentData[l]?.aviarios || 0), 0);
       tankChart.data.datasets[0].data = [totalRecria, totalAviarios];
@@ -9585,42 +9585,42 @@ function generateInteractiveReport(rows, dailyData, dates) {
   newWindow.document.close();
 }
 
-// Obter label do período
+// Obter label do perÃ­odo
 function getPeriodLabel() {
   switch (state.waterPeriod) {
     case 'day': return 'Hoje';
-    case 'week': return 'Última Semana';
-    case 'month': return 'Último Mês';
-    default: return 'Período';
+    case 'week': return 'Ãšltima Semana';
+    case 'month': return 'Ãšltimo MÃªs';
+    default: return 'PerÃ­odo';
   }
 }
 
-// ========== FIM CONTROLE DE ÁGUA ==========
+// ========== FIM CONTROLE DE ÃGUA ==========
 
 // ========== CONTROLE DE DIESEL ==========
 
-// Estado adicional para mês selecionado no diesel
+// Estado adicional para mÃªs selecionado no diesel
 if (typeof state.dieselSelectedMonth === 'undefined') {
-  state.dieselSelectedMonth = null; // null = mês atual, ou 'YYYY-MM' para mês específico
+  state.dieselSelectedMonth = null; // null = mÃªs atual, ou 'YYYY-MM' para mÃªs especÃ­fico
 }
 
-// Função auxiliar para obter datas do período (diesel)
+// FunÃ§Ã£o auxiliar para obter datas do perÃ­odo (diesel)
 function getDieselPeriodDates() {
   var now = new Date();
   var year, month, day, endDate, startDate;
   
-  // Se um mês específico foi selecionado
+  // Se um mÃªs especÃ­fico foi selecionado
   if (state.dieselSelectedMonth) {
     var parts = state.dieselSelectedMonth.split('-');
     year = parseInt(parts[0]);
     month = parseInt(parts[1]) - 1; // 0-indexed
     
-    // Para mês específico, sempre retorna o mês inteiro
+    // Para mÃªs especÃ­fico, sempre retorna o mÃªs inteiro
     startDate = new Date(year, month, 1, 0, 0, 0);
-    // Último dia do mês
+    // Ãšltimo dia do mÃªs
     endDate = new Date(year, month + 1, 0, 23, 59, 59);
   } else {
-    // Comportamento original para hoje/semana/mês atual
+    // Comportamento original para hoje/semana/mÃªs atual
     year = now.getFullYear();
     month = now.getMonth();
     day = now.getDate();
@@ -9629,11 +9629,11 @@ function getDieselPeriodDates() {
     if (state.dieselPeriod === 'today') {
       startDate = new Date(year, month, day, 0, 0, 0);
     } else if (state.dieselPeriod === 'week') {
-      // 7 dias atrás
+      // 7 dias atrÃ¡s
       startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       startDate.setHours(0, 0, 0, 0);
     } else {
-      // month - mês atual inteiro (do dia 1 até hoje)
+      // month - mÃªs atual inteiro (do dia 1 atÃ© hoje)
       startDate = new Date(year, month, 1, 0, 0, 0);
     }
   }
@@ -9651,7 +9651,7 @@ function getDieselPeriodDates() {
 // Carregar controle de diesel
 async function loadDieselControl() {
   try {
-    // Verificar permissão de edição e esconder/mostrar formulário
+    // Verificar permissÃ£o de ediÃ§Ã£o e esconder/mostrar formulÃ¡rio
     var formSection = document.getElementById('diesel-form-section');
     if (formSection) {
       formSection.classList.toggle('hidden', !state.canEditDiesel);
@@ -9667,10 +9667,10 @@ async function loadDieselControl() {
     var dateInput = document.getElementById('diesel-date');
     if (dateInput && !dateInput.value) dateInput.value = today;
     
-    // Preencher dropdown de meses (últimos 12 meses)
+    // Preencher dropdown de meses (Ãºltimos 12 meses)
     populateDieselMonthSelect();
     
-    // Atualizar estado dos botões de período
+    // Atualizar estado dos botÃµes de perÃ­odo
     updateDieselPeriodButtons();
     
     // Carregar dados
@@ -9698,12 +9698,12 @@ function populateDieselMonthSelect() {
   if (!select) return;
   
   var now = new Date();
-  var meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+  var meses = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 
                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   
-  var html = '<option value="">Mês Específico...</option>';
+  var html = '<option value="">MÃªs EspecÃ­fico...</option>';
   
-  // Últimos 12 meses
+  // Ãšltimos 12 meses
   for (var i = 0; i < 12; i++) {
     var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     var value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -9713,13 +9713,13 @@ function populateDieselMonthSelect() {
   
   select.innerHTML = html;
   
-  // Se já há um mês selecionado, marcar
+  // Se jÃ¡ hÃ¡ um mÃªs selecionado, marcar
   if (state.dieselSelectedMonth) {
     select.value = state.dieselSelectedMonth;
   }
 }
 
-// Atualizar estado visual dos botões de período do diesel
+// Atualizar estado visual dos botÃµes de perÃ­odo do diesel
 function updateDieselPeriodButtons() {
   ['today', 'week', 'month'].forEach(function(p) {
     var btn = document.getElementById('diesel-filter-' + p);
@@ -9757,7 +9757,7 @@ async function loadDieselRecords() {
   }
 }
 
-// Carregar estatísticas de diesel
+// Carregar estatÃ­sticas de diesel
 async function loadDieselStats() {
   try {
     var dates = getDieselPeriodDates();
@@ -9775,16 +9775,16 @@ async function loadDieselStats() {
       console.log('[Diesel] Stats carregados:', state.dieselStats);
     }
   } catch (error) {
-    console.error('Erro ao carregar estatísticas de diesel:', error);
+    console.error('Erro ao carregar estatÃ­sticas de diesel:', error);
   }
 }
 
-// Alternar período do diesel
+// Alternar perÃ­odo do diesel
 async function setDieselPeriod(period) {
   state.dieselPeriod = period;
-  state.dieselSelectedMonth = null; // Limpar seleção de mês específico
+  state.dieselSelectedMonth = null; // Limpar seleÃ§Ã£o de mÃªs especÃ­fico
   
-  // Atualizar botões - usar IDs que começam com diesel-filter
+  // Atualizar botÃµes - usar IDs que comeÃ§am com diesel-filter
   ['today', 'week', 'month'].forEach(function(p) {
     var btn = document.getElementById('diesel-filter-' + p);
     if (btn) btn.classList.remove('active');
@@ -9792,7 +9792,7 @@ async function setDieselPeriod(period) {
   var activeBtn = document.getElementById('diesel-filter-' + period);
   if (activeBtn) activeBtn.classList.add('active');
   
-  // Limpar seleção do dropdown de mês
+  // Limpar seleÃ§Ã£o do dropdown de mÃªs
   var monthSelect = document.getElementById('diesel-month-select');
   if (monthSelect) monthSelect.value = '';
   
@@ -9808,10 +9808,10 @@ async function setDieselPeriod(period) {
   checkDieselAlerts();
 }
 
-// Selecionar mês específico do diesel
+// Selecionar mÃªs especÃ­fico do diesel
 async function setDieselMonth(monthValue) {
   if (!monthValue) {
-    // Voltou para "mês atual"
+    // Voltou para "mÃªs atual"
     state.dieselSelectedMonth = null;
     state.dieselPeriod = 'month';
     setDieselPeriod('month');
@@ -9820,7 +9820,7 @@ async function setDieselMonth(monthValue) {
   
   state.dieselSelectedMonth = monthValue; // formato YYYY-MM
   
-  // Remover active de todos os botões de período
+  // Remover active de todos os botÃµes de perÃ­odo
   ['today', 'week', 'month'].forEach(function(p) {
     var btn = document.getElementById('diesel-filter-' + p);
     if (btn) btn.classList.remove('active');
@@ -9846,7 +9846,7 @@ function checkDieselAlerts() {
   var stats = state.dieselStats || {};
   var saldo = stats.saldo_atual || stats.saldoAtual || 0;
   
-  // Ícones SVG modernos
+  // Ãcones SVG modernos
   var svgOk = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
   var svgAlert = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
   var svgCritical = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
@@ -9854,9 +9854,9 @@ function checkDieselAlerts() {
   var svgGauge = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/><circle cx="12" cy="12" r="4"/></svg>';
   
   // Limites de alerta
-  var LIMITE_CRITICO = 50;   // Crítico - vermelho
+  var LIMITE_CRITICO = 50;   // CrÃ­tico - vermelho
   var LIMITE_BAIXO = 100;    // Baixo - amarelo/laranja
-  var LIMITE_ATENCAO = 200;  // Atenção - amarelo
+  var LIMITE_ATENCAO = 200;  // AtenÃ§Ã£o - amarelo
   
   // Estilo base do card
   var baseStyle = 'display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:16px;';
@@ -9870,16 +9870,16 @@ function checkDieselAlerts() {
       '<div style="' + iconStyle + 'background:rgba(249,57,67,0.2);color:#f93943;">' + svgEmpty + '</div>' +
       '<div style="' + contentStyle + '">' +
       '<span style="' + titleStyle + 'color:#f93943;">DIESEL ESGOTADO</span>' +
-      '<span style="' + subtitleStyle + 'color:#fca5a5;">Tanque vazio! Abastecimento urgente necessário.</span>' +
+      '<span style="' + subtitleStyle + 'color:#fca5a5;">Tanque vazio! Abastecimento urgente necessÃ¡rio.</span>' +
       '</div></div>';
-    // Verificar se precisa criar requisição de compra
+    // Verificar se precisa criar requisiÃ§Ã£o de compra
     checkDieselAutoRequest(saldo);
   } else if (saldo <= LIMITE_CRITICO) {
     container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(249,57,67,0.15),rgba(220,38,38,0.1));border:1px solid rgba(249,57,67,0.4);">' +
       '<div style="' + iconStyle + 'background:rgba(249,57,67,0.2);color:#f93943;">' + svgCritical + '</div>' +
       '<div style="' + contentStyle + '">' +
-      '<span style="' + titleStyle + 'color:#f93943;">ESTOQUE CRÍTICO</span>' +
-      '<span style="' + subtitleStyle + 'color:#fca5a5;">Apenas <strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> restantes. Abasteça imediatamente!</span>' +
+      '<span style="' + titleStyle + 'color:#f93943;">ESTOQUE CRÃTICO</span>' +
+      '<span style="' + subtitleStyle + 'color:#fca5a5;">Apenas <strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> restantes. AbasteÃ§a imediatamente!</span>' +
       '</div></div>';
     checkDieselAutoRequest(saldo);
   } else if (saldo <= LIMITE_BAIXO) {
@@ -9894,31 +9894,31 @@ function checkDieselAlerts() {
     container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(234,179,8,0.15),rgba(202,138,4,0.1));border:1px solid rgba(234,179,8,0.4);">' +
       '<div style="' + iconStyle + 'background:rgba(234,179,8,0.2);color:#eab308;">' + svgGauge + '</div>' +
       '<div style="' + contentStyle + '">' +
-      '<span style="' + titleStyle + 'color:#eab308;">ATENÇÃO AO ESTOQUE</span>' +
-      '<span style="' + subtitleStyle + 'color:#fde047;"><strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> disponíveis. Monitore o consumo.</span>' +
+      '<span style="' + titleStyle + 'color:#eab308;">ATENÃ‡ÃƒO AO ESTOQUE</span>' +
+      '<span style="' + subtitleStyle + 'color:#fde047;"><strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> disponÃ­veis. Monitore o consumo.</span>' +
       '</div></div>';
   } else {
     container.innerHTML = '<div class="diesel-status-card" style="' + baseStyle + 'background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(22,163,74,0.08));border:1px solid rgba(34,197,94,0.35);">' +
       '<div style="' + iconStyle + 'background:rgba(34,197,94,0.2);color:#22c55e;">' + svgOk + '</div>' +
       '<div style="' + contentStyle + '">' +
       '<span style="' + titleStyle + 'color:#22c55e;">ESTOQUE ADEQUADO</span>' +
-      '<span style="' + subtitleStyle + 'color:#86efac;"><strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> disponíveis no tanque.</span>' +
+      '<span style="' + subtitleStyle + 'color:#86efac;"><strong>' + saldo.toLocaleString('pt-BR') + ' L</strong> disponÃ­veis no tanque.</span>' +
       '</div></div>';
   }
 }
 
-// Verificar e criar/remover requisição automática de diesel quando estoque baixo
+// Verificar e criar/remover requisiÃ§Ã£o automÃ¡tica de diesel quando estoque baixo
 // Flag para evitar chamadas duplicadas
 var _dieselAutoRequestRunning = false;
 
 async function checkDieselAutoRequest(saldo) {
-  // Evitar execução duplicada
+  // Evitar execuÃ§Ã£o duplicada
   if (_dieselAutoRequestRunning) {
-    console.log('[Diesel] Auto-request já em execução, ignorando...');
+    console.log('[Diesel] Auto-request jÃ¡ em execuÃ§Ã£o, ignorando...');
     return;
   }
   
-  // Só usuários com permissão podem ver/criar requisições
+  // SÃ³ usuÃ¡rios com permissÃ£o podem ver/criar requisiÃ§Ãµes
   if (!state.user || !state.user.roles) {
     return;
   }
@@ -9942,29 +9942,29 @@ async function checkDieselAutoRequest(saldo) {
     var data = await resp.json();
     if (data.ok) state.purchases = data.purchases || [];
     
-    // Procurar requisição de diesel pendente (em análise ou pedido)
+    // Procurar requisiÃ§Ã£o de diesel pendente (em anÃ¡lise ou pedido)
     var requisicaoDiesel = state.purchases.find(function(p) {
       var isDiesel = p.item_name && p.item_name.toLowerCase().includes('diesel');
       var isPendente = p.status === 'analise' || p.status === 'pedido' || p.status === 'chegando';
-      var isAuto = p.auto_generated === true || (p.notes && p.notes.includes('AUTOMÁTICA'));
+      var isAuto = p.auto_generated === true || (p.notes && p.notes.includes('AUTOMÃTICA'));
       return isDiesel && isPendente && isAuto;
     });
     
     if (dieselBaixo) {
-      // Diesel baixo - criar requisição se não existe
+      // Diesel baixo - criar requisiÃ§Ã£o se nÃ£o existe
       if (!requisicaoDiesel) {
-        console.log('[Diesel] Estoque baixo (' + saldo + 'L) - criando requisição automática...');
+        console.log('[Diesel] Estoque baixo (' + saldo + 'L) - criando requisiÃ§Ã£o automÃ¡tica...');
         
         var stats = state.dieselStats || {};
         var consumoMes = stats.total_saida || stats.totalSaida || 0;
         var quantidadeSugerida = Math.max(consumoMes, 200);
         
-        var mensagem = 'REQUISIÇÃO AUTOMÁTICA DE DIESEL\n\n' +
-          'O sistema detectou que o estoque de diesel está baixo:\n' +
-          '• Estoque atual: ' + saldo.toLocaleString('pt-BR') + ' litros\n' +
-          '• Consumo do mês: ' + consumoMes.toLocaleString('pt-BR') + ' litros\n' +
-          '• Quantidade sugerida: ' + quantidadeSugerida.toLocaleString('pt-BR') + ' litros\n\n' +
-          'Por favor, providencie o abastecimento o mais rápido possível.';
+        var mensagem = 'REQUISIÃ‡ÃƒO AUTOMÃTICA DE DIESEL\n\n' +
+          'O sistema detectou que o estoque de diesel estÃ¡ baixo:\n' +
+          'â€¢ Estoque atual: ' + saldo.toLocaleString('pt-BR') + ' litros\n' +
+          'â€¢ Consumo do mÃªs: ' + consumoMes.toLocaleString('pt-BR') + ' litros\n' +
+          'â€¢ Quantidade sugerida: ' + quantidadeSugerida.toLocaleString('pt-BR') + ' litros\n\n' +
+          'Por favor, providencie o abastecimento o mais rÃ¡pido possÃ­vel.';
         
         var response = await fetch(API_URL + '/purchases', {
           method: 'POST',
@@ -9973,7 +9973,7 @@ async function checkDieselAutoRequest(saldo) {
             'Authorization': 'Bearer ' + state.token
           },
           body: JSON.stringify({
-            item_name: '🛢️ DIESEL - Abastecimento Urgente',
+            item_name: 'ðŸ›¢ï¸ DIESEL - Abastecimento Urgente',
             quantity: quantidadeSugerida,
             unit: 'L',
             category: 'combustivel',
@@ -9984,18 +9984,18 @@ async function checkDieselAutoRequest(saldo) {
         });
         
         if (response.ok) {
-          showNotification('⛽ Requisição de diesel criada automaticamente!', 'warning');
-          console.log('[Diesel] Requisição automática criada com sucesso');
+          showNotification('â›½ RequisiÃ§Ã£o de diesel criada automaticamente!', 'warning');
+          console.log('[Diesel] RequisiÃ§Ã£o automÃ¡tica criada com sucesso');
           // Recarregar compras
           await loadPurchases();
         }
       } else {
-        console.log('[Diesel] Requisição de diesel já existe:', requisicaoDiesel.id);
+        console.log('[Diesel] RequisiÃ§Ã£o de diesel jÃ¡ existe:', requisicaoDiesel.id);
       }
     } else {
-      // Diesel OK - remover requisição automática se existir
+      // Diesel OK - remover requisiÃ§Ã£o automÃ¡tica se existir
       if (requisicaoDiesel) {
-        console.log('[Diesel] Estoque OK (' + saldo + 'L) - removendo requisição automática...');
+        console.log('[Diesel] Estoque OK (' + saldo + 'L) - removendo requisiÃ§Ã£o automÃ¡tica...');
         
         var delResp = await fetch(API_URL + '/purchases/' + requisicaoDiesel.id, {
           method: 'DELETE',
@@ -10003,28 +10003,28 @@ async function checkDieselAutoRequest(saldo) {
         });
         
         if (delResp.ok) {
-          showNotification('✅ Requisição de diesel removida (estoque OK)', 'success');
-          console.log('[Diesel] Requisição automática removida');
+          showNotification('âœ… RequisiÃ§Ã£o de diesel removida (estoque OK)', 'success');
+          console.log('[Diesel] RequisiÃ§Ã£o automÃ¡tica removida');
           await loadPurchases();
         }
       }
     }
   } catch (e) {
-    console.error('[Diesel] Erro ao gerenciar requisição automática:', e);
+    console.error('[Diesel] Erro ao gerenciar requisiÃ§Ã£o automÃ¡tica:', e);
   } finally {
     _dieselAutoRequestRunning = false;
   }
 }
 
-// Função para mostrar detalhes da requisição
+// FunÃ§Ã£o para mostrar detalhes da requisiÃ§Ã£o
 function showPurchaseDetails(purchaseId) {
   const purchase = state.purchases.find(p => p.id === purchaseId);
   if (!purchase) return;
   
   const statusConfig = {
-    analise: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: 'Em Análise', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>' },
+    analise: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: 'Em AnÃ¡lise', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>' },
     pedido: { color: '#3b82f6', bg: 'rgba(59,130,246,0.15)', text: 'Pedido Feito', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>' },
-    chegando: { color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', text: 'Em Trânsito', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16 16,8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>' },
+    chegando: { color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', text: 'Em TrÃ¢nsito', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16 16,8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>' },
     chegou: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', text: 'Entregue', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>' }
   };
   
@@ -10128,7 +10128,7 @@ function showPurchaseDetails(purchaseId) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// Renderizar estatísticas do diesel
+// Renderizar estatÃ­sticas do diesel
 function renderDieselStats() {
   var stats = state.dieselStats || {};
   var records = state.dieselRecords || [];
@@ -10174,7 +10174,7 @@ function renderDieselStats() {
     }
   }
   
-  // Última movimentação
+  // Ãšltima movimentaÃ§Ã£o
   if (elUltimaMov && elUltimaMovTipo) {
     if (records.length > 0) {
       // Ordenar por data e pegar o mais recente
@@ -10187,7 +10187,7 @@ function renderDieselStats() {
       var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1]) : dateStr;
       
       elUltimaMov.textContent = formattedDate;
-      var tipoTexto = ultimo.record_type === 'entrada' ? 'Entrada' : 'Saída';
+      var tipoTexto = ultimo.record_type === 'entrada' ? 'Entrada' : 'SaÃ­da';
       var qtd = (parseFloat(ultimo.quantity) || 0).toLocaleString('pt-BR');
       elUltimaMovTipo.textContent = tipoTexto + ': ' + qtd + ' L';
       
@@ -10199,20 +10199,20 @@ function renderDieselStats() {
       }
     } else {
       elUltimaMov.textContent = '-';
-      elUltimaMovTipo.textContent = 'Sem registros no período';
+      elUltimaMovTipo.textContent = 'Sem registros no perÃ­odo';
       elUltimaMov.style.color = '#888';
     }
   }
 }
 
-// Renderizar gráfico de diesel (barras - entradas/saídas)
+// Renderizar grÃ¡fico de diesel (barras - entradas/saÃ­das)
 function renderDieselChart() {
   var canvas = document.getElementById('diesel-consumption-chart');
   if (!canvas) return;
   
-  // Verificar se Chart.js está disponível
+  // Verificar se Chart.js estÃ¡ disponÃ­vel
   if (typeof Chart === 'undefined') {
-    console.warn('[Diesel] Chart.js não disponível, pulando gráfico');
+    console.warn('[Diesel] Chart.js nÃ£o disponÃ­vel, pulando grÃ¡fico');
     return;
   }
   
@@ -10237,13 +10237,13 @@ function renderDieselChart() {
   var entradasData = labels.map(function(d) { return dailyData[d].entrada; });
   var saidasData = labels.map(function(d) { return dailyData[d].saida; });
   
-  // Formatar labels para exibição
+  // Formatar labels para exibiÃ§Ã£o
   var formattedLabels = labels.map(function(d) {
     var parts = d.split('-');
     return parts[2] + '/' + parts[1];
   });
   
-  // Destruir gráfico anterior se existir
+  // Destruir grÃ¡fico anterior se existir
   if (window.dieselChart) {
     window.dieselChart.destroy();
   }
@@ -10262,7 +10262,7 @@ function renderDieselChart() {
           borderRadius: 4
         },
         {
-          label: 'Saídas (L)',
+          label: 'SaÃ­das (L)',
           data: saidasData,
           backgroundColor: 'rgba(239, 68, 68, 0.7)',
           borderColor: '#ef4444',
@@ -10293,7 +10293,7 @@ function renderDieselChart() {
   });
 }
 
-// Renderizar histórico do diesel
+// Renderizar histÃ³rico do diesel
 function renderDieselHistory() {
   var tbody = document.getElementById('diesel-history-tbody');
   if (!tbody) return;
@@ -10306,11 +10306,11 @@ function renderDieselHistory() {
   });
   
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Nenhum registro no período</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Nenhum registro no perÃ­odo</td></tr>';
     return;
   }
   
-  var diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+  var diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÃB'];
   
   var html = '';
   sorted.forEach(function(r) {
@@ -10326,12 +10326,12 @@ function renderDieselHistory() {
     }
     
     var typeClass = r.record_type === 'entrada' ? 'badge-success' : 'badge-danger';
-    var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'Saída';
+    var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'SaÃ­da';
     
-    // Botão de delete (só para admin ou quem tem permissão)
+    // BotÃ£o de delete (sÃ³ para admin ou quem tem permissÃ£o)
     var canDelete = state.user && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all') || state.user.roles.includes('diesel'));
     var deleteBtn = canDelete 
-      ? '<button class="delete-reading-btn" onclick="deleteDieselRecord(\'' + r.id + '\')" title="Excluir registro">×</button>'
+      ? '<button class="delete-reading-btn" onclick="deleteDieselRecord(\'' + r.id + '\')" title="Excluir registro">Ã—</button>'
       : '';
     
     html += '<tr>';
@@ -10351,9 +10351,9 @@ function renderDieselHistory() {
 // Salvar registro de diesel
 async function saveDieselRecord() {
   try {
-    // Verificar permissão de edição
+    // Verificar permissÃ£o de ediÃ§Ã£o
     if (!state.canEditDiesel) {
-      showNotification('Você não tem permissão para registrar diesel', 'error');
+      showNotification('VocÃª nÃ£o tem permissÃ£o para registrar diesel', 'error');
       return;
     }
     
@@ -10368,7 +10368,7 @@ async function saveDieselRecord() {
     var reason = reasonInput ? reasonInput.value : '';
     
     if (!recordDate || !recordType || !quantity || quantity <= 0) {
-      showNotification('Preencha todos os campos obrigatórios', 'error');
+      showNotification('Preencha todos os campos obrigatÃ³rios', 'error');
       return;
     }
     
@@ -10391,7 +10391,7 @@ async function saveDieselRecord() {
     if (data.ok) {
       showNotification('Registro de diesel salvo com sucesso!', 'success');
       
-      // Limpar formulário
+      // Limpar formulÃ¡rio
       if (quantityInput) quantityInput.value = '';
       if (reasonInput) reasonInput.value = '';
       
@@ -10423,9 +10423,9 @@ async function deleteDieselRecord(id) {
     if (data.ok) {
       state.dieselRecords = data.records;
       renderDieselHistory();
-      // Recarregar estatísticas
+      // Recarregar estatÃ­sticas
       await loadDieselControl();
-      showNotification('Registro de diesel excluído com sucesso!', 'success');
+      showNotification('Registro de diesel excluÃ­do com sucesso!', 'success');
     } else {
       showNotification(data.error || 'Erro ao excluir registro', 'error');
     }
@@ -10435,7 +10435,7 @@ async function deleteDieselRecord(id) {
   }
 }
 
-// Exportar relatório de diesel PDF
+// Exportar relatÃ³rio de diesel PDF
 function exportDieselReportPDF() {
   var records = state.dieselRecords || [];
   var stats = state.dieselStats || {};
@@ -10451,13 +10451,13 @@ function exportDieselReportPDF() {
   });
   
   var periodLabel = state.dieselPeriod === 'today' ? 'Hoje' : 
-                    state.dieselPeriod === 'week' ? 'Última Semana' : 'Último Mês';
+                    state.dieselPeriod === 'week' ? 'Ãšltima Semana' : 'Ãšltimo MÃªs';
   
   var content = '<!DOCTYPE html>' +
     '<html lang="pt-BR">' +
     '<head>' +
     '<meta charset="UTF-8">' +
-    '<title>Relatório de Diesel - Granja Vitta</title>' +
+    '<title>RelatÃ³rio de Diesel - Granja Vitta</title>' +
     '<style>' +
     'body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #333; }' +
     '.header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #d4af37; padding-bottom: 20px; }' +
@@ -10480,19 +10480,19 @@ function exportDieselReportPDF() {
     '</head>' +
     '<body>' +
     '<div class="header">' +
-    '<h1>⛽ CONTROLE DE DIESEL</h1>' +
-    '<p><strong>Granja Vitta</strong> | Período: ' + periodLabel + '</p>' +
+    '<h1>â›½ CONTROLE DE DIESEL</h1>' +
+    '<p><strong>Granja Vitta</strong> | PerÃ­odo: ' + periodLabel + '</p>' +
     '<p>Gerado em: ' + new Date().toLocaleString('pt-BR') + '</p>' +
     '</div>' +
     '<div class="stats-grid">' +
     '<div class="stat-box"><h3>Total Entradas</h3><div class="value">' + (stats.totalEntrada || 0).toLocaleString('pt-BR') + ' L</div></div>' +
-    '<div class="stat-box"><h3>Total Saídas</h3><div class="value">' + (stats.totalSaida || 0).toLocaleString('pt-BR') + ' L</div></div>' +
+    '<div class="stat-box"><h3>Total SaÃ­das</h3><div class="value">' + (stats.totalSaida || 0).toLocaleString('pt-BR') + ' L</div></div>' +
     '<div class="stat-box"><h3>Saldo Atual</h3><div class="value">' + (stats.saldoAtual || 0).toLocaleString('pt-BR') + ' L</div></div>' +
-    '<div class="stat-box"><h3>Média Diária</h3><div class="value">' + (stats.mediaDiaria || 0).toFixed(1) + ' L</div></div>' +
+    '<div class="stat-box"><h3>MÃ©dia DiÃ¡ria</h3><div class="value">' + (stats.mediaDiaria || 0).toFixed(1) + ' L</div></div>' +
     '</div>' +
-    '<h2 style="color:#1a1a2e;font-size:16px;margin-bottom:15px;">HISTÓRICO DE MOVIMENTAÇÕES</h2>' +
+    '<h2 style="color:#1a1a2e;font-size:16px;margin-bottom:15px;">HISTÃ“RICO DE MOVIMENTAÃ‡Ã•ES</h2>' +
     '<table>' +
-    '<thead><tr><th>Data</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Registrado por</th><th>Observações</th></tr></thead>' +
+    '<thead><tr><th>Data</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Registrado por</th><th>ObservaÃ§Ãµes</th></tr></thead>' +
     '<tbody>';
   
   sorted.forEach(function(r) {
@@ -10500,7 +10500,7 @@ function exportDieselReportPDF() {
     var parts = dateStr.split('-');
     var formattedDate = parts.length === 3 ? (parts[2] + '/' + parts[1] + '/' + parts[0]) : dateStr;
     var badgeClass = r.record_type === 'entrada' ? 'badge-entrada' : 'badge-saida';
-    var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'Saída';
+    var typeLabel = r.record_type === 'entrada' ? 'Entrada' : 'SaÃ­da';
     
     content += '<tr>';
     content += '<td>' + formattedDate + '</td>';
@@ -10514,8 +10514,8 @@ function exportDieselReportPDF() {
   
   content += '</tbody></table>' +
     '<div class="footer">' +
-    '<p>Relatório gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>' +
-    '<p>Desenvolvido por Guilherme Braga | © 2025</p>' +
+    '<p>RelatÃ³rio gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>' +
+    '<p>Desenvolvido por Guilherme Braga | Â© 2025</p>' +
     '</div>' +
     '</body></html>';
   
@@ -10527,10 +10527,10 @@ function exportDieselReportPDF() {
     printWindow.print();
   }, 500);
   
-  showNotification('Relatório PDF gerado!', 'success');
+  showNotification('RelatÃ³rio PDF gerado!', 'success');
 }
 
-// Exportar relatório de diesel Excel/CSV
+// Exportar relatÃ³rio de diesel Excel/CSV
 function exportDieselReportExcel() {
   var records = state.dieselRecords || [];
   
@@ -10552,7 +10552,7 @@ function exportDieselReportExcel() {
     else totalSaida += qty;
   });
   
-  // Cabeçalhos
+  // CabeÃ§alhos
   var headers = ['DATA', 'DIA', 'TIPO', 'QUANTIDADE (L)', 'MOTIVO', 'REGISTRADO POR', 'OBSERVACOES'];
   
   // Nomes dos dias
@@ -10608,15 +10608,15 @@ function exportDieselReportExcel() {
   
   showNotification('Planilha exportada: ' + sorted.length + ' registros', 'success');
   
-  // Gerar relatório HTML interativo também
+  // Gerar relatÃ³rio HTML interativo tambÃ©m
   generateDieselInteractiveReport(sorted, totalEntrada, totalSaida);
 }
 
-// Gerar relatório HTML interativo para Diesel
+// Gerar relatÃ³rio HTML interativo para Diesel
 function generateDieselInteractiveReport(records, totalEntrada, totalSaida) {
-  var diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  var diasSemana = ['Domingo', 'Segunda', 'TerÃ§a', 'Quarta', 'Quinta', 'Sexta', 'SÃ¡bado'];
   
-  // Agrupar por mês para gráfico
+  // Agrupar por mÃªs para grÃ¡fico
   var monthlyData = {};
   records.forEach(function(r) {
     var dateStr = r.record_date ? r.record_date.split('T')[0] : '';
@@ -10641,7 +10641,7 @@ function generateDieselInteractiveReport(records, totalEntrada, totalSaida) {
       dayOfWeek = diasSemana[d.getDay()];
     }
     var typeClass = r.record_type === 'entrada' ? 'entrada' : 'saida';
-    var typeLabel = r.record_type === 'entrada' ? '⬆ ENTRADA' : '⬇ SAÍDA';
+    var typeLabel = r.record_type === 'entrada' ? 'â¬† ENTRADA' : 'â¬‡ SAÃDA';
     
     return '<tr>' +
       '<td>' + formattedDate + '</td>' +
@@ -10658,7 +10658,7 @@ function generateDieselInteractiveReport(records, totalEntrada, totalSaida) {
   
   var html = '<!DOCTYPE html>' +
     '<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-    '<title>Relatório de Diesel - Granja Vitta</title>' +
+    '<title>RelatÃ³rio de Diesel - Granja Vitta</title>' +
     '<style>' +
     '* { margin: 0; padding: 0; box-sizing: border-box; }' +
     'body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; min-height: 100vh; padding: 40px 20px; }' +
@@ -10691,21 +10691,21 @@ function generateDieselInteractiveReport(records, totalEntrada, totalSaida) {
     '</style></head><body>' +
     '<div class="container">' +
     '<div class="header">' +
-    '<h1>🛢️ Controle de Diesel</h1>' +
-    '<p>Granja Vitta • Relatório gerado em ' + new Date().toLocaleDateString('pt-BR') + '</p>' +
+    '<h1>ðŸ›¢ï¸ Controle de Diesel</h1>' +
+    '<p>Granja Vitta â€¢ RelatÃ³rio gerado em ' + new Date().toLocaleDateString('pt-BR') + '</p>' +
     '</div>' +
     '<div class="stats-grid">' +
     '<div class="stat-card entrada"><div class="stat-value">+' + totalEntrada.toFixed(1) + ' L</div><div class="stat-label">Total Entradas</div></div>' +
-    '<div class="stat-card saida"><div class="stat-value">-' + totalSaida.toFixed(1) + ' L</div><div class="stat-label">Total Saídas</div></div>' +
+    '<div class="stat-card saida"><div class="stat-value">-' + totalSaida.toFixed(1) + ' L</div><div class="stat-label">Total SaÃ­das</div></div>' +
     '<div class="stat-card saldo"><div class="stat-value">' + saldo.toFixed(1) + ' L</div><div class="stat-label">Saldo</div></div>' +
     '<div class="stat-card"><div class="stat-value">' + records.length + '</div><div class="stat-label">Registros</div></div>' +
     '</div>' +
     '<div class="table-card">' +
-    '<div class="table-header"><h2>📋 Histórico de Movimentações</h2></div>' +
-    '<table><thead><tr><th>Data</th><th>Dia</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Responsável</th></tr></thead>' +
+    '<div class="table-header"><h2>ðŸ“‹ HistÃ³rico de MovimentaÃ§Ãµes</h2></div>' +
+    '<table><thead><tr><th>Data</th><th>Dia</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>ResponsÃ¡vel</th></tr></thead>' +
     '<tbody>' + tableRows + '</tbody></table>' +
     '</div>' +
-    '<div class="footer"><p>Sistema ICARUS • Desenvolvido por Guilherme Braga</p></div>' +
+    '<div class="footer"><p>Sistema ICARUS â€¢ Desenvolvido por Guilherme Braga</p></div>' +
     '</div></body></html>';
   
   // Abrir em nova aba
@@ -10720,7 +10720,7 @@ function generateDieselInteractiveReport(records, totalEntrada, totalSaida) {
 
 // ========== CONTROLE DE GERADOR ==========
 
-// Função auxiliar para obter datas do período (gerador)
+// FunÃ§Ã£o auxiliar para obter datas do perÃ­odo (gerador)
 function getGeneratorPeriodDates() {
   var now = new Date();
   var year = now.getFullYear();
@@ -10751,7 +10751,7 @@ function getGeneratorPeriodDates() {
 // Carregar controle de gerador
 async function loadGeneratorControl() {
   try {
-    // Verificar permissão de edição e esconder/mostrar formulário
+    // Verificar permissÃ£o de ediÃ§Ã£o e esconder/mostrar formulÃ¡rio
     var formSection = document.getElementById('generator-form-section');
     if (formSection) {
       formSection.classList.toggle('hidden', !state.canEditGerador);
@@ -10801,7 +10801,7 @@ async function loadGeneratorRecords() {
   }
 }
 
-// Carregar estatísticas de gerador
+// Carregar estatÃ­sticas de gerador
 async function loadGeneratorStats() {
   try {
     var dates = getGeneratorPeriodDates();
@@ -10816,15 +10816,15 @@ async function loadGeneratorStats() {
       state.generatorStats = data.stats;
     }
   } catch (error) {
-    console.error('Erro ao carregar estatísticas de gerador:', error);
+    console.error('Erro ao carregar estatÃ­sticas de gerador:', error);
   }
 }
 
-// Alternar período do gerador
+// Alternar perÃ­odo do gerador
 async function setGeneratorPeriod(period) {
   state.generatorPeriod = period;
   
-  // Atualizar botões
+  // Atualizar botÃµes
   document.querySelectorAll('.generator-filter-btn').forEach(function(btn) {
     btn.classList.remove('active');
   });
@@ -10841,7 +10841,7 @@ async function setGeneratorPeriod(period) {
   renderGeneratorHistory();
 }
 
-// Renderizar estatísticas do gerador
+// Renderizar estatÃ­sticas do gerador
 function renderGeneratorStats() {
   var stats = state.generatorStats || {};
   
@@ -10867,7 +10867,7 @@ function renderGeneratorStats() {
   }
 }
 
-// Renderizar histórico do gerador
+// Renderizar histÃ³rico do gerador
 function renderGeneratorHistory() {
   var tbody = document.getElementById('generator-history-tbody');
   if (!tbody) return;
@@ -10899,7 +10899,7 @@ function renderGeneratorHistory() {
       typeLabel = 'Desligado';
       typeClass = 'badge-warning';
     } else if (r.record_type === 'manutencao') {
-      typeLabel = 'Manutenção';
+      typeLabel = 'ManutenÃ§Ã£o';
       typeClass = 'badge-info';
     } else {
       typeLabel = r.record_type || '-';
@@ -10925,9 +10925,9 @@ function renderGeneratorHistory() {
 // Salvar registro de gerador
 async function saveGeneratorRecord() {
   try {
-    // Verificar permissão de edição
+    // Verificar permissÃ£o de ediÃ§Ã£o
     if (!state.canEditGerador) {
-      showNotification('Você não tem permissão para registrar eventos do gerador', 'error');
+      showNotification('VocÃª nÃ£o tem permissÃ£o para registrar eventos do gerador', 'error');
       return;
     }
     
@@ -10944,7 +10944,7 @@ async function saveGeneratorRecord() {
     var notes = notesInput ? notesInput.value : '';
     
     if (!recordDate || !recordType) {
-      showNotification('Preencha os campos obrigatórios (data e tipo)', 'error');
+      showNotification('Preencha os campos obrigatÃ³rios (data e tipo)', 'error');
       return;
     }
     
@@ -10968,7 +10968,7 @@ async function saveGeneratorRecord() {
     if (data.ok) {
       showNotification('Registro de gerador salvo com sucesso!', 'success');
       
-      // Limpar formulário
+      // Limpar formulÃ¡rio
       if (timeInput) timeInput.value = '';
       if (fuelInput) fuelInput.value = '';
       if (notesInput) notesInput.value = '';
@@ -10984,7 +10984,7 @@ async function saveGeneratorRecord() {
   }
 }
 
-// Exportar relatório de gerador PDF
+// Exportar relatÃ³rio de gerador PDF
 function exportGeneratorReportPDF() {
   var records = state.generatorRecords || [];
   var stats = state.generatorStats || {};
@@ -11000,7 +11000,7 @@ function exportGeneratorReportPDF() {
   });
   
   var periodLabel = state.generatorPeriod === 'today' ? 'Hoje' : 
-                    state.generatorPeriod === 'week' ? 'Última Semana' : 'Último Mês';
+                    state.generatorPeriod === 'week' ? 'Ãšltima Semana' : 'Ãšltimo MÃªs';
   
   var totalHours = stats.totalHours || 0;
   var hoursInt = Math.floor(totalHours);
@@ -11011,7 +11011,7 @@ function exportGeneratorReportPDF() {
     '<html lang="pt-BR">' +
     '<head>' +
     '<meta charset="UTF-8">' +
-    '<title>Relatório de Gerador - Granja Vitta</title>' +
+    '<title>RelatÃ³rio de Gerador - Granja Vitta</title>' +
     '<style>' +
     'body { font-family: Arial, sans-serif; padding: 40px; background: #fff; color: #333; }' +
     '.header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #d4af37; padding-bottom: 20px; }' +
@@ -11035,19 +11035,19 @@ function exportGeneratorReportPDF() {
     '</head>' +
     '<body>' +
     '<div class="header">' +
-    '<h1>🔌 CONTROLE DE GERADOR</h1>' +
-    '<p><strong>Granja Vitta</strong> | Período: ' + periodLabel + '</p>' +
+    '<h1>ðŸ”Œ CONTROLE DE GERADOR</h1>' +
+    '<p><strong>Granja Vitta</strong> | PerÃ­odo: ' + periodLabel + '</p>' +
     '<p>Gerado em: ' + new Date().toLocaleString('pt-BR') + '</p>' +
     '</div>' +
     '<div class="stats-grid">' +
     '<div class="stat-box"><h3>Total de Horas</h3><div class="value">' + hoursFormatted + '</div></div>' +
-    '<div class="stat-box"><h3>Combustível Usado</h3><div class="value">' + (stats.fuelUsed || 0).toLocaleString('pt-BR') + ' L</div></div>' +
-    '<div class="stat-box"><h3>Consumo Médio</h3><div class="value">' + (stats.avgConsumption || 0).toFixed(1) + ' L/h</div></div>' +
-    '<div class="stat-box"><h3>Manutenções</h3><div class="value">' + (stats.maintenanceCount || 0) + '</div></div>' +
+    '<div class="stat-box"><h3>CombustÃ­vel Usado</h3><div class="value">' + (stats.fuelUsed || 0).toLocaleString('pt-BR') + ' L</div></div>' +
+    '<div class="stat-box"><h3>Consumo MÃ©dio</h3><div class="value">' + (stats.avgConsumption || 0).toFixed(1) + ' L/h</div></div>' +
+    '<div class="stat-box"><h3>ManutenÃ§Ãµes</h3><div class="value">' + (stats.maintenanceCount || 0) + '</div></div>' +
     '</div>' +
-    '<h2 style="color:#1a1a2e;font-size:16px;margin-bottom:15px;">HISTÓRICO DE OPERAÇÕES</h2>' +
+    '<h2 style="color:#1a1a2e;font-size:16px;margin-bottom:15px;">HISTÃ“RICO DE OPERAÃ‡Ã•ES</h2>' +
     '<table>' +
-    '<thead><tr><th>Data</th><th>Tipo</th><th>Tempo</th><th>Combustível</th><th>Registrado por</th><th>Observações</th></tr></thead>' +
+    '<thead><tr><th>Data</th><th>Tipo</th><th>Tempo</th><th>CombustÃ­vel</th><th>Registrado por</th><th>ObservaÃ§Ãµes</th></tr></thead>' +
     '<tbody>';
   
   sorted.forEach(function(r) {
@@ -11064,7 +11064,7 @@ function exportGeneratorReportPDF() {
       typeLabel = 'Desligado';
       badgeClass = 'badge-desligado';
     } else if (r.record_type === 'manutencao') {
-      typeLabel = 'Manutenção';
+      typeLabel = 'ManutenÃ§Ã£o';
       badgeClass = 'badge-manutencao';
     } else {
       typeLabel = r.record_type || '-';
@@ -11086,8 +11086,8 @@ function exportGeneratorReportPDF() {
   
   content += '</tbody></table>' +
     '<div class="footer">' +
-    '<p>Relatório gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>' +
-    '<p>Desenvolvido por Guilherme Braga | © 2025</p>' +
+    '<p>RelatÃ³rio gerado automaticamente pelo Sistema Icarus | Granja Vitta</p>' +
+    '<p>Desenvolvido por Guilherme Braga | Â© 2025</p>' +
     '</div>' +
     '</body></html>';
   
@@ -11099,12 +11099,12 @@ function exportGeneratorReportPDF() {
     printWindow.print();
   }, 500);
   
-  showNotification('Relatório PDF gerado!', 'success');
+  showNotification('RelatÃ³rio PDF gerado!', 'success');
 }
 
 // ========== FIM CONTROLE DE GERADOR ==========
 
-// ========== EXPORTAÇÃO DASHBOARD ==========
+// ========== EXPORTAÃ‡ÃƒO DASHBOARD ==========
 
 function exportDashboardReport() {
   const orders = state.orders || [];
@@ -11117,12 +11117,12 @@ function exportDashboardReport() {
   
   if (state.dashboardMonth) {
     const [year, month] = state.dashboardMonth.split('-');
-    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     periodLabel = monthNames[parseInt(month) - 1] + ' ' + year;
   } else if (filter === 'weekly') {
     periodLabel = 'Esta Semana';
   } else if (filter === 'monthly') {
-    periodLabel = 'Este Mês';
+    periodLabel = 'Este MÃªs';
   }
   
   const filteredOrders = orders.filter(o => {
@@ -11137,7 +11137,7 @@ function exportDashboardReport() {
   const total = filteredOrders.length;
   const aproveitamento = total > 0 ? Math.round((completed / total) * 100) : 0;
   
-  // Dados de checklists para o relatório
+  // Dados de checklists para o relatÃ³rio
   const checklistStats = {
     total: checklists.length,
     automaticos: checklists.filter(c => c.auto_complete).length,
@@ -11146,35 +11146,35 @@ function exportDashboardReport() {
       name: c.name,
       sector: c.sector || 'N/A',
       items: (c.items || []).length,
-      auto: c.auto_complete ? 'Sim' : 'Não',
-      frequency: c.auto_complete ? (c.frequency_days === 1 ? 'Diário' : c.frequency_days === 2 ? 'Dia sim/não' : `A cada ${c.frequency_days} dias`) : 'Manual'
+      auto: c.auto_complete ? 'Sim' : 'NÃ£o',
+      frequency: c.auto_complete ? (c.frequency_days === 1 ? 'DiÃ¡rio' : c.frequency_days === 2 ? 'Dia sim/nÃ£o' : `A cada ${c.frequency_days} dias`) : 'Manual'
     }))
   };
   
-  // Agrupar por executor - usando assigned_users que é o formato correto
+  // Agrupar por executor - usando assigned_users que Ã© o formato correto
   const byExecutor = {};
   filteredOrders.forEach(o => {
-    // Pegar nomes dos usuários atribuídos
+    // Pegar nomes dos usuÃ¡rios atribuÃ­dos
     if (o.assigned_users && Array.isArray(o.assigned_users) && o.assigned_users.length > 0) {
       o.assigned_users.forEach(user => {
-        const name = user.name || user.username || 'Não atribuído';
+        const name = user.name || user.username || 'NÃ£o atribuÃ­do';
         if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
         byExecutor[name].total++;
         if (o.status === 'completed') byExecutor[name].completed++;
         if (o.worked_minutes) byExecutor[name].minutes += o.worked_minutes;
       });
     } else {
-      const name = 'Não atribuído';
+      const name = 'NÃ£o atribuÃ­do';
       if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
       byExecutor[name].total++;
       if (o.status === 'completed') byExecutor[name].completed++;
     }
   });
   
-  // Agrupar por setor - usando 'sector' que é o campo correto
+  // Agrupar por setor - usando 'sector' que Ã© o campo correto
   const bySetor = {};
   filteredOrders.forEach(o => {
-    const setor = o.sector || 'Não especificado';
+    const setor = o.sector || 'NÃ£o especificado';
     if (!bySetor[setor]) bySetor[setor] = 0;
     bySetor[setor]++;
   });
@@ -11200,7 +11200,7 @@ function exportDashboardReport() {
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relatório Dashboard - Granja Vitta</title>
+  <title>RelatÃ³rio Dashboard - Granja Vitta</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -11766,7 +11766,7 @@ function exportDashboardReport() {
       <div class="header-icon">
         ${svgIcons.chart}
       </div>
-      <h1>Relatório Dashboard</h1>
+      <h1>RelatÃ³rio Dashboard</h1>
       <p class="subtitle">
         <strong>Granja Vitta</strong>
         <span class="dot"></span>
@@ -11775,7 +11775,7 @@ function exportDashboardReport() {
       <div class="period-badge">
         ${svgIcons.clock}
         <span>${periodLabel}</span>
-        <span style="opacity: 0.5;">•</span>
+        <span style="opacity: 0.5;">â€¢</span>
         <span>Gerado em ${new Date().toLocaleString('pt-BR')}</span>
       </div>
     </div>
@@ -11806,7 +11806,7 @@ function exportDashboardReport() {
         <div class="stat-icon" style="--icon-color: #10b981;">
           ${svgIcons.check}
         </div>
-        <h3>Concluídas</h3>
+        <h3>ConcluÃ­das</h3>
         <div class="value green">${completed}</div>
       </div>
       <div class="stat-card gold">
@@ -11851,7 +11851,7 @@ function exportDashboardReport() {
           <tr>
             <th>Executor</th>
             <th>Total</th>
-            <th>Concluídas</th>
+            <th>ConcluÃ­das</th>
             <th>Aproveitamento</th>
             <th>Progresso</th>
           </tr>
@@ -11877,7 +11877,7 @@ function exportDashboardReport() {
       </table>
     </div>
 
-    <!-- SEÇÃO CHECKLISTS -->
+    <!-- SEÃ‡ÃƒO CHECKLISTS -->
     <div class="table-card" style="margin-top: 20px;">
       <div class="card-header">
         <div class="card-icon" style="background: linear-gradient(135deg, #059669, #10b981);">
@@ -11886,7 +11886,7 @@ function exportDashboardReport() {
             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
           </svg>
         </div>
-        <h3>Checklists de Manutenção</h3>
+        <h3>Checklists de ManutenÃ§Ã£o</h3>
       </div>
       <div class="stats-row" style="display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 120px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
@@ -11895,7 +11895,7 @@ function exportDashboardReport() {
         </div>
         <div style="flex: 1; min-width: 120px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
           <div style="font-size: 24px; font-weight: 700; color: #8b5cf6;">${checklistStats.automaticos}</div>
-          <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Automáticos</div>
+          <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">AutomÃ¡ticos</div>
         </div>
         <div style="flex: 1; min-width: 120px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
           <div style="font-size: 24px; font-weight: 700; color: #3b82f6;">${checklistStats.manuais}</div>
@@ -11909,8 +11909,8 @@ function exportDashboardReport() {
             <th>Checklist</th>
             <th>Setor</th>
             <th>Itens</th>
-            <th>Automático</th>
-            <th>Frequência</th>
+            <th>AutomÃ¡tico</th>
+            <th>FrequÃªncia</th>
           </tr>
         </thead>
         <tbody>
@@ -11935,7 +11935,7 @@ function exportDashboardReport() {
         ${svgIcons.printer}
         Imprimir / Salvar PDF
       </button>
-      <p class="footer-text">Relatório gerado automaticamente pelo Sistema Icarus</p>
+      <p class="footer-text">RelatÃ³rio gerado automaticamente pelo Sistema Icarus</p>
       <div class="icarus-brand">
         <div class="icarus-logo">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -11945,7 +11945,7 @@ function exportDashboardReport() {
         </div>
         <div class="icarus-info">
           <span class="icarus-title">ICARUS SYSTEM</span>
-          <span class="icarus-subtitle">Sistema Inteligente de Gestão de Manutenção</span>
+          <span class="icarus-subtitle">Sistema Inteligente de GestÃ£o de ManutenÃ§Ã£o</span>
           <span class="icarus-contact">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             +55 62 98493-0056
@@ -11954,7 +11954,7 @@ function exportDashboardReport() {
       </div>
       <p class="footer-brand">
         ${svgIcons.award}
-        Desenvolvido por Guilherme Braga • © 2025
+        Desenvolvido por Guilherme Braga â€¢ Â© 2025
       </p>
     </div>
   </div>
@@ -11963,13 +11963,13 @@ function exportDashboardReport() {
     const executorData = ${JSON.stringify(byExecutor)};
     const setorData = ${JSON.stringify(bySetor)};
 
-    // Gráfico de Executores - Estilo futurista
+    // GrÃ¡fico de Executores - Estilo futurista
     new Chart(document.getElementById('executorChart'), {
       type: 'bar',
       data: {
         labels: Object.keys(executorData),
         datasets: [{
-          label: 'Concluídas',
+          label: 'ConcluÃ­das',
           data: Object.values(executorData).map(d => d.completed),
           backgroundColor: 'rgba(16, 185, 129, 0.8)',
           borderColor: '#10b981',
@@ -12010,7 +12010,7 @@ function exportDashboardReport() {
       }
     });
 
-    // Gráfico de Setores - Estilo futurista
+    // GrÃ¡fico de Setores - Estilo futurista
     new Chart(document.getElementById('setorChart'), {
       type: 'doughnut',
       data: {
@@ -12053,26 +12053,26 @@ function exportDashboardReport() {
 
   // Dados estruturados para PDF no servidor
   const dashboardReportData = {
-    title: 'Relatório Dashboard - Granja Vitta',
+    title: 'RelatÃ³rio Dashboard - Granja Vitta',
     type: 'table',
     content: {
-      headers: ['Métrica', 'Valor'],
+      headers: ['MÃ©trica', 'Valor'],
       rows: [
         ['Total de Ordens', total],
-        ['Concluídas', completed],
+        ['ConcluÃ­das', completed],
         ['Em Andamento', inProgress],
         ['Pendentes', pending],
-        ['Taxa de Conclusão', aproveitamento + '%'],
-        ['Período', periodLabel]
+        ['Taxa de ConclusÃ£o', aproveitamento + '%'],
+        ['PerÃ­odo', periodLabel]
       ]
     }
   };
 
-  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(htmlContent, 'Relatório Dashboard', 'Relatório do Dashboard gerado!', dashboardReportData);
+  // Renderizar diretamente na pÃ¡gina (funciona em APK, mobile e desktop)
+  showReportInPage(htmlContent, 'RelatÃ³rio Dashboard', 'RelatÃ³rio do Dashboard gerado!', dashboardReportData);
 }
 
-// ========== DROPDOWN DE EXPORTAÇÃO ==========
+// ========== DROPDOWN DE EXPORTAÃ‡ÃƒO ==========
 
 function toggleExportDropdown(event) {
   event.stopPropagation();
@@ -12108,12 +12108,12 @@ function exportDashboardHTML() {
   
   if (state.dashboardMonth) {
     const [year, month] = state.dashboardMonth.split('-');
-    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     periodLabel = monthNames[parseInt(month) - 1] + ' ' + year;
   } else if (filter === 'weekly') {
     periodLabel = 'Esta Semana';
   } else if (filter === 'monthly') {
-    periodLabel = 'Este Mês';
+    periodLabel = 'Este MÃªs';
   }
   
   const filteredOrders = orders.filter(o => {
@@ -12133,14 +12133,14 @@ function exportDashboardHTML() {
   filteredOrders.forEach(o => {
     if (o.assigned_users && Array.isArray(o.assigned_users) && o.assigned_users.length > 0) {
       o.assigned_users.forEach(user => {
-        const name = user.name || user.username || 'Não atribuído';
+        const name = user.name || user.username || 'NÃ£o atribuÃ­do';
         if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
         byExecutor[name].total++;
         if (o.status === 'completed') byExecutor[name].completed++;
         if (o.worked_minutes) byExecutor[name].minutes += o.worked_minutes;
       });
     } else {
-      const name = 'Não atribuído';
+      const name = 'NÃ£o atribuÃ­do';
       if (!byExecutor[name]) byExecutor[name] = { total: 0, completed: 0, minutes: 0 };
       byExecutor[name].total++;
       if (o.status === 'completed') byExecutor[name].completed++;
@@ -12150,7 +12150,7 @@ function exportDashboardHTML() {
   // Agrupar por setor
   const bySetor = {};
   filteredOrders.forEach(o => {
-    const setor = o.sector || 'Não especificado';
+    const setor = o.sector || 'NÃ£o especificado';
     if (!bySetor[setor]) bySetor[setor] = 0;
     bySetor[setor]++;
   });
@@ -12164,8 +12164,8 @@ function exportDashboardHTML() {
       name: c.name,
       sector: c.sector || 'N/A',
       items: (c.items || []).length,
-      auto: c.auto_complete ? 'Sim' : 'Não',
-      frequency: c.auto_complete ? (c.frequency_days === 1 ? 'Diário' : c.frequency_days === 2 ? 'Dia sim/não' : 'A cada ' + c.frequency_days + ' dias') : 'Manual'
+      auto: c.auto_complete ? 'Sim' : 'NÃ£o',
+      frequency: c.auto_complete ? (c.frequency_days === 1 ? 'DiÃ¡rio' : c.frequency_days === 2 ? 'Dia sim/nÃ£o' : 'A cada ' + c.frequency_days + ' dias') : 'Manual'
     }))
   };
   
@@ -12256,10 +12256,10 @@ function exportDashboardHTML() {
         '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' +
       '</div>' +
       '<h1>Dashboard ICARUS</h1>' +
-      '<p class="subtitle"><strong>Granja Vitta</strong> <span style="color:#64748b">•</span> Sistema de Gestão</p>' +
+      '<p class="subtitle"><strong>Granja Vitta</strong> <span style="color:#64748b">â€¢</span> Sistema de GestÃ£o</p>' +
       '<div class="period-badge">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
-        periodLabel + ' <span style="color:#64748b">|</span> Gerado em ' + dataGeracao + ' às ' + horaGeracao +
+        periodLabel + ' <span style="color:#64748b">|</span> Gerado em ' + dataGeracao + ' Ã s ' + horaGeracao +
       '</div>' +
     '</div>' +
     
@@ -12276,7 +12276,7 @@ function exportDashboardHTML() {
       '</div>' +
       '<div class="stat-card completed">' +
         '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
-        '<h3>Concluídas</h3>' +
+        '<h3>ConcluÃ­das</h3>' +
         '<div class="value">' + completed + '</div>' +
       '</div>' +
       '<div class="stat-card total">' +
@@ -12316,7 +12316,7 @@ function exportDashboardHTML() {
       '</div>' +
       '<div class="table-scroll">' +
         '<table>' +
-          '<thead><tr><th>Nome</th><th>Setor</th><th>Itens</th><th>Automático</th><th>Frequência</th></tr></thead>' +
+          '<thead><tr><th>Nome</th><th>Setor</th><th>Itens</th><th>AutomÃ¡tico</th><th>FrequÃªncia</th></tr></thead>' +
           '<tbody>' +
             checklistStats.lista.map(function(c) {
               return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.sector + '</td><td style="text-align:center">' + c.items + '</td><td style="text-align:center"><span class="badge ' + (c.auto === 'Sim' ? 'sim' : 'nao') + '">' + c.auto + '</span></td><td style="text-align:center;color:#94a3b8">' + c.frequency + '</td></tr>';
@@ -12333,7 +12333,7 @@ function exportDashboardHTML() {
       '</div>' +
       '<div class="table-scroll">' +
         '<table>' +
-          '<thead><tr><th>Executor</th><th>Total</th><th>Concluídas</th><th>Taxa</th></tr></thead>' +
+          '<thead><tr><th>Executor</th><th>Total</th><th>ConcluÃ­das</th><th>Taxa</th></tr></thead>' +
           '<tbody>' +
             Object.entries(byExecutor).map(function(entry) {
               const name = entry[0];
@@ -12353,12 +12353,12 @@ function exportDashboardHTML() {
         '</div>' +
         '<div class="icarus-info">' +
           '<span class="icarus-title">ICARUS SYSTEM</span>' +
-          '<span class="icarus-subtitle">Sistema Inteligente de Gestão</span>' +
+          '<span class="icarus-subtitle">Sistema Inteligente de GestÃ£o</span>' +
           '<span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> (38) 99988-2730</span>' +
         '</div>' +
       '</div>' +
-      '<p class="footer-text">Snapshot interativo gerado offline • Funciona em qualquer dispositivo</p>' +
-      '<p class="footer-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> Desenvolvido por Guilherme Braga • © 2025-2026</p>' +
+      '<p class="footer-text">Snapshot interativo gerado offline â€¢ Funciona em qualquer dispositivo</p>' +
+      '<p class="footer-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> Desenvolvido por Guilherme Braga â€¢ Â© 2025-2026</p>' +
     '</div>' +
   '</div>' +
   
@@ -12367,13 +12367,13 @@ function exportDashboardHTML() {
     'const setorData = ' + JSON.stringify(bySetor) + ';' +
     
     'document.addEventListener("DOMContentLoaded", function() {' +
-      // Gráfico de Executores
+      // GrÃ¡fico de Executores
       'new Chart(document.getElementById("executorChart"), {' +
         'type: "bar",' +
         'data: {' +
           'labels: Object.keys(executorData),' +
           'datasets: [{' +
-            'label: "Concluídas",' +
+            'label: "ConcluÃ­das",' +
             'data: Object.values(executorData).map(d => d.completed),' +
             'backgroundColor: "rgba(16, 185, 129, 0.8)",' +
             'borderColor: "#10b981",' +
@@ -12405,7 +12405,7 @@ function exportDashboardHTML() {
         '}' +
       '});' +
       
-      // Gráfico de Setores
+      // GrÃ¡fico de Setores
       'const colors = ["#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#ec4899", "#14b8a6", "#f97316"];' +
       'new Chart(document.getElementById("setorChart"), {' +
         'type: "doughnut",' +
@@ -12448,7 +12448,7 @@ function exportDashboardHTML() {
   showNotification('HTML interativo baixado com sucesso!', 'success');
 }
 
-// ========== EXPORTAÇÃO ALMOXARIFADO ==========
+// ========== EXPORTAÃ‡ÃƒO ALMOXARIFADO ==========
 
 function exportAlmoxarifadoReport() {
   const items = state.inventory || [];
@@ -12466,13 +12466,13 @@ function exportAlmoxarifadoReport() {
     byCategory[cat].push(item);
   });
   
-  // Calcular estatísticas
+  // Calcular estatÃ­sticas
   const totalItems = items.length;
   const lowStock = items.filter(i => i.quantity <= (i.min_stock || 5)).length;
   const totalValue = items.reduce((sum, i) => sum + (i.quantity * (i.unit_cost || 0)), 0);
   const categories = Object.keys(byCategory).length;
 
-  // Gerar relatório HTML interativo (SEM CSV automático)
+  // Gerar relatÃ³rio HTML interativo (SEM CSV automÃ¡tico)
   const dateStr = new Date().toLocaleString('pt-BR');
   const totalValueStr = 'R$ ' + totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   const categoryDataJson = JSON.stringify(Object.fromEntries(Object.entries(byCategory).map(function(entry) { return [entry[0], entry[1].length]; })));
@@ -12496,7 +12496,7 @@ function exportAlmoxarifadoReport() {
 
   const htmlContent = '<!DOCTYPE html>' +
     '<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>Relatório Almoxarifado - Granja Vitta</title>' +
+    '<title>RelatÃ³rio Almoxarifado - Granja Vitta</title>' +
     '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">' +
     '<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>' +
     '<style>' +
@@ -12546,8 +12546,8 @@ function exportAlmoxarifadoReport() {
     '<div class="container">' +
     '<div class="header">' +
     '<div class="header-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>' +
-    '<h1>RELATÓRIO ALMOXARIFADO</h1>' +
-    '<p><strong>Granja Vitta</strong> — Sistema Icarus</p>' +
+    '<h1>RELATÃ“RIO ALMOXARIFADO</h1>' +
+    '<p><strong>Granja Vitta</strong> â€” Sistema Icarus</p>' +
     '<p style="margin-top:8px;font-size:12px;color:#64748b">Gerado em ' + dateStr + '</p>' +
     '</div>' +
     '<div class="stats-grid">' +
@@ -12561,14 +12561,14 @@ function exportAlmoxarifadoReport() {
     '<div class="chart-card"><div class="chart-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><h3>Top 10 - Maior Quantidade</h3></div><canvas id="topItemsChart"></canvas></div>' +
     '</div>' +
     '<div class="table-card"><div class="table-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><h3>Lista Completa de Itens</h3></div>' +
-    '<div class="table-scroll"><table><thead><tr><th>SKU</th><th>Nome</th><th>Categoria</th><th>Marca</th><th>Qtd</th><th>Unidade</th><th>Localização</th><th>Status</th></tr></thead>' +
+    '<div class="table-scroll"><table><thead><tr><th>SKU</th><th>Nome</th><th>Categoria</th><th>Marca</th><th>Qtd</th><th>Unidade</th><th>LocalizaÃ§Ã£o</th><th>Status</th></tr></thead>' +
     '<tbody>' + tableRows + '</tbody></table></div></div>' +
     '<div class="footer">' +
     '<div class="icarus-brand">' +
     '<div class="icarus-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
-    '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de Gestão</span><span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>+55 62 98493-0056</span></div>' +
+    '<div class="icarus-info"><span class="icarus-title">ICARUS SYSTEM</span><span class="icarus-subtitle">Sistema de GestÃ£o</span><span class="icarus-contact"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>+55 62 98493-0056</span></div>' +
     '</div>' +
-    '<p class="footer-text">Desenvolvido por Guilherme Braga © 2025</p>' +
+    '<p class="footer-text">Desenvolvido por Guilherme Braga Â© 2025</p>' +
     '</div></div>' +
     '<script>' +
     'var categoryData = ' + categoryDataJson + ';' +
@@ -12579,7 +12579,7 @@ function exportAlmoxarifadoReport() {
 
   // Dados estruturados para PDF no servidor
   const almoxarifadoReportData = {
-    title: 'Relatório Almoxarifado - Granja Vitta',
+    title: 'RelatÃ³rio Almoxarifado - Granja Vitta',
     type: 'table',
     content: {
       headers: ['SKU', 'Nome', 'Categoria', 'Quantidade', 'Unidade'],
@@ -12595,15 +12595,15 @@ function exportAlmoxarifadoReport() {
     }
   };
 
-  // Renderizar diretamente na página (funciona em APK, mobile e desktop)
-  showReportInPage(htmlContent, 'Relatório Almoxarifado', 'Relatório do Almoxarifado gerado!', almoxarifadoReportData);
+  // Renderizar diretamente na pÃ¡gina (funciona em APK, mobile e desktop)
+  showReportInPage(htmlContent, 'RelatÃ³rio Almoxarifado', 'RelatÃ³rio do Almoxarifado gerado!', almoxarifadoReportData);
 }
 
 // ========== TAREFAS ADITIVAS ==========
 
 async function loadAditiva() {
   try {
-    // Esconder/mostrar botão de nova tarefa baseado em permissão
+    // Esconder/mostrar botÃ£o de nova tarefa baseado em permissÃ£o
     var headerActions = document.querySelector('#aditiva-view .water-header-actions');
     if (headerActions) {
       headerActions.style.display = state.canEditAditiva ? 'flex' : 'none';
@@ -12681,8 +12681,8 @@ function renderAdditiveTasks() {
   var html = '';
   tasks.forEach(function(task) {
     var dateStr = task.created_at ? new Date(task.created_at).toLocaleDateString('pt-BR') : '';
-    var statusLabel = task.status === 'pending' ? 'Pendente' : task.status === 'in_progress' ? 'Em Andamento' : 'Concluída';
-    var priorityLabel = task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa';
+    var statusLabel = task.status === 'pending' ? 'Pendente' : task.status === 'in_progress' ? 'Em Andamento' : 'ConcluÃ­da';
+    var priorityLabel = task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'MÃ©dia' : 'Baixa';
     var executedByName = task.executed_by_name || '';
     
     html += '<div class="aditiva-task-item" onclick="openAdditiveTask(\'' + task.id + '\')">' +
@@ -12691,11 +12691,11 @@ function renderAdditiveTasks() {
         '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
         '<div class="task-meta">' +
           '<span>' + (task.sector || 'Sem setor') + '</span>' +
-          '<span>•</span>' +
+          '<span>â€¢</span>' +
           '<span>' + dateStr + '</span>' +
-          '<span>•</span>' +
+          '<span>â€¢</span>' +
           '<span>' + priorityLabel + '</span>' +
-          (executedByName ? '<span>•</span><span style="color: var(--success);">✓ ' + escapeHtml(executedByName) + '</span>' : '') +
+          (executedByName ? '<span>â€¢</span><span style="color: var(--success);">âœ“ ' + escapeHtml(executedByName) + '</span>' : '') +
         '</div>' +
       '</div>' +
       '<span class="task-status-badge ' + task.status + '">' + statusLabel + '</span>' +
@@ -12710,11 +12710,11 @@ function renderAdditiveTasks() {
   container.innerHTML = html;
 }
 
-// Modal para concluir tarefa aditiva com seleção de executor
+// Modal para concluir tarefa aditiva com seleÃ§Ã£o de executor
 function showCompleteAdditiveModal(taskId) {
   state.currentAdditiveTaskId = taskId;
   
-  // Carregar usuários para o select
+  // Carregar usuÃ¡rios para o select
   var select = document.getElementById('additive-executor');
   if (select && state.users) {
     var options = '<option value="">Selecione quem executou...</option>';
@@ -12757,7 +12757,7 @@ async function confirmCompleteAdditive() {
       closeCompleteAdditiveModal();
       renderAdditiveTasks();
       loadAdditiveStats().then(renderAdditiveStats);
-      showNotification('Tarefa concluída!', 'success');
+      showNotification('Tarefa concluÃ­da!', 'success');
     } else {
       showNotification(data.error || 'Erro ao concluir', 'error');
     }
@@ -12782,11 +12782,11 @@ function setAditivaFilter(filter) {
 
 function showNewAdditiveModal() {
   if (!state.canEditAditiva) {
-    showNotification('Você não tem permissão para criar tarefas', 'error');
+    showNotification('VocÃª nÃ£o tem permissÃ£o para criar tarefas', 'error');
     return;
   }
   
-  // Limpar formulário
+  // Limpar formulÃ¡rio
   document.getElementById('additive-title').value = '';
   document.getElementById('additive-description').value = '';
   document.getElementById('additive-sector').value = '';
@@ -12810,7 +12810,7 @@ async function saveAdditiveTask() {
     var notes = document.getElementById('additive-notes').value.trim();
     
     if (!title) {
-      showNotification('Título é obrigatório', 'error');
+      showNotification('TÃ­tulo Ã© obrigatÃ³rio', 'error');
       return;
     }
     
@@ -12871,9 +12871,9 @@ function openAdditiveTask(taskId) {
   var task = state.additiveTasks.find(function(t) { return t.id === taskId; });
   if (!task) return;
   
-  // Por enquanto só mostra detalhes via alert, pode expandir para modal de edição
-  var msg = 'Título: ' + task.title + '\n' +
-    'Descrição: ' + (task.description || '-') + '\n' +
+  // Por enquanto sÃ³ mostra detalhes via alert, pode expandir para modal de ediÃ§Ã£o
+  var msg = 'TÃ­tulo: ' + task.title + '\n' +
+    'DescriÃ§Ã£o: ' + (task.description || '-') + '\n' +
     'Setor: ' + (task.sector || '-') + '\n' +
     'Status: ' + task.status + '\n' +
     'Prioridade: ' + task.priority + '\n' +
@@ -12884,7 +12884,7 @@ function openAdditiveTask(taskId) {
 
 // ========== LAVANDERIA V2 - Multi-Cliente ==========
 
-// Configuração dos 4 clientes
+// ConfiguraÃ§Ã£o dos 4 clientes
 var LAV2_CLIENTS = {
   marajoara: {
     id: 'client_marajoara',
@@ -12896,9 +12896,9 @@ var LAV2_CLIENTS = {
     cycleStartDay: 4,
     fields: [
       { key: 'camisa_masc', label: 'Camisa Masc.' },
-      { key: 'calca_masc', label: 'Calça Masc.' },
+      { key: 'calca_masc', label: 'CalÃ§a Masc.' },
       { key: 'camisa_fem', label: 'Camisa Fem.' },
-      { key: 'calca_fem', label: 'Calça Fem.' }
+      { key: 'calca_fem', label: 'CalÃ§a Fem.' }
     ]
   },
   loyola: {
@@ -12909,8 +12909,8 @@ var LAV2_CLIENTS = {
     markingPrice: 2.00,
     billingCycle: 'monthly',
     fields: [
-      { key: 'pecas', label: 'Peças' },
-      { key: 'marcacoes', label: 'Marcações', isMarking: true }
+      { key: 'pecas', label: 'PeÃ§as' },
+      { key: 'marcacoes', label: 'MarcaÃ§Ãµes', isMarking: true }
     ]
   },
   suplemento: {
@@ -12922,7 +12922,7 @@ var LAV2_CLIENTS = {
     billingCycle: 'monthly',
     fields: [
       { key: 'camisa', label: 'Camisa' },
-      { key: 'calca', label: 'Calça' }
+      { key: 'calca', label: 'CalÃ§a' }
     ]
   },
   vitta: {
@@ -12934,8 +12934,8 @@ var LAV2_CLIENTS = {
     billingCycle: 'monthly',
     fields: [
       { key: 'camisa', label: 'Camisa' },
-      { key: 'calca', label: 'Calça' },
-      { key: 'marcacoes', label: 'Marcações', isMarking: true }
+      { key: 'calca', label: 'CalÃ§a' },
+      { key: 'marcacoes', label: 'MarcaÃ§Ãµes', isMarking: true }
     ]
   }
 };
@@ -12961,7 +12961,7 @@ async function loadLavanderia() {
       dateInput.value = today;
     }
     
-    // Só selecionar marajoara na primeira vez (se não tiver cliente selecionado)
+    // SÃ³ selecionar marajoara na primeira vez (se nÃ£o tiver cliente selecionado)
     if (!lav2State.initialized) {
       selectLav2Client('marajoara');
       lav2State.initialized = true;
@@ -12999,16 +12999,16 @@ function selectLav2Client(clientId) {
   var activeTab = document.getElementById('lav2-tab-' + clientId);
   if (activeTab) activeTab.classList.add('active');
   
-  // Atualizar título do form
+  // Atualizar tÃ­tulo do form
   var titleEl = document.getElementById('lav2-entry-title');
-  if (titleEl) titleEl.textContent = 'Novo Lançamento';
+  if (titleEl) titleEl.textContent = 'Novo LanÃ§amento';
   
-  // Renderizar campos dinâmicos APENAS se o cliente mudou
+  // Renderizar campos dinÃ¢micos APENAS se o cliente mudou
   if (previousClient !== clientId) {
     renderLav2FormFields(client);
   }
   
-  // Calcular e mostrar período
+  // Calcular e mostrar perÃ­odo
   updateLav2PeriodDisplay(client);
   
   // Carregar entries do cliente
@@ -13029,7 +13029,7 @@ function renderLav2FormFields(client) {
   });
   container.innerHTML = html;
   
-  // Mostrar/esconder preview de marcações
+  // Mostrar/esconder preview de marcaÃ§Ãµes
   var marcacoesPreview = document.getElementById('lav2-preview-marcacoes');
   if (marcacoesPreview) {
     marcacoesPreview.style.display = client.markingPrice > 0 ? 'block' : 'none';
@@ -13048,15 +13048,15 @@ function updateLav2PeriodDisplay(client) {
     // Marajoara: ciclo de 16 dias (5-20 ou 21-4)
     var day = now.getDate();
     if (day >= 5 && day <= 20) {
-      // Período 5 até 20 do mês atual
+      // PerÃ­odo 5 atÃ© 20 do mÃªs atual
       startDate = new Date(now.getFullYear(), now.getMonth(), 5);
       endDate = new Date(now.getFullYear(), now.getMonth(), 20);
     } else if (day >= 21) {
-      // Período 21 até 4 do próximo mês
+      // PerÃ­odo 21 atÃ© 4 do prÃ³ximo mÃªs
       startDate = new Date(now.getFullYear(), now.getMonth(), 21);
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 4);
     } else {
-      // Dias 1-4: ainda no período 21-4 (período anterior)
+      // Dias 1-4: ainda no perÃ­odo 21-4 (perÃ­odo anterior)
       startDate = new Date(now.getFullYear(), now.getMonth() - 1, 21);
       endDate = new Date(now.getFullYear(), now.getMonth(), 4);
     }
@@ -13180,7 +13180,7 @@ async function loadLav2AllStats() {
       var lucroEl = document.getElementById('lav2-total-lucro');
       if (lucroEl) lucroEl.textContent = 'R$ ' + (stats.month_value || stats.total_value || 0).toFixed(2);
       
-      // Total de peças geral (todos os clientes)
+      // Total de peÃ§as geral (todos os clientes)
       var pecasGeralEl = document.getElementById('lav2-total-pecas-geral');
       if (pecasGeralEl) pecasGeralEl.textContent = (stats.month_pieces || stats.total_pieces || 0);
     }
@@ -13202,8 +13202,8 @@ function renderLav2History() {
           '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
           '<polyline points="14 2 14 8 20 8"/>' +
         '</svg>' +
-        '<div style="font-size: 14px; margin-bottom: 4px;">Nenhum lançamento</div>' +
-        '<div style="font-size: 12px;">Adicione o primeiro lançamento do período</div>' +
+        '<div style="font-size: 14px; margin-bottom: 4px;">Nenhum lanÃ§amento</div>' +
+        '<div style="font-size: 12px;">Adicione o primeiro lanÃ§amento do perÃ­odo</div>' +
       '</div>';
     return;
   }
@@ -13224,7 +13224,7 @@ function renderLav2History() {
     html += '<div class="lav2-history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.04);">' +
       '<div>' +
         '<div style="font-size: 14px; font-weight: 600; color: #fff;">' + dateStr + '</div>' +
-        '<div style="font-size: 12px; color: rgba(255,255,255,0.5);">' + totalPieces + ' peças</div>' +
+        '<div style="font-size: 12px; color: rgba(255,255,255,0.5);">' + totalPieces + ' peÃ§as</div>' +
       '</div>' +
       '<div style="display: flex; align-items: center; gap: 12px;">' +
         '<span style="font-size: 15px; font-weight: 600; color: #ec4899;">R$ ' + (parseFloat(entry.valor_total) || 0).toFixed(2) + '</span>' +
@@ -13291,7 +13291,7 @@ async function saveLav2Entry() {
     
     var data = await response.json();
     if (data.ok) {
-      showToast('Lançamento salvo!', 'success');
+      showToast('LanÃ§amento salvo!', 'success');
       
       // Limpar campos
       client.fields.forEach(function(field) {
@@ -13308,12 +13308,12 @@ async function saveLav2Entry() {
     }
   } catch (error) {
     console.error('[Lavanderia V2] Erro ao salvar:', error);
-    showToast('Erro ao salvar lançamento', 'error');
+    showToast('Erro ao salvar lanÃ§amento', 'error');
   }
 }
 
 async function deleteLav2Entry(entryId) {
-  if (!confirm('Excluir este lançamento?')) return;
+  if (!confirm('Excluir este lanÃ§amento?')) return;
   
   try {
     var response = await fetch(API_URL + '/laundry/v2/entries/' + entryId, {
@@ -13323,7 +13323,7 @@ async function deleteLav2Entry(entryId) {
     
     var data = await response.json();
     if (data.ok) {
-      showToast('Lançamento excluído', 'success');
+      showToast('LanÃ§amento excluÃ­do', 'success');
       await loadLav2ClientEntries(lav2State.currentClient);
       await loadLav2AllStats();
     } else {
@@ -13342,7 +13342,7 @@ async function exportLav2PDF() {
     
     showToast('Gerando PDF...', 'info');
     
-    // Criar conteúdo do PDF
+    // Criar conteÃºdo do PDF
     var periodStart = lav2State.period.start;
     var periodEnd = lav2State.period.end;
     var formatDate = function(d) {
@@ -13367,7 +13367,7 @@ async function exportLav2PDF() {
     });
     
     var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-      '<title>Relatório ' + client.name + '</title>' +
+      '<title>RelatÃ³rio ' + client.name + '</title>' +
       '<style>' +
         'body { font-family: Arial, sans-serif; padding: 40px; color: #333; }' +
         '.header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid ' + client.color + '; padding-bottom: 20px; }' +
@@ -13385,12 +13385,12 @@ async function exportLav2PDF() {
         '.footer { margin-top: 40px; text-align: center; font-size: 12px; color: #999; }' +
       '</style></head><body>' +
       '<div class="header">' +
-        '<h1>Relatório de Lavanderia - ' + client.name + '</h1>' +
-        '<div class="period">Período: ' + formatDate(periodStart) + ' a ' + formatDate(periodEnd) + '</div>' +
+        '<h1>RelatÃ³rio de Lavanderia - ' + client.name + '</h1>' +
+        '<div class="period">PerÃ­odo: ' + formatDate(periodStart) + ' a ' + formatDate(periodEnd) + '</div>' +
       '</div>' +
       '<div class="summary">' +
-        '<div class="summary-item"><div class="value">' + totalPieces + '</div><div class="label">Total de Peças</div></div>' +
-        (client.markingPrice > 0 ? '<div class="summary-item"><div class="value">' + totalMarkings + '</div><div class="label">Marcações</div></div>' : '') +
+        '<div class="summary-item"><div class="value">' + totalPieces + '</div><div class="label">Total de PeÃ§as</div></div>' +
+        (client.markingPrice > 0 ? '<div class="summary-item"><div class="value">' + totalMarkings + '</div><div class="label">MarcaÃ§Ãµes</div></div>' : '') +
         '<div class="summary-item"><div class="value">R$ ' + totalValue.toFixed(2) + '</div><div class="label">Valor Total</div></div>' +
       '</div>' +
       '<table><thead><tr><th>Data</th>';
@@ -13412,7 +13412,7 @@ async function exportLav2PDF() {
     
     printContent += '</tbody></table>' +
       '<div class="footer">' +
-        '<p>Gerado por ICARUS - Sistema de Gestão</p>' +
+        '<p>Gerado por ICARUS - Sistema de GestÃ£o</p>' +
         '<p>' + new Date().toLocaleString('pt-BR') + '</p>' +
       '</div>' +
       '</body></html>';
@@ -13432,11 +13432,11 @@ async function exportLav2PDF() {
   }
 }
 
-// ========== RELATÓRIOS ==========
+// ========== RELATÃ“RIOS ==========
 
 async function loadRelatorios() {
   try {
-    // Esconder/mostrar botão de novo relatório baseado em permissão
+    // Esconder/mostrar botÃ£o de novo relatÃ³rio baseado em permissÃ£o
     var writeActions = document.getElementById('relatorios-write-actions');
     if (writeActions) {
       writeActions.style.display = state.canWriteRelatorios ? 'flex' : 'none';
@@ -13445,11 +13445,11 @@ async function loadRelatorios() {
     await loadReportsData();
     renderReports();
     
-    // Inicializar aba de Notas & Boletos se usuário tiver permissão
+    // Inicializar aba de Notas & Boletos se usuÃ¡rio tiver permissÃ£o
     initNotasTab();
     
   } catch (error) {
-    console.error('Erro ao carregar relatórios:', error);
+    console.error('Erro ao carregar relatÃ³rios:', error);
   }
 }
 
@@ -13469,7 +13469,7 @@ async function loadReportsData() {
       state.reports = data.reports || [];
     }
   } catch (error) {
-    console.error('Erro ao carregar relatórios:', error);
+    console.error('Erro ao carregar relatÃ³rios:', error);
   }
 }
 
@@ -13479,9 +13479,9 @@ function renderReports() {
   var viewer = document.getElementById('report-viewer');
   if (!container) return;
   
-  // Se há um relatório aberto, não esconder o viewer
+  // Se hÃ¡ um relatÃ³rio aberto, nÃ£o esconder o viewer
   if (state.currentReport) {
-    // Manter viewer visível, apenas atualizar dados internos se necessário
+    // Manter viewer visÃ­vel, apenas atualizar dados internos se necessÃ¡rio
   } else {
     // Mostrar lista, esconder viewer
     container.classList.remove('hidden');
@@ -13496,7 +13496,7 @@ function renderReports() {
   var monthEl = document.getElementById('forum-this-month');
   if (totalEl) totalEl.textContent = reports.length;
   
-  // Contar posts deste mês
+  // Contar posts deste mÃªs
   var now = new Date();
   var thisMonth = reports.filter(function(r) {
     var d = new Date(r.created_at);
@@ -13512,17 +13512,17 @@ function renderReports() {
         '</svg>' +
       '</div>' +
       '<h3>Nenhum post ainda</h3>' +
-      '<p>Seja o primeiro a publicar um relatório!</p>' +
+      '<p>Seja o primeiro a publicar um relatÃ³rio!</p>' +
     '</div>';
     return;
   }
   
   var categoryLabels = {
     'geral': 'Geral',
-    'manutencao': 'Manutenção',
+    'manutencao': 'ManutenÃ§Ã£o',
     'incidente': 'Incidente',
     'melhoria': 'Melhoria',
-    'orcamento': 'Orçamento'
+    'orcamento': 'OrÃ§amento'
   };
   
   var html = '';
@@ -13530,10 +13530,10 @@ function renderReports() {
     var dateStr = report.created_at ? formatRelativeDate(new Date(report.created_at)) : '';
     var catLabel = categoryLabels[report.category] || 'Geral';
     var preview = (report.content || '').substring(0, 180);
-    var authorName = report.created_by_name || 'Anônimo';
+    var authorName = report.created_by_name || 'AnÃ´nimo';
     var initials = authorName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
     
-    // Ícones extras (visibilidade e anexos)
+    // Ãcones extras (visibilidade e anexos)
     var attachments = report.attachments || [];
     var extraIcons = '';
     
@@ -13580,7 +13580,7 @@ function renderReports() {
   container.innerHTML = html;
 }
 
-// Função para formatar data relativa
+// FunÃ§Ã£o para formatar data relativa
 function formatRelativeDate(date) {
   var now = new Date();
   var diff = now - date;
@@ -13592,11 +13592,11 @@ function formatRelativeDate(date) {
   if (days > 7) {
     return date.toLocaleDateString('pt-BR');
   } else if (days > 0) {
-    return days === 1 ? 'Ontem' : 'Há ' + days + ' dias';
+    return days === 1 ? 'Ontem' : 'HÃ¡ ' + days + ' dias';
   } else if (hours > 0) {
-    return 'Há ' + hours + (hours === 1 ? ' hora' : ' horas');
+    return 'HÃ¡ ' + hours + (hours === 1 ? ' hora' : ' horas');
   } else if (minutes > 0) {
-    return 'Há ' + minutes + ' min';
+    return 'HÃ¡ ' + minutes + ' min';
   } else {
     return 'Agora';
   }
@@ -13618,7 +13618,7 @@ function setReportCategory(category, btn) {
   loadReportsData().then(renderReports);
 }
 
-// Buscar relatórios
+// Buscar relatÃ³rios
 function searchReports(query) {
   var container = document.getElementById('relatorios-list');
   if (!container) return;
@@ -13655,7 +13655,7 @@ function openReport(reportId) {
   if (toolbar) toolbar.classList.add('hidden');
   if (viewer) viewer.classList.remove('hidden');
   
-  var categoryLabels = { 'geral': 'Geral', 'manutencao': 'Manutenção', 'incidente': 'Incidente', 'melhoria': 'Melhoria', 'orcamento': 'Orçamento' };
+  var categoryLabels = { 'geral': 'Geral', 'manutencao': 'ManutenÃ§Ã£o', 'incidente': 'Incidente', 'melhoria': 'Melhoria', 'orcamento': 'OrÃ§amento' };
   var dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR', { 
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
   }) : '';
@@ -13667,10 +13667,10 @@ function openReport(reportId) {
   }
   document.getElementById('viewer-date').textContent = dateStr;
   document.getElementById('viewer-title').textContent = report.title;
-  document.getElementById('viewer-author').textContent = report.created_by_name || 'Anônimo';
+  document.getElementById('viewer-author').textContent = report.created_by_name || 'AnÃ´nimo';
   document.getElementById('viewer-content').textContent = report.content || '';
   
-  // Análise inteligente do conteúdo
+  // AnÃ¡lise inteligente do conteÃºdo
   renderSmartAnalysis(report.content);
   
   // Mostrar visibilidade
@@ -13682,7 +13682,7 @@ function openReport(reportId) {
       visibilityEl.style.color = '#ef4444';
       visibilityEl.style.display = 'inline-block';
     } else {
-      visibilityEl.textContent = 'PÚBLICO';
+      visibilityEl.textContent = 'PÃšBLICO';
       visibilityEl.style.background = 'rgba(34, 197, 94, 0.15)';
       visibilityEl.style.color = '#22c55e';
       visibilityEl.style.display = 'inline-block';
@@ -13720,7 +13720,7 @@ function openReport(reportId) {
     attachmentsContainer.style.display = 'none';
   }
   
-  // Mostrar/esconder botão de deletar baseado em permissão (dono ou admin)
+  // Mostrar/esconder botÃ£o de deletar baseado em permissÃ£o (dono ou admin)
   var deleteBtn = document.getElementById('btn-delete-report');
   if (deleteBtn) {
     var isOwner = report.created_by === state.user.id;
@@ -13743,7 +13743,7 @@ function closeReportViewer() {
   state.currentReport = null;
 }
 
-// Modal de Exportação
+// Modal de ExportaÃ§Ã£o
 function openExportModal() {
   var modal = document.getElementById('export-modal');
   if (modal) modal.classList.add('active');
@@ -13754,7 +13754,7 @@ function closeExportModal() {
   if (modal) modal.classList.remove('active');
 }
 
-// Copiar relatório para clipboard
+// Copiar relatÃ³rio para clipboard
 function copyReportToClipboard() {
   if (!state.currentReport) return;
   
@@ -13763,13 +13763,13 @@ function copyReportToClipboard() {
   text += '\n\n---\nGerado pelo Sistema ICARUS\nicarussite.vercel.app';
   
   navigator.clipboard.writeText(text).then(function() {
-    showNotification('Conteúdo copiado!', 'success');
+    showNotification('ConteÃºdo copiado!', 'success');
   }).catch(function() {
     showNotification('Erro ao copiar', 'error');
   });
 }
 
-// Compartilhar relatório
+// Compartilhar relatÃ³rio
 function shareReport() {
   if (!state.currentReport) return;
   
@@ -13793,7 +13793,7 @@ function shareReport() {
   }
 }
 
-// Análise inteligente do conteúdo - detecta valores, quantidades, datas
+// AnÃ¡lise inteligente do conteÃºdo - detecta valores, quantidades, datas
 function analyzeReportContent(content) {
   if (!content) return [];
   
@@ -13815,8 +13815,8 @@ function analyzeReportContent(content) {
     }
   }
   
-  // Detectar quantidades (X unidades, X peças, X un, Qtd: X)
-  var qtyRegex = /(\d+)\s*(unidade|unidades|un|peça|peças|pç|pcs|qtd|quantidade)/gi;
+  // Detectar quantidades (X unidades, X peÃ§as, X un, Qtd: X)
+  var qtyRegex = /(\d+)\s*(unidade|unidades|un|peÃ§a|peÃ§as|pÃ§|pcs|qtd|quantidade)/gi;
   var qtyMatches = content.match(qtyRegex);
   if (qtyMatches) {
     qtyMatches.slice(0, 3).forEach(function(m) {
@@ -13836,7 +13836,7 @@ function analyzeReportContent(content) {
   return tags.slice(0, 8); // Limitar a 8 tags
 }
 
-// Renderizar análise inteligente
+// Renderizar anÃ¡lise inteligente
 function renderSmartAnalysis(content) {
   var container = document.getElementById('viewer-smart-analysis');
   var contentEl = document.getElementById('smart-analysis-content');
@@ -13863,7 +13863,7 @@ function renderSmartAnalysis(content) {
   }).join('');
 }
 
-// Função para gerar PDF premium via backend
+// FunÃ§Ã£o para gerar PDF premium via backend
 async function generateReportPDF() {
   if (!state.currentReport) return;
   
@@ -13889,7 +13889,7 @@ async function generateReportPDF() {
   }
 }
 
-// Função para imprimir relatório como PDF - Design Premium Magenta
+// FunÃ§Ã£o para imprimir relatÃ³rio como PDF - Design Premium Magenta
 function printReport() {
   var article = document.getElementById('forum-article-content');
   if (!article || !state.currentReport) return;
@@ -13920,7 +13920,7 @@ function printReport() {
   // Categoria badge
   printWindow.document.write('.category-badge { display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #fdf2f8, #fce7f3); border: 2px solid #f9a8d4; border-radius: 25px; font-size: 12px; text-transform: uppercase; font-weight: 600; color: #db2777; letter-spacing: 1px; margin-bottom: 20px; }');
   
-  // Título
+  // TÃ­tulo
   printWindow.document.write('.title { font-size: 32px; font-weight: 700; color: #1a1a2e; margin-bottom: 20px; line-height: 1.3; border-left: 4px solid #ec4899; padding-left: 20px; }');
   
   // Meta info
@@ -13931,7 +13931,7 @@ function printReport() {
   printWindow.document.write('.meta-role { font-size: 12px; color: #6b7280; }');
   printWindow.document.write('.meta-date { margin-left: auto; font-size: 13px; color: #6b7280; }');
   
-  // Conteúdo
+  // ConteÃºdo
   printWindow.document.write('.content { font-size: 15px; line-height: 1.9; white-space: pre-wrap; color: #374151; padding: 25px; background: #fafafa; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 40px; }');
   
   // Promo box
@@ -13957,9 +13957,9 @@ function printReport() {
   printWindow.document.write('<div class="header">');
   printWindow.document.write('<div class="header-left">');
   printWindow.document.write('<div class="logo-icon">' + starOfDavid.replace(/#ec4899/g, '#fff') + '</div>');
-  printWindow.document.write('<div class="logo-text"><div class="logo-title">ICARUS</div><div class="logo-subtitle">Sistema de Gestão Inteligente</div></div>');
+  printWindow.document.write('<div class="logo-text"><div class="logo-title">ICARUS</div><div class="logo-subtitle">Sistema de GestÃ£o Inteligente</div></div>');
   printWindow.document.write('</div>');
-  printWindow.document.write('<div class="header-date">Central de Relatórios<br>Granja Vitta</div>');
+  printWindow.document.write('<div class="header-date">Central de RelatÃ³rios<br>Granja Vitta</div>');
   printWindow.document.write('</div>');
   
   // Category
@@ -13974,7 +13974,7 @@ function printReport() {
   printWindow.document.write('<div class="meta">');
   printWindow.document.write('<div class="meta-author">');
   printWindow.document.write('<div class="meta-avatar">' + authorInitial + '</div>');
-  printWindow.document.write('<div><div class="meta-name">' + (report.created_by_name || 'Anônimo') + '</div><div class="meta-role">Equipe de Manutenção</div></div>');
+  printWindow.document.write('<div><div class="meta-name">' + (report.created_by_name || 'AnÃ´nimo') + '</div><div class="meta-role">Equipe de ManutenÃ§Ã£o</div></div>');
   printWindow.document.write('</div>');
   printWindow.document.write('<div class="meta-date">' + dateStr + '</div>');
   printWindow.document.write('</div>');
@@ -13987,15 +13987,15 @@ function printReport() {
   printWindow.document.write('<div class="promo-logo">' + starOfDavid.replace(/#ec4899/g, '#fff') + '</div>');
   printWindow.document.write('<div class="promo-info">');
   printWindow.document.write('<div class="promo-title">Sistema ICARUS</div>');
-  printWindow.document.write('<div class="promo-subtitle">Gestão Inteligente de Manutenção • Granja Vitta</div>');
+  printWindow.document.write('<div class="promo-subtitle">GestÃ£o Inteligente de ManutenÃ§Ã£o â€¢ Granja Vitta</div>');
   printWindow.document.write('<div class="promo-contact"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> (62) 98493-0056</div>');
   printWindow.document.write('</div>');
   printWindow.document.write('</div>');
   
   // Footer
   printWindow.document.write('<div class="footer">');
-  printWindow.document.write('<div class="footer-text">Relatório gerado pelo Sistema Icarus em ' + new Date().toLocaleDateString('pt-BR') + '</div>');
-  printWindow.document.write('<div class="footer-brand">© 2025 ICARUS • Desenvolvido por Guilherme Braga</div>');
+  printWindow.document.write('<div class="footer-text">RelatÃ³rio gerado pelo Sistema Icarus em ' + new Date().toLocaleDateString('pt-BR') + '</div>');
+  printWindow.document.write('<div class="footer-brand">Â© 2025 ICARUS â€¢ Desenvolvido por Guilherme Braga</div>');
   printWindow.document.write('</div>');
   
   printWindow.document.write('</div>');
@@ -14007,20 +14007,20 @@ function printReport() {
   }, 300);
 }
 
-// Função para deletar relatório
+// FunÃ§Ã£o para deletar relatÃ³rio
 async function deleteReport() {
   if (!state.currentReport) return;
   
-  // Verificar permissão (dono ou admin)
+  // Verificar permissÃ£o (dono ou admin)
   var isOwner = state.currentReport.created_by === state.user.id;
   var isAdmin = state.user.roles && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all'));
   
   if (!isOwner && !isAdmin) {
-    showNotification('Você não tem permissão para excluir este relatório', 'error');
+    showNotification('VocÃª nÃ£o tem permissÃ£o para excluir este relatÃ³rio', 'error');
     return;
   }
   
-  if (!confirm('Tem certeza que deseja excluir este relatório permanentemente?')) return;
+  if (!confirm('Tem certeza que deseja excluir este relatÃ³rio permanentemente?')) return;
   
   try {
     var response = await fetch(API_URL + '/maintenance-reports/' + state.currentReport.id, {
@@ -14034,22 +14034,22 @@ async function deleteReport() {
       closeReportViewer();
       await loadReportsData();
       renderReports();
-      showNotification('Relatório excluído com sucesso!', 'success');
+      showNotification('RelatÃ³rio excluÃ­do com sucesso!', 'success');
     } else {
-      showNotification(data.error || 'Erro ao excluir relatório', 'error');
+      showNotification(data.error || 'Erro ao excluir relatÃ³rio', 'error');
     }
   } catch (error) {
-    console.error('Erro ao excluir relatório:', error);
-    showNotification('Erro ao excluir relatório', 'error');
+    console.error('Erro ao excluir relatÃ³rio:', error);
+    showNotification('Erro ao excluir relatÃ³rio', 'error');
   }
 }
 
-// Array temporário para anexos
+// Array temporÃ¡rio para anexos
 var reportAttachments = [];
 
 function showNewReportModal() {
   if (!state.canWriteRelatorios) {
-    showNotification('Você não tem permissão para criar relatórios', 'error');
+    showNotification('VocÃª nÃ£o tem permissÃ£o para criar relatÃ³rios', 'error');
     return;
   }
   
@@ -14073,18 +14073,18 @@ function closeReportModal() {
   document.getElementById('report-modal').classList.remove('active');
 }
 
-// Adicionar anexo à lista
+// Adicionar anexo Ã  lista
 function addReportAttachment() {
   var input = document.getElementById('report-attachment-input');
   if (!input) return;
   
   var url = input.value.trim();
   if (!url) {
-    showNotification('Cole um link válido', 'error');
+    showNotification('Cole um link vÃ¡lido', 'error');
     return;
   }
   
-  // Validar URL básica
+  // Validar URL bÃ¡sica
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = 'https://' + url;
   }
@@ -14130,7 +14130,7 @@ async function saveReport() {
     var visibility = (privateRadio && privateRadio.checked) ? 'private' : 'public';
     
     if (!title || !content) {
-      showNotification('Título e conteúdo são obrigatórios', 'error');
+      showNotification('TÃ­tulo e conteÃºdo sÃ£o obrigatÃ³rios', 'error');
       return;
     }
     
@@ -14155,20 +14155,20 @@ async function saveReport() {
       state.reports = data.reports || [];
       closeReportModal();
       renderReports();
-      showNotification('Relatório publicado com sucesso!', 'success');
+      showNotification('RelatÃ³rio publicado com sucesso!', 'success');
     } else {
-      showNotification(data.error || 'Erro ao publicar relatório', 'error');
+      showNotification(data.error || 'Erro ao publicar relatÃ³rio', 'error');
     }
   } catch (error) {
-    console.error('Erro ao salvar relatório:', error);
-    showNotification('Erro ao salvar relatório', 'error');
+    console.error('Erro ao salvar relatÃ³rio:', error);
+    showNotification('Erro ao salvar relatÃ³rio', 'error');
   }
 }
 
 // escapeHtml function moved to top of file for security
 
 // ============================================
-// SISTEMA DE DIÁRIAS - GUILHERME BRAGA
+// SISTEMA DE DIÃRIAS - GUILHERME BRAGA
 // ============================================
 
 let diariasData = {
@@ -14204,10 +14204,10 @@ function openDiariasModal() {
             </svg>
           </div>
           <div style="flex: 1;">
-            <h3 style="margin: 0; font-size: 22px; color: #fff; font-weight: 700;">Controle de Diárias</h3>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Guilherme Braga • R$ ${diariasData.valorDiaria.toFixed(2)} por dia</p>
+            <h3 style="margin: 0; font-size: 22px; color: #fff; font-weight: 700;">Controle de DiÃ¡rias</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Guilherme Braga â€¢ R$ ${diariasData.valorDiaria.toFixed(2)} por dia</p>
           </div>
-          <button onclick="closeDiariasModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 36px; height: 36px; color: #888; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+          <button onclick="closeDiariasModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 36px; height: 36px; color: #888; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">Ã—</button>
         </div>
         
         <div style="padding: 24px 28px; max-height: calc(90vh - 200px); overflow-y: auto;">
@@ -14311,7 +14311,7 @@ function renderDiariasSemanas() {
         <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
           ${['sab', 'seg', 'ter', 'qua', 'qui', 'sex'].map((dia, diaIndex) => {
             const diaDate = new Date(startDate);
-            // Sábado é -2 dias a partir de segunda, os outros são 0,1,2,3,4
+            // SÃ¡bado Ã© -2 dias a partir de segunda, os outros sÃ£o 0,1,2,3,4
             const dayOffset = dia === 'sab' ? -2 : diaIndex - 1;
             diaDate.setDate(startDate.getDate() + dayOffset);
             const isChecked = semana.dias[dia];
@@ -14348,7 +14348,7 @@ function addDiariaSemana() {
   const miniModal = `
     <div id="modal-add-semana" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10001; display: flex; align-items: center; justify-content: center;">
       <div style="background: linear-gradient(145deg, #1a1025, #150d20); border: 1px solid rgba(236,72,153,0.3); border-radius: 16px; padding: 24px; max-width: 350px; width: 90%;">
-        <h4 style="color: #fff; margin: 0 0 16px 0; font-size: 16px;">📅 Adicionar Semana</h4>
+        <h4 style="color: #fff; margin: 0 0 16px 0; font-size: 16px;">ðŸ“… Adicionar Semana</h4>
         <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 0 0 16px 0;">Escolha a segunda-feira da semana (pode ser retroativa)</p>
         <input type="date" id="nova-semana-date" value="${defaultDate}" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px; color: #fff; font-size: 14px; margin-bottom: 16px;">
         <div style="display: flex; gap: 10px;">
@@ -14365,19 +14365,19 @@ function confirmAddSemana() {
   const dateInput = document.getElementById('nova-semana-date');
   if (!dateInput) return;
   
-  let selectedDate = new Date(dateInput.value + 'T12:00:00'); // Adiciona horário para evitar problemas de timezone
+  let selectedDate = new Date(dateInput.value + 'T12:00:00'); // Adiciona horÃ¡rio para evitar problemas de timezone
   
-  // Ajustar para segunda-feira mais próxima (anterior)
+  // Ajustar para segunda-feira mais prÃ³xima (anterior)
   const dayOfWeek = selectedDate.getDay();
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   selectedDate.setDate(selectedDate.getDate() - daysToMonday);
   
   const startDate = selectedDate.toISOString().split('T')[0];
   
-  // Verificar se já existe uma semana com essa data
+  // Verificar se jÃ¡ existe uma semana com essa data
   const exists = diariasData.semanas.some(s => s.startDate === startDate);
   if (exists) {
-    showNotification('Já existe uma semana com essa data', 'warning');
+    showNotification('JÃ¡ existe uma semana com essa data', 'warning');
     document.getElementById('modal-add-semana').remove();
     return;
   }
@@ -14434,7 +14434,7 @@ function generateDiariasPDF() {
   const dataGeracao = now.toLocaleDateString('pt-BR');
   const horaGeracao = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   
-  // Estrela de Davi SVG (hexagrama - dois triângulos sobrepostos)
+  // Estrela de Davi SVG (hexagrama - dois triÃ¢ngulos sobrepostos)
   const starOfDavidSVG = `<svg width="40" height="40" viewBox="0 0 100 100" fill="none">
     <polygon points="50,5 95,75 5,75" fill="none" stroke="#ec4899" stroke-width="4"/>
     <polygon points="50,95 5,25 95,25" fill="none" stroke="#ec4899" stroke-width="4"/>
@@ -14450,7 +14450,7 @@ function generateDiariasPDF() {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Relatório de Diárias - Guilherme Braga</title>
+      <title>RelatÃ³rio de DiÃ¡rias - Guilherme Braga</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         @page { size: A4; margin: 0; }
@@ -14468,7 +14468,7 @@ function generateDiariasPDF() {
           overflow: hidden;
           background: linear-gradient(145deg, #0a0a12 0%, #12081a 50%, #0a0a12 100%);
         }
-        /* Decoração de fundo */
+        /* DecoraÃ§Ã£o de fundo */
         .bg-decoration {
           position: absolute;
           border-radius: 50%;
@@ -14704,12 +14704,12 @@ function generateDiariasPDF() {
             </div>
             <div class="logo-text">
               <h1>ICARUS</h1>
-              <p>Sistema de Gestão</p>
+              <p>Sistema de GestÃ£o</p>
             </div>
           </div>
           <div class="date-section">
             <p class="date">${dataGeracao}</p>
-            <p class="time">Gerado às ${horaGeracao}</p>
+            <p class="time">Gerado Ã s ${horaGeracao}</p>
           </div>
         </div>
         
@@ -14720,7 +14720,7 @@ function generateDiariasPDF() {
             </div>
             <div>
               <h2>Guilherme Braga</h2>
-              <p>Relatório de Diárias • Valor: R$ ${diariasData.valorDiaria.toFixed(2)}/dia</p>
+              <p>RelatÃ³rio de DiÃ¡rias â€¢ Valor: R$ ${diariasData.valorDiaria.toFixed(2)}/dia</p>
             </div>
           </div>
           
@@ -14728,7 +14728,7 @@ function generateDiariasPDF() {
             <thead>
               <tr>
                 <th>Semana</th>
-                <th>Período</th>
+                <th>PerÃ­odo</th>
                 <th>Dias Trabalhados</th>
                 <th style="text-align: right;">Valor</th>
               </tr>
@@ -14775,14 +14775,14 @@ function generateDiariasPDF() {
               <polygon points="50,95 5,25 95,25" fill="none" stroke="#ec4899" stroke-width="6"/>
             </svg>
             <div>
-              <p class="footer-text">Sistema ICARUS © 2025-2026</p>
+              <p class="footer-text">Sistema ICARUS Â© 2025-2026</p>
               <p class="footer-text">Desenvolvido por Guilherme Braga de Queiroz</p>
-              <p class="footer-phone">📞 (62) 98493-0056</p>
+              <p class="footer-phone">ðŸ“ž (62) 98493-0056</p>
             </div>
           </div>
           <div class="footer-right">
             <p class="company">Granja Vitta</p>
-            <p>Gestão de Manutenção</p>
+            <p>GestÃ£o de ManutenÃ§Ã£o</p>
           </div>
         </div>
       </div>
@@ -14797,7 +14797,7 @@ function generateDiariasPDF() {
   }, 500);
 }
 
-// Exportar Diárias como HTML interativo com animações
+// Exportar DiÃ¡rias como HTML interativo com animaÃ§Ãµes
 function exportDiariasHTML() {
   const totalDias = calcTotalDias();
   const totalValor = totalDias * diariasData.valorDiaria;
@@ -14842,7 +14842,7 @@ function exportDiariasHTML() {
     '</div>';
   });
   
-  // Gerar partículas
+  // Gerar partÃ­culas
   let particlesHTML = '';
   for (let i = 0; i < 20; i++) {
     particlesHTML += '<div class="particle" style="left: ' + (Math.random() * 100) + '%; animation-delay: ' + (Math.random() * 15) + 's; animation-duration: ' + (10 + Math.random() * 10) + 's;"></div>';
@@ -14853,7 +14853,7 @@ function exportDiariasHTML() {
 '<head>' +
 '  <meta charset="UTF-8">' +
 '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-'  <title>Diárias - Guilherme Braga | ICARUS</title>' +
+'  <title>DiÃ¡rias - Guilherme Braga | ICARUS</title>' +
 '  <style>' +
 '    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");' +
 '    * { margin: 0; padding: 0; box-sizing: border-box; }' +
@@ -14901,7 +14901,7 @@ function exportDiariasHTML() {
 '    .day-card { padding: 16px 10px; border-radius: 14px; text-align: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }' +
 '    .day-card.active { background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 8px 30px rgba(236, 72, 153, 0.4); transform: scale(1.05); }' +
 '    .day-card.inactive { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); }' +
-'    .day-card.active::before { content: "✓"; position: absolute; top: 5px; right: 8px; font-size: 10px; opacity: 0.7; }' +
+'    .day-card.active::before { content: "âœ“"; position: absolute; top: 5px; right: 8px; font-size: 10px; opacity: 0.7; }' +
 '    .day-card:hover { transform: scale(1.08); }' +
 '    .day-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.6; }' +
 '    .day-date { font-size: 14px; font-weight: 600; }' +
@@ -14937,14 +14937,14 @@ function exportDiariasHTML() {
 '        <div class="logo-icon">' +
 '          <svg class="star-of-david" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="4"><polygon points="50,5 95,75 5,75"/><polygon points="50,95 5,25 95,25"/></svg>' +
 '        </div>' +
-'        <div class="logo-text"><h1>ICARUS</h1><p>Controle de Diárias</p></div>' +
+'        <div class="logo-text"><h1>ICARUS</h1><p>Controle de DiÃ¡rias</p></div>' +
 '      </div>' +
 '      <div class="header-info">' +
 '        <div class="user-badge">' +
 '          <div class="user-avatar">GB</div>' +
 '          <div><div style="font-weight: 600;">Guilherme Braga</div><div style="font-size: 12px; color: rgba(255,255,255,0.5);">R$ ' + diariasData.valorDiaria.toFixed(2) + '/dia</div></div>' +
 '        </div>' +
-'        <div class="date-badge"><div class="date">' + dataGeracao + '</div><div class="time">Gerado às ' + horaGeracao + '</div></div>' +
+'        <div class="date-badge"><div class="date">' + dataGeracao + '</div><div class="time">Gerado Ã s ' + horaGeracao + '</div></div>' +
 '      </div>' +
 '    </div>' +
 '    <div class="weeks-container">' + semanasHTML + '</div>' +
@@ -14958,10 +14958,10 @@ function exportDiariasHTML() {
 '        <h3>ICARUS</h3>' +
 '      </div>' +
 '      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>' +
-'      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>' +
-'      <div class="phone">📞 (62) 98493-0056</div>' +
+'      <p>GestÃ£o Inteligente de ManutenÃ§Ã£o â€¢ Granja Vitta</p>' +
+'      <div class="phone">ðŸ“ž (62) 98493-0056</div>' +
 '      <div class="dev"><div class="dev-label">Desenvolvido por</div><div class="dev-name">Guilherme Braga de Queiroz</div></div>' +
-'      <div class="copyright">© ' + new Date().getFullYear() + ' Sistema ICARUS • Todos os direitos reservados</div>' +
+'      <div class="copyright">Â© ' + new Date().getFullYear() + ' Sistema ICARUS â€¢ Todos os direitos reservados</div>' +
 '    </div>' +
 '  </div>' +
 '</body>' +
@@ -14980,7 +14980,7 @@ function exportDiariasHTML() {
 }
 
 // ============================================
-// SISTEMA DE NOTAS & BOLETOS - GESTÃO FINANCEIRA
+// SISTEMA DE NOTAS & BOLETOS - GESTÃƒO FINANCEIRA
 // ============================================
 
 let notasData = {
@@ -14989,7 +14989,7 @@ let notasData = {
   search: ''
 };
 
-// Verificar se usuário tem permissão para ver Notas & Boletos
+// Verificar se usuÃ¡rio tem permissÃ£o para ver Notas & Boletos
 function canAccessNotas() {
   const user = state.user;
   if (!user) return false;
@@ -14998,7 +14998,7 @@ function canAccessNotas() {
   const role = (user.role || '').toLowerCase().trim();
   const roles = (user.roles || []).map(r => String(r).toLowerCase().trim());
   
-  // Se role contém 'manut' ou é admin/owner, tem acesso
+  // Se role contÃ©m 'manut' ou Ã© admin/owner, tem acesso
   if (role.includes('manut') || role === 'admin' || role === 'owner') return true;
   
   // Verificar no array de roles
@@ -15006,7 +15006,7 @@ function canAccessNotas() {
     if (r.includes('manut') || r === 'admin' || r === 'owner') return true;
   }
   
-  // Verificar por nome de usuário específico
+  // Verificar por nome de usuÃ¡rio especÃ­fico
   if (username.includes('bruno') || username.includes('walter') || username.includes('manut')) return true;
   
   return false;
@@ -15027,7 +15027,7 @@ function initNotasTab() {
     tabNotas.style.display = hasAccess ? 'flex' : 'none';
   }
   
-  // Só resetar para Fórum se for a primeira vez (não se já estiver em notas)
+  // SÃ³ resetar para FÃ³rum se for a primeira vez (nÃ£o se jÃ¡ estiver em notas)
   if (tabForum && forumContent && notasContent && currentRelatoriosTab === 'forum') {
     tabForum.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
     tabForum.style.color = '#fff';
@@ -15042,7 +15042,7 @@ function initNotasTab() {
   }
 }
 
-// Alternar entre Fórum e Notas
+// Alternar entre FÃ³rum e Notas
 function switchRelatoriosTab(tab) {
   currentRelatoriosTab = tab; // Salvar estado atual
   
@@ -15063,7 +15063,7 @@ function switchRelatoriosTab(tab) {
     tabNotas.style.border = '1px solid rgba(255,255,255,0.1)';
     forumContent.style.display = 'block';
     notasContent.style.display = 'none';
-    // Mostrar header do fórum, botão novo post e stats
+    // Mostrar header do fÃ³rum, botÃ£o novo post e stats
     if (forumHeader) forumHeader.style.display = 'flex';
     if (writeActions && state.canWriteRelatorios) writeActions.style.display = 'flex';
     if (forumStats) forumStats.style.display = 'flex';
@@ -15076,7 +15076,7 @@ function switchRelatoriosTab(tab) {
     tabForum.style.border = '1px solid rgba(255,255,255,0.1)';
     forumContent.style.display = 'none';
     notasContent.style.display = 'block';
-    // Esconder header do fórum, botão novo post e stats na aba Notas
+    // Esconder header do fÃ³rum, botÃ£o novo post e stats na aba Notas
     if (forumHeader) forumHeader.style.display = 'none';
     loadNotas();
   }
@@ -15086,7 +15086,7 @@ function switchRelatoriosTab(tab) {
 async function loadNotas() {
   try {
     // Tentar carregar do backend primeiro
-    const response = await fetch(`${API_BASE_URL}/notas`, {
+    const response = await fetch(`${API_URL}/notas`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -15119,7 +15119,7 @@ async function saveNotas() {
   
   // Tentar sincronizar com o backend
   try {
-    const response = await fetch(`${API_BASE_URL}/notas/sync`, {
+    const response = await fetch(`${API_URL}/notas/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -15136,7 +15136,7 @@ async function saveNotas() {
   }
 }
 
-// Atualizar estatísticas
+// Atualizar estatÃ­sticas
 function updateNotasStats() {
   const now = new Date();
   const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -15182,18 +15182,18 @@ function updateNotasStats() {
 }
 
 // ============================================
-// RELATÓRIO DE GASTOS DE MANUTENÇÃO
+// RELATÃ“RIO DE GASTOS DE MANUTENÃ‡ÃƒO
 // ============================================
 
-// Estado do relatório
+// Estado do relatÃ³rio
 let gastosReportVisible = false;
 
-// Mostrar tela de relatório de gastos (substitui a área de notas)
+// Mostrar tela de relatÃ³rio de gastos (substitui a Ã¡rea de notas)
 async function showGastosReport() {
   const notasContent = document.getElementById('notas-content');
   if (!notasContent) return;
   
-  // Salvar conteúdo original para restaurar depois
+  // Salvar conteÃºdo original para restaurar depois
   if (!notasContent.dataset.originalHtml) {
     notasContent.dataset.originalHtml = notasContent.innerHTML;
   }
@@ -15203,7 +15203,7 @@ async function showGastosReport() {
     <div style="display: flex; align-items: center; justify-content: center; min-height: 400px;">
       <div style="text-align: center; color: #fff;">
         <div style="width: 50px; height: 50px; border: 3px solid rgba(16, 185, 129, 0.3); border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-        <p>Carregando relatório...</p>
+        <p>Carregando relatÃ³rio...</p>
       </div>
     </div>
   `;
@@ -15211,8 +15211,8 @@ async function showGastosReport() {
   gastosReportVisible = true;
   
   try {
-    // Buscar estatísticas da API
-    const response = await fetch(`${API_BASE_URL}/notas/stats`, {
+    // Buscar estatÃ­sticas da API
+    const response = await fetch(`${API_URL}/notas/stats`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -15231,7 +15231,7 @@ async function showGastosReport() {
   }
 }
 
-// Calcular estatísticas localmente (fallback)
+// Calcular estatÃ­sticas localmente (fallback)
 function calculateLocalStats() {
   const items = notasData.items || [];
   const now = new Date();
@@ -15260,19 +15260,19 @@ function calculateLocalStats() {
     }
     
     // Por setor
-    const setor = item.setor || 'Não informado';
+    const setor = item.setor || 'NÃ£o informado';
     if (!bySetor[setor]) bySetor[setor] = { total: 0, count: 0 };
     bySetor[setor].total += valor;
     bySetor[setor].count++;
     
-    // Por mês
+    // Por mÃªs
     const created = new Date(item.created_at);
     const monthKey = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}`;
     if (!byMonth[monthKey]) byMonth[monthKey] = 0;
     byMonth[monthKey] += valor;
     
     // Por empresa
-    const empresa = item.empresa || 'Não informado';
+    const empresa = item.empresa || 'NÃ£o informado';
     if (!byEmpresa[empresa]) byEmpresa[empresa] = { total: 0, count: 0 };
     byEmpresa[empresa].total += valor;
     byEmpresa[empresa].count++;
@@ -15308,7 +15308,7 @@ function calculateLocalStats() {
   };
 }
 
-// Renderizar view de relatório (dentro do container de notas)
+// Renderizar view de relatÃ³rio (dentro do container de notas)
 function renderGastosReportView(container, stats) {
   const formatCurrency = (val) => 'R$ ' + parseFloat(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   
@@ -15317,7 +15317,7 @@ function renderGastosReportView(container, stats) {
   const maxMonth = Math.max(...(stats.by_month || []).map(m => m.total), 1);
   
   container.innerHTML = `
-    <!-- Header com botão voltar -->
+    <!-- Header com botÃ£o voltar -->
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px 24px 20px; flex-wrap: wrap; gap: 16px;">
       <div style="display: flex; align-items: center; gap: 16px;">
         <button onclick="closeGastosReport()" style="width: 44px; height: 44px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;">
@@ -15326,9 +15326,9 @@ function renderGastosReportView(container, stats) {
         <div>
           <h2 style="font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-            Relatório de Gastos
+            RelatÃ³rio de Gastos
           </h2>
-          <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">Controle de manutenção e despesas</p>
+          <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">Controle de manutenÃ§Ã£o e despesas</p>
         </div>
       </div>
       <button onclick="exportGastosReportPDF()" style="padding: 12px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
@@ -15356,12 +15356,12 @@ function renderGastosReportView(container, stats) {
       </div>
     </div>
     
-    <!-- Gráfico por Mês -->
+    <!-- GrÃ¡fico por MÃªs -->
     <div style="padding: 0 20px 24px 20px;">
       <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px;">
         <h3 style="font-size: 16px; color: #fff; font-weight: 600; margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Gastos por Mês (Últimos 6 meses)
+          Gastos por MÃªs (Ãšltimos 6 meses)
         </h3>
         <div style="display: flex; gap: 16px; align-items: flex-end; height: 180px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px;">
           ${(stats.by_month || []).length > 0 ? (stats.by_month || []).map(m => {
@@ -15376,7 +15376,7 @@ function renderGastosReportView(container, stats) {
                 <span style="font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500;">${monthLabel}</span>
               </div>
             `;
-          }).join('') : '<p style="color: rgba(255,255,255,0.4); text-align: center; width: 100%; padding: 40px 0;">Nenhum dado disponível</p>'}
+          }).join('') : '<p style="color: rgba(255,255,255,0.4); text-align: center; width: 100%; padding: 40px 0;">Nenhum dado disponÃ­vel</p>'}
         </div>
       </div>
     </div>
@@ -15432,7 +15432,7 @@ function renderGastosReportView(container, stats) {
     
     <!-- Footer -->
     <div style="padding: 0 20px 40px 20px; text-align: center;">
-      <p style="font-size: 12px; color: rgba(255,255,255,0.3);">Relatório gerado em ${new Date().toLocaleString('pt-BR')} • ICARUS Sistema de Manutenção</p>
+      <p style="font-size: 12px; color: rgba(255,255,255,0.3);">RelatÃ³rio gerado em ${new Date().toLocaleString('pt-BR')} â€¢ ICARUS Sistema de ManutenÃ§Ã£o</p>
     </div>
   `;
 }
@@ -15449,18 +15449,18 @@ function closeGastosReport() {
   }
 }
 
-// Exportar relatório para PDF
+// Exportar relatÃ³rio para PDF
 function exportGastosReportPDF() {
   const notasContent = document.getElementById('notas-content');
   if (notasContent) {
-    // Abrir em nova janela para impressão
+    // Abrir em nova janela para impressÃ£o
     const content = notasContent.innerHTML;
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Relatório de Gastos - ICARUS</title>
+        <title>RelatÃ³rio de Gastos - ICARUS</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15560,7 +15560,7 @@ function renderNotas() {
     return `
       <div class="nota-card" onclick="viewNota('${item.id}')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; margin-bottom: 12px; cursor: pointer; transition: 0.3s; display: flex; gap: 16px; align-items: flex-start;" onmouseover="this.style.borderColor='rgba(16,185,129,0.3)';this.style.background='rgba(16,185,129,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)'">
         
-        <!-- Ícone/Avatar da Empresa -->
+        <!-- Ãcone/Avatar da Empresa -->
         <div style="width: 56px; height: 56px; background: linear-gradient(135deg, ${statusBg}, transparent); border: 1px solid ${statusColor}30; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="1.5">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -15571,11 +15571,11 @@ function renderNotas() {
         <!-- Info Principal -->
         <div style="flex: 1; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
-            <h3 style="font-size: 16px; font-weight: 600; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(item.empresa || 'Empresa não informada')}</h3>
+            <h3 style="font-size: 16px; font-weight: 600; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(item.empresa || 'Empresa nÃ£o informada')}</h3>
             <span style="padding: 4px 10px; background: ${statusBg}; color: ${statusColor}; font-size: 11px; font-weight: 600; border-radius: 20px; white-space: nowrap;">${statusText}</span>
           </div>
           
-          <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0 0 10px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(item.descricao || 'Sem descrição')}</p>
+          <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0 0 10px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(item.descricao || 'Sem descriÃ§Ã£o')}</p>
           
           <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: rgba(255,255,255,0.4);">
             ${item.responsavel ? `<span style="display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escapeHtml(item.responsavel)}</span>` : ''}
@@ -15601,7 +15601,7 @@ function renderNotas() {
 function setNotasFilter(filter, btn) {
   notasData.filter = filter;
   
-  // Atualizar visual dos botões
+  // Atualizar visual dos botÃµes
   document.querySelectorAll('.notas-filter').forEach(b => {
     b.style.background = 'rgba(255,255,255,0.05)';
     b.style.color = 'rgba(255,255,255,0.6)';
@@ -15639,12 +15639,12 @@ function openNovaNotaModal(editId = null) {
             <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">${isEdit ? 'Editar' : 'Nova'} Entrada Financeira</h3>
             <p style="margin: 4px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Nota fiscal e/ou boleto de fornecedor</p>
           </div>
-          <button onclick="closeNovaNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+          <button onclick="closeNovaNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;">Ã—</button>
         </div>
         
         <form id="form-nova-nota" onsubmit="saveNota(event, '${editId || ''}')" style="padding: 24px 28px;">
           
-          <!-- Seção: Dados da Empresa -->
+          <!-- SeÃ§Ã£o: Dados da Empresa -->
           <div style="margin-bottom: 24px;">
             <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -15654,11 +15654,11 @@ function openNovaNotaModal(editId = null) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
               <div style="grid-column: span 2;">
                 <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Empresa / Fornecedor *</label>
-                <input type="text" id="nota-empresa" value="${item?.empresa || ''}" required placeholder="Ex: Auto Peças Silva, Eletro Center..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" oninput="smartFillNota(this.value)">
+                <input type="text" id="nota-empresa" value="${item?.empresa || ''}" required placeholder="Ex: Auto PeÃ§as Silva, Eletro Center..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;" oninput="smartFillNota(this.value)">
               </div>
               
               <div>
-                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Responsável pelo Serviço</label>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">ResponsÃ¡vel pelo ServiÃ§o</label>
                 <select id="nota-responsavel" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
                   <option value="">Selecione...</option>
                   ${(state.users || []).map(u => `<option value="${u.name}" ${item?.responsavel === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
@@ -15674,27 +15674,27 @@ function openNovaNotaModal(editId = null) {
                   <option value="Vertical 1" ${item?.setor === 'Vertical 1' ? 'selected' : ''}>Vertical 1</option>
                   <option value="Vertical 2" ${item?.setor === 'Vertical 2' ? 'selected' : ''}>Vertical 2</option>
                   <option value="Vertical 3" ${item?.setor === 'Vertical 3' ? 'selected' : ''}>Vertical 3</option>
-                  <option value="Galpão 1" ${item?.setor === 'Galpão 1' ? 'selected' : ''}>Galpão 1</option>
-                  <option value="Galpão 2" ${item?.setor === 'Galpão 2' ? 'selected' : ''}>Galpão 2</option>
-                  <option value="Galpão 3" ${item?.setor === 'Galpão 3' ? 'selected' : ''}>Galpão 3</option>
-                  <option value="Expedição" ${item?.setor === 'Expedição' ? 'selected' : ''}>Expedição</option>
+                  <option value="GalpÃ£o 1" ${item?.setor === 'GalpÃ£o 1' ? 'selected' : ''}>GalpÃ£o 1</option>
+                  <option value="GalpÃ£o 2" ${item?.setor === 'GalpÃ£o 2' ? 'selected' : ''}>GalpÃ£o 2</option>
+                  <option value="GalpÃ£o 3" ${item?.setor === 'GalpÃ£o 3' ? 'selected' : ''}>GalpÃ£o 3</option>
+                  <option value="ExpediÃ§Ã£o" ${item?.setor === 'ExpediÃ§Ã£o' ? 'selected' : ''}>ExpediÃ§Ã£o</option>
                   <option value="Cantina" ${item?.setor === 'Cantina' ? 'selected' : ''}>Cantina</option>
-                  <option value="Escritório" ${item?.setor === 'Escritório' ? 'selected' : ''}>Escritório</option>
+                  <option value="EscritÃ³rio" ${item?.setor === 'EscritÃ³rio' ? 'selected' : ''}>EscritÃ³rio</option>
                   <option value="Oficina" ${item?.setor === 'Oficina' ? 'selected' : ''}>Oficina</option>
-                  <option value="Fábrica de Ração" ${item?.setor === 'Fábrica de Ração' ? 'selected' : ''}>Fábrica de Ração</option>
+                  <option value="FÃ¡brica de RaÃ§Ã£o" ${item?.setor === 'FÃ¡brica de RaÃ§Ã£o' ? 'selected' : ''}>FÃ¡brica de RaÃ§Ã£o</option>
                   <option value="Geral" ${item?.setor === 'Geral' ? 'selected' : ''}>Geral</option>
                 </select>
               </div>
             </div>
           </div>
           
-          <!-- Seção: Descrição -->
+          <!-- SeÃ§Ã£o: DescriÃ§Ã£o -->
           <div style="margin-bottom: 24px;">
-            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Descrição do Serviço/Produto *</label>
-            <textarea id="nota-descricao" required placeholder="Descreva o serviço prestado ou produtos adquiridos..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px; min-height: 80px; resize: vertical;">${item?.descricao || ''}</textarea>
+            <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">DescriÃ§Ã£o do ServiÃ§o/Produto *</label>
+            <textarea id="nota-descricao" required placeholder="Descreva o serviÃ§o prestado ou produtos adquiridos..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px; min-height: 80px; resize: vertical;">${item?.descricao || ''}</textarea>
           </div>
           
-          <!-- Seção: Valores -->
+          <!-- SeÃ§Ã£o: Valores -->
           <div style="margin-bottom: 24px;">
             <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -15713,7 +15713,7 @@ function openNovaNotaModal(editId = null) {
               </div>
               
               <div>
-                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Data de Emissão</label>
+                <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 6px;">Data de EmissÃ£o</label>
                 <input type="date" id="nota-data-emissao" value="${item?.data_emissao || new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px;">
               </div>
               
@@ -15724,7 +15724,7 @@ function openNovaNotaModal(editId = null) {
             </div>
           </div>
           
-          <!-- Seção: Anexos -->
+          <!-- SeÃ§Ã£o: Anexos -->
           <div style="margin-bottom: 24px;">
             <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
@@ -15738,7 +15738,7 @@ function openNovaNotaModal(editId = null) {
                   <input type="file" id="nota-anexo-nota" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'nota')">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5" style="margin: 0 auto 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                   <p style="font-size: 13px; color: #a78bfa; font-weight: 600; margin: 0;">Nota Fiscal</p>
-                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-nota-name">${item?.nota_anexo ? '✓ Arquivo anexado' : 'Clique para anexar'}</p>
+                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-nota-name">${item?.nota_anexo ? 'âœ“ Arquivo anexado' : 'Clique para anexar'}</p>
                 </label>
               </div>
               
@@ -15748,13 +15748,13 @@ function openNovaNotaModal(editId = null) {
                   <input type="file" id="nota-anexo-boleto" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'boleto')">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.5" style="margin: 0 auto 8px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
                   <p style="font-size: 13px; color: #22d3ee; font-weight: 600; margin: 0;">Boleto</p>
-                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-boleto-name">${item?.boleto_anexo ? '✓ Arquivo anexado' : 'Clique para anexar'}</p>
+                  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-boleto-name">${item?.boleto_anexo ? 'âœ“ Arquivo anexado' : 'Clique para anexar'}</p>
                 </label>
               </div>
             </div>
           </div>
           
-          <!-- Seção: Status -->
+          <!-- SeÃ§Ã£o: Status -->
           <div style="margin-bottom: 24px;">
             <label style="display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">Status do Pagamento</label>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -15773,12 +15773,12 @@ function openNovaNotaModal(editId = null) {
             </div>
           </div>
           
-          <!-- Botões -->
+          <!-- BotÃµes -->
           <div style="display: flex; gap: 12px; margin-top: 28px;">
             <button type="button" onclick="closeNovaNotaModal()" style="flex: 1; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 15px; font-weight: 500; cursor: pointer;">Cancelar</button>
             <button type="submit" style="flex: 2; padding: 16px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              ${isEdit ? 'Salvar Alterações' : 'Cadastrar Entrada'}
+              ${isEdit ? 'Salvar AlteraÃ§Ãµes' : 'Cadastrar Entrada'}
             </button>
           </div>
         </form>
@@ -15814,7 +15814,7 @@ function closeNovaNotaModal() {
   if (modal) modal.remove();
 }
 
-// Variáveis temporárias para anexos
+// VariÃ¡veis temporÃ¡rias para anexos
 let tempNotaAnexo = null;
 let tempBoletoAnexo = null;
 
@@ -15826,10 +15826,10 @@ function handleNotaFileSelect(input, tipo) {
   reader.onload = function(e) {
     if (tipo === 'nota') {
       tempNotaAnexo = { name: file.name, data: e.target.result, type: file.type };
-      document.getElementById('nota-anexo-nota-name').textContent = '✓ ' + file.name;
+      document.getElementById('nota-anexo-nota-name').textContent = 'âœ“ ' + file.name;
     } else {
       tempBoletoAnexo = { name: file.name, data: e.target.result, type: file.type };
-      document.getElementById('nota-anexo-boleto-name').textContent = '✓ ' + file.name;
+      document.getElementById('nota-anexo-boleto-name').textContent = 'âœ“ ' + file.name;
     }
   };
   reader.readAsDataURL(file);
@@ -15848,7 +15848,7 @@ function parseValor(str) {
   return parseFloat(str.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
 }
 
-// Smart fill - sugestões baseadas em entradas anteriores
+// Smart fill - sugestÃµes baseadas em entradas anteriores
 function smartFillNota(empresa) {
   const similar = notasData.items.find(i => 
     i.empresa && i.empresa.toLowerCase().includes(empresa.toLowerCase())
@@ -15875,7 +15875,7 @@ async function saveNota(event, editId) {
   const status = document.querySelector('input[name="nota-status"]:checked')?.value || 'pendente';
   
   if (!empresa || !descricao) {
-    showNotification('Preencha a empresa e descrição', 'warning');
+    showNotification('Preencha a empresa e descriÃ§Ã£o', 'warning');
     return;
   }
   
@@ -15897,7 +15897,7 @@ async function saveNota(event, editId) {
     let response;
     if (editId) {
       // Editar existente via API
-      response = await fetch(`${API_BASE_URL}/notas/${editId}`, {
+      response = await fetch(`${API_URL}/notas/${editId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -15907,7 +15907,7 @@ async function saveNota(event, editId) {
       });
     } else {
       // Nova entrada via API
-      response = await fetch(`${API_BASE_URL}/notas`, {
+      response = await fetch(`${API_URL}/notas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -15968,7 +15968,7 @@ async function saveNota(event, editId) {
     showNotification(editId ? 'Salvo localmente (offline)' : 'Cadastrado localmente (offline)', 'warning');
   }
   
-  // Limpar temporários
+  // Limpar temporÃ¡rios
   tempNotaAnexo = null;
   tempBoletoAnexo = null;
 }
@@ -15993,7 +15993,7 @@ function viewNota(id) {
     statusText = 'Aguardando Pagamento';
   } else if (diasVenc !== null && diasVenc < 0) {
     statusColor = '#ef4444';
-    statusText = 'Vencido há ' + Math.abs(diasVenc) + ' dias';
+    statusText = 'Vencido hÃ¡ ' + Math.abs(diasVenc) + ' dias';
   } else if (diasVenc !== null && diasVenc <= 7) {
     statusColor = '#fb923c';
     statusText = 'Vence em ' + diasVenc + ' dias';
@@ -16008,7 +16008,7 @@ function viewNota(id) {
           <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
             <div>
               <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px 0;">${escapeHtml(item.empresa)}</h2>
-              <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">${escapeHtml(item.setor || 'Setor não informado')}</p>
+              <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">${escapeHtml(item.setor || 'Setor nÃ£o informado')}</p>
             </div>
             <div style="display: flex; gap: 8px;">
               <button onclick="exportNotaHTML('${item.id}')" title="Exportar HTML" style="background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; width: 40px; height: 40px; color: #a78bfa; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
@@ -16017,7 +16017,7 @@ function viewNota(id) {
               <button onclick="exportNotaPDF('${item.id}')" title="Exportar PDF" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; width: 40px; height: 40px; color: #ef4444; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h6"/></svg>
               </button>
-              <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">×</button>
+              <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">Ã—</button>
             </div>
           </div>
           
@@ -16027,9 +16027,9 @@ function viewNota(id) {
           </div>
         </div>
         
-        <!-- Conteúdo -->
+        <!-- ConteÃºdo -->
         <div style="padding: 24px;">
-          <!-- Descrição -->
+          <!-- DescriÃ§Ã£o -->
           <div style="margin-bottom: 20px;">
             <p style="font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.6;">${escapeHtml(item.descricao)}</p>
           </div>
@@ -16038,7 +16038,7 @@ function viewNota(id) {
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
             ${item.responsavel ? `
             <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 14px;">
-              <p style="font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 0 0 4px 0;">Responsável</p>
+              <p style="font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 0 0 4px 0;">ResponsÃ¡vel</p>
               <p style="font-size: 14px; color: #fff; font-weight: 500; margin: 0;">${escapeHtml(item.responsavel)}</p>
             </div>` : ''}
             
@@ -16089,7 +16089,7 @@ function viewNota(id) {
           </div>
         </div>
         
-        <!-- Ações -->
+        <!-- AÃ§Ãµes -->
         <div style="padding: 16px 24px 24px; display: flex; gap: 12px; flex-wrap: wrap;">
           <button onclick="closeViewNotaModal(); openNovaNotaModal('${item.id}')" style="flex: 1; min-width: 120px; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -16101,7 +16101,7 @@ function viewNota(id) {
           </button>
           <button onclick="markNotaAsPaid('${item.id}')" style="flex: 1; min-width: 140px; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; ${item.status === 'pago' ? 'opacity: 0.5; pointer-events: none;' : ''}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            ${item.status === 'pago' ? 'Já Pago' : 'Marcar como Pago'}
+            ${item.status === 'pago' ? 'JÃ¡ Pago' : 'Marcar como Pago'}
           </button>
         </div>
       </div>
@@ -16122,7 +16122,7 @@ async function markNotaAsPaid(id) {
     const item = notasData.items.find(i => i.id === id);
     if (!item) return;
     
-    const response = await fetch(`${API_BASE_URL}/notas/${id}`, {
+    const response = await fetch(`${API_URL}/notas/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -16168,7 +16168,7 @@ async function deleteNota(id) {
   if (!confirm('Tem certeza que deseja excluir esta entrada?')) return;
   
   try {
-    const response = await fetch(`${API_BASE_URL}/notas/${id}`, {
+    const response = await fetch(`${API_URL}/notas/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${state.token}`
@@ -16180,7 +16180,7 @@ async function deleteNota(id) {
       renderNotas();
       updateNotasStats();
       closeViewNotaModal();
-      showNotification('Entrada excluída', 'success');
+      showNotification('Entrada excluÃ­da', 'success');
     } else {
       throw new Error('Erro ao excluir');
     }
@@ -16191,12 +16191,12 @@ async function deleteNota(id) {
     renderNotas();
     updateNotasStats();
     closeViewNotaModal();
-    showNotification('Excluído localmente', 'warning');
+    showNotification('ExcluÃ­do localmente', 'warning');
   }
 }
 
 // ============================================
-// EXPORTAÇÃO DE NOTAS - PDF E HTML PREMIUM
+// EXPORTAÃ‡ÃƒO DE NOTAS - PDF E HTML PREMIUM
 // ============================================
 
 function generateNotaHTMLContent(item) {
@@ -16210,7 +16210,7 @@ function generateNotaHTMLContent(item) {
   
   if (item.status === 'pago') {
     statusColor = '#22c55e';
-    statusText = '✓ PAGO';
+    statusText = 'âœ“ PAGO';
     statusBg = 'rgba(34, 197, 94, 0.15)';
   } else if (item.status === 'aguardando') {
     statusColor = '#f59e0b';
@@ -16547,7 +16547,7 @@ function generateNotaHTMLContent(item) {
   html += '      background-clip: text;\n';
   html += '    }\n';
   html += '    \n';
-  html += '    /* Descrição */\n';
+  html += '    /* DescriÃ§Ã£o */\n';
   html += '    .descricao {\n';
   html += '      background: rgba(255,255,255,0.03);\n';
   html += '      border-radius: 16px;\n';
@@ -16834,14 +16834,14 @@ function generateNotaHTMLContent(item) {
   html += '        </div>\n';
   html += '        <div class="logo-text">\n';
   html += '          <h1>ICARUS</h1>\n';
-  html += '          <p>Sistema de Gestão Premium</p>\n';
+  html += '          <p>Sistema de GestÃ£o Premium</p>\n';
   html += '        </div>\n';
   html += '      </div>\n';
   html += '      \n';
   html += '      <div class="doc-info">\n';
   html += '        <div>\n';
   html += '          <div class="doc-number">Doc #' + docId + '</div>\n';
-  html += '          <div class="doc-date">Emitido em ' + dataEmissao + ' às ' + horaEmissao + '</div>\n';
+  html += '          <div class="doc-date">Emitido em ' + dataEmissao + ' Ã s ' + horaEmissao + '</div>\n';
   html += '        </div>\n';
   html += '        <div class="status-badge">\n';
   html += '          <span class="status-dot"></span>\n';
@@ -16857,7 +16857,7 @@ function generateNotaHTMLContent(item) {
   html += '          <h2>' + escapeHtml(item.empresa) + '</h2>\n';
   html += '          <div class="setor">\n';
   html += '            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>\n';
-  html += '            ' + escapeHtml(item.setor || 'Setor não informado') + '\n';
+  html += '            ' + escapeHtml(item.setor || 'Setor nÃ£o informado') + '\n';
   html += '          </div>\n';
   html += '        </div>\n';
   html += '        <div class="valor-destaque">\n';
@@ -16866,9 +16866,9 @@ function generateNotaHTMLContent(item) {
   html += '        </div>\n';
   html += '      </div>\n';
   html += '      \n';
-  html += '      <!-- Descrição -->\n';
+  html += '      <!-- DescriÃ§Ã£o -->\n';
   html += '      <div class="descricao">\n';
-  html += '        <h3>Descrição do Serviço/Produto</h3>\n';
+  html += '        <h3>DescriÃ§Ã£o do ServiÃ§o/Produto</h3>\n';
   html += '        <p>' + escapeHtml(item.descricao) + '</p>\n';
   html += '      </div>\n';
   html += '      \n';
@@ -16876,13 +16876,13 @@ function generateNotaHTMLContent(item) {
   html += '      <div class="info-grid">\n';
   if (item.responsavel) {
     html += '        <div class="info-item">\n';
-    html += '          <div class="label">Responsável</div>\n';
+    html += '          <div class="label">ResponsÃ¡vel</div>\n';
     html += '          <div class="value">' + escapeHtml(item.responsavel) + '</div>\n';
     html += '        </div>\n';
   }
   if (item.data_emissao) {
     html += '        <div class="info-item">\n';
-    html += '          <div class="label">Data de Emissão</div>\n';
+    html += '          <div class="label">Data de EmissÃ£o</div>\n';
     html += '          <div class="value">' + new Date(item.data_emissao).toLocaleDateString('pt-BR') + '</div>\n';
     html += '        </div>\n';
   }
@@ -16927,7 +16927,7 @@ function generateNotaHTMLContent(item) {
   if (item.nota_anexo || item.boleto_anexo) {
     html += '      <!-- Anexos -->\n';
     html += '      <div class="anexos-section">\n';
-    html += '        <h3>📎 Documentos Anexados</h3>\n';
+    html += '        <h3>ðŸ“Ž Documentos Anexados</h3>\n';
     html += '        <div class="anexos-grid">\n';
     if (item.nota_anexo) {
       html += '          <a href="' + item.nota_anexo.data + '" download="' + item.nota_anexo.name + '" class="anexo-btn nota">\n';
@@ -16959,12 +16959,12 @@ function generateNotaHTMLContent(item) {
   html += '        <h3>ICARUS</h3>\n';
   html += '      </div>\n';
   html += '      <p>Documento gerado automaticamente pelo Sistema ICARUS</p>\n';
-  html += '      <p>Gestão Inteligente de Manutenção • Granja Vitta</p>\n';
-  html += '      <p style="margin-top: 12px; color: rgba(255,255,255,0.6);">📞 (62) 98493-0056</p>\n';
+  html += '      <p>GestÃ£o Inteligente de ManutenÃ§Ã£o â€¢ Granja Vitta</p>\n';
+  html += '      <p style="margin-top: 12px; color: rgba(255,255,255,0.6);">ðŸ“ž (62) 98493-0056</p>\n';
   html += '      <div class="tech" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">\n';
   html += '        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Desenvolvido por</div>\n';
   html += '        <div style="font-size: 13px; color: #f472b6; font-weight: 600;">Guilherme Braga de Queiroz</div>\n';
-  html += '        <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px;">© ' + anoAtual + ' Sistema ICARUS • Todos os direitos reservados</div>\n';
+  html += '        <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px;">Â© ' + anoAtual + ' Sistema ICARUS â€¢ Todos os direitos reservados</div>\n';
   html += '      </div>\n';
   html += '    </div>\n';
   html += '  </div>\n';
@@ -17009,10 +17009,10 @@ function exportNotaPDF(id) {
     printWindow.print();
   }, 500);
   
-  showNotification('Preparando PDF para impressão...', 'success');
+  showNotification('Preparando PDF para impressÃ£o...', 'success');
 }
 
-// Inicializar quando entrar na view de relatórios
+// Inicializar quando entrar na view de relatÃ³rios
 const originalNavigateTo = window.navigateTo || function(){};
 window.navigateTo = function(view) {
   if (typeof originalNavigateTo === 'function') {
@@ -17026,7 +17026,7 @@ window.navigateTo = function(view) {
   }
 };
 
-// Também inicializar se já estiver na view
+// TambÃ©m inicializar se jÃ¡ estiver na view
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => {
     if (document.getElementById('relatorios-view') && !document.getElementById('relatorios-view').classList.contains('hidden')) {
