@@ -15098,22 +15098,15 @@ function switchRelatoriosTab(tab) {
 
 // Carregar notas do localStorage ou API
 async function loadNotas() {
-  console.log('[Notas] Carregando notas... API_URL:', API_URL);
   try {
-    // Tentar carregar do backend primeiro
-    const url = `${API_URL}/api/notas`;
-    console.log('[Notas] Fazendo fetch para:', url);
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}/api/notas`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
-    console.log('[Notas] Response status:', response.status);
     if (response.ok) {
       const data = await response.json();
-      console.log('[Notas] Dados recebidos:', data);
       notasData.items = data.notas || [];
     } else {
-      console.log('[Notas] Response não OK, usando localStorage');
       // Fallback para localStorage
       const saved = localStorage.getItem('icarus_notas_' + state.user?.tenant_id);
       if (saved) {
@@ -15121,7 +15114,6 @@ async function loadNotas() {
       }
     }
   } catch (e) {
-    console.error('[Notas] Erro ao carregar:', e);
     // Fallback para localStorage
     const saved = localStorage.getItem('icarus_notas_' + state.user?.tenant_id);
     if (saved) {
@@ -15129,7 +15121,6 @@ async function loadNotas() {
     }
   }
   
-  console.log('[Notas] Total de itens:', notasData.items.length);
   renderNotas();
   updateNotasStats();
 }
