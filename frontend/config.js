@@ -1,18 +1,16 @@
 // Configuração do Icarus - Frontend
-// Versão 1.1.0 - Cache buster para URLs antigas
+// Versão 1.2.0 - Sem dependência do GitHub
 
-// URLs de configuração
-const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/api-config.json';
-const SERVER_IP = 'http://159.203.8.237:3000'; // IP direto do servidor
+// IP direto do servidor (fallback)
+const SERVER_IP = 'http://159.203.8.237:3000';
 
-// URL padrão (fallback) - sempre via tunnel seguro
+// URL padrão do túnel Cloudflare
 let API_URL_DEFAULT = 'https://finances-absolute-caps-receipt.trycloudflare.com';
 
 // Limpar cache de URLs antigas que não funcionam mais
 const OLD_URLS_TO_CLEAR = [
   'troops-minute-missed-alot.trycloudflare.com',
-  'kong-dust-analysts-developers.trycloudflare.com',
-  'kong-dust-analysts-developers'
+  'kong-dust-analysts-developers.trycloudflare.com'
 ];
 
 (function clearOldUrlCache() {
@@ -52,23 +50,6 @@ async function fetchTunnelUrlFromServer() {
   return null;
 }
 
-// Buscar URL do GitHub (fallback)
-async function fetchNewApiUrl() {
-  try {
-    const response = await fetch(CONFIG_URL + '?t=' + Date.now(), { cache: 'no-store' });
-    if (response.ok) {
-      const config = await response.json();
-      if (config.apiUrl) {
-        console.log('[Config] URL obtida do GitHub:', config.apiUrl);
-        return config.apiUrl;
-      }
-    }
-  } catch (e) {
-    console.log('[Config] Erro ao buscar config do GitHub');
-  }
-  return null;
-}
-
 async function testApiUrl(url) {
   try {
     const controller = new AbortController();
@@ -102,40 +83,28 @@ async function testApiUrl(url) {
     window.ICARUS_API_URL = cached;
     console.log('[Config] Usando URL do cache:', cached);
     
-    // Testar em background - se falhar, busca nova do GitHub
+    // Testar em background
     setTimeout(async () => {
       const works = await testApiUrl(cached);
       if (!works) {
-        console.log('[Config] URL do cache não responde, buscando nova...');
-        const newUrl = await fetchNewApiUrl();
-        if (newUrl && newUrl !== cached) {
-          window.ICARUS_API_URL = newUrl;
-          localStorage.setItem('icarus_api_url', newUrl);
-          localStorage.setItem('icarus_api_url_time', Date.now().toString());
-          console.log('[Config] Nova URL aplicada:', newUrl);
-          if (document.readyState === 'complete') {
-            location.reload();
-          }
-        }
+        console.log('[Config] URL do cache não responde, usando padrão...');
+        window.ICARUS_API_URL = API_URL_DEFAULT;
+        localStorage.setItem('icarus_api_url', API_URL_DEFAULT);
       }
     }, 1000);
     return;
   }
   
-  // 3. Sem cache - buscar URL do GitHub
-  const newUrl = await fetchNewApiUrl();
-  if (newUrl) {
-    window.ICARUS_API_URL = newUrl;
-    localStorage.setItem('icarus_api_url', newUrl);
-    localStorage.setItem('icarus_api_url_time', Date.now().toString());
-  }
+  // 3. Sem cache - usar URL padrão
+  window.ICARUS_API_URL = API_URL_DEFAULT;
+  localStorage.setItem('icarus_api_url', API_URL_DEFAULT);
 })();
 
 // URL da API backend (HTTPS via Cloudflare Tunnel)
 window.ICARUS_API_URL = window.ICARUS_API_URL || localStorage.getItem('icarus_api_url') || API_URL_DEFAULT;
 
-// Key ID da Granja Vitta (UUID fixo gerado no backend)
+// Key ID da Granja Vitta
 window.ICARUS_KEY_ID = '76453ce2-9e83-4764-bf13-e11125f6b880';
 
-// Chave de acesso (para validação inicial)
+// Chave de acesso
 window.ICARUS_KEY = 'GRANJA-VITTA-5590PALU-ICARUS';
