@@ -508,14 +508,13 @@ async function exportPDF() {
     return new Date(a.date) - new Date(b.date);
   });
   
-  // Criar HTML do PDF - Design Premium
+  // Criar HTML do PDF - Design Premium (sem dependências de internet)
   var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<title>Relatório ' + client.name + '</title>' +
     '<style>' +
-      '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");' +
       '@page { size: A4; margin: 10mm; }' +
       '* { margin: 0; padding: 0; box-sizing: border-box; }' +
-      'body { font-family: "Inter", system-ui, sans-serif; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%); color: #fff; min-height: 100vh; padding: 20px; }' +
+      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%); color: #fff; min-height: 100vh; padding: 20px; }' +
       
       // Header
       '.header { text-align: center; padding: 30px 20px; background: linear-gradient(135deg, ' + client.color + '22, ' + client.color + '11); border: 1px solid ' + client.color + '44; border-radius: 20px; margin-bottom: 20px; }' +
@@ -647,52 +646,50 @@ async function exportPDF() {
   // Detectar se está no Capacitor (APK Android)
   var isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
   
+  // Criar nome do arquivo
+  var fileName = 'Relatorio_' + client.name.replace(/\s+/g, '_') + '_' + formatDate(new Date()).replace(/\//g, '-') + '.html';
+  
   if (isCapacitor) {
-    // No Android: criar blob e abrir no navegador do sistema
+    // No Android: baixar como arquivo HTML
     try {
-      var blob = new Blob([printContent], { type: 'text/html' });
-      var url = URL.createObjectURL(blob);
+      var blob = new Blob([printContent], { type: 'text/html;charset=utf-8' });
       
-      // Tentar abrir com Browser plugin
-      if (window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
-        // Infelizmente blob URLs não funcionam no Browser plugin
-        // Vamos usar uma abordagem diferente: criar uma data URL
-        var dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(printContent);
-        
-        await window.Capacitor.Plugins.Browser.open({ 
-          url: dataUrl,
-          presentationStyle: 'fullscreen'
-        });
-        showToast('PDF aberto no navegador!', 'success');
-        return;
-      }
+      // Usar FileSaver/download approach
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      
+      showToast('HTML baixado! Abra em Downloads', 'success');
+      return;
     } catch (e) {
-      console.error('Erro ao abrir no navegador:', e);
-    }
-    
-    // Fallback: tentar window.open
-    var printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      showToast('PDF gerado!', 'success');
-    } else {
-      showToast('Permita pop-ups', 'error');
+      console.error('Erro ao baixar HTML:', e);
+      // Fallback: abrir em nova janela
+      var printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        showToast('Relatório aberto!', 'success');
+      } else {
+        showToast('Permita pop-ups', 'error');
+      }
     }
   } else {
-    // No browser: abrir janela normalmente
-    var printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(function() {
-        printWindow.print();
-      }, 500);
-      showToast('PDF gerado!', 'success');
-    } else {
-      showToast('Permita pop-ups para gerar PDF', 'error');
-    }
+    // No browser: baixar arquivo HTML diretamente
+    var blob = new Blob([printContent], { type: 'text/html;charset=utf-8' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    showToast('HTML baixado!', 'success');
   }
 }
 

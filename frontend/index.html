@@ -752,7 +752,7 @@
       background: linear-gradient(90deg, rgba(192, 192, 192, 0.08) 0%, rgba(192, 192, 192, 0.02) 100%);
       border-radius: 10px;
       border-left: 3px solid #c0c0c0;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
       animation: slideInLeft 0.5s ease-out backwards;
     }
 
@@ -1884,7 +1884,7 @@
       padding: 8px 10px;
       background: rgba(255,255,255,0.02);
       border-radius: 6px;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .timeline-item:hover {
       background: rgba(16, 185, 129, 0.08);
@@ -2192,7 +2192,7 @@
       font-size: 11px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .btn-almox-export svg { width: 14px; height: 14px; }
     .btn-almox-export:hover {
@@ -2212,7 +2212,7 @@
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
       box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
     }
     .btn-almox-new svg { width: 14px; height: 14px; }
@@ -2239,7 +2239,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .almox-stat-card:hover {
       border-color: rgba(245, 158, 11, 0.2);
@@ -2299,7 +2299,7 @@
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.06);
       border-radius: 6px;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .almox-search:focus-within {
       border-color: rgba(245, 158, 11, 0.3);
@@ -2329,7 +2329,7 @@
       color: rgba(255,255,255,0.7);
       font-size: 11px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .almox-filter-group select option {
       background: #1a1a2e;
@@ -2425,7 +2425,7 @@
       font-size: 10px;
       border-radius: 4px;
       margin-right: 3px;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .almox-table .btn-small:hover {
       transform: translateY(-1px);
@@ -2446,7 +2446,7 @@
       padding: 12px 14px;
       margin-bottom: 8px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .almox-mobile-item:hover, .almox-mobile-item:active {
       border-color: rgba(245, 158, 11, 0.2);
@@ -4352,7 +4352,7 @@
       border: 1px solid rgba(236, 72, 153, 0.15);
       border-radius: 16px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
       overflow: hidden;
     }
     .lav2-client-card::before {
@@ -7941,7 +7941,7 @@
       color: rgba(255,255,255,0.5);
       font-size: 11px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .forum-filter-chip svg {
       width: 12px;
@@ -8020,7 +8020,7 @@
       border: 1px solid rgba(255, 255, 255, 0.04);
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
       position: relative;
     }
     .forum-post::before {
@@ -8166,7 +8166,7 @@
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .forum-back-btn:hover {
       background: rgba(236, 72, 153, 0.1);
@@ -8188,7 +8188,7 @@
       border-radius: 6px;
       color: rgba(255,255,255,0.6);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.1s, opacity 0.1s;
     }
     .forum-action-btn svg {
       width: 14px;
@@ -8289,7 +8289,7 @@
       justify-content: center;
       opacity: 0;
       visibility: hidden;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .export-modal-overlay.active {
       opacity: 1;
@@ -8303,7 +8303,7 @@
       width: 90%;
       max-width: 500px;
       transform: scale(0.9) translateY(20px);
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
       position: relative;
       overflow: hidden;
     }
@@ -8924,7 +8924,7 @@
       z-index: 2000;
       visibility: hidden;
       opacity: 0;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .mobile-more-menu.open {
       visibility: visible;
@@ -12301,7 +12301,7 @@
               border-radius: 12px;
               color: #fff;
               font-size: 14px;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(212,175,55,0.5)';this.style.boxShadow='0 0 20px rgba(212,175,55,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
           </div>
@@ -12321,7 +12321,7 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                transition: all 0.3s ease;
+                transition: transform 0.15s, background 0.15s, border-color 0.15s;
               ">
                 <span id="os-sector-text">Selecione o local...</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -12435,7 +12435,7 @@
             background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23d4af37%22 stroke-width=%222%22%3E%3Cpolyline points=%226 9 12 15 18 9%22/%3E%3C/svg%3E');
             background-repeat: no-repeat;
             background-position: right 16px center;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
           " onfocus="this.style.borderColor='rgba(212,175,55,0.5)';this.style.boxShadow='0 0 20px rgba(212,175,55,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
             <option value="low" style="background: #1a1a2e;">Baixa</option>
@@ -12462,7 +12462,7 @@
             font-size: 14px;
             resize: vertical;
             min-height: 80px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
             font-family: inherit;
           " onfocus="this.style.borderColor='rgba(212,175,55,0.5)';this.style.boxShadow='0 0 20px rgba(212,175,55,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'"></textarea>
@@ -12507,7 +12507,7 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
           " onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#888'">Cancelar</button>
           <button type="submit" style="
             padding: 14px 32px;
@@ -12521,7 +12521,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
           " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(212,175,55,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(212,175,55,0.3)'">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -12763,7 +12763,7 @@
               font-size: 14px;
               font-family: 'SF Mono', 'Fira Code', monospace;
               letter-spacing: 0.5px;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
           </div>
@@ -12777,7 +12777,7 @@
               border-radius: 12px;
               color: #fff;
               font-size: 14px;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
           </div>
@@ -12800,10 +12800,11 @@
               background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238b5cf6%22 stroke-width=%222%22%3E%3Cpolyline points=%226 9 12 15 18 9%22/%3E%3C/svg%3E');
               background-repeat: no-repeat;
               background-position: right 16px center;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
               <option value="" style="background: #1a1a2e;">Selecione...</option>
+              <option value="yamasa" style="background: #1a1a2e;">🏭 Yamasa (Fábrica)</option>
               <option value="eletrico" style="background: #1a1a2e;">Elétrico</option>
               <option value="pneumatico" style="background: #1a1a2e;">Pneumático</option>
               <option value="hidraulico" style="background: #1a1a2e;">Hidráulico</option>
@@ -12825,7 +12826,7 @@
               border-radius: 12px;
               color: #fff;
               font-size: 14px;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
           </div>
@@ -12845,7 +12846,7 @@
               font-size: 16px;
               font-weight: 600;
               text-align: center;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(6,182,212,0.5)';this.style.boxShadow='0 0 20px rgba(6,182,212,0.2)'" onblur="this.style.borderColor='rgba(6,182,212,0.2)';this.style.boxShadow='none'">
           </div>
@@ -12860,7 +12861,7 @@
               color: #fff;
               font-size: 14px;
               text-align: center;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
           </div>
@@ -12876,7 +12877,7 @@
               font-size: 16px;
               font-weight: 600;
               text-align: center;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(245,158,11,0.5)';this.style.boxShadow='0 0 20px rgba(245,158,11,0.2)'" onblur="this.style.borderColor='rgba(245,158,11,0.2)';this.style.boxShadow='none'">
           </div>
@@ -12892,7 +12893,7 @@
               font-size: 16px;
               font-weight: 600;
               text-align: center;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(16,185,129,0.5)';this.style.boxShadow='0 0 20px rgba(16,185,129,0.2)'" onblur="this.style.borderColor='rgba(16,185,129,0.2)';this.style.boxShadow='none'">
           </div>
@@ -12914,7 +12915,7 @@
             border-radius: 12px;
             color: #fff;
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
           " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
         </div>
@@ -12937,7 +12938,7 @@
             font-size: 14px;
             resize: vertical;
             min-height: 80px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
             font-family: inherit;
           " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'"></textarea>
@@ -12954,7 +12955,7 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
           " onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#888'">Cancelar</button>
           <button type="submit" style="
             padding: 14px 32px;
@@ -12968,7 +12969,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
           " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(139,92,246,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(139,92,246,0.3)'">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -13059,7 +13060,7 @@
             border-radius: 12px;
             color: #fff;
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
           " onfocus="this.style.borderColor='rgba(16,185,129,0.5)';this.style.boxShadow='0 0 20px rgba(16,185,129,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
         </div>
@@ -13078,7 +13079,7 @@
               font-size: 16px;
               font-weight: 600;
               text-align: center;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(6,182,212,0.5)';this.style.boxShadow='0 0 20px rgba(6,182,212,0.2)'" onblur="this.style.borderColor='rgba(6,182,212,0.2)';this.style.boxShadow='none'">
           </div>
@@ -13093,7 +13094,7 @@
               color: #fff;
               font-size: 14px;
               text-align: center;
-              transition: all 0.3s ease;
+              transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(16,185,129,0.5)';this.style.boxShadow='0 0 20px rgba(16,185,129,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
           </div>
@@ -13117,7 +13118,7 @@
             font-size: 14px;
             resize: vertical;
             min-height: 80px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
             font-family: inherit;
           " onfocus="this.style.borderColor='rgba(16,185,129,0.5)';this.style.boxShadow='0 0 20px rgba(16,185,129,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'"></textarea>
@@ -13175,7 +13176,7 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
           " onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#888'">Cancelar</button>
           <button type="submit" style="
             padding: 14px 32px;
@@ -13189,7 +13190,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
           " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(16,185,129,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(16,185,129,0.3)'">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -13588,7 +13589,7 @@
       bottom: 0;
       width: 4px;
       background: rgba(139, 92, 246, 0.3);
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .chk-exec-item:hover {
       transform: translateX(4px);
@@ -13634,7 +13635,7 @@
       height: 16px;
       stroke: transparent;
       stroke-width: 3;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .chk-checkbox-wrapper input:checked ~ .chk-checkbox-custom {
       background: linear-gradient(135deg, #10b981, #059669);
@@ -13652,7 +13653,7 @@
       color: rgba(255, 255, 255, 0.85);
       font-weight: 500;
       line-height: 1.4;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .chk-exec-item.checked .chk-item-label {
       color: #10b981;
@@ -13701,7 +13702,7 @@
       color: #fff;
       font-size: 14px;
       resize: vertical;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .chk-exec-textarea:focus {
       outline: none;
@@ -13826,7 +13827,7 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .chk-btn-cancel:hover {
       background: rgba(239, 68, 68, 0.2);
@@ -13853,7 +13854,7 @@
       box-shadow: 
         0 8px 30px rgba(16, 185, 129, 0.35),
         inset 0 1px 1px rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .chk-btn-submit:hover {
       transform: translateY(-2px) scale(1.02);
@@ -14362,7 +14363,7 @@
             border-radius: 12px;
             color: #fff;
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
           " onfocus="this.style.borderColor='rgba(236,72,153,0.5)';this.style.boxShadow='0 0 20px rgba(236,72,153,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
         </div>
@@ -14379,7 +14380,7 @@
             color: #fff;
             font-size: 14px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
             appearance: none;
             background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%23a855f7\" stroke-width=\"2\"%3E%3Cpath d=\"M6 9l6 6 6-6\"/%3E%3C/svg%3E');
@@ -14505,7 +14506,7 @@
             font-size: 14px;
             resize: vertical;
             min-height: 180px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             outline: none;
             font-family: inherit;
             line-height: 1.6;
@@ -14523,7 +14524,7 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
           " onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#888'">Cancelar</button>
           <button class="btn-modal-save" onclick="saveReport()" style="
             padding: 14px 32px;
@@ -14537,7 +14538,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
+            transition: transform 0.15s, background 0.15s, border-color 0.15s;
             box-shadow: 0 4px 20px rgba(236, 72, 153, 0.3);
           " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(236,72,153,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(236,72,153,0.3)'">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
