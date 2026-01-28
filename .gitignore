@@ -25,7 +25,16 @@ DEPLOY_PUSH_NOTIFICATIONS.ps1
 
 # Backend - nao expor no GitHub publico
 backend/
+apps/
+apps/electron/
 apps/electron/backend/
+
+# Documentacao sensivel - contem senhas/configs
+ICARUS_DOCUMENTACAO_COMPLETA.txt
+PDF_ICARUS_DOCUMENTACAO.txt
+server_encoded.txt
+nginx-icarus.conf
+nginx.conf
 
 # Firebase/API Keys - NEVER commit
 firebase-config.json
