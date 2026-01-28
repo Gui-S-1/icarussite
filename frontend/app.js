@@ -15086,7 +15086,7 @@ function switchRelatoriosTab(tab) {
 async function loadNotas() {
   try {
     // Tentar carregar do backend primeiro
-    const response = await fetch(`${API_URL}/notas`, {
+    const response = await fetch(`${API_URL}/api/notas`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -15119,7 +15119,7 @@ async function saveNotas() {
   
   // Tentar sincronizar com o backend
   try {
-    const response = await fetch(`${API_URL}/notas/sync`, {
+    const response = await fetch(`${API_URL}/api/notas/sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -15212,7 +15212,7 @@ async function showGastosReport() {
   
   try {
     // Buscar estatÃ­sticas da API
-    const response = await fetch(`${API_URL}/notas/stats`, {
+    const response = await fetch(`${API_URL}/api/notas/stats`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -15897,7 +15897,7 @@ async function saveNota(event, editId) {
     let response;
     if (editId) {
       // Editar existente via API
-      response = await fetch(`${API_URL}/notas/${editId}`, {
+      response = await fetch(`${API_URL}/api/notas/${editId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -15907,7 +15907,7 @@ async function saveNota(event, editId) {
       });
     } else {
       // Nova entrada via API
-      response = await fetch(`${API_URL}/notas`, {
+      response = await fetch(`${API_URL}/api/notas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -16122,7 +16122,7 @@ async function markNotaAsPaid(id) {
     const item = notasData.items.find(i => i.id === id);
     if (!item) return;
     
-    const response = await fetch(`${API_URL}/notas/${id}`, {
+    const response = await fetch(`${API_URL}/api/notas/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -16168,7 +16168,7 @@ async function deleteNota(id) {
   if (!confirm('Tem certeza que deseja excluir esta entrada?')) return;
   
   try {
-    const response = await fetch(`${API_URL}/notas/${id}`, {
+    const response = await fetch(`${API_URL}/api/notas/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${state.token}`
