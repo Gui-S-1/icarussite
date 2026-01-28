@@ -6,10 +6,11 @@ const CONFIG_URL = 'https://raw.githubusercontent.com/Gui-S-1/icarussite/main/ap
 const SERVER_IP = 'http://159.203.8.237:3000'; // IP direto do servidor
 
 // URL padrão (fallback) - sempre via tunnel seguro
-let API_URL_DEFAULT = 'https://troops-minute-missed-alot.trycloudflare.com';
+let API_URL_DEFAULT = 'https://finances-absolute-caps-receipt.trycloudflare.com';
 
 // Limpar cache de URLs antigas que não funcionam mais
 const OLD_URLS_TO_CLEAR = [
+  'troops-minute-missed-alot.trycloudflare.com',
   'kong-dust-analysts-developers.trycloudflare.com',
   'kong-dust-analysts-developers'
 ];
