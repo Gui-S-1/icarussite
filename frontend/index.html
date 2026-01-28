@@ -11622,22 +11622,23 @@
           </div><!-- Fim forum-content -->
 
           <!-- ========== SEÇÃO NOTAS & BOLETOS ========== -->
+          <!-- Layout corrigido: botões lado a lado -->
           <div id="notas-content" style="display: none;">
             <!-- Header Notas -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px 20px 20px; flex-wrap: wrap; gap: 16px;">
-              <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 0 20px 20px 20px; gap: 16px;">
+              <div style="flex-shrink: 0;">
                 <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
                   Gestão Financeira
                 </h2>
                 <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">Notas fiscais e boletos de fornecedores</p>
               </div>
-              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <button onclick="showGastosReport()" style="padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+              <div style="display: flex; gap: 12px; flex-shrink: 0;">
+                <button onclick="showGastosReport()" style="padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); white-space: nowrap;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                   Gerar Relatório
                 </button>
-                <button onclick="openNovaNotaModal()" style="padding: 12px 24px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                <button onclick="openNovaNotaModal()" style="padding: 12px 24px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); white-space: nowrap;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                   Nova Entrada
                 </button>
