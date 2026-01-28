@@ -5207,6 +5207,293 @@ async function backupInventoryToTXT() {
   }
 }
 
+// ========================================
+// ALMOXARIFADO V2 - EMPRÉSTIMO DE ITENS RETORNÁVEIS
+// ========================================
+
+// Modal de empréstimo de item retornável
+function showLoanItemModal(itemId) {
+  const item = state.inventory.find(i => i.id === itemId);
+  if (!item) return;
+  
+  if (!item.is_returnable) {
+    showNotification('Este item não é retornável. Use saída normal.', 'warning');
+    return;
+  }
+  
+  const users = state.users || [];
+  
+  const modalHtml = `
+    <div id="modal-loan-item" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-loan-item')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+      <div class="modal" style="max-width: 420px; background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.98) 100%); border: 1px solid rgba(59,130,246,0.3); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+        
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.05)); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 16px; color: #fff;">Emprestar Item</h3>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">${escapeHtml(item.name)} • Disponível: ${item.quantity} ${item.unit}</p>
+          </div>
+          <button onclick="closeModal('modal-loan-item')" style="margin-left: auto; background: none; border: none; color: #64748b; cursor: pointer;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        
+        <form onsubmit="submitLoanItem(event, '${item.id}')" style="display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Quem está pegando? *</label>
+            <select id="loan-user" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
+              <option value="">Selecione...</option>
+              ${users.map(u => `<option value="${u.id}" data-name="${escapeHtml(u.name)}">${escapeHtml(u.name)}</option>`).join('')}
+              <option value="outro">Outro (digitar nome)</option>
+            </select>
+          </div>
+          
+          <div id="loan-custom-name-wrapper" style="display: none;">
+            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Nome da pessoa</label>
+            <input type="text" id="loan-custom-name" placeholder="Digite o nome..." style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Quantidade *</label>
+            <input type="number" id="loan-quantity" min="1" max="${item.quantity}" value="1" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div>
+            <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">Observação (opcional)</label>
+            <input type="text" id="loan-notes" placeholder="Motivo, local de uso..." style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <button type="button" onclick="closeModal('modal-loan-item')" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Cancelar</button>
+            <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600;">Emprestar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-loan-item');
+  if (existing) existing.remove();
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  
+  // Listener para mostrar campo de nome customizado
+  document.getElementById('loan-user').addEventListener('change', function() {
+    const wrapper = document.getElementById('loan-custom-name-wrapper');
+    wrapper.style.display = this.value === 'outro' ? 'block' : 'none';
+  });
+}
+
+// Enviar empréstimo
+async function submitLoanItem(event, itemId) {
+  event.preventDefault();
+  
+  const userSelect = document.getElementById('loan-user');
+  const customName = document.getElementById('loan-custom-name');
+  const quantity = parseInt(document.getElementById('loan-quantity').value);
+  const notes = document.getElementById('loan-notes').value;
+  
+  let userId = userSelect.value;
+  let userName = userSelect.options[userSelect.selectedIndex].dataset.name;
+  
+  if (userId === 'outro') {
+    userId = null;
+    userName = customName.value.trim();
+    if (!userName) {
+      showNotification('Digite o nome da pessoa', 'warning');
+      return;
+    }
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/${itemId}/loan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        user_name: userName,
+        quantity: quantity,
+        notes: notes
+      })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification(data.message || 'Item emprestado com sucesso!', 'success');
+      closeModal('modal-loan-item');
+      await loadInventory();
+    } else {
+      showNotification(data.error || 'Erro ao emprestar item', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao emprestar item:', error);
+    showNotification('Erro ao emprestar item', 'error');
+  }
+}
+
+// Modal de empréstimos pendentes de um item
+async function showItemLoans(itemId) {
+  const item = state.inventory.find(i => i.id === itemId);
+  if (!item) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/${itemId}/loans`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    const data = await response.json();
+    if (!data.ok) {
+      showNotification('Erro ao carregar empréstimos', 'error');
+      return;
+    }
+    
+    const loans = data.loans || [];
+    const pendingLoans = loans.filter(l => !l.returned_at);
+    const returnedLoans = loans.filter(l => l.returned_at).slice(0, 10); // Últimos 10
+    
+    const modalHtml = `
+      <div id="modal-item-loans" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-item-loans')" style="backdrop-filter: blur(8px); background: rgba(0,0,0,0.7);">
+        <div class="modal" style="max-width: 550px; max-height: 80vh; overflow-y: auto; background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.98) 100%); border: 1px solid rgba(59,130,246,0.3);">
+          
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; position: sticky; top: 0; background: inherit; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.05)); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 16px; color: #fff;">Empréstimos: ${escapeHtml(item.name)}</h3>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">${pendingLoans.length} em uso • ${returnedLoans.length} devolvidos</p>
+            </div>
+            <button onclick="closeModal('modal-item-loans')" style="margin-left: auto; background: none; border: none; color: #64748b; cursor: pointer;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          
+          ${pendingLoans.length > 0 ? `
+          <div style="margin-bottom: 20px;">
+            <h4 style="font-size: 12px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0; display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+              Pendentes de Devolução
+            </h4>
+            ${pendingLoans.map(loan => `
+              <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; background: rgba(245,158,11,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #f59e0b; font-size: 14px;">
+                  ${loan.quantity}
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 600; color: #fff; font-size: 14px;">${escapeHtml(loan.borrowed_by_name || 'Desconhecido')}</div>
+                  <div style="font-size: 11px; color: #64748b;">Pegou em ${new Date(loan.borrowed_at).toLocaleDateString('pt-BR')} às ${new Date(loan.borrowed_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</div>
+                  ${loan.notes ? `<div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">${escapeHtml(loan.notes)}</div>` : ''}
+                </div>
+                <button onclick="returnLoanItem('${loan.id}')" style="padding: 8px 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  Devolver
+                </button>
+              </div>
+            `).join('')}
+          </div>
+          ` : `
+          <div style="text-align: center; padding: 30px; color: #64748b;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 10px; opacity: 0.5;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+            <p style="margin: 0;">Nenhum empréstimo pendente</p>
+          </div>
+          `}
+          
+          ${returnedLoans.length > 0 ? `
+          <div>
+            <h4 style="font-size: 12px; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0; display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+              Histórico de Devoluções
+            </h4>
+            ${returnedLoans.map(loan => `
+              <div style="background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.1); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; background: rgba(16,185,129,0.2); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #10b981;">
+                  ${loan.quantity}
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 13px; color: #fff;">${escapeHtml(loan.borrowed_by_name || 'Desconhecido')}</div>
+                  <div style="font-size: 10px; color: #64748b;">Devolvido em ${new Date(loan.returned_at).toLocaleDateString('pt-BR')}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+          
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <button onclick="closeModal('modal-item-loans')" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Fechar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const existing = document.getElementById('modal-item-loans');
+    if (existing) existing.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+  } catch (error) {
+    console.error('Erro ao carregar empréstimos:', error);
+    showNotification('Erro ao carregar empréstimos', 'error');
+  }
+}
+
+// Devolver item emprestado
+async function returnLoanItem(loanId) {
+  if (!confirm('Confirmar devolução deste item?')) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/inventory/loans/${loanId}/return`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({})
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification(data.message || 'Item devolvido ao estoque!', 'success');
+      closeModal('modal-item-loans');
+      await loadInventory();
+    } else {
+      showNotification(data.error || 'Erro ao devolver item', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao devolver item:', error);
+    showNotification('Erro ao devolver item', 'error');
+  }
+}
+
+// Marcar item como retornável/não-retornável
+async function toggleItemReturnable(itemId, isReturnable) {
+  try {
+    const response = await fetch(`${API_URL}/inventory/${itemId}/returnable`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({ is_returnable: isReturnable })
+    });
+    
+    const data = await response.json();
+    if (data.ok) {
+      showNotification(isReturnable ? 'Item marcado como retornável' : 'Item marcado como não-retornável', 'success');
+      await loadInventory();
+    } else {
+      showNotification(data.error || 'Erro ao atualizar item', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar item:', error);
+    showNotification('Erro ao atualizar item', 'error');
+  }
+}
+
 // Compras Module
 async function loadPurchases() {
   try {
@@ -14905,6 +15192,313 @@ function updateNotasStats() {
   }
 }
 
+// ============================================
+// RELATÓRIO DE GASTOS DE MANUTENÇÃO
+// ============================================
+
+// Mostrar modal de relatório de gastos
+async function showGastosReport() {
+  // Mostrar loading
+  const loadingHtml = `
+    <div id="modal-gastos-report" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="text-align: center; color: #fff;">
+        <div style="width: 50px; height: 50px; border: 3px solid rgba(16, 185, 129, 0.3); border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+        <p>Gerando relatório...</p>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', loadingHtml);
+  
+  try {
+    // Buscar estatísticas da API
+    const response = await fetch(`${API_BASE_URL}/notas/stats`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    
+    if (!response.ok) throw new Error('Erro ao carregar estatísticas');
+    
+    const stats = await response.json();
+    
+    // Fechar loading e mostrar relatório
+    const loadingModal = document.getElementById('modal-gastos-report');
+    if (loadingModal) loadingModal.remove();
+    
+    renderGastosReport(stats);
+    
+  } catch (e) {
+    console.error('Erro ao gerar relatório:', e);
+    
+    // Calcular localmente como fallback
+    const stats = calculateLocalStats();
+    
+    const loadingModal = document.getElementById('modal-gastos-report');
+    if (loadingModal) loadingModal.remove();
+    
+    renderGastosReport(stats);
+  }
+}
+
+// Calcular estatísticas localmente (fallback)
+function calculateLocalStats() {
+  const items = notasData.items || [];
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  let totalGeral = 0;
+  let totalPago = 0;
+  let totalPendente = 0;
+  let countPago = 0;
+  let countPendente = 0;
+  const bySetor = {};
+  const byMonth = {};
+  const byEmpresa = {};
+  
+  items.forEach(item => {
+    const valor = parseFloat(item.valor_boleto || item.valor_nota || 0);
+    totalGeral += valor;
+    
+    if (item.status === 'pago') {
+      totalPago += valor;
+      countPago++;
+    } else {
+      totalPendente += valor;
+      countPendente++;
+    }
+    
+    // Por setor
+    const setor = item.setor || 'Não informado';
+    if (!bySetor[setor]) bySetor[setor] = { total: 0, count: 0 };
+    bySetor[setor].total += valor;
+    bySetor[setor].count++;
+    
+    // Por mês
+    const created = new Date(item.created_at);
+    const monthKey = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}`;
+    if (!byMonth[monthKey]) byMonth[monthKey] = 0;
+    byMonth[monthKey] += valor;
+    
+    // Por empresa
+    const empresa = item.empresa || 'Não informado';
+    if (!byEmpresa[empresa]) byEmpresa[empresa] = { total: 0, count: 0 };
+    byEmpresa[empresa].total += valor;
+    byEmpresa[empresa].count++;
+  });
+  
+  // Converter para arrays
+  const setorArray = Object.entries(bySetor).map(([setor, data]) => ({
+    setor,
+    total: data.total,
+    count: data.count
+  })).sort((a, b) => b.total - a.total);
+  
+  const monthArray = Object.entries(byMonth).map(([month, total]) => ({
+    month,
+    total
+  })).sort((a, b) => a.month.localeCompare(b.month)).slice(-6);
+  
+  const empresaArray = Object.entries(byEmpresa).map(([empresa, data]) => ({
+    empresa,
+    total: data.total,
+    count: data.count
+  })).sort((a, b) => b.total - a.total).slice(0, 10);
+  
+  return {
+    total_geral: totalGeral,
+    total_pago: totalPago,
+    total_pendente: totalPendente,
+    count_pago: countPago,
+    count_pendente: countPendente,
+    by_setor: setorArray,
+    by_month: monthArray,
+    top_empresas: empresaArray
+  };
+}
+
+// Renderizar modal de relatório
+function renderGastosReport(stats) {
+  const formatCurrency = (val) => 'R$ ' + parseFloat(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  
+  // Calcular maior valor para escala das barras
+  const maxSetor = Math.max(...(stats.by_setor || []).map(s => s.total), 1);
+  const maxMonth = Math.max(...(stats.by_month || []).map(m => m.total), 1);
+  
+  const modalHtml = `
+    <div id="modal-gastos-report" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto;">
+      <div style="background: linear-gradient(145deg, rgba(15, 20, 25, 0.98), rgba(10, 15, 20, 0.98)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 24px; max-width: 900px; width: 100%; margin: 20px 0; box-shadow: 0 30px 100px rgba(16, 185, 129, 0.15);">
+        
+        <!-- Header -->
+        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10; border-radius: 24px 24px 0 0;">
+          <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          </div>
+          <div style="flex: 1;">
+            <h2 style="margin: 0; font-size: 22px; color: #fff; font-weight: 700;">Relatório de Gastos</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Controle de manutenção e despesas</p>
+          </div>
+          <button onclick="exportGastosReportPDF()" style="padding: 12px 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; color: #ef4444; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Exportar PDF
+          </button>
+          <button onclick="closeGastosReport()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; width: 44px; height: 44px; color: #888; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+        </div>
+        
+        <div style="padding: 28px;">
+          
+          <!-- Cards Resumo -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px;">
+            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 20px; text-align: center;">
+              <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Total Geral</p>
+              <p style="font-size: 28px; font-weight: 800; color: #10b981; margin: 0;">${formatCurrency(stats.total_geral)}</p>
+            </div>
+            <div style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05)); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 20px; text-align: center;">
+              <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Total Pago</p>
+              <p style="font-size: 28px; font-weight: 800; color: #22c55e; margin: 0;">${formatCurrency(stats.total_pago)}</p>
+              <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;">${stats.count_pago || 0} itens</p>
+            </div>
+            <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 20px; text-align: center;">
+              <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Pendente</p>
+              <p style="font-size: 28px; font-weight: 800; color: #f59e0b; margin: 0;">${formatCurrency(stats.total_pendente)}</p>
+              <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;">${stats.count_pendente || 0} itens</p>
+            </div>
+          </div>
+          
+          <!-- Gráfico por Mês -->
+          <div style="margin-bottom: 32px;">
+            <h3 style="font-size: 14px; color: #fff; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Gastos por Mês (Últimos 6 meses)
+            </h3>
+            <div style="display: flex; gap: 12px; align-items: flex-end; height: 150px; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+              ${(stats.by_month || []).map(m => {
+                const height = maxMonth > 0 ? (m.total / maxMonth * 100) : 0;
+                const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                const [year, month] = m.month.split('-');
+                const monthLabel = monthNames[parseInt(month) - 1] + '/' + year.slice(2);
+                return `
+                  <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <div style="width: 100%; max-width: 60px; height: ${height}%; min-height: 4px; background: linear-gradient(180deg, #10b981, #059669); border-radius: 6px 6px 2px 2px; position: relative;">
+                      <span style="position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.6); white-space: nowrap;">${formatCurrency(m.total)}</span>
+                    </div>
+                    <span style="font-size: 11px; color: rgba(255,255,255,0.5);">${monthLabel}</span>
+                  </div>
+                `;
+              }).join('')}
+              ${(stats.by_month || []).length === 0 ? '<p style="color: rgba(255,255,255,0.4); text-align: center; width: 100%;">Sem dados</p>' : ''}
+            </div>
+          </div>
+          
+          <!-- Gastos por Setor -->
+          <div style="margin-bottom: 32px;">
+            <h3 style="font-size: 14px; color: #fff; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Gastos por Setor
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              ${(stats.by_setor || []).map(s => {
+                const width = maxSetor > 0 ? (s.total / maxSetor * 100) : 0;
+                return `
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="width: 120px; font-size: 12px; color: rgba(255,255,255,0.7); flex-shrink: 0;">${escapeHtml(s.setor)}</span>
+                    <div style="flex: 1; height: 24px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden;">
+                      <div style="width: ${width}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #7c3aed); display: flex; align-items: center; padding-left: 8px;">
+                        ${width > 20 ? `<span style="font-size: 11px; color: #fff; font-weight: 500;">${formatCurrency(s.total)}</span>` : ''}
+                      </div>
+                    </div>
+                    ${width <= 20 ? `<span style="font-size: 11px; color: rgba(255,255,255,0.5);">${formatCurrency(s.total)}</span>` : ''}
+                    <span style="font-size: 11px; color: rgba(255,255,255,0.4); width: 50px; text-align: right;">${s.count} itens</span>
+                  </div>
+                `;
+              }).join('')}
+              ${(stats.by_setor || []).length === 0 ? '<p style="color: rgba(255,255,255,0.4); text-align: center;">Sem dados</p>' : ''}
+            </div>
+          </div>
+          
+          <!-- Top Fornecedores -->
+          <div>
+            <h3 style="font-size: 14px; color: #fff; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M21 12H3M12 3v18"/></svg>
+              Top 10 Fornecedores
+            </h3>
+            <div style="background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background: rgba(255,255,255,0.03);">
+                    <th style="text-align: left; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">#</th>
+                    <th style="text-align: left; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Fornecedor</th>
+                    <th style="text-align: right; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Qtd</th>
+                    <th style="text-align: right; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(stats.top_empresas || []).map((e, i) => `
+                    <tr style="border-top: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px 16px; font-size: 13px; color: rgba(255,255,255,0.4);">${i + 1}</td>
+                      <td style="padding: 12px 16px; font-size: 13px; color: #fff;">${escapeHtml(e.empresa)}</td>
+                      <td style="padding: 12px 16px; font-size: 13px; color: rgba(255,255,255,0.6); text-align: right;">${e.count}</td>
+                      <td style="padding: 12px 16px; font-size: 14px; color: #f59e0b; font-weight: 600; text-align: right;">${formatCurrency(e.total)}</td>
+                    </tr>
+                  `).join('')}
+                  ${(stats.top_empresas || []).length === 0 ? '<tr><td colspan="4" style="padding: 20px; text-align: center; color: rgba(255,255,255,0.4);">Sem dados</td></tr>' : ''}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center;">
+            <p style="font-size: 11px; color: rgba(255,255,255,0.4);">Relatório gerado em ${new Date().toLocaleString('pt-BR')} • ICARUS Sistema de Manutenção</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeGastosReport() {
+  const modal = document.getElementById('modal-gastos-report');
+  if (modal) modal.remove();
+}
+
+// Exportar relatório para PDF (usando a mesma estrutura HTML)
+function exportGastosReportPDF() {
+  showNotification('Gerando PDF... Use Ctrl+P para imprimir', 'info');
+  
+  const modal = document.getElementById('modal-gastos-report');
+  if (modal) {
+    // Abrir em nova janela para impressão
+    const content = modal.querySelector('div > div').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Relatório de Gastos - ICARUS</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Inter', sans-serif; 
+            background: #1a1a2e; 
+            color: #fff; 
+            padding: 20px;
+          }
+          @media print {
+            body { background: #fff; color: #000; }
+            * { color: #000 !important; background: transparent !important; border-color: #ddd !important; }
+          }
+        </style>
+      </head>
+      <body>${content}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 500);
+  }
+}
+
 // Renderizar lista de notas
 function renderNotas() {
   const container = document.getElementById('notas-list');
@@ -15279,8 +15873,8 @@ function smartFillNota(empresa) {
   }
 }
 
-// Salvar nota
-function saveNota(event, editId) {
+// Salvar nota (via API)
+async function saveNota(event, editId) {
   event.preventDefault();
   
   const empresa = document.getElementById('nota-empresa').value.trim();
@@ -15298,60 +15892,98 @@ function saveNota(event, editId) {
     return;
   }
   
-  if (editId) {
-    // Editar existente
-    const idx = notasData.items.findIndex(i => i.id === editId);
-    if (idx > -1) {
-      notasData.items[idx] = {
-        ...notasData.items[idx],
-        empresa,
-        descricao,
-        responsavel,
-        setor,
-        valor_nota: valorNota,
-        valor_boleto: valorBoleto,
-        data_emissao: dataEmissao,
-        data_vencimento: dataVencimento,
-        status,
-        nota_anexo: tempNotaAnexo || notasData.items[idx].nota_anexo,
-        boleto_anexo: tempBoletoAnexo || notasData.items[idx].boleto_anexo,
-        updated_at: new Date().toISOString()
-      };
+  const notaData = {
+    empresa,
+    descricao,
+    responsavel,
+    setor,
+    valor_nota: valorNota,
+    valor_boleto: valorBoleto,
+    data_emissao: dataEmissao || null,
+    data_vencimento: dataVencimento || null,
+    status,
+    nota_anexo: tempNotaAnexo || (editId ? notasData.items.find(i => i.id === editId)?.nota_anexo : null),
+    boleto_anexo: tempBoletoAnexo || (editId ? notasData.items.find(i => i.id === editId)?.boleto_anexo : null)
+  };
+  
+  try {
+    let response;
+    if (editId) {
+      // Editar existente via API
+      response = await fetch(`${API_BASE_URL}/notas/${editId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.token}`
+        },
+        body: JSON.stringify(notaData)
+      });
+    } else {
+      // Nova entrada via API
+      response = await fetch(`${API_BASE_URL}/notas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.token}`
+        },
+        body: JSON.stringify(notaData)
+      });
     }
-  } else {
-    // Nova entrada
-    const newItem = {
-      id: 'nota_' + Date.now(),
-      empresa,
-      descricao,
-      responsavel,
-      setor,
-      valor_nota: valorNota,
-      valor_boleto: valorBoleto,
-      data_emissao: dataEmissao,
-      data_vencimento: dataVencimento,
-      status,
-      nota_anexo: tempNotaAnexo,
-      boleto_anexo: tempBoletoAnexo,
-      created_by: state.user?.id,
-      created_by_name: state.user?.name,
-      created_at: new Date().toISOString(),
-      tenant_id: state.user?.tenant_id
-    };
     
-    notasData.items.unshift(newItem);
+    if (response.ok) {
+      const result = await response.json();
+      
+      if (editId) {
+        // Atualizar no array local
+        const idx = notasData.items.findIndex(i => i.id === editId);
+        if (idx > -1) {
+          notasData.items[idx] = result.nota;
+        }
+      } else {
+        // Adicionar ao array local
+        notasData.items.unshift(result.nota);
+      }
+      
+      renderNotas();
+      updateNotasStats();
+      closeNovaNotaModal();
+      showNotification(editId ? 'Entrada atualizada!' : 'Nova entrada cadastrada!', 'success');
+    } else {
+      const error = await response.json();
+      showNotification(error.error || 'Erro ao salvar', 'error');
+    }
+  } catch (e) {
+    console.error('Erro ao salvar nota:', e);
+    // Fallback: salvar localmente
+    if (editId) {
+      const idx = notasData.items.findIndex(i => i.id === editId);
+      if (idx > -1) {
+        notasData.items[idx] = { ...notasData.items[idx], ...notaData, updated_at: new Date().toISOString() };
+      }
+    } else {
+      const newItem = {
+        id: 'nota_' + Date.now(),
+        ...notaData,
+        created_by: state.user?.id,
+        created_by_name: state.user?.name,
+        created_at: new Date().toISOString(),
+        tenant_id: state.user?.tenant_id
+      };
+      notasData.items.unshift(newItem);
+    }
+    
+    // Salvar local como fallback
+    localStorage.setItem('icarus_notas_' + state.user?.tenant_id, JSON.stringify(notasData.items));
+    
+    renderNotas();
+    updateNotasStats();
+    closeNovaNotaModal();
+    showNotification(editId ? 'Salvo localmente (offline)' : 'Cadastrado localmente (offline)', 'warning');
   }
   
   // Limpar temporários
   tempNotaAnexo = null;
   tempBoletoAnexo = null;
-  
-  saveNotas();
-  renderNotas();
-  updateNotasStats();
-  closeNovaNotaModal();
-  
-  showNotification(editId ? 'Entrada atualizada!' : 'Nova entrada cadastrada!', 'success');
 }
 
 // Visualizar nota
@@ -15497,28 +16129,83 @@ function closeViewNotaModal() {
   if (modal) modal.remove();
 }
 
-function markNotaAsPaid(id) {
-  const idx = notasData.items.findIndex(i => i.id === id);
-  if (idx > -1) {
-    notasData.items[idx].status = 'pago';
-    notasData.items[idx].data_pagamento = new Date().toISOString();
-    saveNotas();
-    renderNotas();
-    updateNotasStats();
-    closeViewNotaModal();
-    showNotification('Marcado como pago!', 'success');
+// Marcar nota como paga (via API)
+async function markNotaAsPaid(id) {
+  try {
+    const item = notasData.items.find(i => i.id === id);
+    if (!item) return;
+    
+    const response = await fetch(`${API_BASE_URL}/notas/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({
+        ...item,
+        status: 'pago',
+        data_pagamento: new Date().toISOString()
+      })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      const idx = notasData.items.findIndex(i => i.id === id);
+      if (idx > -1) {
+        notasData.items[idx] = result.nota;
+      }
+      renderNotas();
+      updateNotasStats();
+      closeViewNotaModal();
+      showNotification('Marcado como pago!', 'success');
+    } else {
+      throw new Error('Erro ao atualizar');
+    }
+  } catch (e) {
+    // Fallback local
+    const idx = notasData.items.findIndex(i => i.id === id);
+    if (idx > -1) {
+      notasData.items[idx].status = 'pago';
+      notasData.items[idx].data_pagamento = new Date().toISOString();
+      localStorage.setItem('icarus_notas_' + state.user?.tenant_id, JSON.stringify(notasData.items));
+      renderNotas();
+      updateNotasStats();
+      closeViewNotaModal();
+      showNotification('Marcado como pago (offline)', 'warning');
+    }
   }
 }
 
-function deleteNota(id) {
+// Excluir nota (via API)
+async function deleteNota(id) {
   if (!confirm('Tem certeza que deseja excluir esta entrada?')) return;
   
-  notasData.items = notasData.items.filter(i => i.id !== id);
-  saveNotas();
-  renderNotas();
-  updateNotasStats();
-  closeViewNotaModal();
-  showNotification('Entrada excluída', 'success');
+  try {
+    const response = await fetch(`${API_BASE_URL}/notas/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${state.token}`
+      }
+    });
+    
+    if (response.ok) {
+      notasData.items = notasData.items.filter(i => i.id !== id);
+      renderNotas();
+      updateNotasStats();
+      closeViewNotaModal();
+      showNotification('Entrada excluída', 'success');
+    } else {
+      throw new Error('Erro ao excluir');
+    }
+  } catch (e) {
+    // Fallback local
+    notasData.items = notasData.items.filter(i => i.id !== id);
+    localStorage.setItem('icarus_notas_' + state.user?.tenant_id, JSON.stringify(notasData.items));
+    renderNotas();
+    updateNotasStats();
+    closeViewNotaModal();
+    showNotification('Excluído localmente', 'warning');
+  }
 }
 
 // ============================================

@@ -1408,154 +1408,6 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
 
   /* ========================================
-     GRÁFICO DE TEMPERATURA MOBILE
-     ======================================== */
-  .water-main-chart {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 16px !important;
-    padding: 16px 12px !important;
-    margin-top: 12px !important;
-    overflow-x: auto !important;
-    min-height: 280px !important;
-  }
-
-  .water-main-chart > div {
-    min-width: 100% !important;
-  }
-
-  .water-main-chart svg {
-    min-width: 400px !important;
-    height: auto !important;
-    touch-action: pan-x !important;
-  }
-
-  /* Legenda do gráfico de temperatura */
-  .water-main-chart > div > div:first-child {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    gap: 12px !important;
-    padding: 10px 0 !important;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(239, 68, 68, 0.06)) !important;
-    border-radius: 10px !important;
-    margin-bottom: 12px !important;
-  }
-
-  .water-main-chart > div > div:first-child > div {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    padding: 4px 10px !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-radius: 20px !important;
-  }
-
-  .water-main-chart > div > div:first-child > div > div {
-    width: 12px !important;
-    height: 12px !important;
-    border-radius: 50% !important;
-    box-shadow: 0 0 8px currentColor !important;
-  }
-
-  /* Container do SVG com scroll horizontal suave */
-  .water-main-chart > div > div:last-child {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(245, 158, 11, 0.3) transparent !important;
-    padding-bottom: 8px !important;
-  }
-
-  .water-main-chart > div > div:last-child::-webkit-scrollbar {
-    height: 6px !important;
-  }
-
-  .water-main-chart > div > div:last-child::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-radius: 3px !important;
-  }
-
-  .water-main-chart > div > div:last-child::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #f59e0b, #ef4444) !important;
-    border-radius: 3px !important;
-  }
-
-  /* Toggle de tipo de gráfico mobile */
-  .water-chart-toggle {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-    justify-content: center !important;
-    margin-bottom: 12px !important;
-  }
-
-  .water-chart-toggle-btn {
-    flex: 1 !important;
-    min-width: 100px !important;
-    padding: 10px 14px !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    border-radius: 10px !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: var(--text-secondary) !important;
-    transition: all 0.3s !important;
-  }
-
-  .water-chart-toggle-btn.active {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)) !important;
-    border-color: rgba(59, 130, 246, 0.4) !important;
-    color: #60a5fa !important;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2) !important;
-  }
-
-  .water-chart-toggle-btn:active {
-    transform: scale(0.97) !important;
-  }
-
-  /* Card de água premium mobile */
-  .water-chart-card {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 18px !important;
-    padding: 16px !important;
-    margin-bottom: 16px !important;
-  }
-
-  /* Legenda do gráfico de água */
-  .chart-legend {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    justify-content: center !important;
-    margin-bottom: 12px !important;
-    padding: 10px !important;
-    background: rgba(255, 255, 255, 0.03) !important;
-    border-radius: 10px !important;
-  }
-
-  .legend-item {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    font-size: 11px !important;
-    color: var(--text-secondary) !important;
-    padding: 4px 10px !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-radius: 20px !important;
-  }
-
-  .legend-dot {
-    width: 10px !important;
-    height: 10px !important;
-    border-radius: 50% !important;
-    flex-shrink: 0 !important;
-  }
-
-  /* ========================================
      AUTO REFRESH INDICATOR
      ======================================== */
   #auto-refresh-indicator {
@@ -3645,36 +3497,278 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   }
   
   /* ========================================
-     DROPDOWN DE SETOR/LOCAL - MOBILE
+     NOTAS & BOLETOS - MOBILE RESPONSIVO
      ======================================== */
-  #os-sector-dropdown {
-    width: 100%;
+  
+  /* Container principal das notas */
+  #notas-content {
+    padding-bottom: 80px; /* Espaço para bottom nav */
   }
   
-  #os-sector-btn {
+  /* Header das notas - mobile */
+  #notas-content > div:first-child {
     padding: 16px !important;
-    font-size: 15px !important;
-    border-radius: 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
   }
   
-  #os-sector-options {
-    max-height: 220px !important;
-    border-radius: 14px !important;
+  #notas-content > div:first-child > div:first-child h2 {
+    font-size: 18px !important;
   }
   
-  #os-sector-options .sector-option,
-  #os-sector-options .sector-group > div:first-child {
-    padding: 14px 18px !important;
-    font-size: 15px !important;
+  #notas-content > div:first-child > div:first-child p {
+    font-size: 12px !important;
   }
   
-  #os-sector-options .sector-group .sector-option {
-    padding: 12px 18px 12px 40px !important;
+  /* Botões do header de notas */
+  #notas-content > div:first-child > div:last-child {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  #notas-content > div:first-child > div:last-child button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  /* Stats cards das notas */
+  #notas-content > div:nth-child(2) {
+    padding: 0 16px 16px 16px !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  
+  #notas-content > div:nth-child(2) > div {
+    padding: 14px !important;
+  }
+  
+  #notas-content > div:nth-child(2) > div p:first-child {
+    font-size: 10px !important;
+  }
+  
+  #notas-content > div:nth-child(2) > div p:last-child {
+    font-size: 22px !important;
+  }
+  
+  /* Filtros das notas */
+  #notas-content > div:nth-child(3) {
+    padding: 0 16px 12px 16px !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  
+  #notas-content > div:nth-child(3) button.notas-filter {
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+    flex: 0 0 auto !important;
+  }
+  
+  #notas-content > div:nth-child(3) > div:last-child {
+    min-width: 100% !important;
+    margin-top: 8px !important;
+  }
+  
+  #notas-content > div:nth-child(3) input {
+    padding: 12px 14px !important;
+    font-size: 13px !important;
+  }
+  
+  /* Lista de notas */
+  #notas-list {
+    padding: 0 16px !important;
+  }
+  
+  /* Card de nota individual */
+  .nota-card {
+    padding: 14px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  
+  .nota-card > div:first-child {
+    display: none !important; /* Esconder ícone grande no mobile */
+  }
+  
+  .nota-card > div:nth-child(2) h3 {
     font-size: 14px !important;
   }
-}
-
-/* ========================================
+  
+  .nota-card > div:nth-child(2) > div:first-child {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  
+  .nota-card > div:nth-child(2) > div:first-child span {
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+  }
+  
+  .nota-card > div:nth-child(2) p {
+    font-size: 12px !important;
+    -webkit-line-clamp: 1 !important;
+  }
+  
+  .nota-card > div:nth-child(2) > div:last-child {
+    font-size: 11px !important;
+  }
+  
+  /* Valor da nota no mobile */
+  .nota-card > div:last-child {
+    text-align: left !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(255,255,255,0.08) !important;
+  }
+  
+  .nota-card > div:last-child p:first-child {
+    font-size: 18px !important;
+  }
+  
+  .nota-card > div:last-child p:last-child {
+    margin: 0 !important;
+  }
+  
+  /* Modal de visualização de nota - prevenir fechar ao ler */
+  #modal-view-nota > div {
+    max-height: 85vh !important;
+    margin: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  #modal-view-nota > div > div:first-child {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+  }
+  
+  /* Modal de nova nota - mobile */
+  #modal-nova-nota > div {
+    max-height: 95vh !important;
+    margin: 10px !important;
+    border-radius: 20px !important;
+  }
+  
+  #modal-nova-nota form {
+    padding: 16px !important;
+  }
+  
+  #modal-nova-nota form > div {
+    margin-bottom: 16px !important;
+  }
+  
+  #modal-nova-nota form [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  
+  #modal-nova-nota form input,
+  #modal-nova-nota form select,
+  #modal-nova-nota form textarea {
+    padding: 12px 14px !important;
+    font-size: 14px !important;
+  }
+  
+  /* Upload de anexos mobile */
+  #modal-nova-nota form label[style*="padding: 24px"] {
+    padding: 16px !important;
+  }
+  
+  #modal-nova-nota form label[style*="padding: 24px"] svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  
+  /* Botões de status mobile */
+  #modal-nova-nota form [style*="display: flex; gap: 12px; flex-wrap: wrap"] {
+    gap: 8px !important;
+  }
+  
+  #modal-nova-nota form [style*="display: flex; gap: 12px; flex-wrap: wrap"] label {
+    flex: 1 !important;
+    min-width: 90px !important;
+    padding: 10px 14px !important;
+    justify-content: center !important;
+  }
+  
+  /* Botões de ação do modal */
+  #modal-nova-nota form > div:last-child {
+    flex-direction: column-reverse !important;
+  }
+  
+  #modal-nova-nota form > div:last-child button {
+    flex: unset !important;
+    width: 100% !important;
+    padding: 14px !important;
+  }
+  
+  /* Modal de relatório de gastos */
+  #modal-gastos-report > div {
+    margin: 10px !important;
+    max-height: 95vh !important;
+  }
+  
+  #modal-gastos-report > div > div:first-child {
+    padding: 16px !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  
+  #modal-gastos-report > div > div:first-child > div:first-child {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  
+  #modal-gastos-report > div > div:first-child h2 {
+    font-size: 18px !important;
+  }
+  
+  #modal-gastos-report > div > div:first-child button:first-of-type {
+    display: none !important; /* Esconder exportar PDF em mobile */
+  }
+  
+  #modal-gastos-report [style*="padding: 28px"] {
+    padding: 16px !important;
+  }
+  
+  /* Cards resumo do relatório */
+  #modal-gastos-report [style*="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  #modal-gastos-report [style*="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))"] > div {
+    padding: 14px !important;
+  }
+  
+  #modal-gastos-report [style*="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))"] > div p:last-of-type:not([style*="font-size: 11px"]) {
+    font-size: 22px !important;
+  }
+  
+  /* Gráfico de barras mobile */
+  #modal-gastos-report [style*="height: 150px"] {
+    height: 120px !important;
+    padding: 12px !important;
+    overflow-x: auto !important;
+  }
+  
+  /* Tabela de fornecedores mobile */
+  #modal-gastos-report table {
+    font-size: 12px !important;
+  }
+  
+  #modal-gastos-report table th,
+  #modal-gastos-report table td {
+    padding: 10px 8px !important;
+  }
+  
+  #modal-gastos-report table th:first-child,
+  #modal-gastos-report table td:first-child {
+    display: none !important; /* Esconder coluna # */
+  }
    PRINT STYLES
    ======================================== */
 @media print {
@@ -3693,153 +3787,5 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   .btn-small,
   .task-actions {
     display: none;
-  }
-}
-
-/* ========================================
-   RELATÓRIOS - TABS FÓRUM / NOTAS & BOLETOS
-   ======================================== */
-@media (max-width: 768px) {
-  .relatorios-tabs {
-    display: flex !important;
-    gap: 6px !important;
-    padding: 0 12px !important;
-    margin-bottom: 12px !important;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .relatorios-tabs button,
-  .relatorios-tab,
-  #tab-forum,
-  #tab-notas {
-    padding: 10px 14px !important;
-    font-size: 12px !important;
-    border-radius: 10px !important;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  #tab-notas {
-    display: flex !important;
-  }
-
-  /* Seção Notas & Boletos Mobile */
-  #notas-content {
-    padding: 0 !important;
-  }
-
-  #notas-content > div:first-child {
-    padding: 0 12px 16px 12px !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-  }
-
-  #notas-content h2 {
-    font-size: 18px !important;
-  }
-
-  /* Stats Cards Mobile */
-  #notas-content > div:nth-child(2) {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-    padding: 0 12px 16px 12px !important;
-  }
-
-  #notas-content > div:nth-child(2) > div {
-    padding: 14px !important;
-    border-radius: 12px !important;
-  }
-
-  #notas-content > div:nth-child(2) p:last-child {
-    font-size: 22px !important;
-  }
-
-  /* Filtros Notas Mobile */
-  #notas-content > div:nth-child(3) {
-    padding: 0 12px 12px 12px !important;
-    gap: 6px !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .notas-filter {
-    padding: 8px 14px !important;
-    font-size: 12px !important;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  #notas-search {
-    min-width: 150px !important;
-  }
-
-  /* Lista de Notas Mobile */
-  #notas-list {
-    padding: 0 12px !important;
-  }
-
-  .nota-card {
-    flex-direction: column !important;
-    gap: 12px !important;
-    padding: 16px !important;
-  }
-
-  .nota-card > div:first-child {
-    width: 48px !important;
-    height: 48px !important;
-  }
-
-  .nota-card > div:last-child {
-    text-align: left !important;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-
-  .nota-card > div:last-child p:first-child {
-    font-size: 18px !important;
-  }
-
-  /* Modal Nova Nota Mobile */
-  #modal-nova-nota > div {
-    max-height: 100vh !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-  }
-
-  #modal-nova-nota form > div > div {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Modal View Nota Mobile */
-  #modal-view-nota > div {
-    max-height: 100vh !important;
-    border-radius: 16px 16px 0 0 !important;
-    margin-top: auto !important;
-    max-width: 100% !important;
-  }
-
-  #modal-view-nota > div > div:last-child {
-    flex-direction: column !important;
-  }
-
-  #modal-view-nota > div > div:last-child button {
-    width: 100% !important;
-  }
-}
-
-/* Mobile muito pequeno */
-@media (max-width: 400px) {
-  #notas-content > div:nth-child(2) {
-    grid-template-columns: 1fr !important;
-  }
-
-  .relatorios-tabs button {
-    padding: 8px 12px !important;
-    font-size: 11px !important;
   }
 }
