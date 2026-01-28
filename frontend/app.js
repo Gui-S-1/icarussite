@@ -15050,6 +15050,9 @@ function switchRelatoriosTab(tab) {
   const tabNotas = document.getElementById('tab-notas');
   const forumContent = document.getElementById('forum-content');
   const notasContent = document.getElementById('notas-content');
+  const forumHeader = document.querySelector('.forum-header');
+  const writeActions = document.getElementById('relatorios-write-actions');
+  const forumStats = document.querySelector('.forum-stats');
   
   if (tab === 'forum') {
     tabForum.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
@@ -15060,6 +15063,10 @@ function switchRelatoriosTab(tab) {
     tabNotas.style.border = '1px solid rgba(255,255,255,0.1)';
     forumContent.style.display = 'block';
     notasContent.style.display = 'none';
+    // Mostrar header do fórum, botão novo post e stats
+    if (forumHeader) forumHeader.style.display = 'flex';
+    if (writeActions && state.canWriteRelatorios) writeActions.style.display = 'flex';
+    if (forumStats) forumStats.style.display = 'flex';
   } else {
     tabNotas.style.background = 'linear-gradient(135deg, #10b981, #059669)';
     tabNotas.style.color = '#fff';
@@ -15069,6 +15076,8 @@ function switchRelatoriosTab(tab) {
     tabForum.style.border = '1px solid rgba(255,255,255,0.1)';
     forumContent.style.display = 'none';
     notasContent.style.display = 'block';
+    // Esconder header do fórum, botão novo post e stats na aba Notas
+    if (forumHeader) forumHeader.style.display = 'none';
     loadNotas();
   }
 }
