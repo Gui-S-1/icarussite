@@ -397,43 +397,13 @@ async function initDb() {
       title TEXT NOT NULL,
       content TEXT NOT NULL,
       category TEXT,
-      visibility TEXT DEFAULT 'public',
-      attachments JSONB DEFAULT '[]',
       created_by TEXT REFERENCES users(id),
       key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    -- Adicionar novas colunas se não existirem
-    DO $$ BEGIN
-      ALTER TABLE maintenance_reports ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'public';
-      ALTER TABLE maintenance_reports ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]';
-    EXCEPTION WHEN others THEN NULL; END $$;
-
     -- Índice para consultas de relatórios
     CREATE INDEX IF NOT EXISTS idx_maintenance_reports_date ON maintenance_reports(created_at);
-    
-    -- Configurações de automação de checklists
-    CREATE TABLE IF NOT EXISTS checklist_automation (
-      id TEXT PRIMARY KEY,
-      checklist_id TEXT REFERENCES checklists(id) ON DELETE CASCADE,
-      auto_complete BOOLEAN DEFAULT false,
-      frequency_days INTEGER DEFAULT 1,
-      last_auto_run TIMESTAMPTZ,
-      next_auto_run TIMESTAMPTZ,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    
-    -- Adicionar coluna de automação aos checklists
-    DO $$ BEGIN
-      ALTER TABLE checklists ADD COLUMN IF NOT EXISTS auto_complete BOOLEAN DEFAULT false;
-      ALTER TABLE checklists ADD COLUMN IF NOT EXISTS frequency_days INTEGER DEFAULT 1;
-      ALTER TABLE checklists ADD COLUMN IF NOT EXISTS last_auto_run TIMESTAMPTZ;
-      ALTER TABLE checklists ADD COLUMN IF NOT EXISTS auto_time TEXT DEFAULT '11:00';
-      ALTER TABLE checklists ADD COLUMN IF NOT EXISTS auto_create_os BOOLEAN DEFAULT false;
-      ALTER TABLE checklists ADD COLUMN IF NOT EXISTS auto_os_executor TEXT;
-      ALTER TABLE checklists ADD COLUMN IF NOT EXISTS auto_os_title TEXT;
-    EXCEPTION WHEN others THEN NULL; END $$;
 
     -- Push Notification Tokens
     CREATE TABLE IF NOT EXISTS push_tokens (
@@ -493,6 +463,82 @@ async function initDb() {
     -- Índices para consultas rápidas de lavanderia
     CREATE INDEX IF NOT EXISTS idx_laundry_entries_date ON laundry_entries(entry_date);
     CREATE INDEX IF NOT EXISTS idx_laundry_entries_client ON laundry_entries(client_id);
+
+    -- ========================================
+    -- ALMOXARIFADO V2 - ITENS RETORNÁVEIS
+    -- ========================================
+
+    -- Adiciona coluna is_returnable nos itens de inventário
+    DO $$ BEGIN
+      ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS is_returnable BOOLEAN DEFAULT false;
+    EXCEPTION WHEN others THEN NULL; END $$;
+
+    -- Empréstimos de itens retornáveis
+    CREATE TABLE IF NOT EXISTS inventory_loans (
+      id TEXT PRIMARY KEY,
+      item_id TEXT REFERENCES inventory_items(id) ON DELETE CASCADE,
+      quantity INTEGER NOT NULL DEFAULT 1,
+      borrowed_by TEXT REFERENCES users(id),
+      borrowed_by_name TEXT,
+      borrowed_at TIMESTAMPTZ DEFAULT NOW(),
+      returned_at TIMESTAMPTZ,
+      notes TEXT,
+      key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE
+    );
+
+    -- Índices para empréstimos
+    CREATE INDEX IF NOT EXISTS idx_inventory_loans_item ON inventory_loans(item_id);
+    CREATE INDEX IF NOT EXISTS idx_inventory_loans_user ON inventory_loans(borrowed_by);
+    CREATE INDEX IF NOT EXISTS idx_inventory_loans_status ON inventory_loans(returned_at) WHERE returned_at IS NULL;
+
+    -- Movimentações de estoque (histórico)
+    CREATE TABLE IF NOT EXISTS inventory_movements (
+      id TEXT PRIMARY KEY,
+      item_id TEXT REFERENCES inventory_items(id) ON DELETE CASCADE,
+      movement_type TEXT NOT NULL, -- 'entrada', 'saida', 'emprestimo', 'devolucao', 'ajuste'
+      quantity INTEGER NOT NULL,
+      previous_qty INTEGER,
+      new_qty INTEGER,
+      user_id TEXT REFERENCES users(id),
+      user_name TEXT,
+      notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_inventory_movements_item ON inventory_movements(item_id);
+    CREATE INDEX IF NOT EXISTS idx_inventory_movements_date ON inventory_movements(created_at);
+
+    -- ========================================
+    -- NOTAS E BOLETOS - GESTÃO FINANCEIRA
+    -- ========================================
+
+    CREATE TABLE IF NOT EXISTS notas_boletos (
+      id TEXT PRIMARY KEY,
+      empresa TEXT NOT NULL,
+      descricao TEXT,
+      responsavel TEXT,
+      setor TEXT,
+      valor_nota NUMERIC(12,2),
+      valor_boleto NUMERIC(12,2),
+      data_emissao DATE,
+      data_vencimento DATE,
+      status TEXT DEFAULT 'pendente', -- 'pendente', 'aguardando', 'pago', 'vencido'
+      nota_anexo JSONB,
+      boleto_anexo JSONB,
+      observacoes TEXT,
+      created_by TEXT REFERENCES users(id),
+      key_id TEXT REFERENCES tenant_keys(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_notas_boletos_tenant ON notas_boletos(key_id);
+    CREATE INDEX IF NOT EXISTS idx_notas_boletos_status ON notas_boletos(status);
+    CREATE INDEX IF NOT EXISTS idx_notas_boletos_vencimento ON notas_boletos(data_vencimento);
+
+    -- Job para deletar notas com mais de 3 meses (marcadas como pagas)
+    -- Será executado via cron job ou trigger periódico
   `);
 
   const seedKeyValue = process.env.SEED_KEY_VALUE;
@@ -1154,22 +1200,23 @@ app.delete('/orders/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/inventory', requireAuth, async (req, res) => {
+app.get('/inventory', requireAuth, async (req, res) => {
   try {
-    // Buscar itens do inventário com contagem de "em uso" (empréstimos pendentes)
+    // Buscar itens com contagem de empréstimos ativos
     const result = await pool.query(`
       SELECT i.*, 
-        COALESCE(
-          (SELECT SUM(m.quantity) 
-           FROM inventory_movements m 
-           WHERE m.item_id::text = i.id 
-             AND m.usage_type = 'emprestimo' 
-             AND m.is_returned = false
-             AND m.movement_type = 'saida'
-          ), 0
-        )::INTEGER as in_use_count
-      FROM inventory_items i 
-      WHERE i.key_id = $1 
+             COALESCE(loans.in_use_count, 0) as in_use_count,
+             COALESCE(loans.borrowed_users, '[]'::json) as borrowed_users
+      FROM inventory_items i
+      LEFT JOIN (
+        SELECT item_id,
+               COUNT(*) as in_use_count,
+               json_agg(json_build_object('user_name', borrowed_by_name, 'quantity', quantity, 'borrowed_at', borrowed_at)) as borrowed_users
+        FROM inventory_loans
+        WHERE returned_at IS NULL
+        GROUP BY item_id
+      ) loans ON loans.item_id = i.id
+      WHERE i.key_id = $1
       ORDER BY i.name
     `, [req.user.keyId]);
     return res.json({ ok: true, items: normalizeInventory(result.rows) });
@@ -1178,15 +1225,15 @@ app.get('/api/inventory', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/inventory', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
-  const { sku, name, category, brand, quantity = 0, unit, min_stock = 0, max_stock, location, specs } = req.body || {};
+app.post('/inventory', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+  const { sku, name, category, brand, quantity = 0, unit, min_stock = 0, max_stock, location, specs, is_returnable = false } = req.body || {};
   if (!name || !unit) return res.status(400).json({ ok: false, error: 'Nome e unidade são obrigatórios' });
   try {
     const id = uuid();
     await pool.query(
-      `INSERT INTO inventory_items (id, sku, name, category, brand, quantity, unit, min_stock, max_stock, location, specs, key_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)` ,
-      [id, sku || null, name, category || null, brand || null, quantity, unit, min_stock, max_stock || null, location || null, specs || null, req.user.keyId]
+      `INSERT INTO inventory_items (id, sku, name, category, brand, quantity, unit, min_stock, max_stock, location, specs, is_returnable, key_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)` ,
+      [id, sku || null, name, category || null, brand || null, quantity, unit, min_stock, max_stock || null, location || null, specs || null, is_returnable, req.user.keyId]
     );
     const result = await pool.query('SELECT * FROM inventory_items WHERE key_id = $1 ORDER BY name', [req.user.keyId]);
     return res.status(201).json({ ok: true, items: normalizeInventory(result.rows) });
@@ -1195,7 +1242,7 @@ app.post('/api/inventory', requireAuth, requireRoles(['almoxarifado']), async (r
   }
 });
 
-app.put('/api/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+app.put('/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
   const { quantity } = req.body || {};
   if (quantity === undefined) return res.status(400).json({ ok: false, error: 'Quantidade obrigatória' });
   try {
@@ -1208,7 +1255,7 @@ app.put('/api/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async
   }
 });
 
-app.delete('/api/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+app.delete('/inventory/:id', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
   try {
     await pool.query('DELETE FROM inventory_items WHERE id = $1 AND key_id = $2', [req.params.id, req.user.keyId]);
     const result = await pool.query('SELECT * FROM inventory_items WHERE key_id = $1 ORDER BY name', [req.user.keyId]);
@@ -1218,391 +1265,304 @@ app.delete('/api/inventory/:id', requireAuth, requireRoles(['almoxarifado']), as
   }
 });
 
-// =====================================================
-// INVENTORY MOVEMENTS - Sistema de Movimentações V2
-// =====================================================
+// ========================================
+// ALMOXARIFADO V2 - EMPRÉSTIMOS DE ITENS RETORNÁVEIS
+// ========================================
 
-// Listar movimentações
-app.get('/api/inventory/movements', requireAuth, async (req, res) => {
+// Listar empréstimos ativos de um item
+app.get('/inventory/:id/loans', requireAuth, async (req, res) => {
   try {
-    const { start_date, end_date, movement_type, item_id, person_name, pending_return } = req.query;
-    
-    let query = `
-      SELECT m.*, i.name as item_name, i.sku as item_sku, i.category as item_category, i.brand as item_brand, i.unit as item_unit, i.item_type
-      FROM inventory_movements m
-      LEFT JOIN inventory_items i ON m.item_id::text = i.id
-      WHERE m.key_id = $1
-    `;
-    const params = [req.user.keyId];
-    let paramCount = 2;
-    
-    if (start_date) {
-      query += ` AND m.created_at >= $${paramCount++}`;
-      params.push(start_date);
-    }
-    if (end_date) {
-      query += ` AND m.created_at <= $${paramCount++}`;
-      params.push(end_date + ' 23:59:59');
-    }
-    if (movement_type) {
-      query += ` AND m.movement_type = $${paramCount++}`;
-      params.push(movement_type);
-    }
-    if (item_id) {
-      query += ` AND m.item_id = $${paramCount++}`;
-      params.push(item_id);
-    }
-    if (person_name) {
-      query += ` AND m.person_name ILIKE $${paramCount++}`;
-      params.push('%' + person_name + '%');
-    }
-    if (pending_return === 'true') {
-      query += ` AND m.usage_type = 'emprestimo' AND m.is_returned = false`;
-    }
-    
-    query += ' ORDER BY m.created_at DESC LIMIT 500';
-    
-    const result = await pool.query(query, params);
-    return res.json({ ok: true, movements: result.rows });
+    const result = await pool.query(`
+      SELECT l.*, u.name as user_display_name
+      FROM inventory_loans l
+      LEFT JOIN users u ON u.id = l.borrowed_by
+      WHERE l.item_id = $1 AND l.key_id = $2
+      ORDER BY l.returned_at NULLS FIRST, l.borrowed_at DESC
+    `, [req.params.id, req.user.keyId]);
+    return res.json({ ok: true, loans: result.rows });
   } catch (err) {
-    console.error('Erro ao buscar movimentações:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-// Registrar nova movimentação (entrada, saída, devolução)
-app.post('/api/inventory/movements', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
-  const { 
-    item_id, 
-    movement_type, 
-    quantity, 
-    person_name, 
-    person_sector,
-    usage_type,
-    expected_return_date,
-    reference,
-    notes 
-  } = req.body || {};
+// Emprestar item (criar empréstimo)
+app.post('/inventory/:id/loan', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+  const { quantity = 1, user_id, user_name, notes } = req.body || {};
+  const itemId = req.params.id;
   
-  if (!item_id || !movement_type || !quantity) {
-    return res.status(400).json({ ok: false, error: 'Item, tipo e quantidade são obrigatórios' });
-  }
-  
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    
-    const keyId = req.user.keyId;
-    
-    // Buscar item atual
-    const itemResult = await client.query('SELECT * FROM inventory_items WHERE id = $1 AND key_id = $2', [item_id, keyId]);
-    if (itemResult.rows.length === 0) {
-      throw new Error('Item não encontrado');
+    // Verificar se item existe e é retornável
+    const itemResult = await pool.query(
+      'SELECT * FROM inventory_items WHERE id = $1 AND key_id = $2',
+      [itemId, req.user.keyId]
+    );
+    if (itemResult.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: 'Item não encontrado' });
     }
     const item = itemResult.rows[0];
-    const quantityBefore = parseInt(item.quantity) || 0;
     
-    // Calcular nova quantidade
-    let quantityAfter = quantityBefore;
-    const qty = parseInt(quantity);
-    
-    if (movement_type === 'entrada' || movement_type === 'devolucao') {
-      quantityAfter = quantityBefore + qty;
-    } else if (movement_type === 'saida') {
-      quantityAfter = quantityBefore - qty;
-      if (quantityAfter < 0) {
-        throw new Error('Quantidade insuficiente em estoque');
-      }
-    } else if (movement_type === 'ajuste') {
-      quantityAfter = qty; // Ajuste define o valor absoluto
+    if (!item.is_returnable) {
+      return res.status(400).json({ ok: false, error: 'Este item não é retornável. Use saída normal de estoque.' });
     }
     
-    // Inserir movimentação
-    const movementId = uuid();
-    await client.query(`
-      INSERT INTO inventory_movements (
-        id, key_id, item_id, movement_type, quantity, previous_quantity, new_quantity,
-        person_name, person_sector, usage_type, expected_return_date, reason, notes, is_returned, created_by, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
-    `, [
-      movementId, keyId, item_id, movement_type, qty, quantityBefore, quantityAfter,
-      person_name || null, person_sector || null, usage_type || 'consumo',
-      expected_return_date || null, reference || null, notes || null, false, req.user.userId
-    ]);
+    if (item.quantity < quantity) {
+      return res.status(400).json({ ok: false, error: 'Quantidade insuficiente em estoque' });
+    }
     
-    // Atualizar quantidade no estoque
-    await client.query('UPDATE inventory_items SET quantity = $1, updated_at = NOW() WHERE id = $2', [quantityAfter, item_id]);
+    // Criar empréstimo
+    const loanId = uuid();
+    const borrowerName = user_name || req.user.name;
+    const borrowerId = user_id || req.user.userId;
     
-    await client.query('COMMIT');
+    await pool.query(`
+      INSERT INTO inventory_loans (id, item_id, quantity, borrowed_by, borrowed_by_name, notes, key_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [loanId, itemId, quantity, borrowerId, borrowerName, notes || null, req.user.keyId]);
     
-    // Retornar item atualizado
-    const updatedItems = await pool.query('SELECT * FROM inventory_items WHERE key_id = $1 ORDER BY name', [keyId]);
+    // Diminuir estoque disponível
+    const newQty = item.quantity - quantity;
+    await pool.query(
+      'UPDATE inventory_items SET quantity = $1, updated_at = NOW() WHERE id = $2',
+      [newQty, itemId]
+    );
     
-    return res.status(201).json({ 
-      ok: true, 
-      movement: { id: movementId, movement_type, quantity: qty, quantity_before: quantityBefore, quantity_after: quantityAfter },
-      items: normalizeInventory(updatedItems.rows)
-    });
+    // Registrar movimentação
+    await pool.query(`
+      INSERT INTO inventory_movements (id, item_id, movement_type, quantity, previous_qty, new_qty, user_id, user_name, notes, key_id)
+      VALUES ($1, $2, 'emprestimo', $3, $4, $5, $6, $7, $8, $9)
+    `, [uuid(), itemId, quantity, item.quantity, newQty, req.user.userId, req.user.name, `Empréstimo para ${borrowerName}`, req.user.keyId]);
+    
+    return res.json({ ok: true, loan_id: loanId, message: `${quantity} ${item.unit} emprestado(s) para ${borrowerName}` });
   } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Erro ao registrar movimentação:', err);
     return res.status(500).json({ ok: false, error: err.message });
-  } finally {
-    client.release();
   }
 });
 
-// Registrar devolução de item emprestado
-app.post('/api/inventory/movements/:id/return', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
-  const { return_condition, notes } = req.body || {};
+// Devolver item (finalizar empréstimo)
+app.post('/inventory/loans/:loanId/return', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+  const { notes } = req.body || {};
+  const loanId = req.params.loanId;
   
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    
-    // Buscar movimentação original
-    const movResult = await client.query(`
-      SELECT m.*
-      FROM inventory_movements m 
-      WHERE m.id = $1 AND m.key_id = $2
-    `, [req.params.id, req.user.keyId]);
-    
-    if (movResult.rows.length === 0) {
-      throw new Error('Movimentação não encontrada');
+    // Verificar empréstimo
+    const loanResult = await pool.query(
+      'SELECT * FROM inventory_loans WHERE id = $1 AND key_id = $2',
+      [loanId, req.user.keyId]
+    );
+    if (loanResult.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: 'Empréstimo não encontrado' });
     }
+    const loan = loanResult.rows[0];
     
-    const movement = movResult.rows[0];
-    
-    if (movement.is_returned) {
-      throw new Error('Item já foi devolvido');
-    }
-    
-    if (movement.usage_type !== 'emprestimo') {
-      throw new Error('Esta movimentação não é um empréstimo');
+    if (loan.returned_at) {
+      return res.status(400).json({ ok: false, error: 'Este item já foi devolvido' });
     }
     
     // Marcar como devolvido
-    await client.query(`
-      UPDATE inventory_movements 
-      SET is_returned = true, returned_at = NOW(), notes = COALESCE(notes, '') || ' | Devolução: ' || $1
-      WHERE id = $2
-    `, [notes || '', req.params.id]);
+    await pool.query(
+      'UPDATE inventory_loans SET returned_at = NOW(), notes = COALESCE(notes, \'\') || $1 WHERE id = $2',
+      [notes ? ` | Devolução: ${notes}` : '', loanId]
+    );
     
-    // Criar movimentação de devolução
-    const returnId = uuid();
-    await client.query(`
-      INSERT INTO inventory_movements (
-        id, key_id, item_id, movement_type, quantity, previous_quantity, new_quantity,
-        person_name, person_sector, usage_type, notes, is_returned, created_by, created_at
-      )
-      SELECT $1, key_id, item_id, 'devolucao', quantity, 
-        (SELECT quantity FROM inventory_items WHERE id = m.item_id::text),
-        (SELECT quantity FROM inventory_items WHERE id = m.item_id::text) + quantity,
-        person_name, person_sector, 'emprestimo', $2, true, $3, NOW()
-      FROM inventory_movements m WHERE id = $4
-    `, [returnId, notes || 'Devolução de empréstimo', req.user.userId, req.params.id]);
+    // Aumentar estoque
+    const itemResult = await pool.query('SELECT * FROM inventory_items WHERE id = $1', [loan.item_id]);
+    const item = itemResult.rows[0];
+    const newQty = item.quantity + loan.quantity;
     
-    // Atualizar estoque
-    await client.query(`
-      UPDATE inventory_items 
-      SET quantity = quantity + $1, updated_at = NOW()
-      WHERE id = $2
-    `, [movement.quantity, movement.item_id]);
+    await pool.query(
+      'UPDATE inventory_items SET quantity = $1, updated_at = NOW() WHERE id = $2',
+      [newQty, loan.item_id]
+    );
     
-    await client.query('COMMIT');
+    // Registrar movimentação
+    await pool.query(`
+      INSERT INTO inventory_movements (id, item_id, movement_type, quantity, previous_qty, new_qty, user_id, user_name, notes, key_id)
+      VALUES ($1, $2, 'devolucao', $3, $4, $5, $6, $7, $8, $9)
+    `, [uuid(), loan.item_id, loan.quantity, item.quantity, newQty, req.user.userId, req.user.name, `Devolução de ${loan.borrowed_by_name}`, req.user.keyId]);
     
-    const updatedItems = await pool.query('SELECT * FROM inventory_items WHERE key_id = $1 ORDER BY name', [req.user.keyId]);
-    
-    return res.json({ ok: true, message: 'Devolução registrada com sucesso', items: normalizeInventory(updatedItems.rows) });
+    return res.json({ ok: true, message: `${loan.quantity} devolvido(s) ao estoque` });
   } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Erro ao registrar devolução:', err);
     return res.status(500).json({ ok: false, error: err.message });
-  } finally {
-    client.release();
   }
 });
 
-// Estatísticas de movimentações
-app.get('/api/inventory/stats', requireAuth, async (req, res) => {
+// Atualizar item para definir se é retornável
+app.patch('/inventory/:id/returnable', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
+  const { is_returnable } = req.body || {};
   try {
-    const { period } = req.query; // day, week, month, year
+    await pool.query(
+      'UPDATE inventory_items SET is_returnable = $1, updated_at = NOW() WHERE id = $2 AND key_id = $3',
+      [is_returnable === true, req.params.id, req.user.keyId]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ========================================
+// NOTAS E BOLETOS - API COMPLETA
+// ========================================
+
+// Listar notas/boletos
+app.get('/api/notas', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT n.*, u.name as created_by_name
+      FROM notas_boletos n
+      LEFT JOIN users u ON u.id = n.created_by
+      WHERE n.key_id = $1
+      ORDER BY n.data_vencimento ASC NULLS LAST, n.created_at DESC
+    `, [req.user.keyId]);
+    return res.json({ ok: true, notas: result.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Criar nota/boleto
+app.post('/api/notas', requireAuth, async (req, res) => {
+  const { empresa, descricao, responsavel, setor, valor_nota, valor_boleto, data_emissao, data_vencimento, status = 'pendente', nota_anexo, boleto_anexo, observacoes } = req.body || {};
+  
+  if (!empresa) {
+    return res.status(400).json({ ok: false, error: 'Empresa é obrigatória' });
+  }
+  
+  try {
+    const id = uuid();
+    await pool.query(`
+      INSERT INTO notas_boletos (id, empresa, descricao, responsavel, setor, valor_nota, valor_boleto, data_emissao, data_vencimento, status, nota_anexo, boleto_anexo, observacoes, created_by, key_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+    `, [id, empresa, descricao || null, responsavel || null, setor || null, valor_nota || null, valor_boleto || null, data_emissao || null, data_vencimento || null, status, nota_anexo || null, boleto_anexo || null, observacoes || null, req.user.userId, req.user.keyId]);
     
-    let dateFilter = '';
-    if (period === 'day') {
-      dateFilter = "AND m.created_at >= CURRENT_DATE";
-    } else if (period === 'week') {
-      dateFilter = "AND m.created_at >= CURRENT_DATE - INTERVAL '7 days'";
-    } else if (period === 'month') {
-      dateFilter = "AND m.created_at >= CURRENT_DATE - INTERVAL '30 days'";
-    } else if (period === 'year') {
-      dateFilter = "AND m.created_at >= CURRENT_DATE - INTERVAL '365 days'";
-    }
+    return res.status(201).json({ ok: true, id });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Atualizar nota/boleto
+app.put('/api/notas/:id', requireAuth, async (req, res) => {
+  const { empresa, descricao, responsavel, setor, valor_nota, valor_boleto, data_emissao, data_vencimento, status, nota_anexo, boleto_anexo, observacoes } = req.body || {};
+  
+  try {
+    await pool.query(`
+      UPDATE notas_boletos SET
+        empresa = COALESCE($1, empresa),
+        descricao = $2,
+        responsavel = $3,
+        setor = $4,
+        valor_nota = $5,
+        valor_boleto = $6,
+        data_emissao = $7,
+        data_vencimento = $8,
+        status = COALESCE($9, status),
+        nota_anexo = COALESCE($10, nota_anexo),
+        boleto_anexo = COALESCE($11, boleto_anexo),
+        observacoes = $12,
+        updated_at = NOW()
+      WHERE id = $13 AND key_id = $14
+    `, [empresa, descricao, responsavel, setor, valor_nota, valor_boleto, data_emissao, data_vencimento, status, nota_anexo, boleto_anexo, observacoes, req.params.id, req.user.keyId]);
     
-    const keyId = req.user.keyId;
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Deletar nota/boleto
+app.delete('/api/notas/:id', requireAuth, async (req, res) => {
+  try {
+    await pool.query(
+      'DELETE FROM notas_boletos WHERE id = $1 AND key_id = $2',
+      [req.params.id, req.user.keyId]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Estatísticas de notas para relatório de gastos
+app.get('/api/notas/stats', requireAuth, async (req, res) => {
+  try {
+    const { periodo = '3months' } = req.query;
+    let dateFilter = "created_at >= NOW() - INTERVAL '3 months'";
     
-    // Estatísticas gerais
-    const statsQuery = `
+    if (periodo === '1month') dateFilter = "created_at >= NOW() - INTERVAL '1 month'";
+    else if (periodo === '6months') dateFilter = "created_at >= NOW() - INTERVAL '6 months'";
+    else if (periodo === '1year') dateFilter = "created_at >= NOW() - INTERVAL '1 year'";
+    
+    // Total por status
+    const statusResult = await pool.query(`
+      SELECT status, COUNT(*) as count, COALESCE(SUM(valor_boleto), 0) as total
+      FROM notas_boletos
+      WHERE key_id = $1 AND ${dateFilter}
+      GROUP BY status
+    `, [req.user.keyId]);
+    
+    // Total por mês
+    const monthlyResult = await pool.query(`
       SELECT 
-        COUNT(*) FILTER (WHERE movement_type = 'entrada') as total_entradas,
-        COUNT(*) FILTER (WHERE movement_type = 'saida') as total_saidas,
-        COUNT(*) FILTER (WHERE movement_type = 'devolucao') as total_devolucoes,
-        COALESCE(SUM(quantity) FILTER (WHERE movement_type = 'entrada'), 0) as qty_entradas,
-        COALESCE(SUM(quantity) FILTER (WHERE movement_type = 'saida'), 0) as qty_saidas,
-        COALESCE(SUM(quantity) FILTER (WHERE movement_type = 'devolucao'), 0) as qty_devolucoes,
-        COUNT(*) FILTER (WHERE usage_type = 'emprestimo' AND is_returned = false) as emprestimos_pendentes
-      FROM inventory_movements m
-      WHERE key_id = $1 ${dateFilter}
-    `;
-    
-    const statsResult = await pool.query(statsQuery, [keyId]);
-    
-    // Top 10 itens mais movimentados
-    const topItemsQuery = `
-      SELECT i.name, i.sku, COUNT(*) as total_movimentos, SUM(m.quantity) as total_quantidade
-      FROM inventory_movements m
-      JOIN inventory_items i ON m.item_id::text = i.id
-      WHERE m.key_id = $1 ${dateFilter}
-      GROUP BY i.id, i.name, i.sku
-      ORDER BY total_movimentos DESC
-      LIMIT 10
-    `;
-    
-    const topItemsResult = await pool.query(topItemsQuery, [keyId]);
-    
-    // Top setores que mais retiram
-    const topSectorsQuery = `
-      SELECT person_sector, COUNT(*) as total_retiradas, SUM(quantity) as total_quantidade
-      FROM inventory_movements m
-      WHERE key_id = $1 AND movement_type = 'saida' AND person_sector IS NOT NULL ${dateFilter}
-      GROUP BY person_sector
-      ORDER BY total_retiradas DESC
-      LIMIT 10
-    `;
-    
-    const topSectorsResult = await pool.query(topSectorsQuery, [keyId]);
-    
-    // Movimentações por dia (últimos 30 dias)
-    const dailyQuery = `
-      SELECT DATE(created_at) as date, movement_type, COUNT(*) as count, SUM(quantity) as quantity
-      FROM inventory_movements
-      WHERE key_id = $1 AND created_at >= CURRENT_DATE - INTERVAL '30 days'
-      GROUP BY DATE(created_at), movement_type
-      ORDER BY date
-    `;
-    
-    const dailyResult = await pool.query(dailyQuery, [keyId]);
-    
-    // Itens em estoque baixo
-    const lowStockQuery = `
-      SELECT id, name, sku, quantity, min_stock, category, brand
-      FROM inventory_items
-      WHERE key_id = $1 AND quantity <= COALESCE(min_stock, 0)
-      ORDER BY quantity ASC
-      LIMIT 20
-    `;
-    
-    const lowStockResult = await pool.query(lowStockQuery, [keyId]);
-    
-    // Empréstimos devolvidos vs pendentes
-    const loanStatusQuery = `
-      SELECT 
-        COUNT(*) FILTER (WHERE is_returned = true) as devolvidos,
-        COUNT(*) FILTER (WHERE is_returned = false) as pendentes,
-        COALESCE(SUM(quantity) FILTER (WHERE is_returned = true), 0) as qty_devolvidos,
-        COALESCE(SUM(quantity) FILTER (WHERE is_returned = false), 0) as qty_pendentes
-      FROM inventory_movements
-      WHERE key_id = $1 AND usage_type = 'emprestimo' ${dateFilter.replace('m.', '')}
-    `;
-    const loanStatusResult = await pool.query(loanStatusQuery, [keyId]);
-    
-    // Saídas por tipo de uso (consumo, empréstimo, manutenção)
-    const usageTypeQuery = `
-      SELECT 
-        usage_type,
+        TO_CHAR(data_vencimento, 'YYYY-MM') as mes,
         COUNT(*) as count,
-        COALESCE(SUM(quantity), 0) as total_qty
-      FROM inventory_movements
-      WHERE key_id = $1 AND movement_type = 'saida' ${dateFilter.replace('m.', '')}
-      GROUP BY usage_type
-    `;
-    const usageTypeResult = await pool.query(usageTypeQuery, [keyId]);
+        COALESCE(SUM(valor_boleto), 0) as total,
+        COALESCE(SUM(CASE WHEN status = 'pago' THEN valor_boleto ELSE 0 END), 0) as pago,
+        COALESCE(SUM(CASE WHEN status != 'pago' THEN valor_boleto ELSE 0 END), 0) as pendente
+      FROM notas_boletos
+      WHERE key_id = $1 AND data_vencimento IS NOT NULL AND ${dateFilter}
+      GROUP BY TO_CHAR(data_vencimento, 'YYYY-MM')
+      ORDER BY mes DESC
+      LIMIT 12
+    `, [req.user.keyId]);
+    
+    // Top fornecedores
+    const suppliersResult = await pool.query(`
+      SELECT empresa, COUNT(*) as count, COALESCE(SUM(valor_boleto), 0) as total
+      FROM notas_boletos
+      WHERE key_id = $1 AND ${dateFilter}
+      GROUP BY empresa
+      ORDER BY total DESC
+      LIMIT 10
+    `, [req.user.keyId]);
+    
+    // Top setores
+    const sectorsResult = await pool.query(`
+      SELECT COALESCE(setor, 'Não especificado') as setor, COUNT(*) as count, COALESCE(SUM(valor_boleto), 0) as total
+      FROM notas_boletos
+      WHERE key_id = $1 AND ${dateFilter}
+      GROUP BY setor
+      ORDER BY total DESC
+      LIMIT 10
+    `, [req.user.keyId]);
     
     return res.json({
       ok: true,
       stats: {
-        summary: statsResult.rows[0],
-        topItems: topItemsResult.rows,
-        topSectors: topSectorsResult.rows,
-        dailyMovements: dailyResult.rows,
-        lowStock: lowStockResult.rows,
-        loanStatus: loanStatusResult.rows[0],
-        usageTypes: usageTypeResult.rows
+        by_status: statusResult.rows,
+        by_month: monthlyResult.rows,
+        top_suppliers: suppliersResult.rows,
+        top_sectors: sectorsResult.rows
       }
     });
   } catch (err) {
-    console.error('Erro ao buscar estatísticas:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-// Empréstimos pendentes (ferramentas não devolvidas)
-app.get('/api/inventory/loans/pending', requireAuth, async (req, res) => {
+// Limpar notas antigas (pagas há mais de 3 meses) - pode ser chamado via cron
+app.post('/api/notas/cleanup', requireAuth, requireRoles(['admin']), async (req, res) => {
   try {
-    const query = `
-      SELECT m.*, i.name as item_name, i.sku as item_sku, i.category as item_category, i.item_type
-      FROM inventory_movements m
-      JOIN inventory_items i ON m.item_id::text = i.id
-      WHERE m.key_id = $1 AND m.usage_type = 'emprestimo' AND m.is_returned = false
-      ORDER BY m.created_at DESC
-    `;
+    const result = await pool.query(`
+      DELETE FROM notas_boletos
+      WHERE key_id = $1 
+        AND status = 'pago' 
+        AND updated_at < NOW() - INTERVAL '3 months'
+      RETURNING id
+    `, [req.user.keyId]);
     
-    const result = await pool.query(query, [req.user.keyId]);
-    return res.json({ ok: true, loans: result.rows });
+    return res.json({ ok: true, deleted: result.rowCount });
   } catch (err) {
-    console.error('Erro ao buscar empréstimos pendentes:', err);
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// Histórico de movimentações de um item específico
-app.get('/api/inventory/:id/history', requireAuth, async (req, res) => {
-  try {
-    const query = `
-      SELECT m.*
-      FROM inventory_movements m
-      WHERE m.item_id = $1 AND m.key_id = $2
-      ORDER BY m.created_at DESC
-      LIMIT 100
-    `;
-    
-    const result = await pool.query(query, [req.params.id, req.user.keyId]);
-    return res.json({ ok: true, history: result.rows });
-  } catch (err) {
-    console.error('Erro ao buscar histórico:', err);
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// Atualizar item completo (com novos campos)
-app.put('/inventory/:id/full', requireAuth, requireRoles(['almoxarifado']), async (req, res) => {
-  const { sku, name, category, brand, quantity, unit, min_stock, max_stock, location, specs, item_type, requires_return, unit_price } = req.body || {};
-  
-  try {
-    await pool.query(`
-      UPDATE inventory_items 
-      SET sku = COALESCE($1, sku), name = COALESCE($2, name), category = COALESCE($3, category),
-          brand = COALESCE($4, brand), quantity = COALESCE($5, quantity), unit = COALESCE($6, unit),
-          min_stock = COALESCE($7, min_stock), max_stock = $8, location = $9, specs = $10,
-          item_type = COALESCE($11, item_type), requires_return = COALESCE($12, requires_return),
-          unit_price = $13, updated_at = NOW()
-      WHERE id = $14 AND key_id = $15
-    `, [sku, name, category, brand, quantity, unit, min_stock, max_stock, location, specs, item_type, requires_return, unit_price, req.params.id, req.user.keyId]);
-    
-    const result = await pool.query('SELECT * FROM inventory_items WHERE key_id = $1 ORDER BY name', [req.user.keyId]);
-    return res.json({ ok: true, items: normalizeInventory(result.rows) });
-  } catch (err) {
-    console.error('Erro ao atualizar item:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -1939,191 +1899,6 @@ app.post('/checklists/:id/execute', requireAuth, async (req, res) => {
       }
     }
     return res.status(201).json({ ok: true, execution_id: execId });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// PATCH - Configurar automação de checklist (dia sim dia não, etc)
-app.patch('/checklists/:id/automation', requireAuth, async (req, res) => {
-  if (!canEditChecklist(req.user.roles || [])) {
-    return res.status(403).json({ ok: false, error: 'Sem permissão para configurar automação' });
-  }
-  
-  const { auto_complete, frequency_days, auto_time, auto_create_os, auto_os_executor, auto_os_title } = req.body || {};
-  
-  try {
-    // Atualizar configuração de automação
-    await pool.query(
-      `UPDATE checklists SET 
-        auto_complete = COALESCE($1, auto_complete),
-        frequency_days = COALESCE($2, frequency_days),
-        auto_time = COALESCE($3, auto_time),
-        auto_create_os = COALESCE($4, auto_create_os),
-        auto_os_executor = COALESCE($5, auto_os_executor),
-        auto_os_title = COALESCE($6, auto_os_title)
-       WHERE id = $7 AND key_id = $8`,
-      [auto_complete, frequency_days, auto_time, auto_create_os, auto_os_executor, auto_os_title, req.params.id, req.user.keyId]
-    );
-    
-    // Se ativou automação, calcular próxima execução
-    if (auto_complete) {
-      const freqDays = frequency_days || 2; // Padrão dia sim dia não
-      const nextRun = new Date();
-      nextRun.setDate(nextRun.getDate() + freqDays);
-      
-      await pool.query(
-        `UPDATE checklists SET last_auto_run = NOW() WHERE id = $1`,
-        [req.params.id]
-      );
-    }
-    
-    // Retornar lista atualizada
-    const checklists = await pool.query(
-      `SELECT c.*, u.name as created_by_name,
-        COALESCE(json_agg(json_build_object('id', ci.id, 'description', ci.description, 'item_order', ci.item_order) ORDER BY ci.item_order) FILTER (WHERE ci.id IS NOT NULL), '[]'::json) as items
-       FROM checklists c
-       LEFT JOIN users u ON u.id = c.created_by
-       LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
-       WHERE c.key_id = $1
-       GROUP BY c.id, u.name
-       ORDER BY c.name`,
-      [req.user.keyId]
-    );
-    
-    return res.json({ ok: true, checklists: checklists.rows });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// GET - Estatísticas do dashboard de checklists
-app.get('/checklists/dashboard-stats', requireAuth, async (req, res) => {
-  try {
-    const keyId = req.user.keyId;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Total de execuções hoje
-    const todayExecs = await pool.query(
-      `SELECT ce.*, c.auto_complete, c.name as checklist_name
-       FROM checklist_executions ce
-       JOIN checklists c ON c.id = ce.checklist_id
-       WHERE ce.key_id = $1 AND ce.executed_at >= $2
-       ORDER BY ce.executed_at DESC`,
-      [keyId, today]
-    );
-    
-    // Contar automáticas vs manuais
-    const todayAuto = todayExecs.rows.filter(e => e.notes === 'Execução automática').length;
-    const todayManual = todayExecs.rows.length - todayAuto;
-    
-    // Total de checklists pendentes hoje (não executados ainda)
-    const allChecklists = await pool.query(
-      `SELECT id, name FROM checklists WHERE key_id = $1`,
-      [keyId]
-    );
-    const executedIds = new Set(todayExecs.rows.map(e => e.checklist_id));
-    const pendingCount = allChecklists.rows.filter(c => !executedIds.has(c.id)).length;
-    
-    // Calcular streak (dias consecutivos com pelo menos uma execução)
-    let streakDays = 0;
-    let checkDate = new Date();
-    checkDate.setHours(0, 0, 0, 0);
-    
-    // Se hoje já tem execução, conta hoje
-    if (todayExecs.rows.length > 0) {
-      streakDays = 1;
-      checkDate.setDate(checkDate.getDate() - 1);
-      
-      // Verificar dias anteriores
-      for (let i = 0; i < 365; i++) {
-        const dayStart = new Date(checkDate);
-        const dayEnd = new Date(checkDate);
-        dayEnd.setDate(dayEnd.getDate() + 1);
-        
-        const dayExecs = await pool.query(
-          `SELECT COUNT(*) FROM checklist_executions 
-           WHERE key_id = $1 AND executed_at >= $2 AND executed_at < $3`,
-          [keyId, dayStart, dayEnd]
-        );
-        
-        if (parseInt(dayExecs.rows[0].count) > 0) {
-          streakDays++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break; // Streak quebrado
-        }
-      }
-    }
-    
-    // Pegar as 5 execuções mais recentes para a timeline
-    const recentExecs = todayExecs.rows.slice(0, 5).map(e => ({
-      checklist_name: e.checklist_name,
-      executed_at: e.executed_at,
-      is_auto: e.notes === 'Execução automática'
-    }));
-    
-    return res.json({
-      ok: true,
-      today_total: todayExecs.rows.length,
-      today_auto: todayAuto,
-      today_manual: todayManual,
-      pending: pendingCount,
-      streak_days: streakDays,
-      recent_executions: recentExecs
-    });
-  } catch (err) {
-    console.error('Erro ao buscar stats de checklist:', err);
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// POST - Executar automação de checklist manualmente (marcar como feito sem precisar marcar cada item)
-app.post('/checklists/:id/auto-execute', requireAuth, async (req, res) => {
-  try {
-    // Buscar checklist e seus itens
-    const checklist = await pool.query(
-      `SELECT c.*, 
-        COALESCE(json_agg(json_build_object('id', ci.id, 'description', ci.description) ORDER BY ci.item_order) FILTER (WHERE ci.id IS NOT NULL), '[]'::json) as items
-       FROM checklists c
-       LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
-       WHERE c.id = $1 AND c.key_id = $2
-       GROUP BY c.id`,
-      [req.params.id, req.user.keyId]
-    );
-    
-    if (checklist.rowCount === 0) {
-      return res.status(404).json({ ok: false, error: 'Checklist não encontrado' });
-    }
-    
-    const cl = checklist.rows[0];
-    const items = cl.items || [];
-    
-    // Criar execução automática com todos os itens marcados
-    const execId = uuid();
-    await pool.query(
-      `INSERT INTO checklist_executions (id, checklist_id, executed_by, notes, key_id)
-       VALUES ($1,$2,$3,$4,$5)`,
-      [execId, req.params.id, req.user.userId, 'Execução automática', req.user.keyId]
-    );
-    
-    // Marcar todos os itens como checked
-    for (const item of items) {
-      await pool.query(
-        `INSERT INTO checklist_execution_items (execution_id, item_id, checked, checked_at, notes)
-         VALUES ($1,$2,$3,$4,$5)`,
-        [execId, item.id, true, new Date(), 'Auto']
-      );
-    }
-    
-    // Atualizar última execução automática
-    await pool.query(
-      `UPDATE checklists SET last_auto_run = NOW() WHERE id = $1`,
-      [req.params.id]
-    );
-    
-    return res.status(201).json({ ok: true, execution_id: execId, message: 'Checklist marcado como executado' });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
   }
@@ -2927,6 +2702,140 @@ app.put('/additive-tasks/:id', requireAuth, requireRoles(['aditiva']), async (re
 // Na verdade, aditivas concluídas vão para arquivo após 2 meses automaticamente
 // Não há exclusão manual
 
+// ========== RELATÓRIOS DA MANUTENÇÃO ==========
+
+// GET - Listar relatórios (todos podem ler se tiverem role 'relatorios')
+app.get('/maintenance-reports', requireAuth, async (req, res) => {
+  try {
+    const { category, limit } = req.query;
+    
+    let query = `
+      SELECT mr.*, u.name as created_by_name
+      FROM maintenance_reports mr 
+      LEFT JOIN users u ON u.id = mr.created_by 
+      WHERE mr.key_id = $1
+    `;
+    const params = [req.user.keyId];
+    let paramCount = 2;
+    
+    if (category) {
+      query += ` AND mr.category = $${paramCount++}`;
+      params.push(category);
+    }
+    
+    query += ' ORDER BY mr.created_at DESC';
+    
+    if (limit) {
+      query += ` LIMIT $${paramCount++}`;
+      params.push(parseInt(limit));
+    }
+    
+    const result = await pool.query(query, params);
+    return res.json({ ok: true, reports: result.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// GET - Relatório específico
+app.get('/maintenance-reports/:id', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT mr.*, u.name as created_by_name
+       FROM maintenance_reports mr 
+       LEFT JOIN users u ON u.id = mr.created_by 
+       WHERE mr.id = $1 AND mr.key_id = $2`,
+      [req.params.id, req.user.keyId]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: 'Relatório não encontrado' });
+    }
+    
+    return res.json({ ok: true, report: result.rows[0] });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST - Criar relatório (manutenção com role 'relatorios_write' OU 'relatorios')
+app.post('/maintenance-reports', requireAuth, requireRoles(['relatorios_write', 'relatorios']), async (req, res) => {
+  try {
+    const { title, content, category } = req.body || {};
+    
+    if (!title || !content) {
+      return res.status(400).json({ ok: false, error: 'Título e conteúdo são obrigatórios' });
+    }
+    
+    const id = uuid();
+    await pool.query(
+      `INSERT INTO maintenance_reports (id, title, content, category, created_by, key_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [id, title, content, category || 'geral', req.user.userId, req.user.keyId]
+    );
+    
+    const result = await pool.query(
+      `SELECT mr.*, u.name as created_by_name
+       FROM maintenance_reports mr 
+       LEFT JOIN users u ON u.id = mr.created_by 
+       WHERE mr.key_id = $1
+       ORDER BY mr.created_at DESC`,
+      [req.user.keyId]
+    );
+    
+    return res.status(201).json({ ok: true, reports: result.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// PUT - Atualizar relatório (só quem criou ou admin)
+app.put('/maintenance-reports/:id', requireAuth, requireRoles(['relatorios_write', 'relatorios']), async (req, res) => {
+  try {
+    const { title, content, category } = req.body || {};
+    const reportId = req.params.id;
+    
+    // Verificar se existe e se é o criador
+    const existing = await pool.query(
+      'SELECT created_by FROM maintenance_reports WHERE id = $1 AND key_id = $2',
+      [reportId, req.user.keyId]
+    );
+    
+    if (existing.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: 'Relatório não encontrado' });
+    }
+    
+    const isAdmin = (req.user.roles || []).includes('admin');
+    if (existing.rows[0].created_by !== req.user.userId && !isAdmin) {
+      return res.status(403).json({ ok: false, error: 'Sem permissão para editar este relatório' });
+    }
+    
+    await pool.query(
+      `UPDATE maintenance_reports SET 
+         title = COALESCE($1, title),
+         content = COALESCE($2, content),
+         category = COALESCE($3, category)
+       WHERE id = $4 AND key_id = $5`,
+      [title, content, category, reportId, req.user.keyId]
+    );
+    
+    const result = await pool.query(
+      `SELECT mr.*, u.name as created_by_name
+       FROM maintenance_reports mr 
+       LEFT JOIN users u ON u.id = mr.created_by 
+       WHERE mr.key_id = $1
+       ORDER BY mr.created_at DESC`,
+      [req.user.keyId]
+    );
+    
+    return res.json({ ok: true, reports: result.rows });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// NOTA: DELETE de relatórios NÃO é permitido - dados nunca são apagados
+
 // =============================================
 // PUSH NOTIFICATIONS ENDPOINTS
 // =============================================
@@ -3001,299 +2910,6 @@ app.post('/api/push-test', requireAuth, async (req, res) => {
 
     return res.json({ ok: true, message: 'Notificação de teste enviada' });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// ========================================
-// RELATÓRIOS DA MANUTENÇÃO (maintenance_reports)
-// ========================================
-
-// GET - Listar relatórios (filtra por visibilidade)
-app.get('/maintenance-reports', requireAuth, async (req, res) => {
-  try {
-    const { category } = req.query;
-    const isAdmin = req.user.roles && (req.user.roles.includes('admin') || req.user.roles.includes('os_manage_all'));
-    
-    let query = `
-      SELECT r.*, u.name as created_by_name, u.username as created_by_username
-      FROM maintenance_reports r
-      LEFT JOIN users u ON r.created_by = u.id
-      WHERE r.key_id = $1
-        AND (r.visibility = 'public' OR r.created_by = $2 ${isAdmin ? "OR TRUE" : ""})
-    `;
-    const params = [req.user.keyId, req.user.userId];
-    
-    if (category && category !== 'all') {
-      query += ` AND r.category = $${params.length + 1}`;
-      params.push(category);
-    }
-    
-    query += ` ORDER BY r.created_at DESC LIMIT 100`;
-    
-    const result = await pool.query(query, params);
-    return res.json({ ok: true, reports: result.rows });
-  } catch (err) {
-    console.error('Erro ao listar relatórios:', err);
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// GET - Buscar relatório específico
-app.get('/maintenance-reports/:id', requireAuth, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT r.*, u.name as created_by_name, u.username as created_by_username
-       FROM maintenance_reports r
-       LEFT JOIN users u ON r.created_by = u.id
-       WHERE r.id = $1 AND r.key_id = $2`,
-      [req.params.id, req.user.keyId]
-    );
-    
-    if (result.rowCount === 0) {
-      return res.status(404).json({ ok: false, error: 'Relatório não encontrado' });
-    }
-    
-    const report = result.rows[0];
-    // Verificar permissão de visualização
-    if (report.visibility === 'private' && report.created_by !== req.user.userId) {
-      const isAdmin = req.user.roles && (req.user.roles.includes('admin') || req.user.roles.includes('os_manage_all'));
-      if (!isAdmin) {
-        return res.status(403).json({ ok: false, error: 'Este relatório é privado' });
-      }
-    }
-    
-    return res.json({ ok: true, report: report });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// POST - Criar relatório com visibilidade e anexos
-app.post('/maintenance-reports', requireAuth, requireRoles(['admin', 'relatorios_write', 'relatorios', 'os_manage_all']), async (req, res) => {
-  try {
-    const { title, content, category, visibility, attachments } = req.body;
-    
-    if (!title || !content) {
-      return res.status(400).json({ ok: false, error: 'Título e conteúdo são obrigatórios' });
-    }
-    
-    const id = uuid();
-    const validVisibility = ['public', 'private'].includes(visibility) ? visibility : 'public';
-    const validAttachments = Array.isArray(attachments) ? JSON.stringify(attachments) : '[]';
-    
-    await pool.query(
-      `INSERT INTO maintenance_reports (id, title, content, category, visibility, attachments, created_by, key_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [id, sanitizeString(title, 200), sanitizeString(content, 10000), category || 'geral', validVisibility, validAttachments, req.user.userId, req.user.keyId]
-    );
-    
-    // Retornar lista atualizada
-    const isAdmin = req.user.roles && (req.user.roles.includes('admin') || req.user.roles.includes('os_manage_all'));
-    const result = await pool.query(
-      `SELECT r.*, u.name as created_by_name
-       FROM maintenance_reports r
-       LEFT JOIN users u ON r.created_by = u.id
-       WHERE r.key_id = $1
-         AND (r.visibility = 'public' OR r.created_by = $2 ${isAdmin ? "OR TRUE" : ""})
-       ORDER BY r.created_at DESC LIMIT 100`,
-      [req.user.keyId, req.user.userId]
-    );
-    
-    return res.status(201).json({ ok: true, reports: result.rows });
-  } catch (err) {
-    console.error('Erro ao criar relatório:', err);
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// PUT - Atualizar relatório
-app.put('/maintenance-reports/:id', requireAuth, requireRoles(['admin', 'relatorios_write', 'relatorios', 'os_manage_all']), async (req, res) => {
-  try {
-    const { title, content, category, visibility, attachments } = req.body;
-    
-    // Verificar se é dono ou admin
-    const check = await pool.query(
-      'SELECT created_by FROM maintenance_reports WHERE id = $1 AND key_id = $2',
-      [req.params.id, req.user.keyId]
-    );
-    
-    if (check.rowCount === 0) {
-      return res.status(404).json({ ok: false, error: 'Relatório não encontrado' });
-    }
-    
-    const isAdmin = req.user.roles && (req.user.roles.includes('admin') || req.user.roles.includes('os_manage_all'));
-    if (check.rows[0].created_by !== req.user.userId && !isAdmin) {
-      return res.status(403).json({ ok: false, error: 'Sem permissão para editar este relatório' });
-    }
-    
-    const validAttachments = Array.isArray(attachments) ? JSON.stringify(attachments) : undefined;
-    
-    await pool.query(
-      `UPDATE maintenance_reports SET 
-        title = COALESCE($1, title),
-        content = COALESCE($2, content),
-        category = COALESCE($3, category),
-        visibility = COALESCE($4, visibility),
-        attachments = COALESCE($5, attachments)
-       WHERE id = $6 AND key_id = $7`,
-      [title, content, category, visibility, validAttachments, req.params.id, req.user.keyId]
-    );
-    
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// DELETE - Excluir relatório (dono ou admin)
-app.delete('/maintenance-reports/:id', requireAuth, requireRoles(['admin', 'relatorios_write', 'relatorios', 'os_manage_all']), async (req, res) => {
-  try {
-    // Verificar se é dono ou admin
-    const check = await pool.query(
-      'SELECT created_by FROM maintenance_reports WHERE id = $1 AND key_id = $2',
-      [req.params.id, req.user.keyId]
-    );
-    
-    if (check.rowCount === 0) {
-      return res.status(404).json({ ok: false, error: 'Relatório não encontrado' });
-    }
-    
-    const isAdmin = req.user.roles && (req.user.roles.includes('admin') || req.user.roles.includes('os_manage_all'));
-    if (check.rows[0].created_by !== req.user.userId && !isAdmin) {
-      return res.status(403).json({ ok: false, error: 'Sem permissão para excluir este relatório' });
-    }
-    
-    await pool.query(
-      'DELETE FROM maintenance_reports WHERE id = $1 AND key_id = $2',
-      [req.params.id, req.user.keyId]
-    );
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// GET - Gerar PDF bonito de relatório
-app.get('/maintenance-reports/:id/pdf', requireAuth, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT r.*, u.name as created_by_name
-       FROM maintenance_reports r
-       LEFT JOIN users u ON r.created_by = u.id
-       WHERE r.id = $1 AND r.key_id = $2`,
-      [req.params.id, req.user.keyId]
-    );
-    
-    if (result.rowCount === 0) {
-      return res.status(404).json({ ok: false, error: 'Relatório não encontrado' });
-    }
-    
-    const report = result.rows[0];
-    
-    // Criar PDF bonito
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="relatorio-${report.id}.pdf"`);
-    doc.pipe(res);
-    
-    const magenta = '#ec4899';
-    const pink = '#f472b6';
-    
-    // Header com gradiente rosa/magenta
-    doc.rect(0, 0, 595.28, 140).fill('#1a0a14');
-    doc.rect(0, 0, 8, 140).fill(magenta);
-    
-    // Orbs decorativos (simulados com círculos)
-    doc.circle(500, 40, 80).fillOpacity(0.15).fill(magenta);
-    doc.circle(450, 100, 50).fillOpacity(0.1).fill(pink);
-    doc.fillOpacity(1);
-    
-    // Logo Icarus (ícone)
-    doc.circle(70, 65, 28).lineWidth(2).strokeColor(magenta).stroke();
-    doc.font('Helvetica-Bold').fontSize(16).fillColor(magenta).text('IC', 58, 56);
-    
-    // Título
-    doc.font('Helvetica-Bold').fontSize(28).fillColor('#fff').text('ICARUS', 115, 40);
-    doc.font('Helvetica').fontSize(11).fillColor('#f9a8d4').text('Central de Relatórios • Granja Vitta', 115, 72);
-    
-    // Badge categoria
-    const catColors = {
-      geral: magenta,
-      manutencao: '#a855f7',
-      incidente: '#ef4444',
-      melhoria: '#22c55e',
-      orcamento: '#f59e0b'
-    };
-    const catColor = catColors[report.category] || magenta;
-    const catLabels = { geral: 'GERAL', manutencao: 'MANUTENÇÃO', incidente: 'INCIDENTE', melhoria: 'MELHORIA', orcamento: 'ORÇAMENTO' };
-    
-    doc.roundedRect(115, 95, 100, 22, 11).fill(catColor);
-    doc.font('Helvetica-Bold').fontSize(9).fillColor('#fff').text(catLabels[report.category] || 'GERAL', 125, 101);
-    
-    // Data
-    const dateStr = report.created_at ? new Date(report.created_at).toLocaleDateString('pt-BR', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    }) : '';
-    doc.font('Helvetica').fontSize(10).fillColor('#9ca3af').text(dateStr, 230, 100);
-    
-    doc.y = 160;
-    
-    // Título do relatório
-    doc.font('Helvetica-Bold').fontSize(24).fillColor('#111').text(report.title, 50, doc.y, { width: 495 });
-    doc.moveDown(0.8);
-    
-    // Autor
-    doc.font('Helvetica').fontSize(11).fillColor('#6b7280').text(`Por: ${report.created_by_name || 'Anônimo'}`, 50);
-    doc.moveDown(1.5);
-    
-    // Linha decorativa
-    doc.moveTo(50, doc.y).lineTo(545, doc.y).lineWidth(1).strokeColor(magenta).stroke();
-    doc.moveDown(1);
-    
-    // Conteúdo - processar e detectar valores/números
-    const content = report.content || '';
-    doc.font('Helvetica').fontSize(12).fillColor('#374151').text(content, 50, doc.y, {
-      width: 495,
-      align: 'justify',
-      lineGap: 6
-    });
-    
-    // Anexos se houver
-    const attachments = report.attachments || [];
-    if (attachments.length > 0) {
-      doc.moveDown(2);
-      doc.font('Helvetica-Bold').fontSize(14).fillColor(magenta).text('Anexos:', 50);
-      doc.moveDown(0.5);
-      attachments.forEach((att, i) => {
-        doc.font('Helvetica').fontSize(11).fillColor('#3b82f6').text(`${i + 1}. ${att.name || att.url}`, 60);
-      });
-    }
-    
-    // Footer com propaganda Icarus
-    const footerY = 760;
-    doc.rect(0, footerY, 595.28, 80).fill('#1a0a14');
-    doc.rect(0, footerY, 595.28, 2).fill(magenta);
-    
-    // Logo no footer
-    doc.circle(70, footerY + 30, 18).lineWidth(1.5).strokeColor(magenta).stroke();
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(magenta).text('IC', 62, footerY + 24);
-    
-    // Info de contato
-    doc.font('Helvetica-Bold').fontSize(12).fillColor('#fff').text('ICARUS SYSTEM', 100, footerY + 15);
-    doc.font('Helvetica').fontSize(9).fillColor('#f9a8d4').text('Gestão Inteligente de Manutenção', 100, footerY + 30);
-    doc.font('Helvetica').fontSize(9).fillColor('#9ca3af').text('WhatsApp: (62) 98493-0056', 100, footerY + 42);
-    doc.font('Helvetica').fontSize(9).fillColor('#60a5fa').text('icarussite.vercel.app', 100, footerY + 54);
-    
-    // QR Code placeholder (canto direito)
-    doc.roundedRect(480, footerY + 10, 60, 60, 6).lineWidth(1).strokeColor('rgba(236,72,153,0.3)').stroke();
-    doc.font('Helvetica').fontSize(7).fillColor('#6b7280').text('Acesse', 495, footerY + 32);
-    doc.font('Helvetica').fontSize(7).fillColor('#6b7280').text('o sistema', 493, footerY + 40);
-    
-    doc.end();
-    
-  } catch (err) {
-    console.error('Erro ao gerar PDF:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -4669,192 +4285,6 @@ app.post('/api/generate-pdf', async (req, res) => {
   }
 });
 
-// ============================================
-// PDF ICARUS.LAV - RELATÓRIO DE LAVANDERIA
-// ============================================
-app.post('/api/pdf/lav-report', async (req, res) => {
-  try {
-    const { client, entries, period, totals } = req.body;
-    
-    if (!client || !entries || !period) {
-      return res.status(400).json({ ok: false, error: 'Dados incompletos' });
-    }
-    
-    // Criar PDF
-    const doc = new PDFDocument({ size: 'A4', margin: 40 });
-    const chunks = [];
-    
-    doc.on('data', chunk => chunks.push(chunk));
-    doc.on('end', () => {
-      const pdfBuffer = Buffer.concat(chunks);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="relatorio_${client.name}_${period.label}.pdf"`);
-      res.setHeader('Content-Length', pdfBuffer.length);
-      res.send(pdfBuffer);
-    });
-    
-    const clientColor = client.color || '#f472b6';
-    
-    // ===== CABEÇALHO =====
-    doc.rect(0, 0, 595, 120).fill('#0f172a');
-    doc.rect(40, 25, 515, 70).lineWidth(2).stroke(clientColor);
-    
-    doc.fontSize(28).font('Helvetica-Bold').fillColor(clientColor)
-       .text('RELATÓRIO ' + client.name.toUpperCase(), 40, 40, { align: 'center', width: 515 });
-    
-    doc.fontSize(11).font('Helvetica').fillColor('#94a3b8')
-       .text('Controle de Lavanderia • Sistema Icarus', 40, 72, { align: 'center', width: 515 });
-    
-    doc.fontSize(10).fillColor('#cbd5e1')
-       .text('📅 ' + period.label, 40, 88, { align: 'center', width: 515 });
-    
-    // ===== CARDS DE ESTATÍSTICAS =====
-    let y = 140;
-    const cardWidth = 120;
-    const cardGap = 15;
-    const totalCards = client.markingPrice > 0 ? 4 : 3;
-    const startX = (595 - (totalCards * cardWidth + (totalCards - 1) * cardGap)) / 2;
-    
-    // Card Peças
-    doc.rect(startX, y, cardWidth, 70).fill('#1e293b');
-    doc.rect(startX, y, cardWidth, 70).lineWidth(1).stroke('#334155');
-    doc.fontSize(24).font('Helvetica-Bold').fillColor(clientColor)
-       .text(totals.pieces.toString(), startX, y + 15, { width: cardWidth, align: 'center' });
-    doc.fontSize(9).font('Helvetica').fillColor('#64748b')
-       .text('PEÇAS', startX, y + 48, { width: cardWidth, align: 'center' });
-    
-    let cardX = startX + cardWidth + cardGap;
-    
-    // Card Marcações (se aplicável)
-    if (client.markingPrice > 0) {
-      doc.rect(cardX, y, cardWidth, 70).fill('#1e293b');
-      doc.rect(cardX, y, cardWidth, 70).lineWidth(1).stroke('#334155');
-      doc.fontSize(24).font('Helvetica-Bold').fillColor(clientColor)
-         .text((totals.markings || 0).toString(), cardX, y + 15, { width: cardWidth, align: 'center' });
-      doc.fontSize(9).font('Helvetica').fillColor('#64748b')
-         .text('MARCAÇÕES', cardX, y + 48, { width: cardWidth, align: 'center' });
-      cardX += cardWidth + cardGap;
-    }
-    
-    // Card Lançamentos
-    doc.rect(cardX, y, cardWidth, 70).fill('#1e293b');
-    doc.rect(cardX, y, cardWidth, 70).lineWidth(1).stroke('#334155');
-    doc.fontSize(24).font('Helvetica-Bold').fillColor(clientColor)
-       .text(entries.length.toString(), cardX, y + 15, { width: cardWidth, align: 'center' });
-    doc.fontSize(9).font('Helvetica').fillColor('#64748b')
-       .text('LANÇAMENTOS', cardX, y + 48, { width: cardWidth, align: 'center' });
-    cardX += cardWidth + cardGap;
-    
-    // Card Total (destaque)
-    doc.rect(cardX, y, cardWidth, 70).fill(clientColor);
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('#000')
-       .text('R$ ' + totals.value.toFixed(0), cardX, y + 18, { width: cardWidth, align: 'center' });
-    doc.fontSize(9).font('Helvetica').fillColor('#000')
-       .text('TOTAL', cardX, y + 48, { width: cardWidth, align: 'center' });
-    
-    // ===== INFORMAÇÕES DO CLIENTE =====
-    y += 90;
-    doc.rect(40, y, 515, 35).fill('#1e293b');
-    doc.fontSize(9).font('Helvetica').fillColor('#94a3b8');
-    
-    const infoWidth = 515 / 4;
-    doc.text('Cliente', 50, y + 5, { width: infoWidth });
-    doc.font('Helvetica-Bold').fillColor('#fff').text(client.name, 50, y + 18, { width: infoWidth });
-    
-    doc.font('Helvetica').fillColor('#94a3b8').text('R$/Peça', 50 + infoWidth, y + 5, { width: infoWidth });
-    doc.font('Helvetica-Bold').fillColor('#fff').text('R$ ' + client.pricePerPiece.toFixed(2), 50 + infoWidth, y + 18, { width: infoWidth });
-    
-    if (client.markingPrice > 0) {
-      doc.font('Helvetica').fillColor('#94a3b8').text('R$/Marcação', 50 + infoWidth * 2, y + 5, { width: infoWidth });
-      doc.font('Helvetica-Bold').fillColor('#fff').text('R$ ' + client.markingPrice.toFixed(2), 50 + infoWidth * 2, y + 18, { width: infoWidth });
-    }
-    
-    doc.font('Helvetica').fillColor('#94a3b8').text('Ciclo', 50 + infoWidth * 3, y + 5, { width: infoWidth });
-    doc.font('Helvetica-Bold').fillColor('#fff').text(client.billingCycle === 'biweekly' ? 'Quinzenal' : 'Mensal', 50 + infoWidth * 3, y + 18, { width: infoWidth });
-    
-    // ===== TABELA DE LANÇAMENTOS =====
-    y += 50;
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#fff')
-       .text('📋 Lançamentos do Período', 40, y);
-    y += 20;
-    
-    // Cabeçalho da tabela
-    const fields = client.fields || [];
-    const colWidths = [70]; // Data
-    fields.forEach(() => colWidths.push(Math.floor((515 - 70 - 80) / fields.length))); // Campos dinâmicos
-    colWidths.push(80); // Valor
-    
-    let x = 40;
-    doc.rect(40, y, 515, 22).fill(clientColor);
-    doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
-    doc.text('Data', x + 5, y + 7, { width: colWidths[0] });
-    x += colWidths[0];
-    
-    fields.forEach((field, i) => {
-      doc.text(field.label, x + 5, y + 7, { width: colWidths[i + 1], align: 'center' });
-      x += colWidths[i + 1];
-    });
-    doc.text('Valor', x + 5, y + 7, { width: colWidths[colWidths.length - 1], align: 'right' });
-    
-    y += 22;
-    
-    // Linhas da tabela
-    doc.font('Helvetica').fontSize(9);
-    entries.forEach((entry, idx) => {
-      if (y > 750) {
-        doc.addPage();
-        y = 40;
-      }
-      
-      const bgColor = idx % 2 === 0 ? '#1e293b' : '#0f172a';
-      doc.rect(40, y, 515, 20).fill(bgColor);
-      
-      x = 40;
-      doc.fillColor('#fff');
-      
-      // Data
-      const dateStr = entry.date.split('-').reverse().slice(0, 2).join('/');
-      doc.text(dateStr, x + 5, y + 6, { width: colWidths[0] });
-      x += colWidths[0];
-      
-      // Campos
-      fields.forEach((field, i) => {
-        doc.fillColor('#94a3b8').text((entry[field.key] || 0).toString(), x + 5, y + 6, { width: colWidths[i + 1], align: 'center' });
-        x += colWidths[i + 1];
-      });
-      
-      // Valor
-      doc.fillColor(clientColor).text('R$ ' + (entry.totalValue || 0).toFixed(2), x + 5, y + 6, { width: colWidths[colWidths.length - 1] - 10, align: 'right' });
-      
-      y += 20;
-    });
-    
-    // Rodapé da tabela (totais)
-    doc.rect(40, y, 515, 25).fill('#334155');
-    x = 40;
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#fff');
-    doc.text('TOTAIS', x + 5, y + 8, { width: colWidths[0] });
-    x += colWidths[0];
-    
-    fields.forEach((field, i) => {
-      doc.text((totals.byField[field.key] || 0).toString(), x + 5, y + 8, { width: colWidths[i + 1], align: 'center' });
-      x += colWidths[i + 1];
-    });
-    doc.fillColor(clientColor).text('R$ ' + totals.value.toFixed(2), x + 5, y + 8, { width: colWidths[colWidths.length - 1] - 10, align: 'right' });
-    
-    // ===== RODAPÉ =====
-    y = 800;
-    doc.fontSize(8).font('Helvetica').fillColor('#64748b')
-       .text('Gerado em ' + new Date().toLocaleString('pt-BR') + ' • Icarus.LAV v1.0 • Guilherme Braga', 40, y, { align: 'center', width: 515 });
-    
-    doc.end();
-    
-  } catch (error) {
-    console.error('Erro ao gerar PDF LAV:', error);
-    res.status(500).json({ ok: false, error: 'Erro ao gerar PDF' });
-  }
-});
-
 // Endpoint para download do PDF gerado
 app.get('/api/download-pdf/:id', (req, res) => {
   const pdfData = pdfStorage.get(req.params.id);
@@ -4879,190 +4309,6 @@ app.get('/api/version', (req, res) => {
     changelog: APP_CHANGELOG,
     downloadUrl: APK_DOWNLOAD_URL
   });
-});
-
-// ============================================
-// ENDPOINTS DE NOTAS & BOLETOS
-// ============================================
-
-// Listar notas do tenant
-app.get('/api/notas', requireAuth, async (req, res) => {
-  try {
-    const tenantId = req.user.tenant_id;
-    const result = await pool.query(
-      `SELECT * FROM notas_boletos 
-       WHERE tenant_id = $1 
-       ORDER BY created_at DESC`,
-      [tenantId]
-    );
-    
-    // Parse dos anexos JSON
-    const notas = result.rows.map(row => ({
-      ...row,
-      nota_anexo: row.nota_anexo ? JSON.parse(row.nota_anexo) : null,
-      boleto_anexo: row.boleto_anexo ? JSON.parse(row.boleto_anexo) : null
-    }));
-    
-    res.json({ ok: true, notas });
-  } catch (err) {
-    console.error('Erro ao buscar notas:', err);
-    res.status(500).json({ ok: false, error: 'Erro ao buscar notas' });
-  }
-});
-
-// Criar/Atualizar nota
-app.post('/api/notas', requireAuth, async (req, res) => {
-  try {
-    const tenantId = req.user.tenant_id;
-    const { nota } = req.body;
-    
-    if (!nota) {
-      return res.status(400).json({ ok: false, error: 'Dados da nota não fornecidos' });
-    }
-    
-    // Verificar se já existe
-    const existing = await pool.query(
-      'SELECT id FROM notas_boletos WHERE id = $1 AND tenant_id = $2',
-      [nota.id, tenantId]
-    );
-    
-    if (existing.rows.length > 0) {
-      // Atualizar
-      await pool.query(
-        `UPDATE notas_boletos SET 
-          empresa = $1,
-          descricao = $2,
-          responsavel = $3,
-          setor = $4,
-          valor_nota = $5,
-          valor_boleto = $6,
-          data_emissao = $7,
-          data_vencimento = $8,
-          status = $9,
-          nota_anexo = $10,
-          boleto_anexo = $11,
-          updated_at = NOW()
-        WHERE id = $12 AND tenant_id = $13`,
-        [
-          nota.empresa,
-          nota.descricao,
-          nota.responsavel,
-          nota.setor,
-          nota.valor_nota || 0,
-          nota.valor_boleto || 0,
-          nota.data_emissao,
-          nota.data_vencimento,
-          nota.status,
-          nota.nota_anexo ? JSON.stringify(nota.nota_anexo) : null,
-          nota.boleto_anexo ? JSON.stringify(nota.boleto_anexo) : null,
-          nota.id,
-          tenantId
-        ]
-      );
-    } else {
-      // Inserir
-      await pool.query(
-        `INSERT INTO notas_boletos 
-          (id, tenant_id, empresa, descricao, responsavel, setor, 
-           valor_nota, valor_boleto, data_emissao, data_vencimento, 
-           status, nota_anexo, boleto_anexo, created_by, created_by_name, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())`,
-        [
-          nota.id,
-          tenantId,
-          nota.empresa,
-          nota.descricao,
-          nota.responsavel,
-          nota.setor,
-          nota.valor_nota || 0,
-          nota.valor_boleto || 0,
-          nota.data_emissao,
-          nota.data_vencimento,
-          nota.status,
-          nota.nota_anexo ? JSON.stringify(nota.nota_anexo) : null,
-          nota.boleto_anexo ? JSON.stringify(nota.boleto_anexo) : null,
-          nota.created_by,
-          nota.created_by_name
-        ]
-      );
-    }
-    
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('Erro ao salvar nota:', err);
-    res.status(500).json({ ok: false, error: 'Erro ao salvar nota' });
-  }
-});
-
-// Excluir nota
-app.delete('/api/notas/:id', requireAuth, async (req, res) => {
-  try {
-    const tenantId = req.user.tenant_id;
-    const { id } = req.params;
-    
-    await pool.query(
-      'DELETE FROM notas_boletos WHERE id = $1 AND tenant_id = $2',
-      [id, tenantId]
-    );
-    
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('Erro ao excluir nota:', err);
-    res.status(500).json({ ok: false, error: 'Erro ao excluir nota' });
-  }
-});
-
-// Sincronizar todas as notas (bulk save)
-app.post('/api/notas/sync', requireAuth, async (req, res) => {
-  try {
-    const tenantId = req.user.tenant_id;
-    const { notas } = req.body;
-    
-    if (!notas || !Array.isArray(notas)) {
-      return res.status(400).json({ ok: false, error: 'Lista de notas não fornecida' });
-    }
-    
-    for (const nota of notas) {
-      const existing = await pool.query(
-        'SELECT id FROM notas_boletos WHERE id = $1 AND tenant_id = $2',
-        [nota.id, tenantId]
-      );
-      
-      if (existing.rows.length > 0) {
-        await pool.query(
-          `UPDATE notas_boletos SET 
-            empresa = $1, descricao = $2, responsavel = $3, setor = $4,
-            valor_nota = $5, valor_boleto = $6, data_emissao = $7, data_vencimento = $8,
-            status = $9, nota_anexo = $10, boleto_anexo = $11, updated_at = NOW()
-          WHERE id = $12 AND tenant_id = $13`,
-          [
-            nota.empresa, nota.descricao, nota.responsavel, nota.setor,
-            nota.valor_nota || 0, nota.valor_boleto || 0, nota.data_emissao, nota.data_vencimento,
-            nota.status, nota.nota_anexo ? JSON.stringify(nota.nota_anexo) : null,
-            nota.boleto_anexo ? JSON.stringify(nota.boleto_anexo) : null, nota.id, tenantId
-          ]
-        );
-      } else {
-        await pool.query(
-          `INSERT INTO notas_boletos 
-            (id, tenant_id, empresa, descricao, responsavel, setor, valor_nota, valor_boleto,
-             data_emissao, data_vencimento, status, nota_anexo, boleto_anexo, created_by, created_by_name, created_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())`,
-          [
-            nota.id, tenantId, nota.empresa, nota.descricao, nota.responsavel, nota.setor,
-            nota.valor_nota || 0, nota.valor_boleto || 0, nota.data_emissao, nota.data_vencimento,
-            nota.status, nota.nota_anexo ? JSON.stringify(nota.nota_anexo) : null,
-            nota.boleto_anexo ? JSON.stringify(nota.boleto_anexo) : null, nota.created_by, nota.created_by_name
-          ]
-        );
-      }
-    }
-    
-    res.json({ ok: true, synced: notas.length });
-  } catch (err) {
-    console.error('Erro ao sincronizar notas:', err);
-    res.status(500).json({ ok: false, error: 'Erro ao sincronizar notas' });
-  }
 });
 
 async function start() {
@@ -5095,139 +4341,6 @@ async function start() {
         } catch (e) { /* noop */ }
       }, 60 * 1000);
     }
-    
-    // ============= SCHEDULER DE CHECKLISTS AUTOMÁTICOS =============
-    // Executa a cada minuto para verificar checklists no horário configurado
-    async function executeAutoChecklists() {
-      console.log('🔄 Verificando checklists automáticos...');
-      try {
-        // Buscar todos os checklists com auto_complete ativado
-        const autoChecklists = await pool.query(
-          `SELECT c.*, 
-            COALESCE(json_agg(json_build_object('id', ci.id, 'description', ci.description) ORDER BY ci.item_order) FILTER (WHERE ci.id IS NOT NULL), '[]'::json) as items
-           FROM checklists c
-           LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
-           WHERE c.auto_complete = true
-           GROUP BY c.id`
-        );
-        
-        const now = new Date();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        
-        for (const checklist of autoChecklists.rows) {
-          const freqDays = checklist.frequency_days || 2; // Padrão: dia sim dia não
-          const lastRun = checklist.last_auto_run ? new Date(checklist.last_auto_run) : null;
-          const autoTime = checklist.auto_time || '11:00';
-          
-          // Verificar se é o horário correto (com tolerância de 2 minutos)
-          const [targetHour, targetMin] = autoTime.split(':').map(Number);
-          const currentHour = now.getHours();
-          const currentMin = now.getMinutes();
-          const isCorrectTime = currentHour === targetHour && Math.abs(currentMin - targetMin) <= 2;
-          
-          if (!isCorrectTime) {
-            continue; // Não é a hora ainda
-          }
-          
-          // Verificar se já executou hoje
-          const todayExec = await pool.query(
-            `SELECT id FROM checklist_executions 
-             WHERE checklist_id = $1 AND executed_at >= $2`,
-            [checklist.id, today]
-          );
-          
-          if (todayExec.rowCount > 0) {
-            console.log(`  ⏭️ ${checklist.name}: já executado hoje`);
-            continue;
-          }
-          
-          // Calcular se deve executar hoje baseado na frequência
-          let shouldExecute = false;
-          
-          if (!lastRun) {
-            // Primeira execução
-            shouldExecute = true;
-          } else {
-            // Calcular dias desde última execução
-            const lastRunDate = new Date(lastRun);
-            lastRunDate.setHours(0, 0, 0, 0);
-            const diffTime = today.getTime() - lastRunDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            // Executar se passou o número de dias da frequência
-            shouldExecute = diffDays >= freqDays;
-          }
-          
-          if (shouldExecute) {
-            console.log(`  ✅ Executando automaticamente: ${checklist.name} às ${autoTime}`);
-            
-            // Criar execução automática
-            const execId = uuid();
-            const executorId = checklist.auto_os_executor || null;
-            await pool.query(
-              `INSERT INTO checklist_executions (id, checklist_id, executed_by, notes, key_id)
-               VALUES ($1, $2, $3, 'Execução automática', $4)`,
-              [execId, checklist.id, executorId, checklist.key_id]
-            );
-            
-            // Marcar todos os itens como checked
-            const items = checklist.items || [];
-            for (const item of items) {
-              await pool.query(
-                `INSERT INTO checklist_execution_items (execution_id, item_id, checked, checked_at, notes)
-                 VALUES ($1, $2, true, NOW(), 'Auto')`,
-                [execId, item.id]
-              );
-            }
-            
-            // Atualizar última execução
-            await pool.query(
-              `UPDATE checklists SET last_auto_run = NOW() WHERE id = $1`,
-              [checklist.id]
-            );
-            
-            // Se configurado para criar OS, criar e já fechar
-            if (checklist.auto_create_os && checklist.auto_os_executor) {
-              const osId = uuid();
-              const osTitle = checklist.auto_os_title || `Checklist: ${checklist.name}`;
-              const itemsDesc = items.map((item, i) => `${i + 1}. ${item.description}`).join('\n');
-              const osDescription = `Originado do Checklist Automático: ${checklist.name}\n\nItens:\n${itemsDesc}\n\nExecutado automaticamente em ${new Date().toLocaleString('pt-BR')}`;
-              
-              // Criar a OS já como concluída
-              await pool.query(
-                `INSERT INTO orders (id, title, description, sector, priority, status, requested_by, started_at, finished_at, worked_minutes, key_id, created_at)
-                 VALUES ($1, $2, $3, $4, 'low', 'completed', $5, NOW(), NOW(), 0, $6, NOW())`,
-                [osId, osTitle, osDescription, checklist.sector || 'Manutenção', checklist.auto_os_executor, checklist.key_id]
-              );
-              
-              // Atribuir ao executor
-              await pool.query(
-                `INSERT INTO order_users (order_id, user_id) VALUES ($1, $2)`,
-                [osId, checklist.auto_os_executor]
-              );
-              
-              console.log(`    📋 OS criada e fechada: ${osTitle}`);
-            }
-          } else {
-            console.log(`  ⏸️ ${checklist.name}: aguardando ${freqDays - Math.floor((today - new Date(lastRun)) / (1000 * 60 * 60 * 24))} dias`);
-          }
-        }
-        
-        console.log('✅ Verificação de checklists automáticos concluída');
-      } catch (err) {
-        console.error('❌ Erro ao executar checklists automáticos:', err);
-      }
-    }
-    
-    // Verificar checklists a cada minuto
-    setInterval(executeAutoChecklists, 60 * 1000);
-    
-    // Executar verificação 30 segundos após iniciar
-    setTimeout(executeAutoChecklists, 30 * 1000);
-    
-    console.log('⏰ Scheduler de checklists automáticos iniciado (verifica a cada minuto)');
     
     app.listen(PORT, () => console.log(`API Icarus rodando na porta ${PORT}`));
   } catch (err) {
