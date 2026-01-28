@@ -2974,7 +2974,7 @@ async function loadInventory() {
       }
     }
 
-    const response = await fetch(`${API_URL}/api/inventory`, {
+    const response = await fetch(`${API_URL}/inventory`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
 
@@ -3496,7 +3496,7 @@ async function loadAlmoxMovements() {
     const startStr = startDate.toISOString().split('T')[0];
     const endStr = now.toISOString().split('T')[0];
     
-    let url = `${API_URL}/api/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
+    let url = `${API_URL}/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
     if (type) url += `&movement_type=${type}`;
     if (pending) url += `&pending_return=true`;
     
@@ -3639,7 +3639,7 @@ function refreshMovements() {
 // Carregar empréstimos pendentes
 async function loadPendingLoans() {
   try {
-    const response = await fetch(`${API_URL}/api/inventory/loans/pending`, {
+    const response = await fetch(`${API_URL}/inventory/loans/pending`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -3820,7 +3820,7 @@ async function executeReturn(movementId) {
   closeModal('modal-return-confirm');
   
   try {
-    const response = await fetch(`${API_URL}/api/inventory/movements/${movementId}/return`, {
+    const response = await fetch(`${API_URL}/inventory/movements/${movementId}/return`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4001,7 +4001,7 @@ async function submitQuickWithdrawal(event) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/api/inventory/movements`, {
+    const response = await fetch(`${API_URL}/inventory/movements`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4149,7 +4149,7 @@ async function submitQuickEntry(event) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/api/inventory/movements`, {
+    const response = await fetch(`${API_URL}/inventory/movements`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4183,7 +4183,7 @@ async function submitQuickEntry(event) {
 // Carregar relatórios
 async function loadAlmoxReports() {
   try {
-    const response = await fetch(`${API_URL}/api/inventory/stats?period=${almox2State.reportPeriod}`, {
+    const response = await fetch(`${API_URL}/inventory/stats?period=${almox2State.reportPeriod}`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
@@ -5074,7 +5074,7 @@ async function createItemFromForm(event) {
   };
 
   try {
-    const response = await fetch(`${API_URL}/api/inventory`, {
+    const response = await fetch(`${API_URL}/inventory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -5113,7 +5113,7 @@ async function adjustStock(itemId, delta) {
   }
 
   try {
-    const response = await fetch(`${API_URL}/api/inventory/${itemId}`, {
+    const response = await fetch(`${API_URL}/inventory/${itemId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -5140,7 +5140,7 @@ async function deleteItem(itemId) {
   if (!confirm('Tem certeza que deseja excluir este item?')) return;
 
   try {
-    const response = await fetch(`${API_URL}/api/inventory/${itemId}`, {
+    const response = await fetch(`${API_URL}/inventory/${itemId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
@@ -14992,43 +14992,23 @@ let notasData = {
 // Verificar se usuário tem permissão para ver Notas & Boletos
 function canAccessNotas() {
   const user = state.user;
-  if (!user) {
-    console.log('canAccessNotas - sem usuário');
-
-    return false;
-  }
+  if (!user) return false;
   
   const username = (user.username || user.name || '').toLowerCase().trim();
   const role = (user.role || '').toLowerCase().trim();
   const roles = (user.roles || []).map(r => String(r).toLowerCase().trim());
   
-  console.log('=== canAccessNotas DEBUG ===' );
-  console.log('username:', username);
-  console.log('role:', role);
-  console.log('roles:', roles);
-  console.log('user object:', user);
-  
-  // SIMPLIFICADO: Se role contém 'manut' ou é admin/owner, tem acesso
-  if (role.includes('manut') || role === 'admin' || role === 'owner') {
-    console.log('ACESSO PERMITIDO por role:', role);
-    return true;
-  }
+  // Se role contém 'manut' ou é admin/owner, tem acesso
+  if (role.includes('manut') || role === 'admin' || role === 'owner') return true;
   
   // Verificar no array de roles
   for (const r of roles) {
-    if (r.includes('manut') || r === 'admin' || r === 'owner') {
-      console.log('ACESSO PERMITIDO por roles[]:', r);
-      return true;
-    }
+    if (r.includes('manut') || r === 'admin' || r === 'owner') return true;
   }
   
   // Verificar por nome de usuário específico
-  if (username.includes('bruno') || username.includes('walter') || username.includes('manut')) {
-    console.log('ACESSO PERMITIDO por username:', username);
-    return true;
-  }
+  if (username.includes('bruno') || username.includes('walter') || username.includes('manut')) return true;
   
-  console.log('ACESSO NEGADO');
   return false;
 }
 
@@ -15196,18 +15176,30 @@ function updateNotasStats() {
 // RELATÓRIO DE GASTOS DE MANUTENÇÃO
 // ============================================
 
-// Mostrar modal de relatório de gastos
+// Estado do relatório
+let gastosReportVisible = false;
+
+// Mostrar tela de relatório de gastos (substitui a área de notas)
 async function showGastosReport() {
+  const notasContent = document.getElementById('notas-content');
+  if (!notasContent) return;
+  
+  // Salvar conteúdo original para restaurar depois
+  if (!notasContent.dataset.originalHtml) {
+    notasContent.dataset.originalHtml = notasContent.innerHTML;
+  }
+  
   // Mostrar loading
-  const loadingHtml = `
-    <div id="modal-gastos-report" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+  notasContent.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 400px;">
       <div style="text-align: center; color: #fff;">
         <div style="width: 50px; height: 50px; border: 3px solid rgba(16, 185, 129, 0.3); border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-        <p>Gerando relatório...</p>
+        <p>Carregando relatório...</p>
       </div>
     </div>
   `;
-  document.body.insertAdjacentHTML('beforeend', loadingHtml);
+  
+  gastosReportVisible = true;
   
   try {
     // Buscar estatísticas da API
@@ -15215,26 +15207,18 @@ async function showGastosReport() {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
-    if (!response.ok) throw new Error('Erro ao carregar estatísticas');
+    let stats;
+    if (response.ok) {
+      stats = await response.json();
+    } else {
+      stats = calculateLocalStats();
+    }
     
-    const stats = await response.json();
-    
-    // Fechar loading e mostrar relatório
-    const loadingModal = document.getElementById('modal-gastos-report');
-    if (loadingModal) loadingModal.remove();
-    
-    renderGastosReport(stats);
+    renderGastosReportView(notasContent, stats);
     
   } catch (e) {
-    console.error('Erro ao gerar relatório:', e);
-    
-    // Calcular localmente como fallback
     const stats = calculateLocalStats();
-    
-    const loadingModal = document.getElementById('modal-gastos-report');
-    if (loadingModal) loadingModal.remove();
-    
-    renderGastosReport(stats);
+    renderGastosReportView(notasContent, stats);
   }
 }
 
@@ -15315,161 +15299,153 @@ function calculateLocalStats() {
   };
 }
 
-// Renderizar modal de relatório
-function renderGastosReport(stats) {
+// Renderizar view de relatório (dentro do container de notas)
+function renderGastosReportView(container, stats) {
   const formatCurrency = (val) => 'R$ ' + parseFloat(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   
   // Calcular maior valor para escala das barras
   const maxSetor = Math.max(...(stats.by_setor || []).map(s => s.total), 1);
   const maxMonth = Math.max(...(stats.by_month || []).map(m => m.total), 1);
   
-  const modalHtml = `
-    <div id="modal-gastos-report" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto;">
-      <div style="background: linear-gradient(145deg, rgba(15, 20, 25, 0.98), rgba(10, 15, 20, 0.98)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 24px; max-width: 900px; width: 100%; margin: 20px 0; box-shadow: 0 30px 100px rgba(16, 185, 129, 0.15);">
-        
-        <!-- Header -->
-        <div style="padding: 24px 28px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%); border-bottom: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10; border-radius: 24px 24px 0 0;">
-          <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-          </div>
-          <div style="flex: 1;">
-            <h2 style="margin: 0; font-size: 22px; color: #fff; font-weight: 700;">Relatório de Gastos</h2>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Controle de manutenção e despesas</p>
-          </div>
-          <button onclick="exportGastosReportPDF()" style="padding: 12px 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; color: #ef4444; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Exportar PDF
-          </button>
-          <button onclick="closeGastosReport()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; width: 44px; height: 44px; color: #888; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+  container.innerHTML = `
+    <!-- Header com botão voltar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px 24px 20px; flex-wrap: wrap; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button onclick="closeGastosReport()" style="width: 44px; height: 44px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div>
+          <h2 style="font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            Relatório de Gastos
+          </h2>
+          <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin: 0;">Controle de manutenção e despesas</p>
         </div>
-        
-        <div style="padding: 28px;">
-          
-          <!-- Cards Resumo -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px;">
-            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 20px; text-align: center;">
-              <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Total Geral</p>
-              <p style="font-size: 28px; font-weight: 800; color: #10b981; margin: 0;">${formatCurrency(stats.total_geral)}</p>
-            </div>
-            <div style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05)); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 20px; text-align: center;">
-              <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Total Pago</p>
-              <p style="font-size: 28px; font-weight: 800; color: #22c55e; margin: 0;">${formatCurrency(stats.total_pago)}</p>
-              <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;">${stats.count_pago || 0} itens</p>
-            </div>
-            <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 20px; text-align: center;">
-              <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Pendente</p>
-              <p style="font-size: 28px; font-weight: 800; color: #f59e0b; margin: 0;">${formatCurrency(stats.total_pendente)}</p>
-              <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;">${stats.count_pendente || 0} itens</p>
-            </div>
-          </div>
-          
-          <!-- Gráfico por Mês -->
-          <div style="margin-bottom: 32px;">
-            <h3 style="font-size: 14px; color: #fff; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              Gastos por Mês (Últimos 6 meses)
-            </h3>
-            <div style="display: flex; gap: 12px; align-items: flex-end; height: 150px; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
-              ${(stats.by_month || []).map(m => {
-                const height = maxMonth > 0 ? (m.total / maxMonth * 100) : 0;
-                const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-                const [year, month] = m.month.split('-');
-                const monthLabel = monthNames[parseInt(month) - 1] + '/' + year.slice(2);
-                return `
-                  <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <div style="width: 100%; max-width: 60px; height: ${height}%; min-height: 4px; background: linear-gradient(180deg, #10b981, #059669); border-radius: 6px 6px 2px 2px; position: relative;">
-                      <span style="position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,0.6); white-space: nowrap;">${formatCurrency(m.total)}</span>
-                    </div>
-                    <span style="font-size: 11px; color: rgba(255,255,255,0.5);">${monthLabel}</span>
-                  </div>
-                `;
-              }).join('')}
-              ${(stats.by_month || []).length === 0 ? '<p style="color: rgba(255,255,255,0.4); text-align: center; width: 100%;">Sem dados</p>' : ''}
-            </div>
-          </div>
-          
-          <!-- Gastos por Setor -->
-          <div style="margin-bottom: 32px;">
-            <h3 style="font-size: 14px; color: #fff; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              Gastos por Setor
-            </h3>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              ${(stats.by_setor || []).map(s => {
-                const width = maxSetor > 0 ? (s.total / maxSetor * 100) : 0;
-                return `
-                  <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="width: 120px; font-size: 12px; color: rgba(255,255,255,0.7); flex-shrink: 0;">${escapeHtml(s.setor)}</span>
-                    <div style="flex: 1; height: 24px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden;">
-                      <div style="width: ${width}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #7c3aed); display: flex; align-items: center; padding-left: 8px;">
-                        ${width > 20 ? `<span style="font-size: 11px; color: #fff; font-weight: 500;">${formatCurrency(s.total)}</span>` : ''}
-                      </div>
-                    </div>
-                    ${width <= 20 ? `<span style="font-size: 11px; color: rgba(255,255,255,0.5);">${formatCurrency(s.total)}</span>` : ''}
-                    <span style="font-size: 11px; color: rgba(255,255,255,0.4); width: 50px; text-align: right;">${s.count} itens</span>
-                  </div>
-                `;
-              }).join('')}
-              ${(stats.by_setor || []).length === 0 ? '<p style="color: rgba(255,255,255,0.4); text-align: center;">Sem dados</p>' : ''}
-            </div>
-          </div>
-          
-          <!-- Top Fornecedores -->
-          <div>
-            <h3 style="font-size: 14px; color: #fff; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M21 12H3M12 3v18"/></svg>
-              Top 10 Fornecedores
-            </h3>
-            <div style="background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background: rgba(255,255,255,0.03);">
-                    <th style="text-align: left; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">#</th>
-                    <th style="text-align: left; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Fornecedor</th>
-                    <th style="text-align: right; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Qtd</th>
-                    <th style="text-align: right; padding: 12px 16px; font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${(stats.top_empresas || []).map((e, i) => `
-                    <tr style="border-top: 1px solid rgba(255,255,255,0.05);">
-                      <td style="padding: 12px 16px; font-size: 13px; color: rgba(255,255,255,0.4);">${i + 1}</td>
-                      <td style="padding: 12px 16px; font-size: 13px; color: #fff;">${escapeHtml(e.empresa)}</td>
-                      <td style="padding: 12px 16px; font-size: 13px; color: rgba(255,255,255,0.6); text-align: right;">${e.count}</td>
-                      <td style="padding: 12px 16px; font-size: 14px; color: #f59e0b; font-weight: 600; text-align: right;">${formatCurrency(e.total)}</td>
-                    </tr>
-                  `).join('')}
-                  ${(stats.top_empresas || []).length === 0 ? '<tr><td colspan="4" style="padding: 20px; text-align: center; color: rgba(255,255,255,0.4);">Sem dados</td></tr>' : ''}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          <!-- Footer -->
-          <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center;">
-            <p style="font-size: 11px; color: rgba(255,255,255,0.4);">Relatório gerado em ${new Date().toLocaleString('pt-BR')} • ICARUS Sistema de Manutenção</p>
-          </div>
+      </div>
+      <button onclick="exportGastosReportPDF()" style="padding: 12px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Exportar PDF
+      </button>
+    </div>
+    
+    <!-- Cards Resumo -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 0 20px 24px 20px;">
+      <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 24px; text-align: center;">
+        <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Total Geral</p>
+        <p style="font-size: 32px; font-weight: 800; color: #10b981; margin: 0;">${formatCurrency(stats.total_geral)}</p>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin: 6px 0 0 0;">${(stats.count_pago || 0) + (stats.count_pendente || 0)} registros</p>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05)); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 24px; text-align: center;">
+        <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Total Pago</p>
+        <p style="font-size: 32px; font-weight: 800; color: #22c55e; margin: 0;">${formatCurrency(stats.total_pago)}</p>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin: 6px 0 0 0;">${stats.count_pago || 0} itens</p>
+      </div>
+      <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 24px; text-align: center;">
+        <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Total Pendente</p>
+        <p style="font-size: 32px; font-weight: 800; color: #f59e0b; margin: 0;">${formatCurrency(stats.total_pendente)}</p>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin: 6px 0 0 0;">${stats.count_pendente || 0} itens</p>
+      </div>
+    </div>
+    
+    <!-- Gráfico por Mês -->
+    <div style="padding: 0 20px 24px 20px;">
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px;">
+        <h3 style="font-size: 16px; color: #fff; font-weight: 600; margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Gastos por Mês (Últimos 6 meses)
+        </h3>
+        <div style="display: flex; gap: 16px; align-items: flex-end; height: 180px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px;">
+          ${(stats.by_month || []).length > 0 ? (stats.by_month || []).map(m => {
+            const height = maxMonth > 0 ? (m.total / maxMonth * 100) : 0;
+            const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const [year, month] = m.month.split('-');
+            const monthLabel = monthNames[parseInt(month) - 1] + '/' + year.slice(2);
+            return `
+              <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <span style="font-size: 11px; color: #10b981; font-weight: 600; white-space: nowrap;">${formatCurrency(m.total)}</span>
+                <div style="width: 100%; max-width: 60px; height: ${Math.max(height, 8)}%; background: linear-gradient(180deg, #10b981, #059669); border-radius: 8px 8px 4px 4px;"></div>
+                <span style="font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500;">${monthLabel}</span>
+              </div>
+            `;
+          }).join('') : '<p style="color: rgba(255,255,255,0.4); text-align: center; width: 100%; padding: 40px 0;">Nenhum dado disponível</p>'}
         </div>
       </div>
     </div>
+    
+    <!-- Grid com Setor e Fornecedores -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 20px 24px 20px;">
+      
+      <!-- Gastos por Setor -->
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px;">
+        <h3 style="font-size: 16px; color: #fff; font-weight: 600; margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Por Setor
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          ${(stats.by_setor || []).length > 0 ? (stats.by_setor || []).map(s => {
+            const width = maxSetor > 0 ? (s.total / maxSetor * 100) : 0;
+            return `
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 13px; color: rgba(255,255,255,0.8);">${escapeHtml(s.setor)}</span>
+                  <span style="font-size: 13px; color: #8b5cf6; font-weight: 600;">${formatCurrency(s.total)}</span>
+                </div>
+                <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                  <div style="width: ${width}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #7c3aed); border-radius: 4px;"></div>
+                </div>
+              </div>
+            `;
+          }).join('') : '<p style="color: rgba(255,255,255,0.4); text-align: center; padding: 20px 0;">Nenhum dado</p>'}
+        </div>
+      </div>
+      
+      <!-- Top Fornecedores -->
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px;">
+        <h3 style="font-size: 16px; color: #fff; font-weight: 600; margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+          Top Fornecedores
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          ${(stats.top_empresas || []).slice(0, 5).map((e, i) => `
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 10px;">
+              <div style="width: 28px; height: 28px; background: ${i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7c32' : 'rgba(255,255,255,0.1)'}; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: ${i < 3 ? '#000' : '#fff'}; font-size: 12px; font-weight: 700;">${i + 1}</div>
+              <div style="flex: 1; min-width: 0;">
+                <p style="font-size: 13px; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(e.empresa)}</p>
+                <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 2px 0 0 0;">${e.count} compras</p>
+              </div>
+              <span style="font-size: 14px; color: #f59e0b; font-weight: 700;">${formatCurrency(e.total)}</span>
+            </div>
+          `).join('')}
+          ${(stats.top_empresas || []).length === 0 ? '<p style="color: rgba(255,255,255,0.4); text-align: center; padding: 20px 0;">Nenhum fornecedor</p>' : ''}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div style="padding: 0 20px 40px 20px; text-align: center;">
+      <p style="font-size: 12px; color: rgba(255,255,255,0.3);">Relatório gerado em ${new Date().toLocaleString('pt-BR')} • ICARUS Sistema de Manutenção</p>
+    </div>
   `;
-  
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+// Voltar para lista de notas
 function closeGastosReport() {
-  const modal = document.getElementById('modal-gastos-report');
-  if (modal) modal.remove();
+  const notasContent = document.getElementById('notas-content');
+  if (notasContent && notasContent.dataset.originalHtml) {
+    notasContent.innerHTML = notasContent.dataset.originalHtml;
+    delete notasContent.dataset.originalHtml;
+    gastosReportVisible = false;
+    // Recarregar notas
+    loadNotas();
+  }
 }
 
-// Exportar relatório para PDF (usando a mesma estrutura HTML)
+// Exportar relatório para PDF
 function exportGastosReportPDF() {
-  showNotification('Gerando PDF... Use Ctrl+P para imprimir', 'info');
-  
-  const modal = document.getElementById('modal-gastos-report');
-  if (modal) {
+  const notasContent = document.getElementById('notas-content');
+  if (notasContent) {
     // Abrir em nova janela para impressão
-    const content = modal.querySelector('div > div').innerHTML;
+    const content = notasContent.innerHTML;
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -15481,13 +15457,15 @@ function exportGastosReportPDF() {
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
             font-family: 'Inter', sans-serif; 
-            background: #1a1a2e; 
+            background: #0f1419; 
             color: #fff; 
             padding: 20px;
           }
           @media print {
-            body { background: #fff; color: #000; }
-            * { color: #000 !important; background: transparent !important; border-color: #ddd !important; }
+            body { background: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            * { color: #000 !important; }
+            [style*="background"] { background: #f5f5f5 !important; }
+            button { display: none !important; }
           }
         </style>
       </head>
