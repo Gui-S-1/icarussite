@@ -35,6 +35,7 @@ PDF_ICARUS_DOCUMENTACAO.txt
 server_encoded.txt
 nginx-icarus.conf
 nginx.conf
+api-config.json
 
 # Firebase/API Keys - NEVER commit
 firebase-config.json

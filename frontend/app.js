@@ -1188,17 +1188,31 @@ function updateDashboardStats() {
 // ========== CHECKLIST DASHBOARD ==========
 async function loadChecklistDashboard() {
   try {
-    const response = await fetch(`${API_URL}/checklists/dashboard-stats`, {
+    // Usar endpoint existente de checklists
+    const response = await fetch(`${API_URL}/checklists`, {
       headers: { 'Authorization': `Bearer ${state.token}` }
     });
     
+    if (!response.ok) {
+      throw new Error('Endpoint not found');
+    }
+    
     const data = await response.json();
-    if (data.ok) {
-      renderChecklistDashboard(data);
+    if (data.ok && data.checklists) {
+      // Calcular stats a partir dos checklists
+      const today = new Date().toISOString().split('T')[0];
+      const todayExec = data.checklists.filter(c => c.last_execution && c.last_execution.startsWith(today)).length;
+      renderChecklistDashboard({
+        today_total: todayExec,
+        today_auto: 0,
+        today_manual: todayExec,
+        pending: data.checklists.length - todayExec,
+        streak_days: 0,
+        recent_executions: []
+      });
     }
   } catch (error) {
-    console.error('Erro ao carregar checklist dashboard:', error);
-    // Fallback com dados mock se endpoint nÃ£o existir
+    // Silenciar erro - endpoint pode nao existir
     renderChecklistDashboard({
       today_total: 0,
       today_auto: 0,
