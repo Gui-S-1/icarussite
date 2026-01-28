@@ -3035,7 +3035,9 @@ function renderInventoryTable() {
     rolamentos: 'âš™ï¸ Rolamentos',
     parafusos: 'ðŸ”© Parafusos',
     lubrificantes: 'ðŸ›¢ï¸ Lubrificantes',
-    epis: 'ðŸ¦º EPIs',
+    epis: '🦺 EPIs',
+    yamasa: '🏭 Yamasa',
+    sala_ovos: '🥚 Sala de Ovos',
     outros: 'ðŸ“¦ Outros',
     // Categorias antigas para compatibilidade
     eletrico: 'âš¡ ElÃ©trico',
@@ -3057,6 +3059,8 @@ function renderInventoryTable() {
     parafusos: 'parafusos',
     lubrificantes: 'lubrificantes',
     epis: 'epis',
+    yamasa: 'yamasa',
+    sala_ovos: 'sala_ovos',
     outros: 'outros',
     eletrico: 'eletrica',
     hidraulico: 'hidraulica',
@@ -4525,7 +4529,9 @@ function exportAlmoxReportHTML() {
     rolamentos: 'Rolamentos',
     parafusos: 'Parafusos/FixaÃ§Ã£o',
     lubrificantes: 'Lubrificantes',
-    epis: 'EPIs',
+    epis: 'epis',
+    yamasa: 'yamasa',
+    sala_ovos: 'sala_ovos',
     outros: 'Outros'
   };
   
