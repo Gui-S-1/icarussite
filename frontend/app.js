@@ -3860,10 +3860,8 @@ async function executeReturn(movementId) {
  }
 }
 
-// Modal de Retirada Rapida - Design Premium
-// Estado para retirada multipla
-let withdrawalItems = [];
 
+// Modal de Retirada Rapida - Design Premium
 // Estado para retirada multipla
 let withdrawalItems = [];
 
