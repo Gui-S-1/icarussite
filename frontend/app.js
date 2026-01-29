@@ -2988,7 +2988,7 @@ async function loadInventory() {
  }
  }
 
- const response = await fetch(`${API_URL}/api/inventory`, {
+ const response = await fetch(`${API_URL}/inventory`, {
  headers: { 'Authorization': `Bearer ${state.token}` }
  });
 
@@ -3514,7 +3514,7 @@ async function loadAlmoxMovements() {
  const startStr = startDate.toISOString().split('T')[0];
  const endStr = now.toISOString().split('T')[0];
  
- let url = `${API_URL}/api/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
+ let url = `${API_URL}/inventory/movements?start_date=${startStr}&end_date=${endStr}`;
  if (type) url += `&movement_type=${type}`;
  if (pending) url += `&pending_return=true`;
  
@@ -3657,7 +3657,7 @@ function refreshMovements() {
 // Carregar emprestimos pendentes
 async function loadPendingLoans() {
  try {
- const response = await fetch(`${API_URL}/api/inventory/loans/pending`, {
+ const response = await fetch(`${API_URL}/inventory/loans/pending`, {
  headers: { 'Authorization': `Bearer ${state.token}` }
  });
  
@@ -3838,7 +3838,7 @@ async function executeReturn(movementId) {
  closeModal('modal-return-confirm');
  
  try {
- const response = await fetch(`${API_URL}/api/inventory/movements/${movementId}/return`, {
+ const response = await fetch(`${API_URL}/inventory/movements/${movementId}/return`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
@@ -4019,7 +4019,7 @@ async function submitQuickWithdrawal(event) {
  }
  
  try {
- const response = await fetch(`${API_URL}/api/inventory/movements`, {
+ const response = await fetch(`${API_URL}/inventory/movements`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
@@ -4167,7 +4167,7 @@ async function submitQuickEntry(event) {
  }
  
  try {
- const response = await fetch(`${API_URL}/api/inventory/movements`, {
+ const response = await fetch(`${API_URL}/inventory/movements`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
@@ -4201,7 +4201,7 @@ async function submitQuickEntry(event) {
 // Carregar relatorios
 async function loadAlmoxReports() {
  try {
- const response = await fetch(`${API_URL}/api/inventory/stats?period=${almox2State.reportPeriod}`, {
+ const response = await fetch(`${API_URL}/inventory/stats?period=${almox2State.reportPeriod}`, {
  headers: { 'Authorization': `Bearer ${state.token}` }
  });
  
@@ -5094,7 +5094,7 @@ async function createItemFromForm(event) {
  };
 
  try {
- const response = await fetch(`${API_URL}/api/inventory`, {
+ const response = await fetch(`${API_URL}/inventory`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
@@ -5133,7 +5133,7 @@ async function adjustStock(itemId, delta) {
  }
 
  try {
- const response = await fetch(`${API_URL}/api/inventory/${itemId}`, {
+ const response = await fetch(`${API_URL}/inventory/${itemId}`, {
  method: 'PUT',
  headers: {
  'Content-Type': 'application/json',
@@ -5160,7 +5160,7 @@ async function deleteItem(itemId) {
  if (!confirm('Tem certeza que deseja excluir este item?')) return;
 
  try {
- const response = await fetch(`${API_URL}/api/inventory/${itemId}`, {
+ const response = await fetch(`${API_URL}/inventory/${itemId}`, {
  method: 'DELETE',
  headers: { 'Authorization': `Bearer ${state.token}` }
  });
@@ -5328,7 +5328,7 @@ async function submitLoanItem(event, itemId) {
  }
  
  try {
- const response = await fetch(`${API_URL}/api/inventory/${itemId}/loan`, {
+ const response = await fetch(`${API_URL}/inventory/${itemId}/loan`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
@@ -5362,7 +5362,7 @@ async function showItemLoans(itemId) {
  if (!item) return;
  
  try {
- const response = await fetch(`${API_URL}/api/inventory/${itemId}/loans`, {
+ const response = await fetch(`${API_URL}/inventory/${itemId}/loans`, {
  headers: { 'Authorization': `Bearer ${state.token}` }
  });
  
@@ -5466,7 +5466,7 @@ async function returnLoanItem(loanId) {
  if (!confirm('Confirmar devolucao deste item?')) return;
  
  try {
- const response = await fetch(`${API_URL}/api/inventory/loans/${loanId}/return`, {
+ const response = await fetch(`${API_URL}/inventory/loans/${loanId}/return`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
@@ -5492,7 +5492,7 @@ async function returnLoanItem(loanId) {
 // Marcar item como retornavel/nao-retornavel
 async function toggleItemReturnable(itemId, isReturnable) {
  try {
- const response = await fetch(`${API_URL}/api/inventory/${itemId}/returnable`, {
+ const response = await fetch(`${API_URL}/inventory/${itemId}/returnable`, {
  method: 'PATCH',
  headers: {
  'Content-Type': 'application/json',
