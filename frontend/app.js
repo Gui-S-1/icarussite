@@ -3080,53 +3080,53 @@ function renderInventoryTable() {
  }
 
  tbody.innerHTML = itemsToShow.map(item => {
- var catClass = categoryClasses[item.category] || 'outros';
- var statusClass = item.quantity <= 0 ? 'badge-high': (item.quantity <= (item.min_stock || 0) ? 'badge-warning': 'badge-low');
- var statusText = item.quantity <= 0 ? 'ðŸ”´ Zerado': (item.quantity <= (item.min_stock || 0) ? 'âš ï¸ Baixo': 'OK');
- 
- // Itens em uso (emprestados)
- var inUse = item.in_use_count || 0;
- var inUseBadge = inUse > 0 
- ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px; margin-left:4px;" title="Itens emprestados aguardando devolucao">ðŸ”„ '+ inUse + 'em uso</span>'
- : '';
- 
- // Criar descricao informativa do item
- var descParts = [];
- if (item.brand) descParts.push(item.brand);
- if (item.specs) {
- var specsPreview = item.specs.substring(0, 60) + (item.specs.length > 60 ? '...': '');
- descParts.push(specsPreview);
- }
- var descHtml = descParts.length > 0 
- ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+ escapeHtml(descParts.join('â€¢ ')) + '</div>'
- : '<div style="font-size:11px; color:var(--text-muted); margin-top:2px; font-style:italic;">Sem descricao</div>';
- 
- // Localizacao com icone
- var locationHtml = item.location 
- ? '<span style="font-size: 12px; display:flex; align-items:center; gap:4px;"><span style="opacity:0.6;">ðŸ“</span>'+ escapeHtml(item.location) + '</span>'
- : '<span style="font-size: 11px; color:var(--text-muted); font-style:italic;">Nao definido</span>';
- 
- return '<tr onclick="showItemDetail(\''+ sanitizeId(item.id) + '\')" style="cursor: pointer;" title="Clique para ver detalhes">'+
- '<td><code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-size: 11px;">'+ escapeHtml(item.sku || '-') + '</code></td>'+
- '<td><div><strong>'+ escapeHtml(item.name) + '</strong>'+ descHtml + '</div></td>'+
- '<td><span class="category-badge '+ catClass + '">'+ escapeHtml(categoryLabels[item.category] || item.category || '-') + '</span></td>'+
- '<td>'+ escapeHtml(item.brand || '-') + '</td>'+
- '<td><div style="display:flex; flex-direction:column; gap:2px;">'+
- '<div style="display:flex; align-items:center; gap:6px;">'+
- '<strong style="font-size: 16px;">'+ escapeHtml(item.quantity) + '</strong>'+
- '<span style="color: var(--text-secondary); font-size:11px;">min '+ (item.min_stock || 0) + (item.max_stock ? '/ max '+ item.max_stock : '') + '</span>'+
- '</div>'+
- inUseBadge +
- '</div></td>'+
- '<td>'+ escapeHtml(item.unit) + '</td>'+
- '<td>'+ locationHtml + '</td>'+
- '<td><span class="badge '+ statusClass + '">'+ statusText + '</span></td>'+
- '<td onclick="event.stopPropagation()">'+
- '<button class="btn-small" onclick="adjustStock('+ item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">âˆ’</button>'+
- '<button class="btn-small" onclick="adjustStock('+ item.id + ', 1)" title="Adicionar 1" style="padding: 4px 8px;">+</button>'+
- '<button class="btn-small btn-danger" onclick="deleteItem('+ item.id + ')" style="padding: 4px 8px;" title="Excluir item">A—</button>'+
- '</td>'+
- '</tr>';
+   var catClass = categoryClasses[item.category] || 'outros';
+   var statusClass = item.quantity <= 0 ? 'badge-high': (item.quantity <= (item.min_stock || 0) ? 'badge-warning': 'badge-low');
+   var statusText = item.quantity <= 0 ? '🔴 Zerado': (item.quantity <= (item.min_stock || 0) ? '⚠️ Baixo': 'OK');
+   // Itens em uso (emprestados)
+   var inUse = item.in_use_count || 0;
+   var inUseBadge = inUse > 0 
+     ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px; margin-left:4px;" title="Itens emprestados aguardando devolucao">🔄 '+ inUse + ' em uso</span>'
+     : '';
+   // Criar descricao informativa do item
+   var descParts = [];
+   if (item.brand) descParts.push(item.brand);
+   if (item.specs) {
+     var specsPreview = item.specs.substring(0, 60) + (item.specs.length > 60 ? '...': '');
+     descParts.push(specsPreview);
+   }
+   var descHtml = descParts.length > 0 
+     ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+ escapeHtml(descParts.join(' • ')) + '</div>'
+     : '<div style="font-size:11px; color:var(--text-muted); margin-top:2px; font-style:italic;">Sem descricao</div>';
+   // Localizacao com icone
+   var locationHtml = item.location 
+     ? '<span style="font-size: 12px; display:flex; align-items:center; gap:4px;"><span style="opacity:0.6;">📍</span>'+ escapeHtml(item.location) + '</span>'
+     : '<span style="font-size: 11px; color:var(--text-muted); font-style:italic;">Nao definido</span>';
+   // Buscar último responsável pela retirada (se houver)
+   var lastPerson = item.last_person_name || (item.movements && item.movements.length > 0 ? item.movements[item.movements.length-1].person_name : null);
+   var personHtml = lastPerson ? '<span style="font-size:11px; color:var(--accent-cyan); margin-left:8px;">👤 '+escapeHtml(lastPerson)+'</span>' : '';
+   return '<tr onclick="showItemDetail(\''+ sanitizeId(item.id) + '\')" style="cursor: pointer;" title="Clique para ver detalhes">'+
+     '<td><code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-size: 11px;">'+ escapeHtml(item.sku || '-') + '</code></td>'+ 
+     '<td><div><strong>'+ escapeHtml(item.name) + '</strong>'+ descHtml + '</div></td>'+ 
+     '<td><span class="category-badge '+ catClass + '">'+ escapeHtml(categoryLabels[item.category] || item.category || '-') + '</span></td>'+ 
+     '<td>'+ escapeHtml(item.brand || '-') + '</td>'+ 
+     '<td><div style="display:flex; flex-direction:column; gap:2px;">'+ 
+       '<div style="display:flex; align-items:center; gap:6px;">'+ 
+         '<strong style="font-size: 16px;">'+ escapeHtml(item.quantity) + '</strong>'+ 
+         '<span style="color: var(--text-secondary); font-size:11px;">min '+ (item.min_stock || 0) + (item.max_stock ? '/ max '+ item.max_stock : '') + '</span>'+ 
+         personHtml + 
+       '</div>'+ 
+       inUseBadge + 
+     '</div></td>'+ 
+     '<td>'+ escapeHtml(item.unit || '-') + '</td>'+ 
+     '<td>'+ locationHtml + '</td>'+ 
+     '<td><span class="badge '+ statusClass + '">'+ statusText + '</span></td>'+ 
+     '<td onclick="event.stopPropagation()">'+ 
+       '<button class="btn-small" onclick="adjustStock('+ item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">−</button>'+ 
+       '<button class="btn-small" onclick="adjustStock('+ item.id + ', 1)" title="Adicionar 1" style="padding: 4px 8px;">+</button>'+ 
+       '<button class="btn-small btn-danger" onclick="deleteItem('+ item.id + ')" style="padding: 4px 8px;" title="Excluir item">×</button>'+ 
+     '</td>'+ 
+   '</tr>';
  }).join('');
  
  // Renderizar versao mobile (cards)
