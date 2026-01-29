@@ -3972,15 +3972,24 @@ function filterWithdrawalItems(query) {
   
   suggestionsDiv.innerHTML = items.map(item => `
     <div onclick="addWithdrawalItem('${item.id}')" 
-      style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; position:relative; z-index:1002;"
+      style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; background: transparent;"
       onmouseover="this.style.background='rgba(168,85,247,0.2)'" onmouseout="this.style.background='transparent'">
       <div style="font-weight: 600; color: #fff;">${escapeHtml(item.name)}</div>
       <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.quantity} ${item.unit || 'un'} disponiveis - ${item.category || ''}</div>
     </div>
   `).join('');
   suggestionsDiv.style.display = 'block';
-  suggestionsDiv.style.zIndex = '1002';
-  suggestionsDiv.style.position = 'absolute';
+  suggestionsDiv.style.zIndex = '9999';
+  suggestionsDiv.style.position = 'fixed';
+  // Ajustar largura e posição para coincidir com o input
+  const input = document.getElementById('withdrawal-search');
+  if (input) {
+    const rect = input.getBoundingClientRect();
+    suggestionsDiv.style.left = rect.left + 'px';
+    suggestionsDiv.style.top = (rect.bottom + window.scrollY) + 'px';
+    suggestionsDiv.style.width = rect.width + 'px';
+    suggestionsDiv.style.right = 'auto';
+  }
 }
 
 function addWithdrawalItem(itemId) {
