@@ -3972,13 +3972,15 @@ function filterWithdrawalItems(query) {
   
   suggestionsDiv.innerHTML = items.map(item => `
     <div onclick="addWithdrawalItem('${item.id}')" 
-      style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;"
+      style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; position:relative; z-index:1002;"
       onmouseover="this.style.background='rgba(168,85,247,0.2)'" onmouseout="this.style.background='transparent'">
       <div style="font-weight: 600; color: #fff;">${escapeHtml(item.name)}</div>
       <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.quantity} ${item.unit || 'un'} disponiveis - ${item.category || ''}</div>
     </div>
   `).join('');
   suggestionsDiv.style.display = 'block';
+  suggestionsDiv.style.zIndex = '1002';
+  suggestionsDiv.style.position = 'absolute';
 }
 
 function addWithdrawalItem(itemId) {
