@@ -3861,195 +3861,230 @@ async function executeReturn(movementId) {
 }
 
 // Modal de Retirada Rapida - Design Premium
+// Estado para retirada multipla
+let withdrawalItems = [];
+
+// Estado para retirada multipla
+let withdrawalItems = [];
+
 function showQuickWithdrawal() {
- const items = state.inventory.filter(i => i.quantity > 0);
- 
- const modalHtml = `
- <div id="modal-quick-withdrawal" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-withdrawal')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(30,20,60,0.7));">
- <div class="modal" style="max-width: 520px; background: linear-gradient(180deg, rgba(45,25,85,0.98) 0%, rgba(25,15,55,0.98) 100%); border: 1px solid rgba(168,85,247,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 80px rgba(168,85,247,0.12), inset 0 1px 0 rgba(255,255,255,0.05); border-radius: 20px; padding: 0; overflow: hidden;">
- 
- <!-- Header Gradient -->
- <div style="background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.1)); padding: 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.06);">
- <div style="display: flex; align-items: center; gap: 16px;">
- <div style="width: 52px; height: 52px; background: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.2)); border-radius: 14px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(236,72,153,0.4); box-shadow: 0 8px 24px rgba(236,72,153,0.2);">
- <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2">
- <polyline points="17 1 21 5 17 9"/>
- <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
- <polyline points="7 23 3 19 7 15"/>
- <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
- </svg>
- </div>
- <div>
- <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #fff;">Registrar Retirada</h3>
- <p style="margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Informe os dados da saida de material</p>
- </div>
- </div>
- </div>
- 
- <form onsubmit="submitQuickWithdrawal(event)" style="padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;">
- 
- <!-- Item Search Field -->
- <div style="position: relative;">
- <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
- Item do Estoque
- </label>
- <select name="item_id" id="withdrawal-item-select" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)'; this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)'; this.style.boxShadow='none';">
- <option value="">Buscar ou selecionar item...</option>
- ${items.map(i => `<option value="${i.id}">${escapeHtml(i.name)} â€” ${i.quantity} ${i.unit || 'un'} disponiveis</option>`).join('')}
- </select>
- </div>
- 
- <!-- Quantity + Usage Type Row -->
- <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 14px;">
- <div>
- <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
- Quantidade
- </label>
- <input type="number" name="quantity" min="1" value="1" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 16px; font-weight: 600; text-align: center;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)'; this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)'; this.style.boxShadow='none';">
- </div>
- <div>
- <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
- Tipo de Uso
- </label>
- <select name="usage_type" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
- <option value="consumo">ðŸ”¸ Consumo (nao retorna)</option>
- <option value="emprestimo">ðŸ”„ Emprestimo (deve retornar)</option>
- <option value="manutencao">ðŸ”§ Manutencao</option>
- </select>
- </div>
- </div>
- 
- <!-- Person Name -->
- <div>
- <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
- Quem esta retirando?
- </label>
- <input type="text" name="person_name" placeholder="Digite o nome completo da pessoa" required style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(236,72,153,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(236,72,153,0.5)'; this.style.boxShadow='0 0 0 3px rgba(236,72,153,0.1)';" onblur="this.style.borderColor='rgba(236,72,153,0.2)'; this.style.boxShadow='none';">
- </div>
- 
- <!-- Sector -->
- <div>
- <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
- Setor / Destino
- </label>
- <select name="sector" id="withdrawal-sector-select" style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; cursor: pointer;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';" onchange="toggleCustomSector(this)">
- <option value="">Selecione o setor...</option>
- <option value="Manutencao">ðŸ”§ Manutencao</option>
- <option value="Aviario 1">ðŸ” Aviario 1</option>
- <option value="Aviario 2">ðŸ” Aviario 2</option>
- <option value="Aviario 3">ðŸ” Aviario 3</option>
- <option value="Aviario 4">ðŸ” Aviario 4</option>
- <option value="Recria">ðŸ£ Recria</option>
- <option value="Fabrica de Racao">ðŸ­ Fabrica de Racao</option>
- <option value="Escritorio">ðŸ“‹ Escritorio</option>
- <option value="Almoxarifado">ðŸ“¦ Almoxarifado</option>
- <option value="Externo"> Externo</option>
- <option value="__outro__"> Outro (digitar)</option>
- </select>
- <input type="text" name="sector_custom" id="withdrawal-sector-custom" placeholder="Digite o nome do setor..." style="display: none; width: 100%; padding: 14px 16px; margin-top: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';">
- </div>
- 
- <!-- Notes -->
- <div>
- <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
- Observacao <span style="font-weight: 400; color: rgba(255,255,255,0.4);">(opcional)</span>
- </label>
- <textarea name="notes" rows="2" placeholder="Anotacoes adicionais sobre a retirada..." style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; color: #fff; font-size: 14px; resize: none;" onfocus="this.style.borderColor='rgba(168,85,247,0.5)';" onblur="this.style.borderColor='rgba(168,85,247,0.2)';"></textarea>
- </div>
- 
- <!-- Action Buttons -->
- <div style="display: flex; gap: 12px; margin-top: 8px;">
- <button type="button" onclick="closeModal('modal-quick-withdrawal')" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)';" onmouseout="this.style.background='rgba(255,255,255,0.03)';">Cancelar</button>
- <button type="submit" style="flex: 1.2; padding: 14px; background: linear-gradient(135deg, #ec4899, #be185d); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px rgba(236,72,153,0.35); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 30px rgba(236,72,153,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(236,72,153,0.35)';">
- <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
- Confirmar Retirada
- </button>
- </div>
- </form>
- </div>
- </div>
- `;
- 
- const existing = document.getElementById('modal-quick-withdrawal');
- if (existing) existing.remove();
- document.body.insertAdjacentHTML('beforeend', modalHtml);
+  withdrawalItems = [];
+  const items = state.inventory.filter(i => i.quantity > 0);
+  
+  const modalHtml = `
+    <div id="modal-quick-withdrawal" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-quick-withdrawal')" style="backdrop-filter: blur(12px); background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(30,20,60,0.7));">
+      <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto; background: linear-gradient(180deg, rgba(45,25,85,0.98) 0%, rgba(25,15,55,0.98) 100%); border: 1px solid rgba(168,85,247,0.35); box-shadow: 0 30px 60px rgba(0,0,0,0.5); border-radius: 20px; padding: 0;">
+        
+        <div style="background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.1)); padding: 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 52px; height: 52px; background: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.2)); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2">
+                <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #fff;">Registrar Retirada</h3>
+              <p style="margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Adicione um ou mais itens para a mesma pessoa</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="padding: 24px 28px;">
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase;">BUSCAR ITEM</label>
+            <div style="position: relative;">
+              <input type="text" id="withdrawal-search" placeholder="Digite para buscar..." autocomplete="off"
+                style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; color: #fff; font-size: 14px;"
+                oninput="filterWithdrawalItems(this.value)">
+              <div id="withdrawal-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #1a1a2e; border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; margin-top: 4px; max-height: 200px; overflow-y: auto; z-index: 100;"></div>
+            </div>
+          </div>
+          
+          <div id="withdrawal-selected-items" style="margin-bottom: 20px; min-height: 60px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px;">
+            <p style="color: rgba(255,255,255,0.4); text-align: center; margin: 0; font-size: 13px;">Nenhum item adicionado</p>
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase;">QUEM ESTA RETIRANDO?</label>
+            <input type="text" id="withdrawal-person" placeholder="Nome da pessoa" 
+              style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(236,72,153,0.3); border-radius: 12px; color: #fff; font-size: 14px;">
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase;">SETOR / DESTINO</label>
+            <select id="withdrawal-sector" style="width: 100%; padding: 14px 16px; background: #1a1a2e; border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; color: #fff; font-size: 14px;">
+              <option value="">Selecione o setor...</option>
+              <option value="Manutencao">Manutencao</option>
+              <option value="Aviario 1">Aviario 1</option>
+              <option value="Aviario 2">Aviario 2</option>
+              <option value="Aviario 3">Aviario 3</option>
+              <option value="Aviario 4">Aviario 4</option>
+              <option value="Recria">Recria</option>
+              <option value="Fabrica de Racao">Fabrica de Racao</option>
+              <option value="Escritorio">Escritorio</option>
+              <option value="Almoxarifado">Almoxarifado</option>
+              <option value="Externo">Externo</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; text-transform: uppercase;">OBSERVACAO (OPCIONAL)</label>
+            <textarea id="withdrawal-notes" rows="2" placeholder="Anotacoes adicionais..." 
+              style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; color: #fff; font-size: 14px; resize: none;"></textarea>
+          </div>
+          
+          <div style="display: flex; gap: 12px;">
+            <button type="button" onclick="closeModal('modal-quick-withdrawal')" 
+              style="flex: 1; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; cursor: pointer; font-weight: 500;">
+              Cancelar
+            </button>
+            <button type="button" onclick="submitMultipleWithdrawal()" 
+              style="flex: 1.5; padding: 14px; background: linear-gradient(135deg, #ec4899, #be185d); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+              Confirmar Retirada
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('modal-quick-withdrawal');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// Toggle campo customizado de setor
-function toggleCustomSector(selectEl) {
- const customInput = document.getElementById('withdrawal-sector-custom');
- if (selectEl.value === '__outro__') {
- customInput.style.display = 'block';
- customInput.focus();
- } else {
- customInput.style.display = 'none';
- customInput.value = '';
- }
+function filterWithdrawalItems(query) {
+  const suggestionsDiv = document.getElementById('withdrawal-suggestions');
+  if (!query || query.length < 1) {
+    suggestionsDiv.style.display = 'none';
+    return;
+  }
+  
+  const items = state.inventory.filter(i => 
+    i.quantity > 0 && 
+    (i.name.toLowerCase().includes(query.toLowerCase()) || 
+     (i.sku && i.sku.toLowerCase().includes(query.toLowerCase())))
+  ).slice(0, 8);
+  
+  if (items.length === 0) {
+    suggestionsDiv.style.display = 'none';
+    return;
+  }
+  
+  suggestionsDiv.innerHTML = items.map(item => `
+    <div onclick="addWithdrawalItem('${item.id}')" 
+      style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;"
+      onmouseover="this.style.background='rgba(168,85,247,0.2)'" onmouseout="this.style.background='transparent'">
+      <div style="font-weight: 600; color: #fff;">${escapeHtml(item.name)}</div>
+      <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.quantity} ${item.unit || 'un'} disponiveis - ${item.category || ''}</div>
+    </div>
+  `).join('');
+  suggestionsDiv.style.display = 'block';
 }
 
-// Submeter retirada rapida
-async function submitQuickWithdrawal(event) {
- event.preventDefault();
- const form = event.target;
- const formData = new FormData(form);
- 
- // Determinar setor (select ou customizado)
- let sector = formData.get('sector');
- if (sector === '__outro__') {
- sector = formData.get('sector_custom');
- }
- 
- const item = state.inventory.find(i => i.id == formData.get('item_id'));
- const quantity = parseInt(formData.get('quantity'));
- 
- if (!item) {
- showNotification('Selecione um item', 'error');
- return;
- }
- 
- if (quantity > item.quantity) {
- showNotification('Quantidade maior que disponivel', 'error');
- return;
- }
- 
- try {
- const response = await fetch(`${API_URL}/inventory/movements`, {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- 'Authorization': `Bearer ${state.token}`
- },
- body: JSON.stringify({
- item_id: item.id,
- movement_type: 'saida',
- quantity: quantity,
- usage_type: formData.get('usage_type'),
- person_name: formData.get('person_name'),
- person_sector: sector || null,
- notes: formData.get('notes') || null
- })
- });
- 
- const data = await response.json();
- if (data.ok) {
- showNotification('Retirada registrada com sucesso!', 'success');
- closeModal('modal-quick-withdrawal');
- loadInventory();
- if (almox2State.currentTab === 'movimentos') loadAlmoxMovements();
- if (almox2State.currentTab === 'ferramentas') loadPendingLoans();
- } else {
- showNotification('Erro: '+ (data.error || 'Erro ao registrar'), 'error');
- }
- } catch (error) {
- console.error('Erro ao registrar retirada:', error);
- showNotification('Erro ao registrar retirada', 'error');
- }
+function addWithdrawalItem(itemId) {
+  const item = state.inventory.find(i => i.id === itemId || i.id === parseInt(itemId));
+  if (!item) return;
+  
+  const existing = withdrawalItems.find(w => w.id == itemId);
+  if (existing) {
+    if (existing.qty < item.quantity) {
+      existing.qty++;
+      renderWithdrawalItems();
+    }
+    return;
+  }
+  
+  withdrawalItems.push({ id: item.id, name: item.name, qty: 1, maxQty: item.quantity, unit: item.unit || 'un' });
+  renderWithdrawalItems();
+  
+  document.getElementById('withdrawal-search').value = '';
+  document.getElementById('withdrawal-suggestions').style.display = 'none';
+}
+
+function renderWithdrawalItems() {
+  const container = document.getElementById('withdrawal-selected-items');
+  
+  if (withdrawalItems.length === 0) {
+    container.innerHTML = '<p style="color: rgba(255,255,255,0.4); text-align: center; margin: 0; font-size: 13px;">Nenhum item adicionado</p>';
+    return;
+  }
+  
+  container.innerHTML = withdrawalItems.map((item, idx) => `
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(168,85,247,0.1); border-radius: 8px; margin-bottom: 8px;">
+      <div style="flex: 1;">
+        <div style="font-weight: 600; color: #fff; font-size: 14px;">${escapeHtml(item.name)}</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Max: ${item.maxQty} ${item.unit}</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" onclick="changeWithdrawalQty(${idx}, -1)" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff; cursor: pointer; font-size: 16px;">-</button>
+        <span style="color: #fff; font-weight: 700; min-width: 30px; text-align: center;">${item.qty}</span>
+        <button type="button" onclick="changeWithdrawalQty(${idx}, 1)" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff; cursor: pointer; font-size: 16px;">+</button>
+      </div>
+      <button type="button" onclick="removeWithdrawalItem(${idx})" style="width: 28px; height: 28px; border-radius: 6px; border: none; background: rgba(239,68,68,0.2); color: #ef4444; cursor: pointer;">X</button>
+    </div>
+  `).join('');
+}
+
+function changeWithdrawalQty(idx, delta) {
+  const item = withdrawalItems[idx];
+  const newQty = item.qty + delta;
+  if (newQty >= 1 && newQty <= item.maxQty) {
+    item.qty = newQty;
+    renderWithdrawalItems();
+  }
+}
+
+function removeWithdrawalItem(idx) {
+  withdrawalItems.splice(idx, 1);
+  renderWithdrawalItems();
+}
+
+async function submitMultipleWithdrawal() {
+  const personName = document.getElementById('withdrawal-person').value.trim();
+  const sector = document.getElementById('withdrawal-sector').value;
+  const notes = document.getElementById('withdrawal-notes').value.trim();
+  
+  if (withdrawalItems.length === 0) {
+    showNotification('Adicione pelo menos um item', 'error');
+    return;
+  }
+  
+  if (!personName) {
+    showNotification('Informe quem esta retirando', 'error');
+    return;
+  }
+  
+  try {
+    for (const item of withdrawalItems) {
+      await fetch(`${API_URL}/inventory/movements`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.token}`
+        },
+        body: JSON.stringify({
+          item_id: item.id,
+          movement_type: 'saida',
+          quantity: item.qty,
+          usage_type: 'emprestimo',
+          person_name: personName,
+          person_sector: sector || null,
+          notes: notes || null
+        })
+      });
+    }
+    
+    const itemNames = withdrawalItems.map(i => `${i.qty}x ${i.name}`).join(', ');
+    showNotification(`Retirada registrada: ${itemNames}`, 'success');
+    closeModal('modal-quick-withdrawal');
+    loadInventory();
+    if (almox2State.currentTab === 'movimentos') loadAlmoxMovements();
+  } catch (error) {
+    console.error('Erro ao registrar retirada:', error);
+    showNotification('Erro ao registrar retirada', 'error');
+  }
 }
 
 // Modal de Entrada Rapida - Design Premium
