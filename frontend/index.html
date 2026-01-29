@@ -294,6 +294,25 @@
       --info: #3b82f6;
     }
 
+    /* ========================================
+       GLOBAL SELECT/DROPDOWN STYLING
+       Garante que todas options fiquem legíveis
+       ======================================== */
+    select {
+      background-color: #1a1a2e !important;
+      color: #fff !important;
+    }
+    select option {
+      background-color: #1a1a2e !important;
+      color: #fff !important;
+      padding: 10px 12px;
+    }
+    select option:hover,
+    select option:checked {
+      background-color: #2d2d4a !important;
+      color: #fff !important;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
       background: var(--bg-primary);
@@ -12805,17 +12824,17 @@
               transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
-              <option value="" style="background: #1a1a2e;">Selecione...</option>
-              <option value="ferramentas" style="background: #1a1a2e;">🔧 Ferramentas</option>
-              <option value="eletrica" style="background: #1a1a2e;">⚡ Elétrica</option>
-              <option value="hidraulica" style="background: #1a1a2e;">💧 Hidráulica</option>
-              <option value="rolamentos" style="background: #1a1a2e;">⚙️ Rolamentos</option>
-              <option value="parafusos" style="background: #1a1a2e;">🔩 Parafusos</option>
-              <option value="lubrificantes" style="background: #1a1a2e;">🛢️ Lubrificantes</option>
-              <option value="epis" style="background: #1a1a2e;">🦺 EPIs</option>
-              <option value="yamasa" style="background: #1a1a2e;">🏭 Yamasa</option>
-              <option value="sala_ovos" style="background: #1a1a2e;">🥚 Sala de Ovos</option>
-              <option value="outros" style="background: #1a1a2e;">📦 Outros</option>
+              <option value="">Selecione...</option>
+              <option value="ferramentas">Ferramentas</option>
+              <option value="eletrica">Elétrica</option>
+              <option value="hidraulica">Hidráulica</option>
+              <option value="rolamentos">Rolamentos</option>
+              <option value="parafusos">Parafusos</option>
+              <option value="lubrificantes">Lubrificantes</option>
+              <option value="epis">EPIs</option>
+              <option value="yamasa">Yamasa</option>
+              <option value="sala_ovos">Sala de Ovos</option>
+              <option value="outros">Outros</option>
             </select>
           </div>
           <div style="position: relative;">
