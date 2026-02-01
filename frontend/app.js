@@ -3013,8 +3013,8 @@ async function loadInventory() {
 }
 
 function renderInventoryTable() {
+ const cardsContainer = document.getElementById('inventory-cards-grid');
  const tbody = document.querySelector('#almoxarifado-table tbody');
- if (!tbody) return;
 
  // Atualizar estatisticas
  updateAlmoxarifadoStats();
@@ -3023,15 +3023,15 @@ function renderInventoryTable() {
  updateMarcasFilter();
 
  if (state.inventory.length === 0) {
- tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">Nenhum item cadastrado</td></tr>';
- updateShowingCount(0);
- return;
+   if (cardsContainer) cardsContainer.innerHTML = '<div style="text-align:center; padding:60px 20px; color: var(--text-secondary);">Nenhum item cadastrado</div>';
+   updateShowingCount(0);
+   return;
  }
 
  const categoryLabels = {
  ferramentas: 'Ferramentas',
- eletrica: 'Eletrica',
- hidraulica: 'Hidraulica',
+ eletrica: 'Elétrica',
+ hidraulica: 'Hidráulica',
  rolamentos: 'Rolamentos',
  parafusos: 'Parafusos',
  lubrificantes: 'Lubrificantes',
@@ -3039,11 +3039,10 @@ function renderInventoryTable() {
  yamasa: 'Yamasa',
  sala_ovos: 'Sala de Ovos',
  outros: 'Outros',
- // Categorias antigas para compatibilidade
- eletrico: 'Eletrico',
- pneumatico: 'Pneumatico',
- hidraulico: 'Hidraulico',
- mecanico: 'Mecanico',
+ mecanico: 'Mecânico',
+ eletrico: 'Elétrico',
+ pneumatico: 'Pneumático',
+ hidraulico: 'Hidráulico',
  rolamento: 'Rolamento',
  ferramenta: 'Ferramenta',
  epi: 'EPI',
@@ -3051,83 +3050,70 @@ function renderInventoryTable() {
  outro: 'Outro'
  };
 
- const categoryClasses = {
- ferramentas: 'ferramentas',
- eletrica: 'eletrica',
- hidraulica: 'hidraulica',
- rolamentos: 'rolamentos',
- parafusos: 'parafusos',
- lubrificantes: 'lubrificantes',
- epis: 'epis',
- yamasa: 'yamasa',
- sala_ovos: 'sala_ovos',
- outros: 'outros',
- eletrico: 'eletrica',
- hidraulico: 'hidraulica',
- rolamento: 'rolamentos',
- ferramenta: 'ferramentas',
- epi: 'epis',
- outro: 'outros'
- };
-
  // Aplicar filtros
  var itemsToShow = filterInventoryItems(state.inventory);
  updateShowingCount(itemsToShow.length);
 
  if (itemsToShow.length === 0) {
- tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: var(--text-secondary);">Nenhum item encontrado com os filtros selecionados</td></tr>';
- return;
+   if (cardsContainer) cardsContainer.innerHTML = '<div style="text-align:center; padding:60px 20px; color: var(--text-secondary);">Nenhum item encontrado com os filtros selecionados</div>';
+   return;
  }
 
- tbody.innerHTML = itemsToShow.map(item => {
-   var catClass = categoryClasses[item.category] || 'outros';
-   var statusClass = item.quantity <= 0 ? 'badge-high': (item.quantity <= (item.min_stock || 0) ? 'badge-warning': 'badge-low');
-   var statusText = item.quantity <= 0 ? '🔴 Zerado': (item.quantity <= (item.min_stock || 0) ? '⚠️ Baixo': 'OK');
-   // Itens em uso (emprestados)
-   var inUse = item.in_use_count || 0;
-   var inUseBadge = inUse > 0 
-     ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px; margin-left:4px;" title="Itens emprestados aguardando devolucao">🔄 '+ inUse + ' em uso</span>'
-     : '';
-   // Criar descricao informativa do item
-   var descParts = [];
-   if (item.brand) descParts.push(item.brand);
-   if (item.specs) {
-     var specsPreview = item.specs.substring(0, 60) + (item.specs.length > 60 ? '...': '');
-     descParts.push(specsPreview);
-   }
-   var descHtml = descParts.length > 0 
-     ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+ escapeHtml(descParts.join(' • ')) + '</div>'
-     : '<div style="font-size:11px; color:var(--text-muted); margin-top:2px; font-style:italic;">Sem descricao</div>';
-   // Localizacao com icone
-   var locationHtml = item.location 
-     ? '<span style="font-size: 12px; display:flex; align-items:center; gap:4px;"><span style="opacity:0.6;">📍</span>'+ escapeHtml(item.location) + '</span>'
-     : '<span style="font-size: 11px; color:var(--text-muted); font-style:italic;">Nao definido</span>';
-   // Buscar último responsável pela retirada (se houver)
-   var lastPerson = item.last_person_name || (item.movements && item.movements.length > 0 ? item.movements[item.movements.length-1].person_name : null);
-   var personHtml = lastPerson ? '<span style="font-size:11px; color:var(--accent-cyan); margin-left:8px;">👤 '+escapeHtml(lastPerson)+'</span>' : '';
-   return '<tr onclick="showItemDetail(\''+ sanitizeId(item.id) + '\')" style="cursor: pointer;" title="Clique para ver detalhes">'+
-     '<td><code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-size: 11px;">'+ escapeHtml(item.sku || '-') + '</code></td>'+ 
-     '<td><div><strong>'+ escapeHtml(item.name) + '</strong>'+ descHtml + '</div></td>'+ 
-     '<td><span class="category-badge '+ catClass + '">'+ escapeHtml(categoryLabels[item.category] || item.category || '-') + '</span></td>'+ 
-     '<td>'+ escapeHtml(item.brand || '-') + '</td>'+ 
-     '<td><div style="display:flex; flex-direction:column; gap:2px;">'+ 
-       '<div style="display:flex; align-items:center; gap:6px;">'+ 
-         '<strong style="font-size: 16px;">'+ escapeHtml(item.quantity) + '</strong>'+ 
-         '<span style="color: var(--text-secondary); font-size:11px;">min '+ (item.min_stock || 0) + (item.max_stock ? '/ max '+ item.max_stock : '') + '</span>'+ 
-         personHtml + 
-       '</div>'+ 
-       inUseBadge + 
-     '</div></td>'+ 
-     '<td>'+ escapeHtml(item.unit || '-') + '</td>'+ 
-     '<td>'+ locationHtml + '</td>'+ 
-     '<td><span class="badge '+ statusClass + '">'+ statusText + '</span></td>'+ 
-     '<td onclick="event.stopPropagation()">'+ 
-       '<button class="btn-small" onclick="adjustStock('+ item.id + ', -1)" title="Remover 1" style="padding: 4px 8px;">−</button>'+ 
-       '<button class="btn-small" onclick="adjustStock('+ item.id + ', 1)" title="Adicionar 1" style="padding: 4px 8px;">+</button>'+ 
-       '<button class="btn-small btn-danger" onclick="deleteItem('+ item.id + ')" style="padding: 4px 8px;" title="Excluir item">×</button>'+ 
-     '</td>'+ 
-   '</tr>';
- }).join('');
+ // Renderizar cards no desktop
+ if (cardsContainer) {
+   cardsContainer.innerHTML = itemsToShow.map(item => {
+     const isLowStock = item.quantity <= (item.min_stock || 0) && item.quantity > 0;
+     const isCritical = item.quantity <= 0;
+     const cardClass = isCritical ? 'critical' : isLowStock ? 'low-stock' : '';
+     const statusClass = isCritical ? 'zerado' : isLowStock ? 'baixo' : 'ok';
+     const statusText = isCritical ? 'Zerado' : isLowStock ? 'Estoque Baixo' : 'OK';
+     
+     const catLabel = categoryLabels[item.category] || item.category || 'Outros';
+     const inUse = item.in_use_count || 0;
+     
+     // Specs/descrição
+     const specsHtml = item.specs 
+       ? `<div class="inventory-card-specs">${escapeHtml(item.specs.substring(0, 120))}${item.specs.length > 120 ? '...' : ''}</div>`
+       : '';
+     
+     return `
+       <div class="inventory-card ${cardClass}" onclick="showItemDetail('${sanitizeId(item.id)}')" title="Clique para ver detalhes">
+         <div class="inventory-card-actions" onclick="event.stopPropagation()">
+           <button onclick="adjustStock('${item.id}', -1)" title="Remover 1">−</button>
+           <button onclick="adjustStock('${item.id}', 1)" title="Adicionar 1">+</button>
+           <button class="danger" onclick="deleteItem('${item.id}')" title="Excluir">×</button>
+         </div>
+         
+         <div class="inventory-card-header">
+           <div class="inventory-card-title">
+             <div class="inventory-card-name">
+               ${escapeHtml(item.name)}
+               <span class="inventory-card-status ${statusClass}">${statusText}</span>
+               ${inUse > 0 ? `<span class="inventory-card-status" style="background:rgba(59,130,246,0.2);color:#3b82f6;">🔄 ${inUse} em uso</span>` : ''}
+             </div>
+             <div class="inventory-card-sku">
+               <code>SKU: ${escapeHtml(item.sku || '-')}</code>
+               ${item.brand ? `<span style="color:var(--accent-cyan);">• ${escapeHtml(item.brand)}</span>` : ''}
+             </div>
+           </div>
+           <div class="inventory-card-qty">
+             <div class="inventory-card-qty-value">${item.quantity}</div>
+             <div class="inventory-card-qty-unit">${escapeHtml(item.unit || 'un')}</div>
+           </div>
+         </div>
+         
+         ${specsHtml}
+         
+         <div class="inventory-card-footer">
+           <span class="inventory-card-tag category">${escapeHtml(catLabel)}</span>
+           ${item.brand ? `<span class="inventory-card-tag brand">${escapeHtml(item.brand)}</span>` : ''}
+           ${item.location ? `<span class="inventory-card-tag location">📍 ${escapeHtml(item.location)}</span>` : '<span class="inventory-card-tag">Sem local</span>'}
+           <span class="inventory-card-tag">Min: ${item.min_stock || 0}${item.max_stock ? ` / Max: ${item.max_stock}` : ''}</span>
+         </div>
+       </div>
+     `;
+   }).join('');
+ }
  
  // Renderizar versao mobile (cards)
  renderInventoryMobile(itemsToShow, categoryLabels);
@@ -3179,7 +3165,7 @@ function renderInventoryMobile(items, categoryLabels) {
  ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px;">ðŸ”„ '+ inUse + 'em uso</span>'
  : '';
  
- return '<div class="almox-mobile-item'+ (isLowStock ? 'low-stock': '') + '" onclick="showItemDetail(\''+ item.id + '\')" style="padding:12px;">'+
+ return '<div class="almox-mobile-item' + (isCritical ? ' critical' : isLowStock ? ' low-stock' : '') + '" onclick="showItemDetail(\'' + item.id + '\')">' +
  '<div class="almox-mobile-item-header">'+
  '<div style="flex:1;">'+
  '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">'+
