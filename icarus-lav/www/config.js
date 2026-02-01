@@ -2,7 +2,7 @@
 // Versao 1.4.0 - Segurança melhorada
 
 // URL do tunel Cloudflare (atualizar quando mudar)
-const API_URL_DEFAULT = 'https://finances-absolute-caps-receipt.trycloudflare.com';
+const API_URL_DEFAULT = 'https://benz-tunes-gardens-spokesman.trycloudflare.com';
 
 // Usar sempre a URL padrao do tunel
 window.ICARUS_API_URL = API_URL_DEFAULT;
