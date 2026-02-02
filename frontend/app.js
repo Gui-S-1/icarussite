@@ -44,9 +44,11 @@ const state = {
  isOnline: navigator.onLine
 };
 
-const API_URL = (typeof window !== 'undefined'&& window.ICARUS_API_URL)
+const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
  ? window.ICARUS_API_URL
- : 'http://localhost:4000';
+ : 'https://api.icarusg.com';
+
+console.log('[ICARUS] API_URL configurado:', API_URL);
 
 // ========================================
 // PUSH NOTIFICATIONS - Capacitor
@@ -660,6 +662,9 @@ async function loadViewData(view) {
 async function validateKey() {
  const key = document.getElementById('key-input').value;
  const errorDiv = document.getElementById('auth-error');
+ 
+ console.log('[Auth] validateKey chamado, key:', key ? 'definida' : 'vazia');
+ console.log('[Auth] API_URL:', API_URL);
 
  if (!key) {
  showError('Digite uma chave');
@@ -667,13 +672,17 @@ async function validateKey() {
  }
 
  try {
+ console.log('[Auth] Enviando request para:', `${API_URL}/auth/validate-key`);
  const response = await fetch(`${API_URL}/auth/validate-key`, {
  method: 'POST',
  headers: { 'Content-Type': 'application/json'},
  body: JSON.stringify({ key })
  });
+ 
+ console.log('[Auth] Response status:', response.status);
 
  const data = await response.json();
+ console.log('[Auth] Response data:', data);
 
  if (data.ok) {
  state.keyId = data.key_id;
@@ -687,10 +696,13 @@ async function validateKey() {
  document.getElementById('key-validation-form').classList.add('hidden');
  document.getElementById('login-form').classList.remove('hidden');
  errorDiv.classList.add('hidden');
+ console.log('[Auth] Key validada com sucesso!');
  } else {
+ console.log('[Auth] Key invalida:', data.error);
  showError(data.error || 'Chave invalida');
  }
  } catch (error) {
+ console.error('[Auth] Erro na validacao:', error);
  showError('Erro ao validar chave: '+ error.message);
  }
 }
@@ -8789,9 +8801,8 @@ function generateWaterReport() {
  if (monthSelect) {
  const value = monthSelect.value;
  if (value === 'all') {
- // Se "Todos os Meses", gerar do mes atual
- const now = new Date();
- selectedMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+ // Se "Todos os Meses", passar 'all' para gerar relatorio completo
+ selectedMonth = 'all';
  } else if (value && value.match(/^\d{4}-\d{2}$/)) {
  selectedMonth = value; // YYYY-MM
  }
@@ -9764,21 +9775,25 @@ function exportWaterReportPDF(selectedMonth) {
  return;
  }
  
- // Determinar mes a filtrar
+ // Determinar se deve filtrar por mes ou mostrar todos
  const now = new Date();
  let filterYear, filterMonth, monthLabel;
+ let filterByMonth = true; // Por padrao filtra por mes
+ const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
  
- if (selectedMonth) {
+ if (selectedMonth === 'all') {
+ // Todos os meses - nao filtrar
+ filterByMonth = false;
+ monthLabel = 'Todos os Meses';
+ } else if (selectedMonth && selectedMonth.match(/^\d{4}-\d{2}$/)) {
  const parts = selectedMonth.split('-');
  filterYear = parseInt(parts[0]);
  filterMonth = parseInt(parts[1]) - 1;
- const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
- monthLabel = monthNames[filterMonth] + ''+ filterYear;
+ monthLabel = monthNames[filterMonth] + ' ' + filterYear;
  } else {
  filterYear = now.getFullYear();
  filterMonth = now.getMonth();
- const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
- monthLabel = monthNames[filterMonth] + ''+ filterYear;
+ monthLabel = monthNames[filterMonth] + ' ' + filterYear;
  }
  
  // Funcao para formatar data
@@ -9793,11 +9808,17 @@ function exportWaterReportPDF(selectedMonth) {
  return { formatted, dayOfWeek, dateObj: date, year, month, day };
  }
  
- // Filtrar leituras do mes selecionado (dia 1 ate hoje ou fim do mes)
- const filteredReadings = readings.filter(r => {
+ // Filtrar leituras do mes selecionado (ou usar todas se filterByMonth = false)
+ let filteredReadings;
+ if (filterByMonth) {
+ filteredReadings = readings.filter(r => {
  const info = formatDatePDF(r.reading_date);
  return info.year === filterYear && info.month === filterMonth;
  });
+ } else {
+ // Usar todas as leituras
+ filteredReadings = [...readings];
+ }
  
  if (filteredReadings.length === 0) {
  showNotification('Nenhuma leitura para '+ monthLabel, 'warning');

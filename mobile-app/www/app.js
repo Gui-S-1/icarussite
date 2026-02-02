@@ -44,9 +44,11 @@ const state = {
  isOnline: navigator.onLine
 };
 
-const API_URL = (typeof window !== 'undefined'&& window.ICARUS_API_URL)
+const API_URL = (typeof window !== 'undefined' && window.ICARUS_API_URL)
  ? window.ICARUS_API_URL
- : 'http://localhost:4000';
+ : 'https://api.icarusg.com';
+
+console.log('[ICARUS] API_URL configurado:', API_URL);
 
 // ========================================
 // PUSH NOTIFICATIONS - Capacitor
@@ -432,7 +434,7 @@ function sanitizeId(str) {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
  // Setup navigation PRIMEIRO (antes de qualquer coisa)
  setupNavigation();
  
@@ -441,7 +443,17 @@ document.addEventListener('DOMContentLoaded', () => {
  const savedUser = localStorage.getItem('user');
  const savedKey = localStorage.getItem('icarus_key');
  const savedUsername = localStorage.getItem('icarus_username');
+ const savedPassword = localStorage.getItem('icarus_password_enc');
 
+ console.log('[Auth] Verificando credenciais salvas:', { 
+ hasToken: !!savedToken, 
+ hasUser: !!savedUser, 
+ hasKey: !!savedKey, 
+ hasUsername: !!savedUsername, 
+ hasPassword: !!savedPassword 
+ });
+
+ // Preencher campos se existirem
  if (savedKey) {
  const keyInput = document.getElementById('key-input');
  if (keyInput) keyInput.value = savedKey;
@@ -450,37 +462,78 @@ document.addEventListener('DOMContentLoaded', () => {
  const userInput = document.getElementById('username-input');
  if (userInput) userInput.value = savedUsername;
  }
- 
- // Carregar senha salva se existir
- const savedPassword = localStorage.getItem('icarus_password_enc');
  if (savedPassword && savedUsername) {
  const passInput = document.getElementById('password-input');
- if (passInput) passInput.value = atob(savedPassword); // Decodificar base64
+ if (passInput) passInput.value = atob(savedPassword);
  const rememberCheck = document.getElementById('remember-login');
  if (rememberCheck) rememberCheck.checked = true;
  }
 
+ // PRIMEIRO: Tentar usar token existente
  if (savedToken && savedUser) {
  try {
  state.token = savedToken;
  state.user = JSON.parse(savedUser);
+ console.log('[Auth] Sessao restaurada do cache');
  document.getElementById('loading-screen').classList.add('hidden');
  showApp();
- 
- // Tentar renovar token em background para atualizar roles
  refreshTokenInBackground();
  return;
  } catch (e) {
- console.warn('Falha ao restaurar sessao, limpando cache', e);
+ console.warn('[Auth] Token/User invalido no cache, limpando...', e);
  localStorage.removeItem('token');
  localStorage.removeItem('user');
  }
  }
+ 
+ // SEGUNDO: Auto-login com credenciais salvas
+ if (savedKey && savedUsername && savedPassword) {
+ console.log('[Auth] Tentando auto-login...');
+ try {
+ const keyResponse = await fetch(`${API_URL}/auth/validate-key`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ key: savedKey })
+ });
+ const keyData = await keyResponse.json();
+ console.log('[Auth] Resposta validate-key:', keyData);
+ 
+ if (keyData.ok) {
+ state.tenantName = keyData.tenant_name || 'ICARUS';
+ state.tenantType = keyData.tenant_type || 'granja';
+ 
+ const loginResponse = await fetch(`${API_URL}/auth/login`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ 
+ key: savedKey, 
+ username: savedUsername, 
+ password: atob(savedPassword) 
+ })
+ });
+ const loginData = await loginResponse.json();
+ console.log('[Auth] Resposta login:', loginData.ok ? 'OK' : loginData.error);
+ 
+ if (loginData.ok) {
+ state.token = loginData.token;
+ state.user = loginData.user;
+ localStorage.setItem('token', loginData.token);
+ localStorage.setItem('user', JSON.stringify(loginData.user));
+ document.getElementById('loading-screen').classList.add('hidden');
+ showApp();
+ console.log('[Auth] Auto-login OK!');
+ return;
+ }
+ }
+ } catch (err) {
+ console.error('[Auth] Erro no auto-login:', err);
+ }
+ }
 
- setTimeout(() => {
+ // TERCEIRO: Mostrar tela de login
+ console.log('[Auth] Mostrando tela de login');
  document.getElementById('loading-screen').classList.add('hidden');
  document.getElementById('auth-screen').classList.remove('hidden');
- }, 500);
 });
 
 function setupNavigation() {
@@ -609,6 +662,9 @@ async function loadViewData(view) {
 async function validateKey() {
  const key = document.getElementById('key-input').value;
  const errorDiv = document.getElementById('auth-error');
+ 
+ console.log('[Auth] validateKey chamado, key:', key ? 'definida' : 'vazia');
+ console.log('[Auth] API_URL:', API_URL);
 
  if (!key) {
  showError('Digite uma chave');
@@ -616,13 +672,17 @@ async function validateKey() {
  }
 
  try {
+ console.log('[Auth] Enviando request para:', `${API_URL}/auth/validate-key`);
  const response = await fetch(`${API_URL}/auth/validate-key`, {
  method: 'POST',
  headers: { 'Content-Type': 'application/json'},
  body: JSON.stringify({ key })
  });
+ 
+ console.log('[Auth] Response status:', response.status);
 
  const data = await response.json();
+ console.log('[Auth] Response data:', data);
 
  if (data.ok) {
  state.keyId = data.key_id;
@@ -636,10 +696,13 @@ async function validateKey() {
  document.getElementById('key-validation-form').classList.add('hidden');
  document.getElementById('login-form').classList.remove('hidden');
  errorDiv.classList.add('hidden');
+ console.log('[Auth] Key validada com sucesso!');
  } else {
+ console.log('[Auth] Key invalida:', data.error);
  showError(data.error || 'Chave invalida');
  }
  } catch (error) {
+ console.error('[Auth] Erro na validacao:', error);
  showError('Erro ao validar chave: '+ error.message);
  }
 }
@@ -8185,7 +8248,6 @@ async function createChecklistFromForm(event) {
  },
  body: JSON.stringify({ name, sector, frequency, description, items })
  });
- });
  
  const data = await response.json();
  if (data.ok) {
@@ -8649,7 +8711,7 @@ async function loadWaterControl() {
 state.waterHistoryPeriod = 'month'; // 'today', 'week', 'month', ou 'YYYY-MM'
 state.waterHistoryMonth = 'current'; // 'current' ou 'YYYY-MM' ou 'all'
 
-// Preencher dropdown de meses com leituras disponiveis
+// Preencher dropdown de meses com leituras disponiveis + ultimos 12 meses
 function populateWaterMonthSelect() {
  const select = document.getElementById('water-month-select');
  if (!select) return;
@@ -8657,32 +8719,45 @@ function populateWaterMonthSelect() {
  const readings = state.waterReadings || [];
  const months = new Set();
  
+ // Adicionar meses das leituras existentes
  readings.forEach(r => {
  const dateKey = r.reading_date.split('T')[0];
  const monthKey = dateKey.substring(0, 7); // YYYY-MM
  months.add(monthKey);
  });
  
+ // Adicionar ultimos 12 meses mesmo sem leituras
+ const now = new Date();
+ for (let i = 0; i < 12; i++) {
+ const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+ const monthKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+ months.add(monthKey);
+ }
+ 
  // Ordenar meses do mais recente para o mais antigo
  const sortedMonths = Array.from(months).sort().reverse();
  
  // Mes atual
- const now = new Date();
  const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
  
- let options = '<option value="current">Mês Atual</option>';
+ let options = '';
  
  sortedMonths.forEach(month => {
  const [year, m] = month.split('-');
  const monthName = new Date(year, parseInt(m) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
  const label = monthName.charAt(0).toUpperCase() + monthName.slice(1);
- const selected = month === currentMonth ? '' : '';
- options += `<option value="${month}" ${selected}>${label}</option>`;
+ const isCurrent = month === currentMonth;
+ const displayLabel = isCurrent ? label + ' (Atual)' : label;
+ options += `<option value="${month}">${displayLabel}</option>`;
  });
  
  options += '<option value="all">Todos os Meses</option>';
  
  select.innerHTML = options;
+ 
+ // Selecionar mes atual por padrao
+ select.value = currentMonth;
+ state.waterHistoryMonth = currentMonth;
 }
 
 // Definir periodo do historico
@@ -8717,11 +8792,24 @@ function setWaterHistoryMonth(month) {
  renderWaterHistory();
 }
 
-// Gerar relatorio de agua (PDF)
+// Gerar relatorio de agua (PDF) - usa o mes selecionado no dropdown
 function generateWaterReport() {
- // Usa a funcao existente de exportar PDF
+ // Pegar mes selecionado no dropdown
+ const monthSelect = document.getElementById('water-month-select');
+ let selectedMonth = null;
+ 
+ if (monthSelect) {
+ const value = monthSelect.value;
+ if (value === 'all') {
+ // Se "Todos os Meses", passar 'all' para gerar relatorio completo
+ selectedMonth = 'all';
+ } else if (value && value.match(/^\d{4}-\d{2}$/)) {
+ selectedMonth = value; // YYYY-MM
+ }
+ }
+ 
  if (typeof exportWaterReportPDF === 'function') {
- exportWaterReportPDF();
+ exportWaterReportPDF(selectedMonth);
  } else {
  showToast('Funcao de relatorio nao disponivel', 'error');
  }
@@ -9287,7 +9375,7 @@ function renderTemperatureChart() {
  });
  
  // Montar SVG
- var svg = '<svg width="100%" height="'+ svgHeight + '" viewBox="0 0 '+ svgWidth + ''+ svgHeight + '" preserveAspectRatio="xMidYMid meet" style="overflow:visible;">';
+ var svg = '<svg width="100%" height="'+ svgHeight + '" viewBox="0 0 '+ svgWidth + ' '+ svgHeight + '" preserveAspectRatio="xMidYMid meet" style="overflow:visible;">';
  svg += gridLines;
  svg += yLabels;
  svg += xLabels;
@@ -9359,18 +9447,23 @@ function renderWaterHistory() {
  const dateKey = r.reading_date.split('T')[0];
  const monthKey = dateKey.substring(0, 7);
  
+ // Se um mes especifico foi selecionado no dropdown (YYYY-MM), filtrar por ele
+ if (monthFilter && monthFilter.match(/^\d{4}-\d{2}$/)) {
+ return monthKey === monthFilter;
+ }
+ 
+ // Se "Todos" foi selecionado
+ if (monthFilter === 'all') {
+ return true;
+ }
+ 
+ // Caso contrario, aplicar filtro de periodo
  if (period === 'today') {
  return dateKey === todayKey;
  } else if (period === 'week') {
  return dateKey >= weekAgoKey;
- } else if (period === 'month') {
- if (monthFilter === 'all') {
- return true; // Mostrar todos
- } else if (monthFilter === 'current') {
+ } else if (period === 'month' || monthFilter === 'current') {
  return monthKey === currentMonthKey;
- } else {
- return monthKey === monthFilter;
- }
  }
  return true;
  });
@@ -9682,21 +9775,25 @@ function exportWaterReportPDF(selectedMonth) {
  return;
  }
  
- // Determinar mes a filtrar
+ // Determinar se deve filtrar por mes ou mostrar todos
  const now = new Date();
  let filterYear, filterMonth, monthLabel;
+ let filterByMonth = true; // Por padrao filtra por mes
+ const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
  
- if (selectedMonth) {
+ if (selectedMonth === 'all') {
+ // Todos os meses - nao filtrar
+ filterByMonth = false;
+ monthLabel = 'Todos os Meses';
+ } else if (selectedMonth && selectedMonth.match(/^\d{4}-\d{2}$/)) {
  const parts = selectedMonth.split('-');
  filterYear = parseInt(parts[0]);
  filterMonth = parseInt(parts[1]) - 1;
- const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
- monthLabel = monthNames[filterMonth] + ''+ filterYear;
+ monthLabel = monthNames[filterMonth] + ' ' + filterYear;
  } else {
  filterYear = now.getFullYear();
  filterMonth = now.getMonth();
- const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
- monthLabel = monthNames[filterMonth] + ''+ filterYear;
+ monthLabel = monthNames[filterMonth] + ' ' + filterYear;
  }
  
  // Funcao para formatar data
@@ -9711,11 +9808,17 @@ function exportWaterReportPDF(selectedMonth) {
  return { formatted, dayOfWeek, dateObj: date, year, month, day };
  }
  
- // Filtrar leituras do mes selecionado (dia 1 ate hoje ou fim do mes)
- const filteredReadings = readings.filter(r => {
+ // Filtrar leituras do mes selecionado (ou usar todas se filterByMonth = false)
+ let filteredReadings;
+ if (filterByMonth) {
+ filteredReadings = readings.filter(r => {
  const info = formatDatePDF(r.reading_date);
  return info.year === filterYear && info.month === filterMonth;
  });
+ } else {
+ // Usar todas as leituras
+ filteredReadings = [...readings];
+ }
  
  if (filteredReadings.length === 0) {
  showNotification('Nenhuma leitura para '+ monthLabel, 'warning');
