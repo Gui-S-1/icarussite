@@ -481,7 +481,6 @@ document.addEventListener('DOMContentLoaded', async () => {
  if (savedKey && savedUsername && savedPassword) {
  try {
  console.log('Tentando auto-login com credenciais salvas...');
- document.getElementById('loading-screen').querySelector('.loading-text').textContent = 'Conectando...';
  
  // Validar chave primeiro
  const keyResponse = await fetch(`${API_URL}/auth/validate-key`, {
@@ -517,10 +516,14 @@ document.addEventListener('DOMContentLoaded', async () => {
  showApp();
  console.log('Auto-login realizado com sucesso!');
  return;
+ } else {
+ console.log('Auto-login falhou:', loginData.error);
  }
+ } else {
+ console.log('Chave invalida:', keyData.error);
  }
  } catch (autoLoginError) {
- console.log('Auto-login falhou, mostrando tela de login:', autoLoginError);
+ console.error('Auto-login erro:', autoLoginError);
  }
  }
 
