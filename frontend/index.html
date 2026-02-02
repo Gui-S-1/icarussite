@@ -2806,16 +2806,16 @@
       to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Stats Grid V2 */
+    /* Stats Grid V2 - Desktop: 4 colunas em linha */
     .almox2-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
       gap: 12px;
       margin-bottom: 16px;
     }
     .almox2-stats-grid.small { gap: 10px; }
-    @media (max-width: 900px) {
-      .almox2-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 768px) {
+      .almox2-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
     .almox2-stat-card {
       background: rgba(255,255,255,0.02);

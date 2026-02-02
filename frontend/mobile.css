@@ -2583,7 +2583,12 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   .content {
     padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
   }
-  
+}
+
+/* ========================================
+   MOBILE ONLY STYLES (768px and below)
+   ======================================== */
+@media (max-width: 768px) {
   /* ========================================
      PHOTO UPLOAD MOBILE - COMPRAS
      ======================================== */
@@ -3878,6 +3883,9 @@ body:has(#auth-screen:not(.hidden)) .mobile-bottom-nav {
   #modal-gastos-report table td:first-child {
     display: none !important; /* Esconder coluna # */
   }
+}
+
+/* ========================================
    PRINT STYLES
    ======================================== */
 @media print {
