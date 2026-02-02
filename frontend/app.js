@@ -8699,7 +8699,7 @@ async function loadWaterControl() {
 state.waterHistoryPeriod = 'month'; // 'today', 'week', 'month', ou 'YYYY-MM'
 state.waterHistoryMonth = 'current'; // 'current' ou 'YYYY-MM' ou 'all'
 
-// Preencher dropdown de meses com leituras disponiveis
+// Preencher dropdown de meses com leituras disponiveis + ultimos 12 meses
 function populateWaterMonthSelect() {
  const select = document.getElementById('water-month-select');
  if (!select) return;
@@ -8707,32 +8707,45 @@ function populateWaterMonthSelect() {
  const readings = state.waterReadings || [];
  const months = new Set();
  
+ // Adicionar meses das leituras existentes
  readings.forEach(r => {
  const dateKey = r.reading_date.split('T')[0];
  const monthKey = dateKey.substring(0, 7); // YYYY-MM
  months.add(monthKey);
  });
  
+ // Adicionar ultimos 12 meses mesmo sem leituras
+ const now = new Date();
+ for (let i = 0; i < 12; i++) {
+ const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+ const monthKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+ months.add(monthKey);
+ }
+ 
  // Ordenar meses do mais recente para o mais antigo
  const sortedMonths = Array.from(months).sort().reverse();
  
  // Mes atual
- const now = new Date();
  const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
  
- let options = '<option value="current">Mês Atual</option>';
+ let options = '';
  
  sortedMonths.forEach(month => {
  const [year, m] = month.split('-');
  const monthName = new Date(year, parseInt(m) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
  const label = monthName.charAt(0).toUpperCase() + monthName.slice(1);
- const selected = month === currentMonth ? '' : '';
- options += `<option value="${month}" ${selected}>${label}</option>`;
+ const isCurrent = month === currentMonth;
+ const displayLabel = isCurrent ? label + ' (Atual)' : label;
+ options += `<option value="${month}">${displayLabel}</option>`;
  });
  
  options += '<option value="all">Todos os Meses</option>';
  
  select.innerHTML = options;
+ 
+ // Selecionar mes atual por padrao
+ select.value = currentMonth;
+ state.waterHistoryMonth = currentMonth;
 }
 
 // Definir periodo do historico
@@ -8776,10 +8789,9 @@ function generateWaterReport() {
  if (monthSelect) {
  const value = monthSelect.value;
  if (value === 'all') {
- // Se "Todos os Meses", usar null para pegar mes atual
- selectedMonth = null;
- } else if (value === 'current') {
- selectedMonth = null; // Mes atual
+ // Se "Todos os Meses", gerar do mes atual
+ const now = new Date();
+ selectedMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
  } else if (value && value.match(/^\d{4}-\d{2}$/)) {
  selectedMonth = value; // YYYY-MM
  }
