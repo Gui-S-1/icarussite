@@ -441,7 +441,17 @@ document.addEventListener('DOMContentLoaded', async () => {
  const savedUser = localStorage.getItem('user');
  const savedKey = localStorage.getItem('icarus_key');
  const savedUsername = localStorage.getItem('icarus_username');
+ const savedPassword = localStorage.getItem('icarus_password_enc');
 
+ console.log('[Auth] Verificando credenciais salvas:', { 
+ hasToken: !!savedToken, 
+ hasUser: !!savedUser, 
+ hasKey: !!savedKey, 
+ hasUsername: !!savedUsername, 
+ hasPassword: !!savedPassword 
+ });
+
+ // Preencher campos se existirem
  if (savedKey) {
  const keyInput = document.getElementById('key-input');
  if (keyInput) keyInput.value = savedKey;
@@ -450,51 +460,46 @@ document.addEventListener('DOMContentLoaded', async () => {
  const userInput = document.getElementById('username-input');
  if (userInput) userInput.value = savedUsername;
  }
- 
- // Carregar senha salva se existir
- const savedPassword = localStorage.getItem('icarus_password_enc');
  if (savedPassword && savedUsername) {
  const passInput = document.getElementById('password-input');
- if (passInput) passInput.value = atob(savedPassword); // Decodificar base64
+ if (passInput) passInput.value = atob(savedPassword);
  const rememberCheck = document.getElementById('remember-login');
  if (rememberCheck) rememberCheck.checked = true;
  }
 
+ // PRIMEIRO: Tentar usar token existente
  if (savedToken && savedUser) {
  try {
  state.token = savedToken;
  state.user = JSON.parse(savedUser);
+ console.log('[Auth] Sessao restaurada do cache');
  document.getElementById('loading-screen').classList.add('hidden');
  showApp();
- 
- // Tentar renovar token em background para atualizar roles
  refreshTokenInBackground();
  return;
  } catch (e) {
- console.warn('Falha ao restaurar sessao, tentando auto-login...', e);
+ console.warn('[Auth] Token/User invalido no cache, limpando...', e);
  localStorage.removeItem('token');
  localStorage.removeItem('user');
  }
  }
  
- // AUTO-LOGIN: Se tem credenciais salvas mas token expirou, fazer login automatico
+ // SEGUNDO: Auto-login com credenciais salvas
  if (savedKey && savedUsername && savedPassword) {
+ console.log('[Auth] Tentando auto-login...');
  try {
- console.log('Tentando auto-login com credenciais salvas...');
- 
- // Validar chave primeiro
  const keyResponse = await fetch(`${API_URL}/auth/validate-key`, {
  method: 'POST',
  headers: { 'Content-Type': 'application/json' },
  body: JSON.stringify({ key: savedKey })
  });
  const keyData = await keyResponse.json();
+ console.log('[Auth] Resposta validate-key:', keyData);
  
  if (keyData.ok) {
  state.tenantName = keyData.tenant_name || 'ICARUS';
  state.tenantType = keyData.tenant_type || 'granja';
  
- // Fazer login
  const loginResponse = await fetch(`${API_URL}/auth/login`, {
  method: 'POST',
  headers: { 'Content-Type': 'application/json' },
@@ -505,32 +510,28 @@ document.addEventListener('DOMContentLoaded', async () => {
  })
  });
  const loginData = await loginResponse.json();
+ console.log('[Auth] Resposta login:', loginData.ok ? 'OK' : loginData.error);
  
  if (loginData.ok) {
  state.token = loginData.token;
  state.user = loginData.user;
  localStorage.setItem('token', loginData.token);
  localStorage.setItem('user', JSON.stringify(loginData.user));
- 
  document.getElementById('loading-screen').classList.add('hidden');
  showApp();
- console.log('Auto-login realizado com sucesso!');
+ console.log('[Auth] Auto-login OK!');
  return;
- } else {
- console.log('Auto-login falhou:', loginData.error);
  }
- } else {
- console.log('Chave invalida:', keyData.error);
  }
- } catch (autoLoginError) {
- console.error('Auto-login erro:', autoLoginError);
+ } catch (err) {
+ console.error('[Auth] Erro no auto-login:', err);
  }
  }
 
- setTimeout(() => {
+ // TERCEIRO: Mostrar tela de login
+ console.log('[Auth] Mostrando tela de login');
  document.getElementById('loading-screen').classList.add('hidden');
  document.getElementById('auth-screen').classList.remove('hidden');
- }, 500);
 });
 
 function setupNavigation() {
