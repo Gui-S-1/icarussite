@@ -161,6 +161,7 @@ function classifyIntent(message) {
   
   // Relatório de água HTML (manda relatorio agua 01/26)
   if (/relatorio.*agua|manda.*relatorio.*agua|envia.*relatorio.*agua|gera.*relatorio.*agua/.test(msg)) {
+    console.log('[Agent] Intent detectado: RELATORIO_AGUA_HTML para mensagem:', msg);
     return INTENTS.RELATORIO_AGUA_HTML;
   }
   
@@ -171,6 +172,7 @@ function classifyIntent(message) {
   
   // Leitura de água
   if (/agua|leitura|caixa.*agua|hidrometro/.test(msg)) {
+    console.log('[Agent] Intent detectado: LEITURA_AGUA para mensagem:', msg);
     return INTENTS.LEITURA_AGUA;
   }
   
@@ -935,6 +937,7 @@ function formatResponse(intent, data) {
     case INTENTS.RELATORIO_AGUA_HTML: {
       // Este intent retorna um objeto especial que será tratado pelo processMessage
       // para gerar o HTML e enviar como arquivo
+      console.log('[Agent] formatResponse: Retornando objeto isHtmlReport para RELATORIO_AGUA_HTML');
       return {
         isHtmlReport: true,
         reportType: 'water',
