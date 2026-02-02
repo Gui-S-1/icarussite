@@ -294,6 +294,25 @@
       --info: #3b82f6;
     }
 
+    /* ========================================
+       GLOBAL SELECT/DROPDOWN STYLING
+       Garante que todas options fiquem legíveis
+       ======================================== */
+    select {
+      background-color: #1a1a2e !important;
+      color: #fff !important;
+    }
+    select option {
+      background-color: #1a1a2e !important;
+      color: #fff !important;
+      padding: 10px 12px;
+    }
+    select option:hover,
+    select option:checked {
+      background-color: #2d2d4a !important;
+      color: #fff !important;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
       background: var(--bg-primary);
@@ -2787,16 +2806,16 @@
       to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Stats Grid V2 */
+    /* Stats Grid V2 - Desktop: 4 colunas em linha */
     .almox2-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
       gap: 12px;
       margin-bottom: 16px;
     }
     .almox2-stats-grid.small { gap: 10px; }
-    @media (max-width: 900px) {
-      .almox2-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 768px) {
+      .almox2-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
     .almox2-stat-card {
       background: rgba(255,255,255,0.02);
@@ -3055,6 +3074,207 @@
     .almox2-table .status-badge.normal { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
     .almox2-table .status-badge.baixo { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
     .almox2-table .status-badge.critico { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    
+    /* ========== INVENTORY CARDS GRID (DESKTOP) ========== */
+    .inventory-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+      padding: 16px;
+    }
+    
+    .inventory-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .inventory-card:hover {
+      border-color: rgba(139, 92, 246, 0.4);
+      background: linear-gradient(145deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.02) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    
+    .inventory-card.low-stock {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: linear-gradient(145deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%);
+    }
+    
+    .inventory-card.critical {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: linear-gradient(145deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+    }
+    
+    .inventory-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    
+    .inventory-card-title {
+      flex: 1;
+    }
+    
+    .inventory-card-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .inventory-card-sku {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .inventory-card-sku code {
+      background: rgba(255,255,255,0.08);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    .inventory-card-qty {
+      text-align: right;
+      min-width: 70px;
+    }
+    
+    .inventory-card-qty-value {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      color: #06d6a0;
+    }
+    
+    .inventory-card.low-stock .inventory-card-qty-value {
+      color: #f59e0b;
+    }
+    
+    .inventory-card.critical .inventory-card-qty-value {
+      color: #ef4444;
+    }
+    
+    .inventory-card-qty-unit {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .inventory-card-specs {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.03);
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+      line-height: 1.4;
+    }
+    
+    .inventory-card-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    .inventory-card-tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 500;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-secondary);
+    }
+    
+    .inventory-card-tag.category {
+      background: rgba(6, 182, 212, 0.15);
+      color: #22d3ee;
+    }
+    
+    .inventory-card-tag.brand {
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+    }
+    
+    .inventory-card-tag.location {
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+    }
+    
+    .inventory-card-actions {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .inventory-card:hover .inventory-card-actions {
+      opacity: 1;
+    }
+    
+    .inventory-card-actions button {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    
+    .inventory-card-actions button:hover {
+      background: rgba(139, 92, 246, 0.4);
+    }
+    
+    .inventory-card-actions button.danger:hover {
+      background: rgba(239, 68, 68, 0.4);
+    }
+    
+    .inventory-card-status {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .inventory-card-status.ok {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+    
+    .inventory-card-status.baixo {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+    }
+    
+    .inventory-card-status.zerado {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
     
     /* Movements List */
     .almox2-movements-list {
@@ -10096,7 +10316,7 @@
 
 
 
-            <!-- Inventory Table Card -->
+            <!-- Inventory Cards Container -->
             <div class="almox2-card">
               <div class="almox2-card-header">
                 <div class="almox2-card-title">
@@ -10108,7 +10328,10 @@
                 </div>
                 <span class="almox2-item-count" id="almox-showing-count">0 itens</span>
               </div>
-              <div class="almox2-table-wrapper">
+              <!-- Cards Grid para Desktop -->
+              <div id="inventory-cards-grid" class="inventory-cards-grid"></div>
+              <!-- Tabela oculta (fallback) -->
+              <div class="almox2-table-wrapper" style="display:none;">
                 <table id="almoxarifado-table" class="almox2-table">
                   <thead>
                     <tr>
@@ -12805,17 +13028,17 @@
               transition: transform 0.15s, background 0.15s, border-color 0.15s;
               outline: none;
             " onfocus="this.style.borderColor='rgba(139,92,246,0.5)';this.style.boxShadow='0 0 20px rgba(139,92,246,0.2)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
-              <option value="" style="background: #1a1a2e;">Selecione...</option>
-              <option value="ferramentas" style="background: #1a1a2e;">🔧 Ferramentas</option>
-              <option value="eletrica" style="background: #1a1a2e;">⚡ Elétrica</option>
-              <option value="hidraulica" style="background: #1a1a2e;">💧 Hidráulica</option>
-              <option value="rolamentos" style="background: #1a1a2e;">⚙️ Rolamentos</option>
-              <option value="parafusos" style="background: #1a1a2e;">🔩 Parafusos</option>
-              <option value="lubrificantes" style="background: #1a1a2e;">🛢️ Lubrificantes</option>
-              <option value="epis" style="background: #1a1a2e;">🦺 EPIs</option>
-              <option value="yamasa" style="background: #1a1a2e;">🏭 Yamasa</option>
-              <option value="sala_ovos" style="background: #1a1a2e;">🥚 Sala de Ovos</option>
-              <option value="outros" style="background: #1a1a2e;">📦 Outros</option>
+              <option value="">Selecione...</option>
+              <option value="ferramentas">Ferramentas</option>
+              <option value="eletrica">Elétrica</option>
+              <option value="hidraulica">Hidráulica</option>
+              <option value="rolamentos">Rolamentos</option>
+              <option value="parafusos">Parafusos</option>
+              <option value="lubrificantes">Lubrificantes</option>
+              <option value="epis">EPIs</option>
+              <option value="yamasa">Yamasa</option>
+              <option value="sala_ovos">Sala de Ovos</option>
+              <option value="outros">Outros</option>
             </select>
           </div>
           <div style="position: relative;">

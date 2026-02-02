@@ -3079,6 +3079,7 @@ function renderInventoryTable() {
      return `
        <div class="inventory-card ${cardClass}" onclick="showItemDetail('${sanitizeId(item.id)}')" title="Clique para ver detalhes">
          <div class="inventory-card-actions" onclick="event.stopPropagation()">
+           <button onclick="generateTermoResponsabilidade('${sanitizeId(item.id)}')" title="Gerar Termo de Responsabilidade" style="background:rgba(59,130,246,0.2);color:#3b82f6;">📄</button>
            <button onclick="adjustStock('${item.id}', -1)" title="Remover 1">−</button>
            <button onclick="adjustStock('${item.id}', 1)" title="Adicionar 1">+</button>
            <button class="danger" onclick="deleteItem('${item.id}')" title="Excluir">×</button>
@@ -4080,6 +4081,272 @@ async function submitMultipleWithdrawal() {
     console.error('Erro ao registrar retirada:', error);
     showNotification('Erro ao registrar retirada', 'error');
   }
+}
+
+// ========================================
+// TERMO DE RESPONSABILIDADE - PDF Generator
+// ========================================
+function generateTermoResponsabilidade(itemId) {
+  const item = state.inventory.find(i => i.id === itemId || i.id === parseInt(itemId));
+  if (!item) {
+    showNotification('Item não encontrado', 'error');
+    return;
+  }
+  
+  const now = new Date();
+  const dataHora = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Termo de Responsabilidade - ${item.name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4; margin: 2cm; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #fff;
+      padding: 40px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 3px double #333;
+      padding-bottom: 20px;
+    }
+    .company-name {
+      font-size: 18pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+    }
+    .company-cnpj {
+      font-size: 11pt;
+      color: #444;
+    }
+    .title {
+      font-size: 16pt;
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      margin: 30px 0;
+      text-decoration: underline;
+    }
+    .content {
+      text-align: justify;
+      margin: 20px 0;
+    }
+    .item-box {
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 15px 20px;
+      margin: 20px 0;
+    }
+    .item-box h4 {
+      font-size: 11pt;
+      color: #666;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .item-detail {
+      display: flex;
+      margin: 5px 0;
+    }
+    .item-label {
+      font-weight: bold;
+      width: 140px;
+    }
+    .laws {
+      margin: 25px 0;
+      padding: 15px;
+      border-left: 4px solid #333;
+      background: #fafafa;
+    }
+    .laws h4 {
+      font-size: 11pt;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .laws ul {
+      margin-left: 20px;
+    }
+    .laws li {
+      margin: 8px 0;
+      font-size: 10pt;
+    }
+    .signature-area {
+      margin-top: 60px;
+      page-break-inside: avoid;
+    }
+    .signature-line {
+      border-top: 1px solid #333;
+      width: 350px;
+      margin: 60px auto 10px;
+      text-align: center;
+      padding-top: 10px;
+    }
+    .signature-fields {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    .field-group {
+      flex: 1;
+      margin: 0 10px;
+    }
+    .field-line {
+      border-bottom: 1px solid #333;
+      margin-bottom: 5px;
+      min-height: 25px;
+    }
+    .field-label {
+      font-size: 9pt;
+      color: #666;
+      text-transform: uppercase;
+    }
+    .date-location {
+      text-align: right;
+      margin-top: 20px;
+      font-style: italic;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      margin: 10px 0;
+    }
+    .checkbox {
+      width: 14px;
+      height: 14px;
+      border: 1px solid #333;
+      margin-right: 10px;
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 9pt;
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+    @media print {
+      body { padding: 0; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">GRANJA VITTA LTDA</div>
+    <div class="company-cnpj">CNPJ: 33.358.938/0001-37</div>
+  </div>
+
+  <h1 class="title">Termo de Responsabilidade de Retirada de Materiais</h1>
+
+  <div class="content">
+    <p>Eu, abaixo identificado(a) e qualificado(a), declaro para os devidos fins que estou retirando do Almoxarifado da empresa <strong>GRANJA VITTA LTDA</strong>, inscrita no CNPJ sob o nº 33.358.938/0001-37, o(s) material(is) discriminado(s) abaixo, assumindo total responsabilidade pela sua guarda, conservação e uso adequado.</p>
+  </div>
+
+  <div class="item-box">
+    <h4>Dados do Material Retirado</h4>
+    <div class="item-detail"><span class="item-label">Item:</span> ${item.name}</div>
+    <div class="item-detail"><span class="item-label">SKU/Código:</span> ${item.sku || 'N/A'}</div>
+    <div class="item-detail"><span class="item-label">Categoria:</span> ${item.category || 'N/A'}</div>
+    <div class="item-detail"><span class="item-label">Marca:</span> ${item.brand || 'N/A'}</div>
+    <div class="item-detail"><span class="item-label">Quantidade:</span> _____ ${item.unit || 'unidade(s)'}</div>
+    <div class="item-detail"><span class="item-label">Localização:</span> ${item.location || 'N/A'}</div>
+  </div>
+
+  <div class="laws">
+    <h4>Fundamentação Legal</h4>
+    <ul>
+      <li><strong>Art. 462, CLT</strong> - Ao empregador é vedado efetuar qualquer desconto nos salários do empregado, salvo quando este resultar de adiantamentos, de dispositivos de lei ou de contrato coletivo. §1º Em caso de dano causado pelo empregado, o desconto será lícito, desde que esta possibilidade tenha sido acordada ou na ocorrência de dolo do empregado.</li>
+      <li><strong>Art. 186, Código Civil</strong> - Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, ainda que exclusivamente moral, comete ato ilícito.</li>
+      <li><strong>Art. 927, Código Civil</strong> - Aquele que, por ato ilícito (arts. 186 e 187), causar dano a outrem, fica obrigado a repará-lo.</li>
+      <li><strong>NR-6 (Norma Regulamentadora)</strong> - Sobre Equipamentos de Proteção Individual, estabelece responsabilidades do empregado quanto à guarda e conservação do equipamento.</li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <p><strong>DECLARO, para os devidos fins, que:</strong></p>
+    <div class="checkbox-item">
+      <div class="checkbox"></div>
+      <span>Recebi o(s) material(is) acima em perfeitas condições de uso;</span>
+    </div>
+    <div class="checkbox-item">
+      <div class="checkbox"></div>
+      <span>Comprometo-me a zelar pela guarda, conservação e uso adequado do(s) material(is);</span>
+    </div>
+    <div class="checkbox-item">
+      <div class="checkbox"></div>
+      <span>Comprometo-me a devolver o(s) material(is) nas mesmas condições em que o(s) recebi, ressalvado o desgaste natural pelo uso;</span>
+    </div>
+    <div class="checkbox-item">
+      <div class="checkbox"></div>
+      <span>Estou ciente de que, em caso de perda, extravio ou dano causado por mau uso, negligência ou dolo, poderei ser responsabilizado(a) nos termos da legislação vigente;</span>
+    </div>
+    <div class="checkbox-item">
+      <div class="checkbox"></div>
+      <span>Autorizo, caso necessário, o desconto em folha de pagamento dos valores correspondentes ao(s) material(is), conforme Art. 462 da CLT.</span>
+    </div>
+  </div>
+
+  <div class="signature-fields">
+    <div class="field-group">
+      <div class="field-line"></div>
+      <div class="field-label">Nome Completo</div>
+    </div>
+    <div class="field-group">
+      <div class="field-line"></div>
+      <div class="field-label">CPF</div>
+    </div>
+  </div>
+
+  <div class="signature-fields">
+    <div class="field-group">
+      <div class="field-line"></div>
+      <div class="field-label">Setor / Função</div>
+    </div>
+    <div class="field-group">
+      <div class="field-line"></div>
+      <div class="field-label">Matrícula</div>
+    </div>
+  </div>
+
+  <div class="signature-area">
+    <div class="signature-line">Assinatura do Responsável</div>
+  </div>
+
+  <p class="date-location">________________, _____ de _______________ de ${now.getFullYear()}.</p>
+
+  <div class="footer">
+    <p>Documento gerado pelo Sistema ICARUS em ${dataHora}</p>
+    <p>GRANJA VITTA LTDA - CNPJ: 33.358.938/0001-37</p>
+  </div>
+
+  <div class="no-print" style="margin-top: 30px; text-align: center;">
+    <button onclick="window.print()" style="padding: 15px 40px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(139,92,246,0.4);">
+      🖨️ Imprimir Termo
+    </button>
+    <button onclick="window.close()" style="margin-left: 15px; padding: 15px 40px; background: #374151; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer;">
+      Fechar
+    </button>
+  </div>
+</body>
+</html>`;
+
+  // Abrir em nova janela
+  const printWindow = window.open('', '_blank', 'width=800,height=1000');
+  printWindow.document.write(html);
+  printWindow.document.close();
 }
 
 // Modal de Entrada Rapida - Design Premium
