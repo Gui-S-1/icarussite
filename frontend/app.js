@@ -432,7 +432,7 @@ function sanitizeId(str) {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
  // Setup navigation PRIMEIRO (antes de qualquer coisa)
  setupNavigation();
  
@@ -471,9 +471,56 @@ document.addEventListener('DOMContentLoaded', () => {
  refreshTokenInBackground();
  return;
  } catch (e) {
- console.warn('Falha ao restaurar sessao, limpando cache', e);
+ console.warn('Falha ao restaurar sessao, tentando auto-login...', e);
  localStorage.removeItem('token');
  localStorage.removeItem('user');
+ }
+ }
+ 
+ // AUTO-LOGIN: Se tem credenciais salvas mas token expirou, fazer login automatico
+ if (savedKey && savedUsername && savedPassword) {
+ try {
+ console.log('Tentando auto-login com credenciais salvas...');
+ document.getElementById('loading-screen').querySelector('.loading-text').textContent = 'Conectando...';
+ 
+ // Validar chave primeiro
+ const keyResponse = await fetch(`${API_URL}/auth/validate-key`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ key: savedKey })
+ });
+ const keyData = await keyResponse.json();
+ 
+ if (keyData.ok) {
+ state.tenantName = keyData.tenant_name || 'ICARUS';
+ state.tenantType = keyData.tenant_type || 'granja';
+ 
+ // Fazer login
+ const loginResponse = await fetch(`${API_URL}/auth/login`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ 
+ key: savedKey, 
+ username: savedUsername, 
+ password: atob(savedPassword) 
+ })
+ });
+ const loginData = await loginResponse.json();
+ 
+ if (loginData.ok) {
+ state.token = loginData.token;
+ state.user = loginData.user;
+ localStorage.setItem('token', loginData.token);
+ localStorage.setItem('user', JSON.stringify(loginData.user));
+ 
+ document.getElementById('loading-screen').classList.add('hidden');
+ showApp();
+ console.log('Auto-login realizado com sucesso!');
+ return;
+ }
+ }
+ } catch (autoLoginError) {
+ console.log('Auto-login falhou, mostrando tela de login:', autoLoginError);
  }
  }
 
