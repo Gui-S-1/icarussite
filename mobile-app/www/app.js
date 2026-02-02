@@ -202,12 +202,12 @@ function showUpdateDialog(version, changelog, downloadUrl, required) {
  dialog.innerHTML = `
  <div class="modal-content" style="max-width: 400px;">
  <div class="modal-header">
- <h3>ðŸš€ Nova Atualizacao Disponivel!</h3>
- ${!required ? '<button class="modal-close" onclick="closeUpdateDialog()">A—</button>': ''}
+ <h3>🚀 Nova Atualizacao Disponivel!</h3>
+ ${!required ? '<button class="modal-close" onclick="closeUpdateDialog()">×</button>': ''}
  </div>
  <div class="modal-body">
  <div style="text-align: center; margin-bottom: 20px;">
- <div style="font-size: 48px; margin-bottom: 10px;">ðŸ“±</div>
+ <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
  <h4 style="color: var(--gold); margin: 0;">Versao ${version}</h4>
  <p style="color: var(--text-secondary); margin: 5px 0;">Atual: ${APP_VERSION}</p>
  </div>
@@ -215,12 +215,12 @@ function showUpdateDialog(version, changelog, downloadUrl, required) {
  <h5 style="margin: 0 0 10px; color: var(--gold);">O que ha de novo:</h5>
  <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">${changelog}</p>
  </div>
- ${required ? '<p style="color: var(--danger); text-align: center; font-size: 12px;">âš ï¸ Esta atualizacao e obrigatoria para continuar usando o app.</p>': ''}
+ ${required ? '<p style="color: var(--danger); text-align: center; font-size: 12px;">⚠️ Esta atualizacao e obrigatoria para continuar usando o app.</p>': ''}
  </div>
  <div class="modal-footer">
  ${!required ? '<button class="btn btn-secondary" onclick="closeUpdateDialog()">Depois</button>': ''}
  <button class="btn btn-primary" onclick="downloadUpdate(\\'${downloadUrl}\\')">
- <span>ðŸ“¥</span> Baixar Atualizacao
+ <span>📥</span> Baixar Atualizacao
  </button>
  </div>
  </div>
@@ -265,7 +265,7 @@ async function downloadUpdate(url) {
 // ========================================
 
 async function forceAppUpdate() {
- showNotification('ðŸ”„ Limpando cache e atualizando...', 'info');
+ showNotification('🔄 Limpando cache e atualizando...', 'info');
  
  try {
  // 1. Limpar caches do localStorage
@@ -400,7 +400,7 @@ function clearOldCache() {
 // Detectar mudanca online/offline
 window.addEventListener('online', () => {
  state.isOnline = true;
- showNotification('ðŸŒ Conectado! Atualizando dados...', 'success');
+ showNotification('🌐 Conectado! Atualizando dados...', 'success');
  // Recarregar dados quando voltar online
  if (state.token) {
  loadViewData(state.currentView);
@@ -409,7 +409,7 @@ window.addEventListener('online', () => {
 
 window.addEventListener('offline', () => {
  state.isOnline = false;
- showNotification('ðŸ“´ Modo offline - usando dados salvos', 'warning');
+ showNotification('🔴 Modo offline - usando dados salvos', 'warning');
 });
 
 // ========================================
@@ -775,12 +775,12 @@ async function showApp() {
  navigateTo('os');
  }
 
- // Polling em tempo real a cada 5 segundos para atualizar views
+ // Polling em tempo real a cada 30 segundos para atualizar views (otimizado para performance)
  setInterval(() => {
- if (state.currentView && state.token) {
+ if (state.currentView && state.token && document.visibilityState === 'visible') {
  loadViewData(state.currentView).catch(err => console.error('Erro no polling:', err));
  }
- }, 5000);
+ }, 30000);
  
  // Verificar atualizacoes do app
  setTimeout(() => checkAppVersion(), 2000);
@@ -1613,11 +1613,11 @@ function filterOSByStatus(status) {
  if (state.osStatusFilter) {
  indicator.style.display = 'flex';
  const filterLabels = {
- 'pending': 'ðŸ• Pendentes',
+ 'pending': '🕐 Pendentes',
  'in_progress': 'Em Andamento',
- 'paused': 'â¸ï¸ Pausadas',
+ 'paused': 'â¸️ Pausadas',
  'completed': 'Concluidas',
- 'urgent': 'ðŸš¨ Urgentes'
+ 'urgent': '🚨 Urgentes'
  };
  filterText.textContent = `Filtro: ${filterLabels[state.osStatusFilter] || state.osStatusFilter}`;
  } else {
@@ -1983,7 +1983,7 @@ async function updateOSAssignments(orderId) {
  await loadOrders();
  // await backupOrdersToTXT(); // Desabilitado temporariamente
  closeModal('modal-os-detail');
- showNotification('âœ“ Salvo', 'success');
+ showNotification('✔ Salvo', 'success');
  // Atualizar visualizacao dos tecnicos atribuidos se necessario
  if (data.assigned_users) {
  const assignedContainer = document.getElementById('detail-os-assigned');
@@ -2830,10 +2830,10 @@ function showNotification(message, type = 'info', duration = 5000, playSound = t
  const id = 'notif-'+ Date.now();
  
  const typeIcons = {
- success: 'âœ“',
- error: 'âœ—',
- warning: 'âš ',
- info: 'â„¹'
+ success: '✔',
+ error: '✘',
+ warning: '⚠',
+ info: 'ℹ'
  };
  
  const typeColors = {
@@ -2921,7 +2921,7 @@ function showNotification(message, type = 'info', duration = 5000, playSound = t
  transition: all 0.2s;
  color: rgba(255,255,255,0.5);
  font-size: 14px;
- " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">A—</span>
+ " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">×</span>
  </div>
  `;
  
@@ -3090,7 +3090,7 @@ function renderInventoryTable() {
              <div class="inventory-card-name">
                ${escapeHtml(item.name)}
                <span class="inventory-card-status ${statusClass}">${statusText}</span>
-               ${inUse > 0 ? `<span class="inventory-card-status" style="background:rgba(59,130,246,0.2);color:#3b82f6;">🔄 ${inUse} em uso</span>` : ''}
+               ${inUse > 0 ? `<span class="inventory-card-status" style="background:rgba(245,158,11,0.25);color:#f59e0b;border:1px solid rgba(245,158,11,0.4);font-weight:600;">🔧 EM USO</span>` : ''}
              </div>
              <div class="inventory-card-sku">
                <code>SKU: ${escapeHtml(item.sku || '-')}</code>
@@ -3163,7 +3163,7 @@ function renderInventoryMobile(items, categoryLabels) {
  
  // Badge "em uso"
  var inUseBadge = inUse > 0 
- ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px;">ðŸ”„ '+ inUse + 'em uso</span>'
+ ? '<span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px;">🔄 '+ inUse + 'em uso</span>'
  : '';
  
  return '<div class="almox-mobile-item' + (isCritical ? ' critical' : isLowStock ? ' low-stock' : '') + '" onclick="showItemDetail(\'' + item.id + '\')">' +
@@ -3187,7 +3187,7 @@ function renderInventoryMobile(items, categoryLabels) {
  specsPreview +
  '<div class="almox-mobile-item-details" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">'+
  '<span style="font-size:11px; padding:3px 8px; background:rgba(6,182,212,0.1); border-radius:4px;">'+ escapeHtml(catLabel) + '</span>'+
- (item.location ? '<span style="font-size:11px; display:flex; align-items:center; gap:4px;"><span>ðŸ“</span>'+ escapeHtml(item.location) + '</span>': '<span style="font-size:11px; color:var(--text-muted); font-style:italic;">Sem local</span>') +
+ (item.location ? '<span style="font-size:11px; display:flex; align-items:center; gap:4px;"><span>📍</span>'+ escapeHtml(item.location) + '</span>': '<span style="font-size:11px; color:var(--text-muted); font-style:italic;">Sem local</span>') +
  '<span style="font-size:11px; color:var(--text-secondary);">Min: '+ (item.min_stock || 0) + (item.max_stock ? '/ Max: '+ item.max_stock : '') + '</span>'+
  '</div>'+
  '</div>';
@@ -3583,8 +3583,22 @@ function renderAlmoxMovements() {
  hour: '2-digit', minute: '2-digit'
  });
  
+ // Prepara dados JSON para o onclick (escapa aspas)
+ const movDataJson = JSON.stringify({
+   id: mov.id,
+   item_name: mov.item_name || 'Item',
+   item_sku: mov.item_sku || '',
+   quantity: mov.quantity,
+   unit: mov.item_unit || 'un',
+   person_name: mov.person_name || '',
+   person_sector: mov.person_sector || '',
+   movement_type: mov.movement_type,
+   notes: mov.notes || '',
+   created_at: mov.created_at
+ }).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+ 
  return `
- <div class="almox2-movement-item">
+ <div class="almox2-movement-item" onclick="showMovementDetails('${movDataJson}')" style="cursor: pointer;" title="Clique para ver detalhes e imprimir">
  <div class="almox2-movement-icon ${mov.movement_type}">
  ${icon}
  </div>
@@ -3602,10 +3616,225 @@ function renderAlmoxMovements() {
  ${isPositive ? '+': '-'}${Math.abs(mov.quantity)}
  </div>
  ${isPending ? '<span class="almox2-movement-pending">Pendente</span>': ''}
+ <button onclick="event.stopPropagation(); printMovementTermo('${movDataJson}')" style="
+   margin-top: 6px;
+   padding: 4px 10px;
+   background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.15));
+   border: 1px solid rgba(236, 72, 153, 0.3);
+   border-radius: 6px;
+   color: #f472b6;
+   font-size: 11px;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   gap: 4px;
+ " title="Imprimir termo">
+   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+   Imprimir
+ </button>
  </div>
  </div>
  `;
  }).join('');
+}
+
+// Mostrar detalhes da movimentação (clique no card)
+function showMovementDetails(movDataJson) {
+  const mov = JSON.parse(movDataJson.replace(/&quot;/g, '"'));
+  
+  const dateObj = new Date(mov.created_at);
+  const dataHora = dateObj.toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+  
+  const typeLabels = {
+    entrada: 'Entrada',
+    saida: 'Saída',
+    devolucao: 'Devolução',
+    ajuste: 'Ajuste'
+  };
+  
+  const modalHtml = `
+    <div id="modal-movement-details" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-movement-details')" style="backdrop-filter: blur(12px); background: rgba(0,0,0,0.8);">
+      <div class="modal" style="max-width: 480px; background: linear-gradient(180deg, rgba(20,20,30,0.98), rgba(10,10,15,0.99)); border: 1px solid rgba(236,72,153,0.25); border-radius: 20px; padding: 0;">
+        
+        <div style="padding: 24px 28px 20px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(236,72,153,0.25), rgba(168,85,247,0.15)); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div>
+                <h3 style="margin: 0; font-size: 18px; color: #fff;">Detalhes da Movimentação</h3>
+                <p style="margin: 4px 0 0; font-size: 12px; color: #888;">${dataHora}</p>
+              </div>
+            </div>
+            <button onclick="closeModal('modal-movement-details')" style="width: 36px; height: 36px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #888; font-size: 20px; cursor: pointer;">×</button>
+          </div>
+        </div>
+        
+        <div style="padding: 24px 28px;">
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <span style="color: #888; font-size: 12px;">ITEM</span>
+              <span style="color: #fff; font-weight: 600;">${mov.item_name}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <span style="color: #888; font-size: 12px;">QUANTIDADE</span>
+              <span style="color: ${mov.movement_type === 'saida' ? '#ef4444' : '#22c55e'}; font-weight: 600;">${mov.movement_type === 'saida' ? '-' : '+'}${mov.quantity} ${mov.unit}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <span style="color: #888; font-size: 12px;">TIPO</span>
+              <span style="color: #a78bfa; font-weight: 500;">${typeLabels[mov.movement_type] || mov.movement_type}</span>
+            </div>
+            ${mov.person_name ? `<div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <span style="color: #888; font-size: 12px;">RESPONSÁVEL</span>
+              <span style="color: #f472b6; font-weight: 500;">${mov.person_name}</span>
+            </div>` : ''}
+            ${mov.person_sector ? `<div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <span style="color: #888; font-size: 12px;">SETOR</span>
+              <span style="color: #22d3ee;">${mov.person_sector}</span>
+            </div>` : ''}
+            ${mov.notes ? `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
+              <span style="color: #888; font-size: 12px; display: block; margin-bottom: 6px;">OBSERVAÇÃO</span>
+              <span style="color: #ccc; font-size: 13px;">${mov.notes}</span>
+            </div>` : ''}
+          </div>
+          
+          <button onclick="closeModal('modal-movement-details'); printMovementTermo('${movDataJson}')" style="
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 24px rgba(236,72,153,0.3);
+          ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Imprimir Termo de Retirada
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Imprimir termo de uma movimentação específica
+function printMovementTermo(movDataJson) {
+  const mov = JSON.parse(movDataJson.replace(/&quot;/g, '"'));
+  
+  const dateObj = new Date(mov.created_at);
+  const dataHora = dateObj.toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+  
+  // Separa os nomes dos responsáveis (podem ser múltiplos separados por vírgula)
+  const persons = mov.person_name ? mov.person_name.split(',').map(p => p.trim()).filter(p => p) : ['Responsável'];
+  
+  const personsHtml = persons.map((person, idx) => `
+    <div style="display: flex; align-items: flex-end; gap: 20px; margin-bottom: 25px;">
+      <div style="flex: 1;">
+        <p style="margin-bottom: 8px; font-weight: 600;">${idx + 1}. ${person}</p>
+        <div style="border-bottom: 2px solid #333; height: 40px;"></div>
+        <p style="font-size: 10pt; color: #666; margin-top: 4px; text-align: center;">Assinatura</p>
+      </div>
+    </div>
+  `).join('');
+  
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Termo de Retirada - ${mov.item_name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4; margin: 1.5cm; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: #1a1a1a; background: #fff; padding: 30px; }
+    .header { text-align: center; margin-bottom: 30px; border-bottom: 3px double #333; padding-bottom: 15px; }
+    .company-name { font-size: 16pt; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+    .company-cnpj { font-size: 10pt; color: #444; }
+    .title { font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin: 25px 0; text-decoration: underline; }
+    .info-box { background: #f8f8f8; border: 1px solid #ddd; border-radius: 5px; padding: 12px 15px; margin-bottom: 20px; }
+    .info-row { display: flex; margin: 5px 0; }
+    .info-label { font-weight: bold; width: 100px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th { background: #f0f0f0; padding: 10px 12px; text-align: left; border-bottom: 2px solid #333; font-weight: bold; font-size: 10pt; text-transform: uppercase; }
+    td { padding: 10px 12px; border-bottom: 1px solid #e5e5e5; }
+    .footer { margin-top: 40px; text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #ddd; padding-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">GRANJA VITTA LTDA</div>
+    <div class="company-cnpj">CNPJ: 33.358.938/0001-37</div>
+  </div>
+  
+  <div class="title">Termo de Retirada de Materiais</div>
+  
+  <div class="info-box">
+    <div class="info-row"><span class="info-label">Data/Hora:</span><span>${dataHora}</span></div>
+    <div class="info-row"><span class="info-label">Setor:</span><span>${mov.person_sector || 'Não informado'}</span></div>
+    ${mov.notes ? `<div class="info-row"><span class="info-label">Observação:</span><span>${mov.notes}</span></div>` : ''}
+  </div>
+  
+  <h4 style="margin: 20px 0 10px; font-size: 11pt; text-transform: uppercase; color: #333;">Item Retirado:</h4>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 15%;">Código</th>
+        <th style="width: 50%;">Descrição</th>
+        <th style="width: 15%; text-align: center;">Qtd</th>
+        <th style="width: 20%;">Unidade</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${mov.item_sku || '-'}</td>
+        <td style="font-weight: 600;">${mov.item_name}</td>
+        <td style="text-align: center;">${mov.quantity}</td>
+        <td>${mov.unit}</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <p style="text-align: justify; margin: 25px 0; font-size: 11pt;">
+    Declaro ter recebido o(s) material(is) acima descrito(s), comprometendo-me a utilizá-lo(s) exclusivamente 
+    para fins de trabalho na empresa. Estou ciente de minha responsabilidade pela guarda e conservação 
+    do(s) mesmo(s), devendo devolvê-lo(s) em perfeito estado quando solicitado.
+  </p>
+  
+  <div style="margin-top: 40px;">
+    <h4 style="margin-bottom: 20px; font-size: 11pt; text-transform: uppercase; color: #333;">Responsável(is):</h4>
+    ${personsHtml}
+  </div>
+  
+  <div style="margin-top: 30px;">
+    <div style="border-bottom: 2px solid #333; height: 40px; width: 60%;"></div>
+    <p style="font-size: 10pt; color: #666; margin-top: 4px;">Almoxarife Responsável</p>
+  </div>
+  
+  <div class="footer">
+    <p>Documento gerado pelo Sistema ICARUS - Gestão Integrada</p>
+    <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+  </div>
+</body>
+</html>`;
+
+  const printWindow = window.open('', '_blank', 'width=800,height=900');
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => { printWindow.print(); }, 300);
 }
 
 // Atualizar estatisticas de movimentacoes
@@ -3851,9 +4080,66 @@ async function executeReturn(movementId) {
 // Modal de Retirada Rapida - Design Premium
 // Estado para retirada multipla
 let withdrawalItems = [];
+let withdrawalPersons = [];
+
+// Função para manipular input de pessoa (Enter para adicionar)
+function handlePersonInput(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const input = event.target;
+    const name = input.value.trim();
+    if (name && !withdrawalPersons.includes(name)) {
+      withdrawalPersons.push(name);
+      renderWithdrawalPersons();
+    }
+    input.value = '';
+  }
+}
+
+// Renderiza as tags de pessoas
+function renderWithdrawalPersons() {
+  const container = document.getElementById('withdrawal-persons-tags');
+  if (!container) return;
+  
+  container.innerHTML = withdrawalPersons.map((person, idx) => `
+    <span style="
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.15));
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 8px;
+      font-size: 12px;
+      color: #f472b6;
+      font-weight: 500;
+    ">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      ${person}
+      <button type="button" onclick="removeWithdrawalPerson(${idx})" style="
+        background: none;
+        border: none;
+        color: #f472b6;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 2px;
+        font-size: 14px;
+        line-height: 1;
+        opacity: 0.7;
+      " onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">×</button>
+    </span>
+  `).join('');
+}
+
+// Remove pessoa da lista
+function removeWithdrawalPerson(idx) {
+  withdrawalPersons.splice(idx, 1);
+  renderWithdrawalPersons();
+}
 
 function showQuickWithdrawal() {
   withdrawalItems = [];
+  withdrawalPersons = [];
   const items = state.inventory.filter(i => i.quantity > 0);
   
   const modalHtml = `
@@ -3968,20 +4254,33 @@ function showQuickWithdrawal() {
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
             <div>
               <label style="display: block; font-size: 11px; font-weight: 600; color: #f472b6; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 10px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Responsável *
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 6px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Responsáveis *
               </label>
-              <input type="text" id="withdrawal-person" placeholder="Nome completo" style="
-                width: 100%; 
-                padding: 14px 16px; 
+              <div id="withdrawal-persons-container" style="
+                min-height: 52px;
                 background: rgba(255,255,255,0.03);
                 border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 12px; 
-                color: #fff; 
-                font-size: 14px;
-                transition: all 0.2s;
-                outline: none;
-              " onfocus="this.style.borderColor='rgba(236,72,153,0.5)';this.style.boxShadow='0 0 20px rgba(236,72,153,0.12)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)';this.style.boxShadow='none'">
+                border-radius: 12px;
+                padding: 8px 12px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: center;
+              ">
+                <div id="withdrawal-persons-tags" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                <input type="text" id="withdrawal-person-input" placeholder="Digite e pressione Enter" style="
+                  flex: 1;
+                  min-width: 120px;
+                  padding: 6px 8px;
+                  background: transparent;
+                  border: none;
+                  color: #fff;
+                  font-size: 13px;
+                  outline: none;
+                " onkeydown="handlePersonInput(event)">
+              </div>
+              <p style="font-size: 10px; color: #666; margin-top: 6px;">Pressione Enter para adicionar mais pessoas</p>
             </div>
             
             <div>
@@ -4274,7 +4573,15 @@ function removeWithdrawalItem(idx) {
 }
 
 async function submitMultipleWithdrawal() {
-  const personName = document.getElementById('withdrawal-person').value.trim();
+  // Adiciona pessoa do input se houver texto pendente
+  const pendingInput = document.getElementById('withdrawal-person-input');
+  if (pendingInput && pendingInput.value.trim()) {
+    const name = pendingInput.value.trim();
+    if (!withdrawalPersons.includes(name)) {
+      withdrawalPersons.push(name);
+    }
+  }
+  
   const sector = document.getElementById('withdrawal-sector').value;
   const notes = document.getElementById('withdrawal-notes').value.trim();
   
@@ -4283,10 +4590,13 @@ async function submitMultipleWithdrawal() {
     return;
   }
   
-  if (!personName) {
-    showNotification('Informe quem esta retirando', 'error');
+  if (withdrawalPersons.length === 0) {
+    showNotification('Adicione pelo menos um responsável', 'error');
     return;
   }
+  
+  // Junta todos os nomes para salvar no banco
+  const allPersonNames = withdrawalPersons.join(', ');
   
   try {
     for (const item of withdrawalItems) {
@@ -4301,7 +4611,7 @@ async function submitMultipleWithdrawal() {
           movement_type: 'saida',
           quantity: item.qty,
           usage_type: 'emprestimo',
-          person_name: personName,
+          person_name: allPersonNames,
           person_sector: sector || null,
           notes: notes || null
         })
@@ -4310,6 +4620,10 @@ async function submitMultipleWithdrawal() {
     
     const itemNames = withdrawalItems.map(i => `${i.qty}x ${i.name}`).join(', ');
     showNotification(`Retirada registrada: ${itemNames}`, 'success');
+    
+    // Gera o termo de retirada automaticamente
+    generateWithdrawalTermo(withdrawalItems, withdrawalPersons, sector, notes);
+    
     closeModal('modal-quick-withdrawal');
     loadInventory();
     if (almox2State.currentTab === 'movimentos') loadAlmoxMovements();
@@ -4317,6 +4631,192 @@ async function submitMultipleWithdrawal() {
     console.error('Erro ao registrar retirada:', error);
     showNotification('Erro ao registrar retirada', 'error');
   }
+}
+
+// ========================================
+// TERMO DE RETIRADA - PDF Generator (Múltiplos Itens)
+// ========================================
+function generateWithdrawalTermo(items, persons, sector, notes) {
+  const now = new Date();
+  const dataHora = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const dataFormal = now.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+  
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e5e5e5;">${item.sku || '-'}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e5e5e5; font-weight: 600;">${item.name}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e5e5e5; text-align: center;">${item.qty}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e5e5e5;">${item.unit || 'un'}</td>
+    </tr>
+  `).join('');
+  
+  const personsHtml = persons.map((person, idx) => `
+    <div style="display: flex; align-items: flex-end; gap: 20px; margin-bottom: 25px;">
+      <div style="flex: 1;">
+        <p style="margin-bottom: 8px; font-weight: 600;">${idx + 1}. ${person}</p>
+        <div style="border-bottom: 2px solid #333; height: 40px;"></div>
+        <p style="font-size: 10pt; color: #666; margin-top: 4px; text-align: center;">Assinatura</p>
+      </div>
+    </div>
+  `).join('');
+  
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Termo de Retirada - ${dataHora}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4; margin: 1.5cm; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: #fff;
+      padding: 30px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 3px double #333;
+      padding-bottom: 15px;
+    }
+    .company-name {
+      font-size: 16pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+    }
+    .company-cnpj {
+      font-size: 10pt;
+      color: #444;
+    }
+    .title {
+      font-size: 14pt;
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      margin: 25px 0;
+      text-decoration: underline;
+    }
+    .info-box {
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+    }
+    .info-row {
+      display: flex;
+      margin: 5px 0;
+    }
+    .info-label {
+      font-weight: bold;
+      width: 100px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th {
+      background: #f0f0f0;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid #333;
+      font-weight: bold;
+      font-size: 10pt;
+      text-transform: uppercase;
+    }
+    .signatures {
+      margin-top: 40px;
+      page-break-inside: avoid;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 9pt;
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">GRANJA VITTA LTDA</div>
+    <div class="company-cnpj">CNPJ: 33.358.938/0001-37</div>
+  </div>
+  
+  <div class="title">Termo de Retirada de Materiais</div>
+  
+  <div class="info-box">
+    <div class="info-row">
+      <span class="info-label">Data/Hora:</span>
+      <span>${dataHora}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Setor:</span>
+      <span>${sector || 'Não informado'}</span>
+    </div>
+    ${notes ? `<div class="info-row">
+      <span class="info-label">Observação:</span>
+      <span>${notes}</span>
+    </div>` : ''}
+  </div>
+  
+  <h4 style="margin: 20px 0 10px; font-size: 11pt; text-transform: uppercase; color: #333;">Itens Retirados:</h4>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 15%;">Código</th>
+        <th style="width: 50%;">Descrição</th>
+        <th style="width: 15%; text-align: center;">Qtd</th>
+        <th style="width: 20%;">Unidade</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemsHtml}
+    </tbody>
+  </table>
+  
+  <p style="text-align: justify; margin: 25px 0; font-size: 11pt;">
+    Declaro ter recebido os materiais acima descritos, comprometendo-me a utilizá-los exclusivamente 
+    para fins de trabalho na empresa. Estou ciente de minha responsabilidade pela guarda e conservação 
+    dos mesmos, devendo devolvê-los em perfeito estado quando solicitado (itens retornáveis) ou 
+    justificar seu uso (itens consumíveis).
+  </p>
+  
+  <div class="signatures">
+    <h4 style="margin-bottom: 20px; font-size: 11pt; text-transform: uppercase; color: #333;">Responsável(is):</h4>
+    ${personsHtml}
+  </div>
+  
+  <div style="margin-top: 30px; display: flex; gap: 30px;">
+    <div style="flex: 1;">
+      <div style="border-bottom: 2px solid #333; height: 40px;"></div>
+      <p style="font-size: 10pt; color: #666; margin-top: 4px; text-align: center;">Almoxarife Responsável</p>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>Documento gerado pelo Sistema ICARUS - Gestão Integrada</p>
+    <p>Gerado em: ${dataHora}</p>
+  </div>
+</body>
+</html>`;
+
+  // Abre em nova janela e prepara para impressão
+  const printWindow = window.open('', '_blank', 'width=800,height=900');
+  printWindow.document.write(html);
+  printWindow.document.close();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 300);
 }
 
 // ========================================
@@ -5479,12 +5979,51 @@ function showItemDetail(itemId) {
  
  const isLowStock = item.quantity <= (item.min_stock || 0);
  const isZero = item.quantity <= 0;
+ const inUseCount = item.in_use_count || 0;
+ const borrowedInfo = item.borrowed_info || [];
  
  const statusConfig = isZero 
  ? { color: '#ef4444', bg: 'rgba(239,68,68,0.15)', text: 'ZERADO', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'}
  : isLowStock 
  ? { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: 'BAIXO', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'}
  : { color: '#10b981', bg: 'rgba(16,185,129,0.15)', text: 'OK', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>'};
+ 
+ // Gerar HTML de quem está usando
+ let inUseHtml = '';
+ if (inUseCount > 0 && borrowedInfo.length > 0) {
+   const usersHtml = borrowedInfo.map(loan => {
+     const loanDate = new Date(loan.created_at);
+     const dateStr = loanDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+     return `
+       <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: rgba(245,158,11,0.08); border-radius: 8px; margin-bottom: 6px;">
+         <div style="display: flex; align-items: center; gap: 10px;">
+           <div style="width: 32px; height: 32px; background: rgba(245,158,11,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+           </div>
+           <div>
+             <div style="font-size: 13px; font-weight: 600; color: #f59e0b;">${escapeHtml(loan.person_name || 'Não informado')}</div>
+             <div style="font-size: 11px; color: #888;">${loan.person_sector ? escapeHtml(loan.person_sector) + ' • ' : ''}${dateStr}</div>
+           </div>
+         </div>
+         <div style="text-align: right;">
+           <div style="font-size: 14px; font-weight: 700; color: #f59e0b;">${loan.quantity}x</div>
+         </div>
+       </div>
+     `;
+   }).join('');
+   
+   inUseHtml = `
+     <div style="margin-bottom: 16px;">
+       <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #f59e0b; font-size: 12px; font-weight: 600;">
+         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+         EM USO (${inUseCount} empréstimo${inUseCount > 1 ? 's' : ''})
+       </div>
+       <div style="background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 10px;">
+         ${usersHtml}
+       </div>
+     </div>
+   `;
+ }
  
  const categoryIcons = {
  ferramentas: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
@@ -5547,11 +6086,13 @@ function showItemDetail(itemId) {
  </div>
  </div>
  
+ ${inUseHtml}
+ 
  ${item.specs ? `
  <div style="margin-bottom: 16px;">
  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #64748b; font-size: 12px;">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
- ESPECIFICAA‡A•ES TECNICAS
+ ESPECIFICAÇÕES TÉCNICAS
  </div>
  <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; font-size: 13px; color: #94a3b8; white-space: pre-wrap; max-height: 120px; overflow-y: auto;">${escapeHtml(item.specs)}</div>
  </div>
@@ -5609,10 +6150,45 @@ function closeModal(modalId) {
  if (form) form.reset();
 }
 
+// Função para selecionar tipo de item (Consumível ou Retornável)
+function selectItemType(type) {
+  const consumivelLabel = document.getElementById('type-consumivel-label');
+  const retornavelLabel = document.getElementById('type-retornavel-label');
+  const consumivelRadio = document.getElementById('type-consumivel');
+  const retornavelRadio = document.getElementById('type-retornavel');
+  const consumivelDot = document.getElementById('type-consumivel-dot');
+  const retornavelDot = document.getElementById('type-retornavel-dot');
+  const retornavelText = document.getElementById('type-retornavel-text');
+  
+  if (type === 'consumivel') {
+    consumivelRadio.checked = true;
+    retornavelRadio.checked = false;
+    consumivelLabel.style.background = 'linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(236, 72, 153, 0.03))';
+    consumivelLabel.style.borderColor = 'rgba(236, 72, 153, 0.25)';
+    consumivelDot.style.background = '#f472b6';
+    retornavelLabel.style.background = 'rgba(255,255,255,0.02)';
+    retornavelLabel.style.borderColor = 'rgba(255,255,255,0.1)';
+    retornavelDot.style.background = 'transparent';
+    retornavelText.style.color = '#aaa';
+  } else {
+    consumivelRadio.checked = false;
+    retornavelRadio.checked = true;
+    retornavelLabel.style.background = 'linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(34, 211, 238, 0.03))';
+    retornavelLabel.style.borderColor = 'rgba(34, 211, 238, 0.25)';
+    retornavelDot.style.background = '#22d3ee';
+    retornavelText.style.color = '#22d3ee';
+    consumivelLabel.style.background = 'rgba(255,255,255,0.02)';
+    consumivelLabel.style.borderColor = 'rgba(255,255,255,0.1)';
+    consumivelDot.style.background = 'transparent';
+  }
+}
+
 async function createItemFromForm(event) {
  event.preventDefault();
  
  const formData = new FormData(event.target);
+ const itemType = document.querySelector('input[name="item_type"]:checked')?.value || 'consumivel';
+ 
  const itemData = {
  sku: formData.get('sku'),
  name: formData.get('name'),
@@ -5623,7 +6199,8 @@ async function createItemFromForm(event) {
  min_stock: parseInt(formData.get('min_stock')) || 0,
  max_stock: formData.get('max_stock') ? parseInt(formData.get('max_stock')) : null,
  location: formData.get('location') || null,
- specs: formData.get('specs') || null
+ specs: formData.get('specs') || null,
+ is_consumable: itemType === 'consumivel'
  };
 
  try {
@@ -5679,7 +6256,7 @@ async function adjustStock(itemId, delta) {
  if (data.ok) {
  await loadInventory();
  // await backupInventoryToTXT(); // Desabilitado temporariamente
- showNotification(`âœ“ ${item.name} atualizado`, 'success');
+ showNotification(`✔ ${item.name} atualizado`, 'success');
  } else {
  showNotification('Erro ao atualizar estoque', 'error');
  }
@@ -6213,7 +6790,7 @@ function showAdvancePurchaseModal(purchaseId) {
  <div class="modal">
  <div class="modal-header">
  <h3 class="modal-title">Avancar para: ${nextStatus.label}</h3>
- <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-advance-purchase')">A—</span>
+ <span style="cursor: pointer; font-size: 24px;" onclick="closeModal('modal-advance-purchase')">×</span>
  </div>
  
  <div style="padding: 15px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 15px;">
@@ -6436,8 +7013,8 @@ function showPurchasePhoto(purchaseId) {
  <div id="modal-photo-viewer" class="modal-overlay active" onclick="if(event.target === this) closeModal('modal-photo-viewer')" style="z-index: 10001;">
  <div class="photo-viewer-modal">
  <div class="photo-viewer-header">
- <h3>ðŸ“· ${escapeHtml(purchase.item_name)}</h3>
- <span style="cursor: pointer; font-size: 28px; color: #fff;" onclick="closeModal('modal-photo-viewer')">A—</span>
+ <h3>📷 ${escapeHtml(purchase.item_name)}</h3>
+ <span style="cursor: pointer; font-size: 28px; color: #fff;" onclick="closeModal('modal-photo-viewer')">×</span>
  </div>
  <div class="photo-viewer-content">
  <img src="${purchase.photo_url}" alt="Foto da peca" class="photo-viewer-img">
@@ -6646,7 +7223,7 @@ function renderPreventivesTable() {
  <td>${prev.last_date ? new Date(prev.last_date).toLocaleDateString('pt-BR') : '-'}</td>
  <td><span class="badge ${statusClass}">${statusText}</span></td>
  <td>
- <button class="btn-small btn-success" onclick="markPreventiveDone(${prev.id})">âœ“ Feito</button>
+ <button class="btn-small btn-success" onclick="markPreventiveDone(${prev.id})">✔ Feito</button>
  <button class="btn-small btn-danger" onclick="deletePreventive(${prev.id})">Excluir</button>
  </td>
  </tr>
@@ -6670,21 +7247,21 @@ function checkPreventiveAlerts(preventives) {
  if (daysUntil < 0) {
  alerts.push({
  type: 'danger',
- icon: 'ðŸš¨',
+ icon: '🚨',
  title: 'Preventiva VENCIDA',
  text: `${prev.equipment_name} esta ${Math.abs(daysUntil)} dia(s) atrasada!`
  });
  } else if (daysUntil === 0) {
  alerts.push({
  type: 'warning',
- icon: 'âš ï¸',
+ icon: '⚠️',
  title: 'Vence HOJE',
  text: `${prev.equipment_name} vence hoje!`
  });
  } else if (daysUntil === 1) {
  alerts.push({
  type: 'info',
- icon: 'ðŸ“¢',
+ icon: '📢',
  title: 'Vence AMANHAƒ',
  text: `${prev.equipment_name} vence amanha!`
  });
@@ -6989,8 +7566,8 @@ function showQuickSearch() {
  modal.innerHTML = `
  <div class="modal" style="max-width: 600px;">
  <div class="modal-header">
- <h3 class="modal-title">ðŸ” Busca Rapida</h3>
- <span style="cursor: pointer; font-size: 24px;" onclick="this.closest('.modal-overlay').remove()">A—</span>
+ <h3 class="modal-title">🔍 Busca Rapida</h3>
+ <span style="cursor: pointer; font-size: 24px;" onclick="this.closest('.modal-overlay').remove()">×</span>
  </div>
  <input type="text" id="quick-search-input" placeholder="Digite para buscar OS, pecas, compras..." 
  style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 15px;">
@@ -7582,27 +8159,6 @@ function showCreateChecklist() {
  modal.classList.add('active');
 }
 
-// Toggle para mostrar opcoes de frequencia automatica
-function toggleChecklistAutoOptions() {
- const checkbox = document.getElementById('checklist-auto-complete');
- const options = document.getElementById('checklist-auto-options');
- const slider = document.getElementById('checklist-auto-slider');
- 
- if (checkbox && checkbox.checked) {
- if (options) options.style.display = 'block';
- if (slider) {
- slider.style.left = '22px';
- slider.style.background = '#10b981';
- }
- } else {
- if (options) options.style.display = 'none';
- if (slider) {
- slider.style.left = '2px';
- slider.style.background = '#666';
- }
- }
-}
-
 // Create checklist from form
 async function createChecklistFromForm(event) {
  event.preventDefault();
@@ -7612,16 +8168,6 @@ async function createChecklistFromForm(event) {
  const frequency = document.getElementById('checklist-frequency').value;
  const description = document.getElementById('checklist-description').value.trim();
  const itemsText = document.getElementById('checklist-items').value.trim();
- 
- // Automacao
- const autoComplete = document.getElementById('checklist-auto-complete');
- const auto_complete = autoComplete ? autoComplete.checked : false;
- 
- let frequency_days = 1;
- if (auto_complete) {
- const selectedRadio = document.querySelector('input[name="frequency-days"]:checked');
- frequency_days = selectedRadio ? parseInt(selectedRadio.value) : 1;
- }
  
  const items = itemsText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
  
@@ -7637,7 +8183,8 @@ async function createChecklistFromForm(event) {
  'Authorization': `Bearer ${state.token}`,
  'Content-Type': 'application/json'
  },
- body: JSON.stringify({ name, sector, frequency, description, items, auto_complete, frequency_days })
+ body: JSON.stringify({ name, sector, frequency, description, items })
+ });
  });
  
  const data = await response.json();
@@ -7908,7 +8455,7 @@ async function viewChecklistHistory(checklistId) {
  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
  ${(exec.items || []).map(item => `
  <span style="font-size: 11px; padding: 3px 6px; background: ${item.checked ? 'rgba(16, 185, 129, 0.2)': 'rgba(239, 68, 68, 0.2)'}; color: ${item.checked ? 'var(--success)': 'var(--danger)'}; border-radius: 4px;">
- ${item.checked ? 'âœ“': 'âœ—'} ${escapeHtml(item.description)}
+ ${item.checked ? '✔': '✘'} ${escapeHtml(item.description)}
  </span>
  `).join('')}
  </div>
@@ -8037,7 +8584,7 @@ async function fetchCurrentTemperature() {
  const tempInput = document.getElementById('water-temperature');
  if (tempInput && !tempInput.value) {
  tempInput.value = temp.toFixed(1);
- tempInput.placeholder = `${temp.toFixed(1)}Â°C (atual)`;
+ tempInput.placeholder = `${temp.toFixed(1)}°C (atual)`;
  }
  return temp;
  }
@@ -8084,6 +8631,9 @@ async function loadWaterControl() {
  loadWaterStats()
  ]);
  
+ // Preencher dropdown de meses
+ populateWaterMonthSelect();
+ 
  // Renderizar
  renderWaterStats();
  renderWaterChart();
@@ -8092,6 +8642,88 @@ async function loadWaterControl() {
  
  } catch (error) {
  console.error('Erro ao carregar controle de agua:', error);
+ }
+}
+
+// Estado do filtro de historico de agua
+state.waterHistoryPeriod = 'month'; // 'today', 'week', 'month', ou 'YYYY-MM'
+state.waterHistoryMonth = 'current'; // 'current' ou 'YYYY-MM' ou 'all'
+
+// Preencher dropdown de meses com leituras disponiveis
+function populateWaterMonthSelect() {
+ const select = document.getElementById('water-month-select');
+ if (!select) return;
+ 
+ const readings = state.waterReadings || [];
+ const months = new Set();
+ 
+ readings.forEach(r => {
+ const dateKey = r.reading_date.split('T')[0];
+ const monthKey = dateKey.substring(0, 7); // YYYY-MM
+ months.add(monthKey);
+ });
+ 
+ // Ordenar meses do mais recente para o mais antigo
+ const sortedMonths = Array.from(months).sort().reverse();
+ 
+ // Mes atual
+ const now = new Date();
+ const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+ 
+ let options = '<option value="current">Mês Atual</option>';
+ 
+ sortedMonths.forEach(month => {
+ const [year, m] = month.split('-');
+ const monthName = new Date(year, parseInt(m) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+ const label = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+ const selected = month === currentMonth ? '' : '';
+ options += `<option value="${month}" ${selected}>${label}</option>`;
+ });
+ 
+ options += '<option value="all">Todos os Meses</option>';
+ 
+ select.innerHTML = options;
+}
+
+// Definir periodo do historico
+function setWaterHistoryPeriod(period) {
+ state.waterHistoryPeriod = period;
+ 
+ // Atualizar botoes
+ document.querySelectorAll('.water-filter-btn').forEach(btn => btn.classList.remove('active'));
+ const activeBtn = document.getElementById(`water-filter-${period}`);
+ if (activeBtn) activeBtn.classList.add('active');
+ 
+ // Resetar dropdown de mes para atual quando selecionar outro periodo
+ const monthSelect = document.getElementById('water-month-select');
+ if (monthSelect && period !== 'month') {
+ monthSelect.value = 'current';
+ state.waterHistoryMonth = 'current';
+ }
+ 
+ renderWaterHistory();
+}
+
+// Definir mes especifico do historico
+function setWaterHistoryMonth(month) {
+ state.waterHistoryMonth = month;
+ state.waterHistoryPeriod = 'month';
+ 
+ // Atualizar botoes - marcar "Mes" como ativo
+ document.querySelectorAll('.water-filter-btn').forEach(btn => btn.classList.remove('active'));
+ const monthBtn = document.getElementById('water-filter-month');
+ if (monthBtn) monthBtn.classList.add('active');
+ 
+ renderWaterHistory();
+}
+
+// Gerar relatorio de agua (PDF)
+function generateWaterReport() {
+ // Usa a funcao existente de exportar PDF
+ if (typeof exportWaterReportPDF === 'function') {
+ exportWaterReportPDF();
+ } else {
+ showToast('Funcao de relatorio nao disponivel', 'error');
  }
 }
 
@@ -8398,7 +9030,7 @@ function renderMiniChartFromReadings(tank, readings7h, period) {
  
  container.innerHTML = filteredConsumptions.map(c => {
  const height = (c.consumption / maxConsumption) * 100;
- return '<div class="tank-chart-bar" style="height: '+ Math.max(height, 5) + '%;" title="'+ c.consumption.toFixed(2) + 'mÂ³"></div>';
+ return '<div class="tank-chart-bar" style="height: '+ Math.max(height, 5) + '%;" title="'+ c.consumption.toFixed(2) + 'm³"></div>';
  }).join('');
 }
 
@@ -8486,8 +9118,8 @@ function renderWaterChart() {
  
  return '<div class="chart-bar-group">'+
  '<div class="chart-bars">'+
- '<div class="chart-bar aviarios" style="height: '+ Math.max(aviariosHeight, 4) + 'px;" title="Aviarios: '+ aviariosValue.toFixed(2) + 'mÂ³"></div>'+
- '<div class="chart-bar recria" style="height: '+ Math.max(recriaHeight, 4) + 'px;" title="Recria: '+ recriaValue.toFixed(2) + 'mÂ³"></div>'+
+ '<div class="chart-bar aviarios" style="height: '+ Math.max(aviariosHeight, 4) + 'px;" title="Aviarios: '+ aviariosValue.toFixed(2) + 'm³"></div>'+
+ '<div class="chart-bar recria" style="height: '+ Math.max(recriaHeight, 4) + 'px;" title="Recria: '+ recriaValue.toFixed(2) + 'm³"></div>'+
  '</div>'+
  '<span class="chart-bar-label">'+ dateLabel + '</span>'+
  '</div>';
@@ -8509,7 +9141,7 @@ function setWaterChartType(type) {
  const legend = document.querySelector('.water-chart-card .chart-legend');
  if (legend) {
  if (type === 'temperatura') {
- legend.innerHTML = '<span class="legend-item temperatura"><span class="legend-dot" style="background: #f59e0b;"></span> Temperatura Â°C</span>';
+ legend.innerHTML = '<span class="legend-item temperatura"><span class="legend-dot" style="background: #f59e0b;"></span> Temperatura °C</span>';
  } else {
  legend.innerHTML = '<span class="legend-item aviarios"><span class="legend-dot"></span> Aviarios</span><span class="legend-item recria"><span class="legend-dot"></span> Recria</span>';
  }
@@ -8609,7 +9241,7 @@ function renderTemperatureChart() {
  var tempVal = minTemp + (tempRange * i / numGridLines);
  var y = getY(tempVal);
  gridLines += '<line x1="'+ paddingLeft + '" y1="'+ y + '" x2="'+ (svgWidth - paddingRight) + '" y2="'+ y + '" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>';
- yLabels += '<text x="'+ (paddingLeft - 5) + '" y="'+ (y + 3) + '" text-anchor="end" fill="#64748b" font-size="9">'+ tempVal.toFixed(0) + 'Â°</text>';
+ yLabels += '<text x="'+ (paddingLeft - 5) + '" y="'+ (y + 3) + '" text-anchor="end" fill="#64748b" font-size="9">'+ tempVal.toFixed(0) + '°</text>';
  }
  
  // Criar path das linhas e pontos
@@ -8638,7 +9270,7 @@ function renderTemperatureChart() {
  path7h += 'L'+ x + ','+ y7;
  }
  points7h += '<circle cx="'+ x + '" cy="'+ y7 + '" r="5" fill="#3b82f6" stroke="#fff" stroke-width="2"/>';
- labels += '<text x="'+ x + '" y="'+ (y7 + 16) + '" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="600">'+ data.temp7h.toFixed(1) + 'Â°</text>';
+ labels += '<text x="'+ x + '" y="'+ (y7 + 16) + '" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="600">'+ data.temp7h.toFixed(1) + '°</text>';
  }
  
  // Ponto e linha da 16h (maxima - vermelho)
@@ -8650,7 +9282,7 @@ function renderTemperatureChart() {
  path16h += 'L'+ x + ','+ y16;
  }
  points16h += '<circle cx="'+ x + '" cy="'+ y16 + '" r="5" fill="#ef4444" stroke="#fff" stroke-width="2"/>';
- labels += '<text x="'+ x + '" y="'+ (y16 - 8) + '" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">'+ data.temp16h.toFixed(1) + 'Â°</text>';
+ labels += '<text x="'+ x + '" y="'+ (y16 - 8) + '" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">'+ data.temp16h.toFixed(1) + '°</text>';
  }
  });
  
@@ -8704,13 +9336,47 @@ function renderWaterHistory() {
  consumptionHeader.textContent = filterConsumption === '24h'? 'Consumo 24h': 'Consumo 9h';
  }
  
+ // Filtrar por tanque
  let filteredReadings = readings;
  if (filterTank !== 'all') {
  filteredReadings = readings.filter(r => r.tank_name === filterTank);
  }
  
+ // Filtrar por periodo/mes
+ const now = new Date();
+ const todayKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+ const currentMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+ 
+ // Calcular data de inicio da semana (7 dias atras)
+ const weekAgo = new Date(now);
+ weekAgo.setDate(weekAgo.getDate() - 7);
+ const weekAgoKey = weekAgo.getFullYear() + '-' + String(weekAgo.getMonth() + 1).padStart(2, '0') + '-' + String(weekAgo.getDate()).padStart(2, '0');
+ 
+ const period = state.waterHistoryPeriod || 'month';
+ const monthFilter = state.waterHistoryMonth || 'current';
+ 
+ filteredReadings = filteredReadings.filter(r => {
+ const dateKey = r.reading_date.split('T')[0];
+ const monthKey = dateKey.substring(0, 7);
+ 
+ if (period === 'today') {
+ return dateKey === todayKey;
+ } else if (period === 'week') {
+ return dateKey >= weekAgoKey;
+ } else if (period === 'month') {
+ if (monthFilter === 'all') {
+ return true; // Mostrar todos
+ } else if (monthFilter === 'current') {
+ return monthKey === currentMonthKey;
+ } else {
+ return monthKey === monthFilter;
+ }
+ }
+ return true;
+ });
+ 
  if (filteredReadings.length === 0) {
- tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">Nenhuma leitura registrada</td></tr>';
+ tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">Nenhuma leitura no período selecionado</td></tr>';
  return;
  }
  
@@ -8796,8 +9462,8 @@ function renderWaterHistory() {
  if (nextReading) {
  const diff = nextReading.reading_value - reading.reading_value;
  consumption = diff >= 0 
- ? '<span class="consumption-positive">'+ diff.toFixed(0) + 'mÂ³</span>'
- : '<span class="consumption-negative">'+ diff.toFixed(0) + 'mÂ³</span>';
+ ? '<span class="consumption-positive">'+ diff.toFixed(0) + 'm³</span>'
+ : '<span class="consumption-negative">'+ diff.toFixed(0) + 'm³</span>';
  }
  }
  } else if (filterConsumption === '9h') {
@@ -8812,8 +9478,8 @@ function renderWaterHistory() {
  if (reading7h) {
  const diff = reading.reading_value - reading7h.reading_value;
  consumption = diff >= 0 
- ? '<span class="consumption-positive">'+ diff.toFixed(0) + 'mÂ³</span>'
- : '<span class="consumption-negative">'+ diff.toFixed(0) + 'mÂ³</span>';
+ ? '<span class="consumption-positive">'+ diff.toFixed(0) + 'm³</span>'
+ : '<span class="consumption-negative">'+ diff.toFixed(0) + 'm³</span>';
  }
  }
  }
@@ -8821,7 +9487,7 @@ function renderWaterHistory() {
  // Botao de delete (so para admin ou quem tem permissao)
  const canDelete = state.user && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all'));
  const deleteBtn = canDelete 
- ? '<button class="delete-reading-btn" onclick="deleteWaterReading(\''+ reading.id + '\')" title="Excluir leitura">A—</button>'
+ ? '<button class="delete-reading-btn" onclick="deleteWaterReading(\''+ reading.id + '\')" title="Excluir leitura">×</button>'
  : '';
  
  return '<tr class="'+ dayClass + '">'+
@@ -8831,7 +9497,7 @@ function renderWaterHistory() {
  '<td><span class="tank-badge '+ tankClass + '">'+ tankLabel + '</span></td>'+
  '<td><strong>'+ reading.reading_value.toFixed(0) + '</strong></td>'+
  '<td>'+ consumption + '</td>'+
- '<td>'+ (reading.temperature !== null ? reading.temperature + 'Â°C': '-') + '</td>'+
+ '<td>'+ (reading.temperature !== null ? reading.temperature + '°C': '-') + '</td>'+
  '<td>'+ (reading.notes || '-') + '</td>'+
  '<td class="delete-cell">'+ deleteBtn + '</td>'+
  '</tr>';
@@ -8909,10 +9575,10 @@ function checkWaterAlerts() {
  
  container.innerHTML = alerts.map(alert => `
  <div class="water-alert">
- <span class="water-alert-icon">ðŸš¨</span>
+ <span class="water-alert-icon">🚨</span>
  <div class="water-alert-text">
  <div class="water-alert-title">Consumo acima do normal - ${alert.tank}</div>
- <div class="water-alert-desc">${alert.message} (${alert.value} mÂ³)</div>
+ <div class="water-alert-desc">${alert.message} (${alert.value} m³)</div>
  </div>
  </div>
  `).join('');
@@ -9231,11 +9897,11 @@ function exportWaterReportPDF(selectedMonth) {
  '<div class="period"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+ periodStr + '</div>'+
  '</div>'+
  '<div class="stats-grid">'+
- '<div class="stat-card primary"><h3>Aviarios (Media)</h3><div class="value cyan">'+ aviariosCalc.avg.toFixed(2) + '</div><div class="unit">mÂ³/dia</div></div>'+
- '<div class="stat-card primary"><h3>Recria (Media)</h3><div class="value green">'+ recriaCalc.avg.toFixed(2) + '</div><div class="unit">mÂ³/dia</div></div>'+
- '<div class="stat-card"><h3>Total Aviarios</h3><div class="value">'+ aviariosCalc.total.toFixed(2) + '</div><div class="unit">mÂ³ periodo</div></div>'+
- '<div class="stat-card"><h3>Total Recria</h3><div class="value">'+ recriaCalc.total.toFixed(2) + '</div><div class="unit">mÂ³ periodo</div></div>'+
- '<div class="total-card"><h3>CONSUMO TOTAL DO MAŠS</h3><div class="value">'+ totalConsumo.toFixed(2) + 'mÂ³</div><div class="unit">'+ sortedReadings.length + 'leituras registradas</div></div>'+
+ '<div class="stat-card primary"><h3>Aviarios (Media)</h3><div class="value cyan">'+ aviariosCalc.avg.toFixed(2) + '</div><div class="unit">m³/dia</div></div>'+
+ '<div class="stat-card primary"><h3>Recria (Media)</h3><div class="value green">'+ recriaCalc.avg.toFixed(2) + '</div><div class="unit">m³/dia</div></div>'+
+ '<div class="stat-card"><h3>Total Aviarios</h3><div class="value">'+ aviariosCalc.total.toFixed(2) + '</div><div class="unit">m³ periodo</div></div>'+
+ '<div class="stat-card"><h3>Total Recria</h3><div class="value">'+ recriaCalc.total.toFixed(2) + '</div><div class="unit">m³ periodo</div></div>'+
+ '<div class="total-card"><h3>CONSUMO TOTAL DO MAŠS</h3><div class="value">'+ totalConsumo.toFixed(2) + 'm³</div><div class="unit">'+ sortedReadings.length + 'leituras registradas</div></div>'+
  '</div>'+
  '<div class="table-card">'+
  '<div class="table-header"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><h3>Historico de Leituras</h3></div>'+
@@ -9271,7 +9937,7 @@ function exportWaterReportPDF(selectedMonth) {
  dayOfWeek: info.dayOfWeek,
  time: r.reading_time,
  tank: r.tank_name === 'aviarios'? 'Aviarios': 'Recria',
- value: r.reading_value.toFixed(3) + 'mÂ³',
+ value: r.reading_value.toFixed(3) + 'm³',
  recordedBy: r.recorded_by_name || '-',
  notes: r.notes || '-'
  };
@@ -9453,7 +10119,7 @@ async function downloadReportAsPDF() {
  windowName: '_system',
  toolbarColor: '#0f172a'
  });
- showNotification('ðŸ“„ PDF aberto no navegador!', 'success');
+ showNotification('📄 PDF aberto no navegador!', 'success');
  return;
  }
  } catch (browserErr) {
@@ -9465,7 +10131,7 @@ async function downloadReportAsPDF() {
  if (window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
  console.log('[PDF] Tentando App.openUrl...');
  await window.Capacitor.Plugins.App.openUrl({ url: fullUrl });
- showNotification('ðŸ“„ PDF aberto!', 'success');
+ showNotification('📄 PDF aberto!', 'success');
  return;
  }
  } catch (appErr) {
@@ -9477,7 +10143,7 @@ async function downloadReportAsPDF() {
  if (window.cordova && window.cordova.InAppBrowser) {
  console.log('[PDF] Tentando InAppBrowser...');
  window.cordova.InAppBrowser.open(fullUrl, '_system', 'location=yes');
- showNotification('ðŸ“„ PDF aberto!', 'success');
+ showNotification('📄 PDF aberto!', 'success');
  return;
  }
  } catch (cordovaErr) {
@@ -9487,7 +10153,7 @@ async function downloadReportAsPDF() {
  // Metodo 4: Fallback window.open com _system
  console.log('[PDF] Fallback: window.open _system');
  window.open(fullUrl, '_system');
- showNotification('ðŸ“„ Abrindo PDF...', 'success');
+ showNotification('📄 Abrindo PDF...', 'success');
  return;
  }
  
@@ -9922,28 +10588,28 @@ function generateInteractiveReport(rows, dailyData, dates) {
 <body>
  <div class="container">
  <div class="header">
- <h1>ðŸ’§ Controle de Agua</h1>
+ <h1>💧 Controle de Agua</h1>
  <p><strong>Granja Vitta</strong> â€¢ Sistema Icarus â€¢ Gerado em ${new Date().toLocaleString('pt-BR')}</p>
  </div>
 
  <div class="stats-grid">
  <div class="stat-card gold">
- <h3>ðŸ† Total Geral</h3>
+ <h3>🏆 Total Geral</h3>
  <div class="value">${((totalRecria + totalAviarios) / 1000).toFixed(1)}</div>
- <div class="unit">mÂ³ consumidos (24h)</div>
+ <div class="unit">m³ consumidos (24h)</div>
  </div>
  <div class="stat-card">
- <h3>ðŸ’š Recria (24h)</h3>
+ <h3>💚 Recria (24h)</h3>
  <div class="value">${(totalRecria / 1000).toFixed(1)}</div>
- <div class="unit">mÂ³ consumidos</div>
+ <div class="unit">m³ consumidos</div>
  </div>
  <div class="stat-card">
- <h3>ðŸ’™ Aviarios (24h)</h3>
+ <h3>💙 Aviarios (24h)</h3>
  <div class="value">${(totalAviarios / 1000).toFixed(1)}</div>
- <div class="unit">mÂ³ consumidos</div>
+ <div class="unit">m³ consumidos</div>
  </div>
  <div class="stat-card gold">
- <h3>ðŸ“Š Media Diaria</h3>
+ <h3>📊 Media Diaria</h3>
  <div class="value">${Math.round((avgRecria + avgAviarios)).toLocaleString('pt-BR')}</div>
  <div class="unit">litros/dia (total)</div>
  </div>
@@ -9951,22 +10617,22 @@ function generateInteractiveReport(rows, dailyData, dates) {
 
  <div class="tabs">
  <div class="tab active" onclick="showTab('trabalho')">â° Periodo Trabalho (7h-16h)</div>
- <div class="tab" onclick="showTab('diario')">ðŸ“Š Consumo 24 Horas</div>
+ <div class="tab" onclick="showTab('diario')">📊 Consumo 24 Horas</div>
  </div>
 
  <div class="charts-grid">
  <div class="chart-container">
- <div class="chart-title">ðŸ“ˆ Evolucao do Consumo</div>
+ <div class="chart-title">📈 Evolucao do Consumo</div>
  <canvas id="waterChart" height="120"></canvas>
  </div>
  <div class="chart-container">
- <div class="chart-title">ðŸ… Top 5 Maiores Gastos (24h)</div>
+ <div class="chart-title">🏅 Top 5 Maiores Gastos (24h)</div>
  <ul class="ranking-list">
  ${topGastos.map((item, idx) => `
  <li class="ranking-item">
  <span class="ranking-position">${idx + 1}</span>
  <span class="ranking-date">${item.date}</span>
- <span class="ranking-value">${(item.total / 1000).toFixed(2)} mÂ³</span>
+ <span class="ranking-value">${(item.total / 1000).toFixed(2)} m³</span>
  </li>
  `).join('')}
  ${topGastos.length === 0 ? '<li class="ranking-item"><span style="color:#666">Sem dados suficientes</span></li>': ''}
@@ -9975,13 +10641,13 @@ function generateInteractiveReport(rows, dailyData, dates) {
  </div>
 
  <div class="chart-container" style="margin-bottom: 30px;">
- <div class="chart-title">ðŸŽ¯ Consumo por Caixa (Periodo Selecionado)</div>
+ <div class="chart-title">🎯 Consumo por Caixa (Periodo Selecionado)</div>
  <canvas id="tankChart" height="80"></canvas>
  </div>
 
  <div class="table-container">
  <div class="table-header">
- <h3>ðŸ“‹ Historico Detalhado de Leituras</h3>
+ <h3>📋 Historico Detalhado de Leituras</h3>
  </div>
  <table>
  <thead>
@@ -9990,7 +10656,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
  <th>Dia</th>
  <th>Caixa</th>
  <th>Periodo</th>
- <th>Entrada (mÂ³)</th>
+ <th>Entrada (m³)</th>
  <th>L/Hora</th>
  <th>Total (L)</th>
  <th>Tipo</th>
@@ -10014,7 +10680,7 @@ function generateInteractiveReport(rows, dailyData, dates) {
  </div>
 
  <div class="footer">
- <button onclick="window.print()" class="print-btn">ðŸ–¨ï¸ Imprimir / Salvar PDF</button>
+ <button onclick="window.print()" class="print-btn">🖨️ Imprimir / Salvar PDF</button>
  <p>Relatorio gerado automaticamente pelo Sistema Icarus â€¢ Granja Vitta</p>
  <p>Desenvolvido por Guilherme Braga â€¢ Â© 2025</p>
  </div>
@@ -10884,7 +11550,7 @@ function renderDieselHistory() {
  // Botao de delete (so para admin ou quem tem permissao)
  var canDelete = state.user && (state.user.roles.includes('admin') || state.user.roles.includes('os_manage_all') || state.user.roles.includes('diesel'));
  var deleteBtn = canDelete 
- ? '<button class="delete-reading-btn" onclick="deleteDieselRecord(\''+ r.id + '\')" title="Excluir registro">A—</button>'
+ ? '<button class="delete-reading-btn" onclick="deleteDieselRecord(\''+ r.id + '\')" title="Excluir registro">×</button>'
  : '';
  
  html += '<tr>';
@@ -11254,7 +11920,7 @@ function generateDieselInteractiveReport(records, totalEntrada, totalSaida) {
  '<div class="stat-card"><div class="stat-value">'+ records.length + '</div><div class="stat-label">Registros</div></div>'+
  '</div>'+
  '<div class="table-card">'+
- '<div class="table-header"><h2>ðŸ“‹ Historico de Movimentacoes</h2></div>'+
+ '<div class="table-header"><h2>📋 Historico de Movimentacoes</h2></div>'+
  '<table><thead><tr><th>Data</th><th>Dia</th><th>Tipo</th><th>Quantidade</th><th>Motivo</th><th>Responsavel</th></tr></thead>'+
  '<tbody>'+ tableRows + '</tbody></table>'+
  '</div>'+
@@ -11588,7 +12254,7 @@ function exportGeneratorReportPDF() {
  '</head>'+
  '<body>'+
  '<div class="header">'+
- '<h1>ðŸ”Œ CONTROLE DE GERADOR</h1>'+
+ '<h1>🔌 CONTROLE DE GERADOR</h1>'+
  '<p><strong>Granja Vitta</strong> | Periodo: '+ periodLabel + '</p>'+
  '<p>Gerado em: '+ new Date().toLocaleString('pt-BR') + '</p>'+
  '</div>'+
@@ -13248,7 +13914,7 @@ function renderAdditiveTasks() {
  '<span>'+ dateStr + '</span>'+
  '<span>â€¢</span>'+
  '<span>'+ priorityLabel + '</span>'+
- (executedByName ? '<span>â€¢</span><span style="color: var(--success);">âœ“ '+ escapeHtml(executedByName) + '</span>': '') +
+ (executedByName ? '<span>â€¢</span><span style="color: var(--success);">✔ '+ escapeHtml(executedByName) + '</span>': '') +
  '</div>'+
  '</div>'+
  '<span class="task-status-badge '+ task.status + '">'+ statusLabel + '</span>'+
@@ -14760,7 +15426,7 @@ function openDiariasModal() {
  <h3 style="margin: 0; font-size: 22px; color: #fff; font-weight: 700;">Controle de Diarias</h3>
  <p style="margin: 4px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Guilherme Braga â€¢ R$ ${diariasData.valorDiaria.toFixed(2)} por dia</p>
  </div>
- <button onclick="closeDiariasModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 36px; height: 36px; color: #888; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">A—</button>
+ <button onclick="closeDiariasModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 36px; height: 36px; color: #888; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
  </div>
  
  <div style="padding: 24px 28px; max-height: calc(90vh - 200px); overflow-y: auto;">
@@ -14901,7 +15567,7 @@ function addDiariaSemana() {
  const miniModal = `
  <div id="modal-add-semana" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10001; display: flex; align-items: center; justify-content: center;">
  <div style="background: linear-gradient(145deg, #1a1025, #150d20); border: 1px solid rgba(236,72,153,0.3); border-radius: 16px; padding: 24px; max-width: 350px; width: 90%;">
- <h4 style="color: #fff; margin: 0 0 16px 0; font-size: 16px;">ðŸ“… Adicionar Semana</h4>
+ <h4 style="color: #fff; margin: 0 0 16px 0; font-size: 16px;">📅 Adicionar Semana</h4>
  <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 0 0 16px 0;">Escolha a segunda-feira da semana (pode ser retroativa)</p>
  <input type="date" id="nova-semana-date" value="${defaultDate}" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(236,72,153,0.3); border-radius: 10px; color: #fff; font-size: 14px; margin-bottom: 16px;">
  <div style="display: flex; gap: 10px;">
@@ -15330,7 +15996,7 @@ function generateDiariasPDF() {
  <div>
  <p class="footer-text">Sistema ICARUS Â© 2025-2026</p>
  <p class="footer-text">Desenvolvido por Guilherme Braga de Queiroz</p>
- <p class="footer-phone">ðŸ“ž (62) 98493-0056</p>
+ <p class="footer-phone">📞 (62) 98493-0056</p>
  </div>
  </div>
  <div class="footer-right">
@@ -15454,7 +16120,7 @@ function exportDiariasHTML() {
 '.day-card { padding: 16px 10px; border-radius: 14px; text-align: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }'+
 '.day-card.active { background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 8px 30px rgba(236, 72, 153, 0.4); transform: scale(1.05); }'+
 '.day-card.inactive { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); }'+
-'.day-card.active::before { content: "âœ“"; position: absolute; top: 5px; right: 8px; font-size: 10px; opacity: 0.7; }'+
+'.day-card.active::before { content: "✔"; position: absolute; top: 5px; right: 8px; font-size: 10px; opacity: 0.7; }'+
 '.day-card:hover { transform: scale(1.08); }'+
 '.day-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.6; }'+
 '.day-date { font-size: 14px; font-weight: 600; }'+
@@ -15512,7 +16178,7 @@ function exportDiariasHTML() {
 '</div>'+
 '<p>Documento gerado automaticamente pelo Sistema ICARUS</p>'+
 '<p>Gestao Inteligente de Manutencao â€¢ Granja Vitta</p>'+
-'<div class="phone">ðŸ“ž (62) 98493-0056</div>'+
+'<div class="phone">📞 (62) 98493-0056</div>'+
 '<div class="dev"><div class="dev-label">Desenvolvido por</div><div class="dev-name">Guilherme Braga de Queiroz</div></div>'+
 '<div class="copyright">Â© '+ new Date().getFullYear() + 'Sistema ICARUS â€¢ Todos os direitos reservados</div>'+
 '</div>'+
@@ -16191,7 +16857,7 @@ function openNovaNotaModal(editId = null) {
  <h3 style="margin: 0; font-size: 20px; color: #fff; font-weight: 700;">${isEdit ? 'Editar': 'Nova'} Entrada Financeira</h3>
  <p style="margin: 4px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.5);">Nota fiscal e/ou boleto de fornecedor</p>
  </div>
- <button onclick="closeNovaNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;">A—</button>
+ <button onclick="closeNovaNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
  </div>
  
  <form id="form-nova-nota" onsubmit="saveNota(event, '${editId || ''}')" style="padding: 24px 28px;">
@@ -16290,7 +16956,7 @@ function openNovaNotaModal(editId = null) {
  <input type="file" id="nota-anexo-nota" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'nota')">
  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5" style="margin: 0 auto 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
  <p style="font-size: 13px; color: #a78bfa; font-weight: 600; margin: 0;">Nota Fiscal</p>
- <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-nota-name">${item?.nota_anexo ? 'âœ“ Arquivo anexado': 'Clique para anexar'}</p>
+ <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-nota-name">${item?.nota_anexo ? '✔ Arquivo anexado': 'Clique para anexar'}</p>
  </label>
  </div>
  
@@ -16300,7 +16966,7 @@ function openNovaNotaModal(editId = null) {
  <input type="file" id="nota-anexo-boleto" accept="image/*,.pdf" style="display: none;" onchange="handleNotaFileSelect(this, 'boleto')">
  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.5" style="margin: 0 auto 8px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
  <p style="font-size: 13px; color: #22d3ee; font-weight: 600; margin: 0;">Boleto</p>
- <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-boleto-name">${item?.boleto_anexo ? 'âœ“ Arquivo anexado': 'Clique para anexar'}</p>
+ <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 4px 0 0 0;" id="nota-anexo-boleto-name">${item?.boleto_anexo ? '✔ Arquivo anexado': 'Clique para anexar'}</p>
  </label>
  </div>
  </div>
@@ -16378,10 +17044,10 @@ function handleNotaFileSelect(input, tipo) {
  reader.onload = function(e) {
  if (tipo === 'nota') {
  tempNotaAnexo = { name: file.name, data: e.target.result, type: file.type };
- document.getElementById('nota-anexo-nota-name').textContent = 'âœ“ '+ file.name;
+ document.getElementById('nota-anexo-nota-name').textContent = '✔ '+ file.name;
  } else {
  tempBoletoAnexo = { name: file.name, data: e.target.result, type: file.type };
- document.getElementById('nota-anexo-boleto-name').textContent = 'âœ“ '+ file.name;
+ document.getElementById('nota-anexo-boleto-name').textContent = '✔ '+ file.name;
  }
  };
  reader.readAsDataURL(file);
@@ -16569,7 +17235,7 @@ function viewNota(id) {
  <button onclick="exportNotaPDF('${item.id}')" title="Exportar PDF" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; width: 40px; height: 40px; color: #ef4444; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h6"/></svg>
  </button>
- <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">A—</button>
+ <button onclick="closeViewNotaModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 40px; height: 40px; color: #888; font-size: 22px; cursor: pointer;">×</button>
  </div>
  </div>
  
@@ -16762,7 +17428,7 @@ function generateNotaHTMLContent(item) {
  
  if (item.status === 'pago') {
  statusColor = '#22c55e';
- statusText = 'âœ“ PAGO';
+ statusText = '✔ PAGO';
  statusBg = 'rgba(34, 197, 94, 0.15)';
  } else if (item.status === 'aguardando') {
  statusColor = '#f59e0b';
@@ -17479,7 +18145,7 @@ function generateNotaHTMLContent(item) {
  if (item.nota_anexo || item.boleto_anexo) {
  html += '<!-- Anexos -->\n';
  html += '<div class="anexos-section">\n';
- html += '<h3>ðŸ“Ž Documentos Anexados</h3>\n';
+ html += '<h3>🔎 Documentos Anexados</h3>\n';
  html += '<div class="anexos-grid">\n';
  if (item.nota_anexo) {
  html += '<a href="'+ item.nota_anexo.data + '" download="'+ item.nota_anexo.name + '" class="anexo-btn nota">\n';
@@ -17512,7 +18178,7 @@ function generateNotaHTMLContent(item) {
  html += '</div>\n';
  html += '<p>Documento gerado automaticamente pelo Sistema ICARUS</p>\n';
  html += '<p>Gestao Inteligente de Manutencao â€¢ Granja Vitta</p>\n';
- html += '<p style="margin-top: 12px; color: rgba(255,255,255,0.6);">ðŸ“ž (62) 98493-0056</p>\n';
+ html += '<p style="margin-top: 12px; color: rgba(255,255,255,0.6);">📞 (62) 98493-0056</p>\n';
  html += '<div class="tech" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">\n';
  html += '<div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Desenvolvido por</div>\n';
  html += '<div style="font-size: 13px; color: #f472b6; font-weight: 600;">Guilherme Braga de Queiroz</div>\n';
@@ -17586,3 +18252,4 @@ document.addEventListener('DOMContentLoaded', function() {
  }
  }, 500);
 });
+

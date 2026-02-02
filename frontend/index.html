@@ -1151,21 +1151,16 @@
       color: var(--accent-gold);
     }
 
-    /* ========== DASHBOARD NEO - TEMA ROXO GLASS ========== */
+    /* ========== DASHBOARD NEO - TEMA ROXO GLASS (OTIMIZADO) ========== */
+    /* Animacoes removidas para melhor performance */
     @keyframes dashboardGlow {
-      0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.2); }
+      0%, 100% { opacity: 0.3; }
     }
     @keyframes floatOrb {
-      0%, 100% { transform: translateY(0) translateX(0); }
-      25% { transform: translateY(-30px) translateX(20px); }
-      50% { transform: translateY(-10px) translateX(-15px); }
-      75% { transform: translateY(-40px) translateX(10px); }
+      0%, 100% { opacity: 0.5; }
     }
     @keyframes pulseRing {
-      0% { transform: scale(0.8); opacity: 0; }
-      50% { opacity: 0.4; }
-      100% { transform: scale(1.5); opacity: 0; }
+      0%, 100% { opacity: 0.3; }
     }
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -1198,9 +1193,8 @@
       left: 5%;
       width: 350px;
       height: 350px;
-      background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-      animation: dashboardGlow 12s ease-in-out infinite;
-      filter: blur(40px);
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+      opacity: 0.5;
     }
     .dashboard-neo-bg::after {
       content: '';
@@ -1209,16 +1203,13 @@
       right: 5%;
       width: 400px;
       height: 400px;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
-      animation: dashboardGlow 15s ease-in-out infinite 3s;
-      filter: blur(50px);
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, transparent 70%);
+      opacity: 0.5;
     }
     .orb {
       position: absolute;
       border-radius: 50%;
-      filter: blur(60px);
-      animation: floatOrb 20s ease-in-out infinite;
-      opacity: 0.6;
+      opacity: 0.4;
     }
     .orb-1 { width: 180px; height: 180px; background: rgba(139, 92, 246, 0.12); top: 15%; left: 25%; animation-delay: 0s; }
     .orb-2 { width: 120px; height: 120px; background: rgba(168, 85, 247, 0.1); top: 55%; right: 20%; animation-delay: 4s; }
@@ -1236,15 +1227,12 @@
       justify-content: space-between;
       align-items: center;
       padding: 28px 32px;
-      background: rgba(25, 18, 50, 0.8);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(25, 18, 50, 0.95);
       border: 1px solid rgba(139, 92, 246, 0.3);
       border-radius: 24px;
       margin-bottom: 28px;
       position: relative;
       overflow: hidden;
-      animation: slideIn 0.5s ease-out;
       box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .dashboard-glass-header::before {
@@ -1376,9 +1364,7 @@
       margin-bottom: 28px;
     }
     .stat-card-neo {
-      background: rgba(20, 15, 40, 0.7);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      background: rgba(20, 15, 40, 0.9);
       border: 1px solid rgba(139, 92, 246, 0.25);
       border-radius: 20px;
       padding: 24px;
@@ -1386,13 +1372,8 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
       overflow: hidden;
       cursor: pointer;
-      transition: transform 0.15s, opacity 0.15s ease-out;
-      animation: slideIn 0.5s ease-out backwards;
+      transition: transform 0.15s ease-out;
     }
-    .stat-card-neo:nth-child(1) { animation-delay: 0.1s; }
-    .stat-card-neo:nth-child(2) { animation-delay: 0.2s; }
-    .stat-card-neo:nth-child(3) { animation-delay: 0.3s; }
-    .stat-card-neo:nth-child(4) { animation-delay: 0.4s; }
     
     .stat-card-neo::before {
       content: '';
@@ -11006,11 +10987,12 @@
               </div>
             </div>
             <div class="water-header-actions">
-              <button class="btn-water-export" onclick="exportWaterReportPDF()">
-                Exportar PDF
-              </button>
-              <button class="btn-water-export" onclick="exportWaterReportExcel()">
-                Exportar Planilha
+              <button class="btn-water-export" onclick="generateWaterReport()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Gerar Relatório
               </button>
             </div>
           </div>
@@ -11020,9 +11002,13 @@
 
           <!-- Filtros de Período -->
           <div class="water-filters">
-            <button class="water-filter-btn active" id="water-filter-day" onclick="setWaterPeriod('day')">Hoje</button>
-            <button class="water-filter-btn" id="water-filter-week" onclick="setWaterPeriod('week')">Semana</button>
-            <button class="water-filter-btn" id="water-filter-month" onclick="setWaterPeriod('month')">Mês</button>
+            <button class="water-filter-btn" id="water-filter-today" onclick="setWaterHistoryPeriod('today')">Hoje</button>
+            <button class="water-filter-btn" id="water-filter-week" onclick="setWaterHistoryPeriod('week')">Semana</button>
+            <button class="water-filter-btn" id="water-filter-month" onclick="setWaterHistoryPeriod('month')">Mês</button>
+            <select id="water-month-select" class="water-select" onchange="setWaterHistoryMonth(this.value)" style="padding: 10px 16px; min-width: 140px;">
+              <option value="current">Mês Atual</option>
+              <!-- Opções de meses serão preenchidas dinamicamente -->
+            </select>
           </div>
 
           <!-- Cards de Resumo -->
@@ -13057,6 +13043,80 @@
           </div>
         </div>
 
+        <!-- Linha 2.5: Tipo do Item (Consumível ou Retornável) -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 11px; font-weight: 600; color: #f472b6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
+            <span style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              Tipo de Uso
+            </span>
+          </label>
+          <div style="display: flex; gap: 12px;">
+            <label style="
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+              padding: 14px 16px;
+              background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(236, 72, 153, 0.03));
+              border: 2px solid rgba(236, 72, 153, 0.25);
+              border-radius: 12px;
+              cursor: pointer;
+              transition: all 0.2s;
+            " onclick="selectItemType('consumivel')" id="type-consumivel-label">
+              <input type="radio" name="item_type" id="type-consumivel" value="consumivel" checked style="display: none;">
+              <span style="
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: 2px solid #f472b6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+              " id="type-consumivel-radio">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #f472b6;" id="type-consumivel-dot"></span>
+              </span>
+              <div>
+                <div style="font-weight: 600; color: #f472b6; font-size: 13px;">Consumível</div>
+                <div style="font-size: 10px; color: #888; margin-top: 2px;">Pregos, parafusos, fitas...</div>
+              </div>
+            </label>
+            <label style="
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+              padding: 14px 16px;
+              background: rgba(255,255,255,0.02);
+              border: 2px solid rgba(255,255,255,0.1);
+              border-radius: 12px;
+              cursor: pointer;
+              transition: all 0.2s;
+            " onclick="selectItemType('retornavel')" id="type-retornavel-label">
+              <input type="radio" name="item_type" id="type-retornavel" value="retornavel" style="display: none;">
+              <span style="
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: 2px solid rgba(255,255,255,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+              " id="type-retornavel-radio">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: transparent;" id="type-retornavel-dot"></span>
+              </span>
+              <div>
+                <div style="font-weight: 600; color: #aaa; font-size: 13px;" id="type-retornavel-text">Retornável</div>
+                <div style="font-size: 10px; color: #666; margin-top: 2px;">Ferramentas, EPIs, máquinas...</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <!-- Linha 3: Quantidades (4 colunas) -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
           <div style="position: relative;">
@@ -13461,37 +13521,12 @@
           </div>
         </div>
 
-        <!-- Seção de Automação -->
-        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              <span style="color: #10b981; font-weight: 600; font-size: 14px;">Execução Automática</span>
-            </div>
-            <label style="position: relative; width: 44px; height: 24px; cursor: pointer;">
-              <input type="checkbox" id="checklist-auto-complete" onchange="toggleChecklistAutoOptions()" style="opacity: 0; width: 0; height: 0;">
-              <span style="position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 12px; transition: 0.3s;"></span>
-              <span id="checklist-auto-slider" style="position: absolute; left: 2px; top: 2px; width: 20px; height: 20px; background: #666; border-radius: 50%; transition: 0.3s;"></span>
-            </label>
-          </div>
-          
-          <div id="checklist-auto-options" style="display: none;">
-            <p style="color: rgba(255,255,255,0.5); font-size: 12px; margin: 0 0 12px 0;">O sistema preencherá automaticamente às 11:00</p>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;" class="freq-option" data-days="1">
-                <input type="radio" name="frequency-days" value="1" checked style="accent-color: #10b981;">
-                <span style="color: #fff; font-size: 13px;">Todo dia</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;" class="freq-option" data-days="2">
-                <input type="radio" name="frequency-days" value="2" style="accent-color: #10b981;">
-                <span style="color: #fff; font-size: 13px;">Dia sim, dia não</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;" class="freq-option" data-days="3">
-                <input type="radio" name="frequency-days" value="3" style="accent-color: #10b981;">
-                <span style="color: #fff; font-size: 13px;">A cada 3 dias</span>
-              </label>
-            </div>
-          </div>
+        <!-- Info: Automação é configurada depois -->
+        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
+          <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Para configurar execução automática, use o botão "Automatizar" após criar o checklist.
+          </p>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
