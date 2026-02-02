@@ -8767,11 +8767,26 @@ function setWaterHistoryMonth(month) {
  renderWaterHistory();
 }
 
-// Gerar relatorio de agua (PDF)
+// Gerar relatorio de agua (PDF) - usa o mes selecionado no dropdown
 function generateWaterReport() {
- // Usa a funcao existente de exportar PDF
+ // Pegar mes selecionado no dropdown
+ const monthSelect = document.getElementById('water-month-select');
+ let selectedMonth = null;
+ 
+ if (monthSelect) {
+ const value = monthSelect.value;
+ if (value === 'all') {
+ // Se "Todos os Meses", usar null para pegar mes atual
+ selectedMonth = null;
+ } else if (value === 'current') {
+ selectedMonth = null; // Mes atual
+ } else if (value && value.match(/^\d{4}-\d{2}$/)) {
+ selectedMonth = value; // YYYY-MM
+ }
+ }
+ 
  if (typeof exportWaterReportPDF === 'function') {
- exportWaterReportPDF();
+ exportWaterReportPDF(selectedMonth);
  } else {
  showToast('Funcao de relatorio nao disponivel', 'error');
  }
@@ -9337,7 +9352,7 @@ function renderTemperatureChart() {
  });
  
  // Montar SVG
- var svg = '<svg width="100%" height="'+ svgHeight + '" viewBox="0 0 '+ svgWidth + ''+ svgHeight + '" preserveAspectRatio="xMidYMid meet" style="overflow:visible;">';
+ var svg = '<svg width="100%" height="'+ svgHeight + '" viewBox="0 0 '+ svgWidth + ' '+ svgHeight + '" preserveAspectRatio="xMidYMid meet" style="overflow:visible;">';
  svg += gridLines;
  svg += yLabels;
  svg += xLabels;
@@ -9409,18 +9424,23 @@ function renderWaterHistory() {
  const dateKey = r.reading_date.split('T')[0];
  const monthKey = dateKey.substring(0, 7);
  
+ // Se um mes especifico foi selecionado no dropdown (YYYY-MM), filtrar por ele
+ if (monthFilter && monthFilter.match(/^\d{4}-\d{2}$/)) {
+ return monthKey === monthFilter;
+ }
+ 
+ // Se "Todos" foi selecionado
+ if (monthFilter === 'all') {
+ return true;
+ }
+ 
+ // Caso contrario, aplicar filtro de periodo
  if (period === 'today') {
  return dateKey === todayKey;
  } else if (period === 'week') {
  return dateKey >= weekAgoKey;
- } else if (period === 'month') {
- if (monthFilter === 'all') {
- return true; // Mostrar todos
- } else if (monthFilter === 'current') {
+ } else if (period === 'month' || monthFilter === 'current') {
  return monthKey === currentMonthKey;
- } else {
- return monthKey === monthFilter;
- }
  }
  return true;
  });
