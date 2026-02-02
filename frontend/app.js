@@ -8236,7 +8236,6 @@ async function createChecklistFromForm(event) {
  },
  body: JSON.stringify({ name, sector, frequency, description, items })
  });
- });
  
  const data = await response.json();
  if (data.ok) {
