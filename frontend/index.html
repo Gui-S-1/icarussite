@@ -6123,18 +6123,31 @@
 
     /* ========== CONTROLE DE ÁGUA - ESTILOS PREMIUM ========== */
     
+    /* Animação do fundo do header */
+    @keyframes waterWave {
+      0% { transform: translateX(-100%) rotate(0deg); }
+      100% { transform: translateX(100%) rotate(360deg); }
+    }
+
+    @keyframes floatBubble {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+      50% { transform: translateY(-10px) scale(1.1); opacity: 0.8; }
+    }
+
     /* Header Premium */
     .water-control-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 24px;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 16px;
-      margin-bottom: 20px;
+      padding: 24px 28px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(6, 182, 212, 0.15) 50%, rgba(59, 130, 246, 0.1) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 20px;
+      margin-bottom: 24px;
       position: relative;
       overflow: hidden;
+      animation: waterFadeInUp 0.6s ease-out;
+      backdrop-filter: blur(10px);
     }
 
     .water-control-header::before {
@@ -6142,48 +6155,70 @@
       position: absolute;
       top: -50%;
       right: -20%;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 60%);
       pointer-events: none;
+      animation: floatBubble 4s ease-in-out infinite;
+    }
+
+    .water-control-header::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 60%);
+      pointer-events: none;
+      animation: floatBubble 5s ease-in-out infinite reverse;
     }
 
     .water-header-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 18px;
       z-index: 1;
     }
 
     .water-icon-badge {
-      width: 56px;
-      height: 56px;
+      width: 60px;
+      height: 60px;
       background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-      border-radius: 14px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+      font-size: 30px;
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);
+      animation: waterDroplet 3s ease-in-out infinite;
+      transition: all 0.3s ease;
+    }
+
+    .water-icon-badge:hover {
+      transform: scale(1.1) rotate(10deg);
+      box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6);
     }
 
     .water-title {
-      font-size: 26px;
-      font-weight: 700;
+      font-size: 28px;
+      font-weight: 800;
       color: #fff;
       margin: 0;
       letter-spacing: 0.5px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
     .water-subtitle {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.7);
-      margin: 4px 0 0 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      margin: 6px 0 0 0;
+      font-weight: 500;
     }
 
     .water-header-actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       z-index: 1;
     }
 
@@ -6191,13 +6226,15 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 18px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
       color: #fff;
       font-size: 13px;
       font-weight: 600;
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
       cursor: pointer;
       transition: transform 0.2s, opacity 0.2s;
       backdrop-filter: blur(5px);
@@ -6361,6 +6398,49 @@
       }
     }
 
+    /* Animações para Water Control */
+    @keyframes waterFadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes waterPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes waterGlow {
+      0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
+    }
+
+    @keyframes waterDroplet {
+      0% { transform: translateY(-5px) scale(1); opacity: 1; }
+      50% { transform: translateY(0) scale(1.1); opacity: 0.8; }
+      100% { transform: translateY(-5px) scale(1); opacity: 1; }
+    }
+
+    @keyframes numberCount {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes barGrow {
+      from { height: 0; opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
     /* Water Tank Card */
     .water-tank-card {
       background: var(--bg-card);
@@ -6369,8 +6449,13 @@
       padding: 20px;
       position: relative;
       overflow: hidden;
-      transition: transform 0.2s, opacity 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: waterFadeInUp 0.5s ease-out forwards;
     }
+
+    .water-tank-card:nth-child(1) { animation-delay: 0.1s; }
+    .water-tank-card:nth-child(2) { animation-delay: 0.2s; }
+    .water-tank-card:nth-child(3) { animation-delay: 0.3s; }
 
     .water-tank-card::before {
       content: '';
@@ -6379,24 +6464,43 @@
       left: 0;
       right: 0;
       height: 4px;
+      background-size: 200% 100%;
     }
 
     .water-tank-card.aviarios::before {
-      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      background: linear-gradient(90deg, #3b82f6, #06b6d4, #3b82f6);
+      background-size: 200% 100%;
+      animation: shimmer 3s linear infinite;
     }
 
     .water-tank-card.recria::before {
-      background: linear-gradient(90deg, #10b981, #34d399);
+      background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+      background-size: 200% 100%;
+      animation: shimmer 3s linear infinite;
     }
 
     .water-tank-card.difference::before {
-      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
+      background-size: 200% 100%;
+      animation: shimmer 3s linear infinite;
     }
 
     .water-tank-card:hover {
-      border-color: rgba(59, 130, 246, 0.4);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 30px rgba(59, 130, 246, 0.15);
+    }
+
+    .water-tank-card.aviarios:hover {
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(59, 130, 246, 0.2);
+    }
+
+    .water-tank-card.recria:hover {
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(16, 185, 129, 0.2);
+    }
+
+    .water-tank-card.difference:hover {
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(251, 191, 36, 0.2);
     }
 
     .tank-header {
@@ -6407,46 +6511,70 @@
     }
 
     .tank-icon {
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       background: var(--bg-secondary);
-      border-radius: 12px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 24px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tank-icon::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.4s ease;
+    }
+    
+    .tank-icon:hover::before {
+      width: 100px;
+      height: 100px;
     }
     
     .tank-icon:hover {
-      transform: scale(1.1);
+      transform: scale(1.15) rotate(5deg);
     }
     
     .tank-icon.aviarios-icon {
       color: #3b82f6;
-      background: rgba(59, 130, 246, 0.15);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(6, 182, 212, 0.1) 100%);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
     }
     
     .tank-icon.aviarios-icon:hover {
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+      animation: waterGlow 2s ease-in-out infinite;
     }
     
     .tank-icon.recria-icon {
       color: #22c55e;
-      background: rgba(34, 197, 94, 0.15);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%);
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
     }
     
     .tank-icon.recria-icon:hover {
-      box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+      box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4);
     }
     
     .tank-icon.pico-icon {
       color: #fbbf24;
-      background: rgba(251, 191, 36, 0.15);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+      box-shadow: 0 4px 15px rgba(251, 191, 36, 0.2);
     }
     
     .tank-icon.pico-icon:hover {
-      box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+      box-shadow: 0 8px 30px rgba(251, 191, 36, 0.4);
     }
 
     .tank-info h3 {
@@ -6464,10 +6592,26 @@
     }
 
     .tank-readings {
-      background: var(--bg-secondary);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.03) 100%);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      transition: all 0.3s ease;
+    }
+
+    .tank-readings:hover {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.06) 100%);
+      border-color: rgba(59, 130, 246, 0.15);
+    }
+
+    .water-tank-card.recria .tank-readings {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(16, 185, 129, 0.03) 100%);
+    }
+
+    .water-tank-card.recria .tank-readings:hover {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(16, 185, 129, 0.06) 100%);
+      border-color: rgba(16, 185, 129, 0.15);
     }
 
     .reading-row {
@@ -6488,10 +6632,17 @@
     }
 
     .reading-value {
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 800;
       color: var(--text-primary);
-      font-family: 'Consolas', monospace;
+      font-family: 'Consolas', 'Monaco', monospace;
+      animation: numberCount 0.5s ease-out;
+      transition: all 0.3s ease;
+    }
+
+    .reading-value:hover {
+      color: #3b82f6;
+      transform: scale(1.05);
     }
 
     .tank-status-badge {
@@ -6525,18 +6676,22 @@
 
     .tank-stat-value {
       display: block;
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 800;
       color: #3b82f6;
       line-height: 1.2;
+      animation: numberCount 0.6s ease-out forwards;
+      text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
 
     .water-tank-card.recria .tank-stat-value {
       color: #10b981;
+      text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
     }
 
     .water-tank-card.difference .tank-stat-value {
       color: #f59e0b;
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
     }
 
     .tank-stat-label {
@@ -6549,25 +6704,70 @@
     }
 
     .tank-chart {
-      height: 60px;
-      background: var(--bg-secondary);
-      border-radius: 8px;
+      height: 70px;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
+      border-radius: 12px;
       display: flex;
       align-items: flex-end;
       gap: 4px;
-      padding: 8px;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tank-chart::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(59, 130, 246, 0.03) 100%);
+      pointer-events: none;
+    }
+
+    .water-tank-card.recria .tank-chart {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(16, 185, 129, 0.05) 100%);
+    }
+
+    .water-tank-card.recria .tank-chart::before {
+      background: linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.03) 100%);
     }
 
     .tank-chart-bar {
       flex: 1;
-      background: linear-gradient(180deg, #3b82f6 0%, rgba(59, 130, 246, 0.3) 100%);
-      border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, #3b82f6 0%, rgba(59, 130, 246, 0.4) 100%);
+      border-radius: 6px 6px 2px 2px;
       min-height: 4px;
-      transition: height 0.3s;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: barGrow 0.6s ease-out forwards;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .tank-chart-bar:hover {
+      transform: scaleY(1.1);
+      filter: brightness(1.2);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+
+    .tank-chart-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+      border-radius: 6px 6px 0 0;
     }
 
     .water-tank-card.recria .tank-chart-bar {
-      background: linear-gradient(180deg, #10b981 0%, rgba(16, 185, 129, 0.3) 100%);
+      background: linear-gradient(180deg, #10b981 0%, rgba(16, 185, 129, 0.4) 100%);
+    }
+
+    .water-tank-card.recria .tank-chart-bar:hover {
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
     }
 
     /* Water Input Section */
@@ -6731,15 +6931,30 @@
     }
 
     .water-main-chart {
-      height: 250px;
-      background: var(--bg-secondary);
-      border-radius: 12px;
-      padding: 16px;
+      height: 280px;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.03) 100%);
+      border-radius: 16px;
+      padding: 20px;
       display: flex;
       align-items: flex-end;
-      gap: 8px;
+      gap: 10px;
       overflow-x: auto;
       max-width: 100%;
+      position: relative;
+    }
+
+    .water-main-chart::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        linear-gradient(180deg, transparent 0%, transparent 25%, rgba(59, 130, 246, 0.02) 50%, transparent 75%, transparent 100%),
+        repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.02) 50px, rgba(255,255,255,0.02) 51px);
+      border-radius: 16px;
+      pointer-events: none;
     }
 
     /* Gráfico de Temperatura */
@@ -6810,29 +7025,61 @@
     }
 
     .chart-bar {
-      width: 20px;
-      border-radius: 4px 4px 0 0;
-      transition: height 0.3s;
+      width: 22px;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       position: relative;
+      animation: barGrow 0.6s ease-out forwards;
+    }
+
+    .chart-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+      border-radius: 6px 6px 0 0;
     }
 
     .chart-bar.aviarios {
-      background: linear-gradient(180deg, #3b82f6 0%, rgba(59, 130, 246, 0.4) 100%);
+      background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 50%, rgba(59, 130, 246, 0.5) 100%);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
     }
 
     .chart-bar.recria {
-      background: linear-gradient(180deg, #10b981 0%, rgba(16, 185, 129, 0.4) 100%);
+      background: linear-gradient(180deg, #34d399 0%, #10b981 50%, rgba(16, 185, 129, 0.5) 100%);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
     }
 
     .chart-bar:hover {
-      opacity: 0.8;
+      transform: scaleY(1.08) scaleX(1.1);
+      filter: brightness(1.15);
+    }
+
+    .chart-bar.aviarios:hover {
+      box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
+    }
+
+    .chart-bar.recria:hover {
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
     }
 
     .chart-bar-label {
       font-size: 10px;
       color: var(--text-secondary);
       text-align: center;
+      font-weight: 500;
+    }
+
+    .chart-bar-group {
+      transition: transform 0.2s ease;
+    }
+
+    .chart-bar-group:hover {
+      transform: translateY(-3px);
     }
 
     /* Water History */
